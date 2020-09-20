@@ -1,20 +1,24 @@
-#include "binaryreader/binary_reader.h"
+#include "binaryreader/binary_reader.hpp"
 
 #include <limits>
 #include <climits>
 #include <cstring>
-
-sciformats::common::binary_reader::binary_reader(std::istream& input_stream, const endianness endian)
-    :_istringstream(), _input_stream(input_stream), _endianness(endian)
-{
-    // TBD: set exceptions on input_stream?
-}
 
 sciformats::common::binary_reader::binary_reader(const std::string& file_path, const endianness endian)
     :_istringstream(), _file_stream(), _input_stream(_file_stream), _endianness(endian)
 {
     _file_stream.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
     _file_stream.open(file_path, std::ios::in | std::ios::binary);
+}
+
+sciformats::common::binary_reader::binary_reader(std::istream& input_stream, const endianness endian, const bool activateExceptions)
+    :_istringstream(), _input_stream(input_stream), _endianness(endian)
+{
+    if (activateExceptions)
+    {
+        // this also activate exceptions on input_stream, as as _input_stream is a reference to input_stream
+        _input_stream.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
+    }
 }
 
 sciformats::common::binary_reader::binary_reader(std::vector<char>& vec, const endianness endian)
@@ -257,5 +261,21 @@ std::vector<char> sciformats::common::binary_reader::read_chars(const size_t siz
     std::vector<char> dest;
     dest.resize(size);
     _input_stream.read(dest.data(), size);
+    return dest;
+}
+
+std::vector<uint8_t> sciformats::common::binary_reader::read_bytes(const size_t size)
+{
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
+
+    // for alternative implementation:
+    // see: https://stackoverflow.com/questions/10823264/is-there-a-more-efficient-way-to-set-a-stdvector-from-a-stream
+    // https://stackoverflow.com/questions/16727125/how-does-stdcopy-work-with-stream-iterators
+    std::vector<uint8_t> dest;
+    dest.resize(size);
+    // reinterpret cast is safe as signed and unsigned char have same representation and alignment
+    // see: https://en.cppreference.com/w/cpp/language/types
+    // also: https://stackoverflow.com/questions/15078638/can-i-turn-unsigned-char-into-char-and-vice-versa/15172304
+    _input_stream.read(reinterpret_cast<char*>(dest.data()), size);
     return dest;
 }

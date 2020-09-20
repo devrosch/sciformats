@@ -1,13 +1,13 @@
-#ifndef LIBIO_BINARY_READER_H
-#define LIBIO_BINARY_READER_H
+#ifndef LIBIO_BINARY_READER_HPP
+#define LIBIO_BINARY_READER_HPP
 
 #include <istream>
 #include <fstream>
 #include <vector>
 #include <sstream>
 
-namespace sciformats { namespace common
-{
+namespace sciformats {
+namespace common {
 
 /**
  * @brief The binary_reader class provides mechanisms to read binary data from various input sources.
@@ -34,8 +34,9 @@ public:
      * @brief sciformats::common::binary_reader::binary_reader Constructs from istream. Does not change exceptions flags.
      * @param input_stream Input stream with binary data.
      * @param endian Default endianness of data.
+     * @param activateExceptions Activate exceptions for input_stream.
      */
-    binary_reader(std::istream& input_stream, const endianness endian = little_endian);
+    binary_reader(std::istream& input_stream, const endianness endian = little_endian, const bool activateExceptions = true);
     /**
      * @brief sciformats::common::binary_reader::binary_reader Constructs from vector.
      * @param vec Vector with binary data.
@@ -72,6 +73,7 @@ public:
     double read_double();
     double read_double(const endianness endian);
     std::vector<char> read_chars(const size_t size);
+    std::vector<uint8_t> read_bytes(const size_t size);
 
 private:
     std::ifstream _file_stream; // TODO: make std::optional?
@@ -80,6 +82,6 @@ private:
     endianness _endianness;
 };
 
-} } // namespace sciformats::common
+}} // namespace sciformats::common
 
-#endif // LIBIO_BINARY_READER_H
+#endif // LIBIO_BINARY_READER_HPP

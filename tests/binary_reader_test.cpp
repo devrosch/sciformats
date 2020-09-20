@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <climits>
 #include <catch2/catch.hpp>
-#include <binaryreader/binary_reader.h>
+#include <binaryreader/binary_reader.hpp>
 
 static_assert(CHAR_BIT == 8, "Char size is not 8.");
 
@@ -55,18 +55,25 @@ TEST_CASE("correctly reads istream", "[binary_reader]") {
 }
 
 TEST_CASE("throws exception when reading past and constructed from istream "
-          "if and only if argument istream is configured to throw exceptions", "[binary_reader]") {
+          "if argument istream is configured to throw exceptions "
+          "or constructor argument for activatin exceptions is true", "[binary_reader]") {
     unsigned char bytes[] = { 0x00, 0xFF, 0x7F };
     std::istringstream ss_nothrow(std::string(bytes, bytes + sizeof(bytes)));
-    sciformats::common::binary_reader reader_nothrow(ss_nothrow, sciformats::common::binary_reader::big_endian);
+    sciformats::common::binary_reader reader_nothrow(ss_nothrow, sciformats::common::binary_reader::big_endian, false);
 
     // unlike for other reader constructors, for constructor the behavior of the argument stream determines if it throws
     reader_nothrow.seekg(3);
     REQUIRE_NOTHROW (reader_nothrow.read_uint8());
 
+    std::istringstream ss_nothrow2(std::string(bytes, bytes + sizeof(bytes)));
+    sciformats::common::binary_reader reader_nothrow2(ss_nothrow2, sciformats::common::binary_reader::big_endian, true);
+
+    reader_nothrow2.seekg(3);
+    REQUIRE_THROWS (reader_nothrow2.read_uint8());
+
     std::istringstream ss_throw(std::string(bytes, bytes + sizeof(bytes)));
     ss_throw.exceptions(std::ios::eofbit | std::ios::failbit | std::ios::badbit);
-    sciformats::common::binary_reader reader_throw(ss_throw, sciformats::common::binary_reader::big_endian);
+    sciformats::common::binary_reader reader_throw(ss_throw, sciformats::common::binary_reader::big_endian, false);
 
     reader_throw.seekg(3);
     REQUIRE_THROWS (reader_throw.read_uint8());
@@ -300,6 +307,20 @@ TEST_CASE("read chars into vector correctly", "[binary_reader]") {
     size_t size = bytes.size();
 
     auto output = reader.read_chars(size);
+
+    REQUIRE (output.size() == size);
+    REQUIRE (output.at(0) == bytes[0]);
+    REQUIRE (output.at(1) == bytes[1]);
+    REQUIRE (output.at(2) == bytes[2]);
+    REQUIRE (output.at(3) == bytes[3]);
+}
+
+TEST_CASE("read bytes into vector correctly", "[binary_reader]") {
+    std::vector<uint8_t> bytes = { 0x00, 0x01, 0x02, 0xFF };
+    sciformats::common::binary_reader reader(bytes);
+    size_t size = bytes.size();
+
+    auto output = reader.read_bytes(size);
 
     REQUIRE (output.size() == size);
     REQUIRE (output.at(0) == bytes[0]);

@@ -3,7 +3,7 @@
 #include <sstream>
 #include <vector>
 #include <boost/locale.hpp>
-#include "binaryreader/binary_reader.h"
+#include "binaryreader/binary_reader.hpp"
 
 using namespace std;
 
@@ -60,14 +60,25 @@ int main()
     std::vector<char> vec = { static_cast<char>(0xe4) };
     std::string latin1_string(vec.begin(), vec.end());
     cout << "Latin1 string" << " (length: " << latin1_string.length() << "): " << latin1_string << endl;
-    std::string utf8_string = boost::locale::conv::to_utf<char>(latin1_string, "Latin1");
+    // poosible names for boost locale ICU backend: https://icu4c-demos.unicode.org/icu-bin/convexp
+    // for lconv backend: https://gist.github.com/hakre/4188459
+    // ICU: https://android.developreference.com/article/12744083/Unicode+character+classification+with+boost%3A%3Alocale
+//    std::string utf8_string = boost::locale::conv::to_utf<char>(latin1_string, "Latin1");
+    std::string utf8_string = boost::locale::conv::to_utf<char>(latin1_string, "ibm-5348_P100-1997");
     cout << "utf8 string" << " (length: " << utf8_string.length() << "): " << utf8_string << endl;
 
     std::vector<char> vecUtf16be = { 0x00, static_cast<char>(0xe4), 0x00, 0x62 };
     std::string utf16be_string(vecUtf16be.begin(), vecUtf16be.end());
     cout << "utf16BE string" << " (length: " << utf16be_string.length() << "): " << utf16be_string << endl;
+//    std::string utf8_string2 = boost::locale::conv::to_utf<char>(utf16be_string, "UTF-16BE");
+//    std::string utf8_string2 = boost::locale::conv::to_utf<char>(utf16be_string, "cp1201");
     std::string utf8_string2 = boost::locale::conv::to_utf<char>(utf16be_string, "UTF-16BE");
     cout << "utf8 string 2" << " (length: " << utf8_string2.length() << "): " << utf8_string2 << endl;
+
+    std::vector<char> vecUtf16le = { 0x61, 0x00, 0x62, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0x00 };
+    std::string utf16le_string(vecUtf16le.begin(), vecUtf16le.end());
+    std::string utf8_string3 = boost::locale::conv::to_utf<char>(utf16le_string, "UTF-16LE");
+    cout << "utf8 string 3" << " (length: " << utf8_string3.length() << "): " << utf8_string3 << endl;
 
     return 0;
 }

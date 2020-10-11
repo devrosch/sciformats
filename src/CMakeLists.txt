@@ -9,4 +9,3 @@ target_compile_features(binary_reader PUBLIC cxx_std_17)
 
 # We need this directory, and users of our library will need it too
 target_include_directories(binary_reader PUBLIC ${INCLUDE_DIRECTORIES})
-

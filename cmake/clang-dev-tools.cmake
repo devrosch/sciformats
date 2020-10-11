@@ -3,7 +3,7 @@
 # see: https://stackoverflow.com/questions/32280717/cmake-clang-tidy-or-other-script-as-custom-target
 
 # prepend include directories with -I to pass them as multiple options to make
-set(CLANG_TIDY_MAKE_INCLUDES ${INCLUDE_DIRECTORIES})
+set(CLANG_TIDY_MAKE_INCLUDES ${INCLUDE_DIRECTORIES} ${TESTING_INCLUDE_DIRECTORIES})
 list(TRANSFORM CLANG_TIDY_MAKE_INCLUDES PREPEND -I)
 message(STATUS "CLANG_TIDY_MAKE_INCLUDES: ${CLANG_TIDY_MAKE_INCLUDES}")
 

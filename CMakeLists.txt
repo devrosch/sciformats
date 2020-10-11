@@ -20,14 +20,15 @@ project(
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # include directories for use with clang-tidy and make as separate target
 set(INCLUDE_DIRECTORIES
-    "${CMAKE_CURRENT_SOURCE_DIR}/lib/catch2/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(TESTING_INCLUDE_DIRECTORIES
+    "${CMAKE_CURRENT_SOURCE_DIR}/lib/catch2/include")
 # source files for use with clang-tidy and make as separate target
 file(GLOB_RECURSE ALL_SOURCE_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/apps/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
+    "${INCLUDE_DIRECTORIES}/*.hpp")
 message(STATUS "INCLUDE_DIRECTORIES: ${INCLUDE_DIRECTORIES}")
 message(STATUS "ALL_SOURCE_FILES: ${ALL_SOURCE_FILES}")
 

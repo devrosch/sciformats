@@ -9,6 +9,7 @@ message(STATUS "CLANG_TIDY_MAKE_INCLUDES: ${CLANG_TIDY_MAKE_INCLUDES}")
 
 add_custom_target(
         clang-tidy
+        VERBATIM
         COMMAND clang-tidy
         --checks=${CLANG_TIDY_CHECKS}
         --warnings-as-errors=${CLANG_TIDY_CHECKS}

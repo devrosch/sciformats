@@ -22,11 +22,15 @@ target_link_libraries(binary_reader_test PRIVATE binary_reader catch2)
 #    ${CMAKE_CURRENT_SOURCE_DIR}/resources/
 #    ${CMAKE_CURRENT_BINARY_DIR}/resources/
 #)
+
+# Wrap paths in escaped quotes for handling paths with spaces
+# see: https://cmake.org/pipermail/cmake/2006-May/009098.html
 add_custom_command(
         TARGET binary_reader_test POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_SOURCE_DIR}/resources/
-                ${CMAKE_CURRENT_BINARY_DIR}/resources/
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+                "${CMAKE_CURRENT_SOURCE_DIR}/resources/"
+                "${CMAKE_CURRENT_BINARY_DIR}/resources/"
+        VERBATIM
 )
 
 # If you register a test, then ctest and make test will run it.

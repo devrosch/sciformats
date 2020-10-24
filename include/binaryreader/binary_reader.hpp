@@ -1,57 +1,70 @@
 #ifndef LIBIO_BINARY_READER_HPP
 #define LIBIO_BINARY_READER_HPP
 
-#include <istream>
 #include <fstream>
-#include <vector>
+#include <istream>
 #include <sstream>
+#include <vector>
 
-namespace sciformats {
-namespace common {
-
+namespace sciformats
+{
+namespace common
+{
 /**
- * @brief The binary_reader class provides mechanisms to read binary data from various input sources.
+ * @brief The binary_reader class provides mechanisms to read binary data from
+ * various input sources.
  */
 class binary_reader
 {
 public:
     /**
-     * @brief The endianness enum indicates if data is expected to be little endian or big endian.
+     * @brief The endianness enum indicates if data is expected to be little
+     * endian or big endian.
      */
     enum endianness : uint8_t
     {
-      little_endian,
-      big_endian,
+        little_endian,
+        big_endian,
     };
 
     /**
-     * @brief sciformats::common::binary_reader::binary_reader Constructs from file.
+     * @brief sciformats::common::binary_reader::binary_reader Constructs from
+     * file.
      * @param file_path Path to the file.
      * @param endian Default endianness of data.
      */
-    binary_reader(const std::string& file_path, const endianness endian = little_endian);
+    binary_reader(
+        const std::string& file_path, const endianness endian = little_endian);
     /**
-     * @brief sciformats::common::binary_reader::binary_reader Constructs from istream. Does not change exceptions flags.
+     * @brief sciformats::common::binary_reader::binary_reader Constructs from
+     * istream. Does not change exceptions flags.
      * @param input_stream Input stream with binary data.
      * @param endian Default endianness of data.
      * @param activateExceptions Activate exceptions for input_stream.
      */
-    binary_reader(std::istream& input_stream, const endianness endian = little_endian, const bool activateExceptions = true);
+    binary_reader(std::istream& input_stream,
+        const endianness endian = little_endian,
+        const bool activateExceptions = true);
     /**
-     * @brief sciformats::common::binary_reader::binary_reader Constructs from vector.
+     * @brief sciformats::common::binary_reader::binary_reader Constructs from
+     * vector.
      * @param vec Vector with binary data.
      * @param endian Default endianness of data.
      */
-    binary_reader(std::vector<char>& vec, const endianness endian = little_endian);
+    binary_reader(
+        std::vector<char>& vec, const endianness endian = little_endian);
     /**
-     * @brief sciformats::common::binary_reader::binary_reader Constructs from vector.
+     * @brief sciformats::common::binary_reader::binary_reader Constructs from
+     * vector.
      * @param vec Vector with binary data.
      * @param endian Default endianness of data.
      */
-    binary_reader(std::vector<uint8_t>& vec, const endianness endian = little_endian);
+    binary_reader(
+        std::vector<uint8_t>& vec, const endianness endian = little_endian);
 
     std::ios::pos_type tellg() const;
-    void seekg(const std::ios::pos_type, const std::ios_base::seekdir = std::ios_base::beg);
+    void seekg(const std::ios::pos_type,
+        const std::ios_base::seekdir = std::ios_base::beg);
     std::ios::pos_type get_length();
 
     int8_t read_int8();
@@ -81,7 +94,7 @@ private:
     std::istream& _input_stream;
     endianness _endianness;
 };
-
-}} // namespace sciformats::common
+}
+} // namespace sciformats::common
 
 #endif // LIBIO_BINARY_READER_HPP

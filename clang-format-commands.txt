@@ -1,0 +1,2 @@
+clang-format --style=file --dry-run --Werror ./src/binary_reader_formatted.cpp
+

@@ -31,7 +31,7 @@ add_custom_target(
 add_custom_target(
         clang-format-fix
         COMMAND clang-format
-        -style=file
+        --style=file
         -i
         ${ALL_SOURCE_FILES}
 )

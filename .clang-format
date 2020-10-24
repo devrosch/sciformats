@@ -15,6 +15,7 @@ IncludeIsMainRegex: '(Test|_test)?$'
 KeepEmptyLinesAtTheStartOfBlocks: false
 NamespaceIndentation: None
 SpaceAfterTemplateKeyword: false
+SpaceBeforeCpp11BracedList: false # requires clang-format 7 or later
 SpacesInContainerLiterals: false
 TabWidth:        4
 ...

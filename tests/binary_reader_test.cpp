@@ -3,7 +3,7 @@
 #include <catch2/catch.hpp>
 #include <climits>
 
-static_assert(CHAR_BIT == 8, "Char size is not 8.");
+static_assert(CHAR_BIT == 8, "Char size is not 8."); // NOLINT
 
 // see: https://stackoverflow.com/a/47934240
 constexpr auto operator"" _c(unsigned long long arg) noexcept
@@ -13,7 +13,7 @@ constexpr auto operator"" _c(unsigned long long arg) noexcept
 
 TEST_CASE("correctly reads file", "[binary_reader]")
 {
-    const auto path = "resources/test.bin";
+    const std::string path{"resources/test.bin"};
     sciformats::common::binary_reader reader(path);
 
     REQUIRE(reader.tellg() == 0);
@@ -34,7 +34,7 @@ TEST_CASE("correctly reads file", "[binary_reader]")
 TEST_CASE("throws exception when reading past end and constructed from file",
     "[binary_reader]")
 {
-    const auto path = "resources/test.bin";
+    const std::string path{"resources/test.bin"};
     sciformats::common::binary_reader reader(path);
 
     reader.seekg(reader.get_length());
@@ -44,7 +44,7 @@ TEST_CASE("throws exception when reading past end and constructed from file",
 TEST_CASE("correctly reads istream", "[binary_reader]")
 {
     unsigned char bytes[]{0x00, 0xFF, 0x7F}; // NOLINT
-    std::istringstream ss(std::string(bytes, bytes + sizeof(bytes)));
+    std::istringstream ss(std::string(std::begin(bytes), std::end(bytes)));
     sciformats::common::binary_reader reader(
         ss, sciformats::common::binary_reader::big_endian);
 
@@ -65,7 +65,7 @@ TEST_CASE("throws exception when reading past and constructed from istream "
     "[binary_reader]")
 {
     unsigned char bytes[] = {0x00, 0xFF, 0x7F}; // NOLINT
-    std::istringstream ss_nothrow(std::string(bytes, bytes + sizeof(bytes)));
+    std::istringstream ss_nothrow(std::string(std::begin(bytes), std::end(bytes)));
     sciformats::common::binary_reader reader_nothrow(
         ss_nothrow, sciformats::common::binary_reader::big_endian, false);
 
@@ -74,14 +74,14 @@ TEST_CASE("throws exception when reading past and constructed from istream "
     reader_nothrow.seekg(3);
     REQUIRE_NOTHROW(reader_nothrow.read_uint8());
 
-    std::istringstream ss_nothrow2(std::string(bytes, bytes + sizeof(bytes)));
+    std::istringstream ss_nothrow2(std::string(std::begin(bytes), std::end(bytes)));
     sciformats::common::binary_reader reader_nothrow2(
         ss_nothrow2, sciformats::common::binary_reader::big_endian, true);
 
     reader_nothrow2.seekg(3);
     REQUIRE_THROWS(reader_nothrow2.read_uint8());
 
-    std::istringstream ss_throw(std::string(bytes, bytes + sizeof(bytes)));
+    std::istringstream ss_throw(std::string(std::begin(bytes), std::end(bytes)));
     ss_throw.exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
     sciformats::common::binary_reader reader_throw(

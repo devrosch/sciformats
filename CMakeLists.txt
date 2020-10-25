@@ -37,7 +37,17 @@ message(STATUS "ALL_SOURCE_FILES: ${ALL_SOURCE_FILES}")
 # --------------------------------------------------------------
 
 # clang-tidy rules to check
-set(CLANG_TIDY_CHECKS "-*,bugprone-*,cert-*,clang-analyzer-*,cppcoreguidelines-*,hicpp-*,misc-*,modernize-*,performance-*,portability-*,readability-*")
+set(CLANG_TIDY_CHECKS
+    "-*\
+    ,bugprone-*\
+    ,cert-*\
+    ,clang-analyzer-*\
+    ,cppcoreguidelines-*\
+    ,hicpp-*,misc-*\
+    ,modernize-*,-modernize-use-trailing-return-type\
+    ,performance-*\
+    ,portability-*\
+    ,readability-*")
 
 # activate clang-tidy for all targets
 # see: https://stackoverflow.com/questions/40433573/how-can-i-specify-additional-arguments-for-use-with-cmake-cxx-clang-tidy-variabl

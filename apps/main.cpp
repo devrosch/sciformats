@@ -44,13 +44,13 @@ int main()
     // https://stackoverflow.com/questions/7781898/get-an-istream-from-a-char
     // char bytes[] = { static_cast<char>(0xFF), 0x01, 0x02 };
     // unsigned char bytes[] = { 0xFF, 0x01, 0x02 };
-    uint8_t bytes[] = {0xFF, 0x01, 0x02};
-    std::istringstream ss(std::string(bytes, bytes + sizeof(bytes)));
-    sciformats::common::binary_reader reader3(
-        ss, sciformats::common::binary_reader::little_endian);
-    uint8_t a = reader3.read_uint8();
-    auto b = reader3.read_uint8();
-    auto c = reader3.read_uint8();
+//    uint8_t bytes[] = {0xFF, 0x01, 0x02};
+//    std::istringstream ss(std::string(bytes, bytes + sizeof(bytes)));
+//    sciformats::common::binary_reader reader3(
+//        ss, sciformats::common::binary_reader::little_endian);
+//    uint8_t a = reader3.read_uint8();
+//    auto b = reader3.read_uint8();
+//    auto c = reader3.read_uint8();
 
     //    vector<char> data_vec { 0x00, 0x01 };
     //    vector<char>& vec_ref = data_vec;
@@ -61,7 +61,7 @@ int main()
     //    vectorbuf<uint8_t> vb(data_vec);
     //    std::istream<uint8_t> is(&vb);
 
-    std::vector<char> vec = {static_cast<char>(0xe4)};
+    std::vector<char> vec = {static_cast<char>(0xe4)}; //NOLINT
     std::string latin1_string(vec.begin(), vec.end());
     cout << "Latin1 string"
          << " (length: " << latin1_string.length() << "): " << latin1_string
@@ -78,7 +78,7 @@ int main()
          << " (length: " << utf8_string.length() << "): " << utf8_string
          << endl;
 
-    std::vector<char> vecUtf16be = {0x00, static_cast<char>(0xe4), 0x00, 0x62};
+    std::vector<char> vecUtf16be = {0x00, static_cast<char>(0xe4), 0x00, 0x62}; // NOLINT
     std::string utf16be_string(vecUtf16be.begin(), vecUtf16be.end());
     cout << "utf16BE string"
          << " (length: " << utf16be_string.length() << "): " << utf16be_string
@@ -94,7 +94,7 @@ int main()
          << endl;
 
     std::vector<char> vecUtf16le
-        = {0x61, 0x00, 0x62, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0x00};
+        = {0x61, 0x00, 0x62, 0x00, 0x00, 0x00, 0x00, 0x00, 0x63, 0x00}; //NOLINT
     std::string utf16le_string(vecUtf16le.begin(), vecUtf16le.end());
     std::string utf8_string3
         = boost::locale::conv::to_utf<char>(utf16le_string, "UTF-16LE");

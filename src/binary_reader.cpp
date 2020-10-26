@@ -1,8 +1,12 @@
 #include "binaryreader/binary_reader.hpp"
 
+#include <array>
 #include <climits>
 #include <cstring>
 #include <limits>
+
+constexpr unsigned int CHAR_BIT_8 = 8;
+static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
 
 sciformats::common::binary_reader::binary_reader(
     const std::string& file_path, const endianness endian)
@@ -83,15 +87,14 @@ std::ios::pos_type sciformats::common::binary_reader::get_length()
 
 int8_t sciformats::common::binary_reader::read_int8()
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
+    static_assert(sizeof(char) == sizeof(int8_t),
+        "Char size does not match int8_t size.");
     return _input_stream.get();
 }
 
 uint8_t sciformats::common::binary_reader::read_uint8()
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
+    // assumes CHAR_BIT == 8
     return _input_stream.get();
 }
 
@@ -102,13 +105,16 @@ uint16_t sciformats::common::binary_reader::read_uint16()
 
 uint16_t sciformats::common::binary_reader::read_uint16(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
-    char bytes[2];
-    _input_stream.read(bytes, 2);
+    // assumes CHAR_BIT == 8
+    // don't initialize array for potentially better performance
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    std::array<char, 2> bytes;
+    _input_stream.read(bytes.data(), bytes.size());
     return endian == little_endian
-               ? ((bytes[0] & 0xFF) << 0) | ((bytes[1] & 0xFF) << 8)
-               : ((bytes[1] & 0xFF) << 0) | ((bytes[0] & 0xFF) << 8);
+               ? ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 0U)
+                     | ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 8U)
+               : ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 0U)
+                     | ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 8U);
 }
 
 int16_t sciformats::common::binary_reader::read_int16()
@@ -118,13 +124,9 @@ int16_t sciformats::common::binary_reader::read_int16()
 
 int16_t sciformats::common::binary_reader::read_int16(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
-    char bytes[2];
-    _input_stream.read(bytes, 2);
-    return endian == little_endian
-               ? ((bytes[0] & 0xFF) << 0) | ((bytes[1] & 0xFF) << 8)
-               : ((bytes[1] & 0xFF) << 0) | ((bytes[0] & 0xFF) << 8);
+    static_assert(sizeof(uint16_t) == sizeof(int16_t),
+        "Size of uinte16_t does not match size of int16_t.");
+    return read_uint16(endian);
 }
 
 uint32_t sciformats::common::binary_reader::read_uint32()
@@ -134,15 +136,20 @@ uint32_t sciformats::common::binary_reader::read_uint32()
 
 uint32_t sciformats::common::binary_reader::read_uint32(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
-    char bytes[4];
-    _input_stream.read(bytes, 4);
+    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
+    // don't initialize array for potentially better performance
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    std::array<char, sizeof(uint32_t)> bytes;
+    _input_stream.read(bytes.data(), bytes.size());
     return endian == little_endian
-               ? ((bytes[0] & 0xFF) << 0) | ((bytes[1] & 0xFF) << 8)
-                     | ((bytes[2] & 0xFF) << 16) | ((bytes[3] & 0xFF) << 24)
-               : ((bytes[3] & 0xFF) << 0) | ((bytes[2] & 0xFF) << 8)
-                     | ((bytes[1] & 0xFF) << 16) | ((bytes[0] & 0xFF) << 24);
+               ? ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 0U)
+                     | ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 8U)
+                     | ((static_cast<uint8_t>(bytes[2]) & 0xFFU) << 16U)
+                     | ((static_cast<uint8_t>(bytes[3]) & 0xFFU) << 24U)
+               : ((static_cast<uint8_t>(bytes[3]) & 0xFFU) << 0U)
+                     | ((static_cast<uint8_t>(bytes[2]) & 0xFFU) << 8U)
+                     | ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 16U)
+                     | ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 24U);
 }
 
 int32_t sciformats::common::binary_reader::read_int32()
@@ -152,15 +159,9 @@ int32_t sciformats::common::binary_reader::read_int32()
 
 int32_t sciformats::common::binary_reader::read_int32(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
-    char bytes[4];
-    _input_stream.read(bytes, 4);
-    return endian == little_endian
-               ? ((bytes[0] & 0xFF) << 0) | ((bytes[1] & 0xFF) << 8)
-                     | ((bytes[2] & 0xFF) << 16) | ((bytes[3] & 0xFF) << 24)
-               : ((bytes[3] & 0xFF) << 0) | ((bytes[2] & 0xFF) << 8)
-                     | ((bytes[1] & 0xFF) << 16) | ((bytes[0] & 0xFF) << 24);
+    static_assert(sizeof(uint32_t) == sizeof(int32_t),
+        "Size of uinte32_t does not match size of int32_t.");
+    return read_uint32(endian);
 }
 
 uint64_t sciformats::common::binary_reader::read_uint64()
@@ -170,28 +171,59 @@ uint64_t sciformats::common::binary_reader::read_uint64()
 
 uint64_t sciformats::common::binary_reader::read_uint64(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
-    char bytes[8];
-    _input_stream.read(bytes, 8);
-
+    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
+    static_assert(sizeof(uint64_t) == 8);
+    // don't initialize array for potentially better performance
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+    std::array<char, sizeof(uint64_t)> bytes;
+    _input_stream.read(bytes.data(), bytes.size());
     return endian == little_endian
-               ? (static_cast<uint64_t>(bytes[0] & 0xFF) << 0)
-                     | (static_cast<uint64_t>(bytes[1] & 0xFF) << 8)
-                     | (static_cast<uint64_t>(bytes[2] & 0xFF) << 16)
-                     | (static_cast<uint64_t>(bytes[3] & 0xFF) << 24)
-                     | (static_cast<uint64_t>(bytes[4] & 0xFF) << 32)
-                     | (static_cast<uint64_t>(bytes[5] & 0xFF) << 40)
-                     | (static_cast<uint64_t>(bytes[6] & 0xFF) << 48)
-                     | (static_cast<uint64_t>(bytes[7] & 0xFF) << 56)
-               : (static_cast<uint64_t>(bytes[7] & 0xFF) << 0)
-                     | (static_cast<uint64_t>(bytes[6] & 0xFF) << 8)
-                     | (static_cast<uint64_t>(bytes[5] & 0xFF) << 16)
-                     | (static_cast<uint64_t>(bytes[4] & 0xFF) << 24)
-                     | (static_cast<uint64_t>(bytes[3] & 0xFF) << 32)
-                     | (static_cast<uint64_t>(bytes[2] & 0xFF) << 40)
-                     | (static_cast<uint64_t>(bytes[1] & 0xFF) << 48)
-                     | (static_cast<uint64_t>(bytes[0] & 0xFF) << 56);
+               ? (static_cast<uint64_t>(static_cast<uint8_t>(bytes[0]) & 0xFFU)
+                     << 0U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[1]) & 0xFFU)
+                         << 8U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[2]) & 0xFFU)
+                         << 16U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[3]) & 0xFFU)
+                         << 24U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[4]) & 0xFFU)
+                         << 32U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[5]) & 0xFFU)
+                         << 40U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[6]) & 0xFFU)
+                         << 48U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[7]) & 0xFFU)
+                         << 56U)
+               : (static_cast<uint64_t>(static_cast<uint8_t>(bytes[7]) & 0xFFU)
+                     << 0U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[6]) & 0xFFU)
+                         << 8U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[5]) & 0xFFU)
+                         << 16U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[4]) & 0xFFU)
+                         << 24U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[3]) & 0xFFU)
+                         << 32U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[2]) & 0xFFU)
+                         << 40U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[1]) & 0xFFU)
+                         << 48U)
+                     | (static_cast<uint64_t>(
+                            static_cast<uint8_t>(bytes[0]) & 0xFFU)
+                         << 56U);
 }
 
 int64_t sciformats::common::binary_reader::read_int64()
@@ -201,28 +233,9 @@ int64_t sciformats::common::binary_reader::read_int64()
 
 int64_t sciformats::common::binary_reader::read_int64(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
-    char bytes[8];
-    _input_stream.read(bytes, 8);
-
-    return endian == little_endian
-               ? (static_cast<int64_t>(bytes[0] & 0xFF) << 0)
-                     | (static_cast<int64_t>(bytes[1] & 0xFF) << 8)
-                     | (static_cast<int64_t>(bytes[2] & 0xFF) << 16)
-                     | (static_cast<int64_t>(bytes[3] & 0xFF) << 24)
-                     | (static_cast<int64_t>(bytes[4] & 0xFF) << 32)
-                     | (static_cast<int64_t>(bytes[5] & 0xFF) << 40)
-                     | (static_cast<int64_t>(bytes[6] & 0xFF) << 48)
-                     | (static_cast<int64_t>(bytes[7] & 0xFF) << 56)
-               : (static_cast<int64_t>(bytes[7] & 0xFF) << 0)
-                     | (static_cast<int64_t>(bytes[6] & 0xFF) << 8)
-                     | (static_cast<int64_t>(bytes[5] & 0xFF) << 16)
-                     | (static_cast<int64_t>(bytes[4] & 0xFF) << 24)
-                     | (static_cast<int64_t>(bytes[3] & 0xFF) << 32)
-                     | (static_cast<int64_t>(bytes[2] & 0xFF) << 40)
-                     | (static_cast<int64_t>(bytes[1] & 0xFF) << 48)
-                     | (static_cast<int64_t>(bytes[0] & 0xFF) << 56);
+    static_assert(sizeof(uint64_t) == sizeof(int64_t),
+        "Size of uinte64_t does not match size of int64_t.");
+    return read_uint64(endian);
 }
 
 float sciformats::common::binary_reader::read_float()
@@ -232,7 +245,7 @@ float sciformats::common::binary_reader::read_float()
 
 float sciformats::common::binary_reader::read_float(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
+    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
     static_assert(sizeof(float) == sizeof(int32_t),
         "Size of float does not match size of int32_t.");
     static_assert(std::numeric_limits<float>::is_iec559,
@@ -243,6 +256,8 @@ float sciformats::common::binary_reader::read_float(const endianness endian)
     // https://stackoverflow.com/questions/20762952/most-efficient-standard-compliant-way-of-reinterpreting-int-as-float
     // https://stackoverflow.com/questions/15531232/reinterpreting-an-unsigned-int-to-a-float-in-c
     const int32_t value = read_int32(endian);
+    // don't initialize variable for potentially better performance
+    // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
     float output;
     memcpy(&output, &value, sizeof(int32_t));
     return output;
@@ -255,7 +270,7 @@ double sciformats::common::binary_reader::read_double()
 
 double sciformats::common::binary_reader::read_double(const endianness endian)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
+    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
     static_assert(sizeof(double) == sizeof(int64_t),
         "Size of double does not match size of int64_t.");
     static_assert(std::numeric_limits<double>::is_iec559,
@@ -266,6 +281,8 @@ double sciformats::common::binary_reader::read_double(const endianness endian)
     // https://stackoverflow.com/questions/20762952/most-efficient-standard-compliant-way-of-reinterpreting-int-as-float
     // https://stackoverflow.com/questions/15531232/reinterpreting-an-unsigned-int-to-a-float-in-c
     const int64_t value = read_int64(endian);
+    // don't initialize variable for potentially better performance
+    // NOLINTNEXTLINE(cppcoreguidelines-init-variables)
     double output;
     memcpy(&output, &value, sizeof(int64_t));
     return output;
@@ -287,8 +304,7 @@ std::vector<char> sciformats::common::binary_reader::read_chars(
 std::vector<uint8_t> sciformats::common::binary_reader::read_bytes(
     const size_t size)
 {
-    static_assert(CHAR_BIT == 8, "Char size is not 8.");
-
+    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
     // for alternative implementation:
     // see:
     // https://stackoverflow.com/questions/10823264/is-there-a-more-efficient-way-to-set-a-stdvector-from-a-stream
@@ -296,8 +312,10 @@ std::vector<uint8_t> sciformats::common::binary_reader::read_bytes(
     std::vector<uint8_t> dest;
     dest.resize(size);
     // reinterpret cast is safe as signed and unsigned char have same
-    // representation and alignment see:
-    // https://en.cppreference.com/w/cpp/language/types also:
+    // representation and alignment
+    // see:
+    // https://en.cppreference.com/w/cpp/language/types
+    // also:
     // https://stackoverflow.com/questions/15078638/can-i-turn-unsigned-char-into-char-and-vice-versa/15172304
     _input_stream.read(reinterpret_cast<char*>(dest.data()), size);
     return dest;

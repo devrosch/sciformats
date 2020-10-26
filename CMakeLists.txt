@@ -37,17 +37,19 @@ message(STATUS "ALL_SOURCE_FILES: ${ALL_SOURCE_FILES}")
 # --------------------------------------------------------------
 
 # clang-tidy rules to check
+# deactivate checks for magic-numbers as they are
+# too sensitive in bit oprations and sample data
 set(CLANG_TIDY_CHECKS
     "-*\
     ,bugprone-*\
     ,cert-*\
     ,clang-analyzer-*\
-    ,cppcoreguidelines-*\
+    ,cppcoreguidelines-*,-cppcoreguidelines-avoid-magic-numbers\
     ,hicpp-*,misc-*\
     ,modernize-*,-modernize-use-trailing-return-type\
     ,performance-*\
     ,portability-*\
-    ,readability-*")
+    ,readability-*,-readability-magic-numbers")
 
 # activate clang-tidy for all targets
 # see: https://stackoverflow.com/questions/40433573/how-can-i-specify-additional-arguments-for-use-with-cmake-cxx-clang-tidy-variabl

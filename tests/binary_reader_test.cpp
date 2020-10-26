@@ -1,9 +1,11 @@
 #define CATCH_CONFIG_MAIN
 #include <binaryreader/binary_reader.hpp>
 #include <catch2/catch.hpp>
+
+#include <array>
 #include <climits>
 
-static_assert(CHAR_BIT == 8, "Char size is not 8."); // NOLINT
+static_assert(CHAR_BIT == 8, "Char size is not 8.");
 
 // see: https://stackoverflow.com/a/47934240
 constexpr auto operator"" _c(unsigned long long arg) noexcept
@@ -43,7 +45,7 @@ TEST_CASE("throws exception when reading past end and constructed from file",
 
 TEST_CASE("correctly reads istream", "[binary_reader]")
 {
-    unsigned char bytes[]{0x00, 0xFF, 0x7F}; // NOLINT
+    std::array<unsigned char, 3> bytes{0x00, 0xFF, 0x7F};
     std::istringstream ss(std::string(std::begin(bytes), std::end(bytes)));
     sciformats::common::binary_reader reader(
         ss, sciformats::common::binary_reader::big_endian);
@@ -61,11 +63,12 @@ TEST_CASE("correctly reads istream", "[binary_reader]")
 
 TEST_CASE("throws exception when reading past and constructed from istream "
           "if argument istream is configured to throw exceptions "
-          "or constructor argument for activatin exceptions is true",
+          "or constructor argument for activating exceptions is true",
     "[binary_reader]")
 {
-    unsigned char bytes[] = {0x00, 0xFF, 0x7F}; // NOLINT
-    std::istringstream ss_nothrow(std::string(std::begin(bytes), std::end(bytes)));
+    std::array<unsigned char, 3> bytes{0x00, 0xFF, 0x7F};
+    std::istringstream ss_nothrow(
+        std::string(std::begin(bytes), std::end(bytes)));
     sciformats::common::binary_reader reader_nothrow(
         ss_nothrow, sciformats::common::binary_reader::big_endian, false);
 
@@ -74,14 +77,16 @@ TEST_CASE("throws exception when reading past and constructed from istream "
     reader_nothrow.seekg(3);
     REQUIRE_NOTHROW(reader_nothrow.read_uint8());
 
-    std::istringstream ss_nothrow2(std::string(std::begin(bytes), std::end(bytes)));
+    std::istringstream ss_nothrow2(
+        std::string(std::begin(bytes), std::end(bytes)));
     sciformats::common::binary_reader reader_nothrow2(
         ss_nothrow2, sciformats::common::binary_reader::big_endian, true);
 
     reader_nothrow2.seekg(3);
     REQUIRE_THROWS(reader_nothrow2.read_uint8());
 
-    std::istringstream ss_throw(std::string(std::begin(bytes), std::end(bytes)));
+    std::istringstream ss_throw(
+        std::string(std::begin(bytes), std::end(bytes)));
     ss_throw.exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
     sciformats::common::binary_reader reader_throw(
@@ -93,7 +98,7 @@ TEST_CASE("throws exception when reading past and constructed from istream "
 
 TEST_CASE("correctly reads char vector", "[binary_reader]")
 {
-    std::vector<char> bytes{0x00_c, 0xFF_c, 0x7F_c}; // NOLINT
+    std::vector<char> bytes{0x00_c, 0xFF_c, 0x7F_c};
     sciformats::common::binary_reader reader(bytes);
 
     REQUIRE(reader.tellg() == 0);
@@ -111,7 +116,7 @@ TEST_CASE(
     "throws exception when reading past end and constructed from char vector",
     "[binary_reader]")
 {
-    std::vector<char> bytes{0x00_c, 0xFF_c, 0x7F_c}; // NOLINT
+    std::vector<char> bytes{0x00_c, 0xFF_c, 0x7F_c};
     sciformats::common::binary_reader reader(bytes);
 
     reader.seekg(3);
@@ -120,7 +125,7 @@ TEST_CASE(
 
 TEST_CASE("correctly reads uint8_t vector", "[binary_reader]")
 {
-    std::vector<uint8_t> bytes{0x00, 0xFF, 0x7F}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0xFF, 0x7F};
     sciformats::common::binary_reader reader(bytes);
 
     REQUIRE(reader.tellg() == 0);
@@ -140,7 +145,7 @@ TEST_CASE("throws exception when reading past end and constructed from uint8_t "
           "vector",
     "[binary_reader]")
 {
-    std::vector<uint8_t> bytes{0x00, 0xFF, 0x7F}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0xFF, 0x7F};
     sciformats::common::binary_reader reader(bytes);
 
     reader.seekg(3);
@@ -149,7 +154,7 @@ TEST_CASE("throws exception when reading past end and constructed from uint8_t "
 
 TEST_CASE("read int8 correctly", "[binary_reader]")
 {
-    std::vector<uint8_t> bytes{0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0xFF};
     sciformats::common::binary_reader reader(bytes);
 
     REQUIRE(reader.read_int8() == -1);
@@ -157,7 +162,7 @@ TEST_CASE("read int8 correctly", "[binary_reader]")
 
 TEST_CASE("read uint8 correctly", "[binary_reader]")
 {
-    std::vector<uint8_t> bytes{0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0xFF};
     sciformats::common::binary_reader reader(bytes);
 
     REQUIRE(reader.read_uint8() == 255);
@@ -165,10 +170,10 @@ TEST_CASE("read uint8 correctly", "[binary_reader]")
 
 TEST_CASE("read int16 correctly", "[binary_reader]")
 {
-    auto expected = -256; // NOLINT
+    auto expected = -256;
 
     // little endian
-    std::vector<uint8_t> bytes{0x00, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0xFF};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -191,10 +196,10 @@ TEST_CASE("read int16 correctly", "[binary_reader]")
 
 TEST_CASE("read uint16 correctly", "[binary_reader]")
 {
-    auto expected = 65280; // NOLINT
+    auto expected = 65280;
 
     // little endian
-    std::vector<uint8_t> bytes{0x00, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0xFF};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -217,10 +222,10 @@ TEST_CASE("read uint16 correctly", "[binary_reader]")
 
 TEST_CASE("read int32 correctly", "[binary_reader]")
 {
-    auto expected = -16777216L; // NOLINT
+    auto expected = -16777216L;
 
     // little endian
-    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0xFF};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -243,10 +248,10 @@ TEST_CASE("read int32 correctly", "[binary_reader]")
 
 TEST_CASE("read uint32 correctly", "[binary_reader]")
 {
-    auto expected = 4278190080UL; // NOLINT
+    auto expected = 4278190080UL;
 
     // little endian
-    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0xFF};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -269,11 +274,10 @@ TEST_CASE("read uint32 correctly", "[binary_reader]")
 
 TEST_CASE("read int64 correctly", "[binary_reader]")
 {
-    auto expected = -72057594037927936LL; // NOLINT
+    auto expected = -72057594037927936LL;
 
     // little endian
-    std::vector<uint8_t> bytes{
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -296,11 +300,10 @@ TEST_CASE("read int64 correctly", "[binary_reader]")
 
 TEST_CASE("read uint64 correctly", "[binary_reader]")
 {
-    auto expected = 18374686479671623680ULL; // NOLINT
+    auto expected = 18374686479671623680ULL;
 
     // little endian
-    std::vector<uint8_t> bytes{
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -323,10 +326,10 @@ TEST_CASE("read uint64 correctly", "[binary_reader]")
 
 TEST_CASE("read float32 correctly", "[binary_reader]")
 {
-    auto expected = 2.5F; // NOLINT
+    auto expected = 2.5F;
 
     // little endian
-    std::vector<uint8_t> bytes{0x00, 0x00, 0x20, 0x40}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x00, 0x20, 0x40};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -349,11 +352,10 @@ TEST_CASE("read float32 correctly", "[binary_reader]")
 
 TEST_CASE("read float64 correctly", "[binary_reader]")
 {
-    auto expected = 2.5; // NOLINT
+    auto expected = 2.5;
 
     // little endian
-    std::vector<uint8_t> bytes{
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x40}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x40};
     sciformats::common::binary_reader reader_le(
         bytes, sciformats::common::binary_reader::little_endian);
 
@@ -376,7 +378,7 @@ TEST_CASE("read float64 correctly", "[binary_reader]")
 
 TEST_CASE("read chars into vector correctly", "[binary_reader]")
 {
-    std::vector<char> bytes{0x00, 0x01, 0x02, 0xFF_c}; // NOLINT
+    std::vector<char> bytes{0x00, 0x01, 0x02, 0xFF_c};
     sciformats::common::binary_reader reader(bytes);
     size_t size = bytes.size();
 
@@ -391,7 +393,7 @@ TEST_CASE("read chars into vector correctly", "[binary_reader]")
 
 TEST_CASE("read bytes into vector correctly", "[binary_reader]")
 {
-    std::vector<uint8_t> bytes{0x00, 0x01, 0x02, 0xFF}; // NOLINT
+    std::vector<uint8_t> bytes{0x00, 0x01, 0x02, 0xFF};
     sciformats::common::binary_reader reader(bytes);
     size_t size = bytes.size();
 

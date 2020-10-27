@@ -5,26 +5,24 @@
 #include <cstring>
 #include <limits>
 
-constexpr unsigned int CHAR_BIT_8 = 8;
-static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
-
 sciformats::common::binary_reader::binary_reader(
-    const std::string& file_path, const endianness endian)
-    : _istringstream()
-    , _file_stream()
-    , _input_stream(_file_stream)
-    , _endianness(endian)
+    const std::string& file_path, endianness endian)
+    : _file_stream{std::ifstream{}}
+    , _istringstream{std::nullopt}
+    , _input_stream{_file_stream.value()}
+    , _endianness{endian}
 {
-    _file_stream.exceptions(
+    _file_stream.value().exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
-    _file_stream.open(file_path, std::ios::in | std::ios::binary);
+    _file_stream.value().open(file_path, std::ios::in | std::ios::binary);
 }
 
 sciformats::common::binary_reader::binary_reader(std::istream& input_stream,
-    const endianness endian, const bool activateExceptions)
-    : _istringstream()
-    , _input_stream(input_stream)
-    , _endianness(endian)
+    endianness endian, bool activateExceptions)
+    : _file_stream{std::nullopt}
+    , _istringstream{std::nullopt}
+    , _input_stream{input_stream}
+    , _endianness{endian}
 {
     if (activateExceptions)
     {
@@ -36,10 +34,11 @@ sciformats::common::binary_reader::binary_reader(std::istream& input_stream,
 }
 
 sciformats::common::binary_reader::binary_reader(
-    std::vector<char>& vec, const endianness endian)
-    : _istringstream()
-    , _input_stream(_istringstream)
-    , _endianness(endian)
+    std::vector<char>& vec, endianness endian)
+    : _file_stream{std::nullopt}
+    , _istringstream{std::istringstream{}}
+    , _input_stream{_istringstream.value()}
+    , _endianness{endian}
 {
     // see:
     // https://stackoverflow.com/questions/8815164/c-wrapping-vectorchar-with-istream/8815308
@@ -48,20 +47,27 @@ sciformats::common::binary_reader::binary_reader(
     // =>
     // https://stackoverflow.com/questions/23630386/read-vectorchar-as-stream?rq=1
     // https://stackoverflow.com/questions/45722747/how-can-i-create-a-istream-from-a-uint8-t-vector
-    _istringstream.exceptions(
+    _istringstream.value().exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
-    _istringstream.rdbuf()->pubsetbuf(vec.data(), vec.size());
+    _istringstream.value().rdbuf()->pubsetbuf(vec.data(), vec.size());
 }
 
 sciformats::common::binary_reader::binary_reader(
-    std::vector<uint8_t>& vec, const endianness endian)
-    : _istringstream()
-    , _input_stream(_istringstream)
-    , _endianness(endian)
+    std::vector<uint8_t>& vec, endianness endian)
+    : _file_stream{std::nullopt}
+    , _istringstream{std::istringstream{}}
+    , _input_stream{_istringstream.value()}
+    , _endianness{endian}
 {
-    _istringstream.exceptions(
+    _istringstream.value().exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
-    _istringstream.rdbuf()->pubsetbuf(
+    // make sure the reinterpret_cast is legal
+    // https://stackoverflow.com/questions/16260033/reinterpret-cast-between-char-and-stduint8-t-safe
+    static_assert(std::is_same_v<std::uint8_t,
+                      char> || std::is_same_v<std::uint8_t, unsigned char>,
+        "uint8_t is not a typedef of char or unsigned char.");
+    _istringstream.value().rdbuf()->pubsetbuf(
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         reinterpret_cast<char*>(vec.data()), vec.size());
 }
 
@@ -71,7 +77,7 @@ std::ios::pos_type sciformats::common::binary_reader::tellg() const
 }
 
 void sciformats::common::binary_reader::seekg(
-    const std::ios::pos_type position, const std::ios_base::seekdir seekdir)
+    std::ios::pos_type position, std::ios_base::seekdir seekdir)
 {
     _input_stream.seekg(position, seekdir);
 }
@@ -94,7 +100,7 @@ int8_t sciformats::common::binary_reader::read_int8()
 
 uint8_t sciformats::common::binary_reader::read_uint8()
 {
-    // assumes CHAR_BIT == 8
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
     return _input_stream.get();
 }
 
@@ -103,9 +109,9 @@ uint16_t sciformats::common::binary_reader::read_uint16()
     return read_uint16(_endianness);
 }
 
-uint16_t sciformats::common::binary_reader::read_uint16(const endianness endian)
+uint16_t sciformats::common::binary_reader::read_uint16(endianness endian)
 {
-    // assumes CHAR_BIT == 8
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
     // don't initialize array for potentially better performance
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     std::array<char, 2> bytes;
@@ -122,7 +128,7 @@ int16_t sciformats::common::binary_reader::read_int16()
     return read_int16(_endianness);
 }
 
-int16_t sciformats::common::binary_reader::read_int16(const endianness endian)
+int16_t sciformats::common::binary_reader::read_int16(endianness endian)
 {
     static_assert(sizeof(uint16_t) == sizeof(int16_t),
         "Size of uinte16_t does not match size of int16_t.");
@@ -134,9 +140,9 @@ uint32_t sciformats::common::binary_reader::read_uint32()
     return read_uint32(_endianness);
 }
 
-uint32_t sciformats::common::binary_reader::read_uint32(const endianness endian)
+uint32_t sciformats::common::binary_reader::read_uint32(endianness endian)
 {
-    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
     // don't initialize array for potentially better performance
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     std::array<char, sizeof(uint32_t)> bytes;
@@ -157,7 +163,7 @@ int32_t sciformats::common::binary_reader::read_int32()
     return read_int32(_endianness);
 }
 
-int32_t sciformats::common::binary_reader::read_int32(const endianness endian)
+int32_t sciformats::common::binary_reader::read_int32(endianness endian)
 {
     static_assert(sizeof(uint32_t) == sizeof(int32_t),
         "Size of uinte32_t does not match size of int32_t.");
@@ -169,10 +175,10 @@ uint64_t sciformats::common::binary_reader::read_uint64()
     return read_uint64(_endianness);
 }
 
-uint64_t sciformats::common::binary_reader::read_uint64(const endianness endian)
+uint64_t sciformats::common::binary_reader::read_uint64(endianness endian)
 {
-    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
-    static_assert(sizeof(uint64_t) == 8);
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
+    static_assert(sizeof(uint64_t) == 8, "uint8_t size is not 8 bytes.");
     // don't initialize array for potentially better performance
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     std::array<char, sizeof(uint64_t)> bytes;
@@ -231,7 +237,7 @@ int64_t sciformats::common::binary_reader::read_int64()
     return read_int64(_endianness);
 }
 
-int64_t sciformats::common::binary_reader::read_int64(const endianness endian)
+int64_t sciformats::common::binary_reader::read_int64(endianness endian)
 {
     static_assert(sizeof(uint64_t) == sizeof(int64_t),
         "Size of uinte64_t does not match size of int64_t.");
@@ -243,9 +249,9 @@ float sciformats::common::binary_reader::read_float()
     return read_float(_endianness);
 }
 
-float sciformats::common::binary_reader::read_float(const endianness endian)
+float sciformats::common::binary_reader::read_float(endianness endian)
 {
-    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
     static_assert(sizeof(float) == sizeof(int32_t),
         "Size of float does not match size of int32_t.");
     static_assert(std::numeric_limits<float>::is_iec559,
@@ -268,9 +274,9 @@ double sciformats::common::binary_reader::read_double()
     return read_double(_endianness);
 }
 
-double sciformats::common::binary_reader::read_double(const endianness endian)
+double sciformats::common::binary_reader::read_double(endianness endian)
 {
-    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
     static_assert(sizeof(double) == sizeof(int64_t),
         "Size of double does not match size of int64_t.");
     static_assert(std::numeric_limits<double>::is_iec559,
@@ -289,12 +295,8 @@ double sciformats::common::binary_reader::read_double(const endianness endian)
 }
 
 std::vector<char> sciformats::common::binary_reader::read_chars(
-    const size_t size)
+    size_t size)
 {
-    // for alternative implementation:
-    // see:
-    // https://stackoverflow.com/questions/10823264/is-there-a-more-efficient-way-to-set-a-stdvector-from-a-stream
-    // https://stackoverflow.com/questions/16727125/how-does-stdcopy-work-with-stream-iterators
     std::vector<char> dest;
     dest.resize(size);
     _input_stream.read(dest.data(), size);
@@ -302,21 +304,24 @@ std::vector<char> sciformats::common::binary_reader::read_chars(
 }
 
 std::vector<uint8_t> sciformats::common::binary_reader::read_bytes(
-    const size_t size)
+    size_t size)
 {
-    static_assert(CHAR_BIT == CHAR_BIT_8, "Char size is not 8.");
-    // for alternative implementation:
-    // see:
-    // https://stackoverflow.com/questions/10823264/is-there-a-more-efficient-way-to-set-a-stdvector-from-a-stream
-    // https://stackoverflow.com/questions/16727125/how-does-stdcopy-work-with-stream-iterators
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
     std::vector<uint8_t> dest;
-    dest.resize(size);
     // reinterpret cast is safe as signed and unsigned char have same
     // representation and alignment
     // see:
     // https://en.cppreference.com/w/cpp/language/types
     // also:
     // https://stackoverflow.com/questions/15078638/can-i-turn-unsigned-char-into-char-and-vice-versa/15172304
+    dest.resize(size);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     _input_stream.read(reinterpret_cast<char*>(dest.data()), size);
+    // alternative implementation:
+    // dest.reserve(size);
+    // for (auto i = 0; i<size; i++)
+    // {
+    //     dest.push_back(_input_stream.get());
+    // }
     return dest;
 }

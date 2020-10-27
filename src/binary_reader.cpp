@@ -17,8 +17,8 @@ sciformats::common::binary_reader::binary_reader(
     _file_stream.value().open(file_path, std::ios::in | std::ios::binary);
 }
 
-sciformats::common::binary_reader::binary_reader(std::istream& input_stream,
-    endianness endian, bool activateExceptions)
+sciformats::common::binary_reader::binary_reader(
+    std::istream& input_stream, endianness endian, bool activateExceptions)
     : _file_stream{std::nullopt}
     , _istringstream{std::nullopt}
     , _input_stream{input_stream}
@@ -294,8 +294,7 @@ double sciformats::common::binary_reader::read_double(endianness endian)
     return output;
 }
 
-std::vector<char> sciformats::common::binary_reader::read_chars(
-    size_t size)
+std::vector<char> sciformats::common::binary_reader::read_chars(size_t size)
 {
     std::vector<char> dest;
     dest.resize(size);
@@ -303,8 +302,7 @@ std::vector<char> sciformats::common::binary_reader::read_chars(
     return dest;
 }
 
-std::vector<uint8_t> sciformats::common::binary_reader::read_bytes(
-    size_t size)
+std::vector<uint8_t> sciformats::common::binary_reader::read_bytes(size_t size)
 {
     static_assert(CHAR_BIT == 8, "Char size is not 8.");
     std::vector<uint8_t> dest;

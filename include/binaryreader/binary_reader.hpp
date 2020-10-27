@@ -42,8 +42,7 @@ public:
      * @param activateExceptions Activate exceptions for input_stream.
      */
     explicit binary_reader(std::istream& input_stream,
-        endianness endian = little_endian,
-        bool activateExceptions = true);
+        endianness endian = little_endian, bool activateExceptions = true);
     /**
      * @brief sciformats::common::binary_reader::binary_reader Constructs from
      * vector.
@@ -62,8 +61,7 @@ public:
         std::vector<uint8_t>& vec, endianness endian = little_endian);
 
     std::ios::pos_type tellg() const;
-    void seekg(std::ios::pos_type,
-        std::ios_base::seekdir = std::ios_base::beg);
+    void seekg(std::ios::pos_type, std::ios_base::seekdir = std::ios_base::beg);
     std::ios::pos_type get_length();
 
     int8_t read_int8();

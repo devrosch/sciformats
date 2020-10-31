@@ -5,6 +5,7 @@ AccessModifierOffset: -4 # i.e. no offset
 # the following setting deviate from WebKit style in clang-format 6.0.0
 AlignEscapedNewlines: Left
 AlignOperands:   true
+AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortFunctionsOnASingleLine: None
 BreakBeforeBraces: Allman

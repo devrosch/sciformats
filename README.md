@@ -22,9 +22,33 @@ tbd
 
 tbd
 
+### Emscripten
+
+see: [Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
+see: [Stack Overflow](https://stackoverflow.com/questions/15724357/using-boost-with-emscripten)
+
+
+```
+docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) emscripten/emsdk emcc -std=c++17 USE_BOOST_HEADERS=1 -Iinclude src/binary_reader.cpp -o binary_reader.js
+```
+
+```
+docker run --rm -v $(pwd):/src -u $(id -u):$(id -g) emscripten/emsdk emcc -std=c++17 -s USE_ICU=1 -Iinclude src/binary_reader.cpp apps/main.cpp -o binary_reader.html
+```
+
+```
+python -m SimpleHTTPServer
+```
+
+```
+docker run --rm -v $(pwd):/build -p 8080:8080 -u $(id -u):$(id -g) emscripten/emsdk emrun --port=8080 --no_browser /build/main.html
+```
+
 ## Built With
 
 * [Boost.Locale](https://www.boost.org/doc/libs/1_74_0/libs/locale/doc/html/index.html) (license: [Boost](https://www.boost.org/LICENSE_1_0.txt), source code: [GitHub](https://github.com/boostorg/locale))
+
+* [ICU](http://site.icu-project.org/design/cpp) (license: [ICU](https://github.com/unicode-org/icu/blob/master/icu4c/LICENSE), source code: [GitHub](https://github.com/unicode-org/icu))
 
 and for development
 

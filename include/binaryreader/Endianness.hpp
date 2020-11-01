@@ -10,12 +10,17 @@
 namespace sciformats::io
 {
 /**
- * @brief The endianness enum indicates if data is expected to be little
- * endian or big endian.
+ * @brief The endianness indicates the byte order of data.
  */
 enum class Endianness : uint8_t
 {
+    /**
+      The least significant byte comes first.
+    */
     LittleEndian,
+    /**
+      The most significant byte comes first.
+    */
     BigEndian,
 };
 

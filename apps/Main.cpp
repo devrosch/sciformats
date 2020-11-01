@@ -1,4 +1,6 @@
-#include "binaryreader/binary_reader.hpp"
+#include "binaryreader/BinaryReader.hpp"
+#include "binaryreader/Endianness.hpp"
+
 //#include <boost/locale.hpp>
 #include <iostream>
 #include <sstream>
@@ -80,21 +82,21 @@ int main()
     //    const string path = "/home/rob/Desktop/test.txt";
     //    ifstream file(path, ios::in | ios::binary);
     //    file.exceptions(std::ios::eofbit | std::ios::failbit |
-    //    std::ios::badbit); sciformats::common::binary_reader reader(
-    //        file, sciformats::common::binary_reader::little_endian);
-    //    sciformats::common::binary_reader reader2(
-    //        path, sciformats::common::binary_reader::little_endian);
+    //    std::ios::badbit); sciformats::io::BinaryReader reader(
+    //        file, sciformats::io::Endianness::LittleEndian);
+    //    sciformats::io::BinaryReader reader2(
+    //        path, sciformats::io::Endianness::LittleEndian);
 
-    //    cout << reader.read_int64() << endl;
-    //    cout << reader.read_uint64() << endl;
-    //    cout << reader.read_int32() << endl;
-    //    cout << reader.read_uint32() << endl;
-    //    cout << reader.read_int16() << endl;
-    //    cout << reader.read_uint16() << endl;
-    //    cout << static_cast<int>(reader.read_int8()) << endl;
-    //    cout << static_cast<int>(reader.read_uint8()) << endl;
-    //    cout << reader.read_double() << endl;
-    //    cout << reader.read_float() << endl;
+    //    cout << reader.readInt64() << endl;
+    //    cout << reader.readUInt64() << endl;
+    //    cout << reader.readInt32() << endl;
+    //    cout << reader.readUInt32() << endl;
+    //    cout << reader.readInt16() << endl;
+    //    cout << reader.readUInt16() << endl;
+    //    cout << static_cast<int>(reader.readInt8()) << endl;
+    //    cout << static_cast<int>(reader.readUInt8()) << endl;
+    //    cout << reader.readDouble() << endl;
+    //    cout << reader.readFloat() << endl;
 
     // https://stackoverflow.com/questions/19952174/passing-data-from-byte-arraywith-zeros-to-istringstreamstringstream
     // https://stackoverflow.com/questions/7781898/get-an-istream-from-a-char
@@ -102,11 +104,11 @@ int main()
     // unsigned char bytes[] = { 0xFF, 0x01, 0x02 };
     //    uint8_t bytes[] = {0xFF, 0x01, 0x02};
     //    std::istringstream ss(std::string(bytes, bytes + sizeof(bytes)));
-    //    sciformats::common::binary_reader reader3(
-    //        ss, sciformats::common::binary_reader::little_endian);
-    //    uint8_t a = reader3.read_uint8();
-    //    auto b = reader3.read_uint8();
-    //    auto c = reader3.read_uint8();
+    //    sciformats::io::BinaryReader reader3(
+    //        ss, sciformats::io::Endianness::LittleEndian);
+    //    uint8_t a = reader3.readUInt8();
+    //    auto b = reader3.readUInt8();
+    //    auto c = reader3.readUInt8();
 
     //    vector<char> data_vec { 0x00, 0x01 };
     //    vector<char>& vec_ref = data_vec;

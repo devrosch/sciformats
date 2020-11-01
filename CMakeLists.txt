@@ -12,6 +12,10 @@ project(
   DESCRIPTION "A library for reading and writing binary data"
   LANGUAGES CXX)
 
+# might be useful for emscripten support
+#SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -s USE_ICU=1")
+#SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -s USE_ICU=1")
+
 # --------------------------------------------------------------
 # Collect sources info for clang-tidy and clang-format
 # --------------------------------------------------------------

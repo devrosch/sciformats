@@ -1,8 +1,9 @@
-#set(HEADER_LIST "${binary_reader_SOURCE_DIR}/include/binaryreader/binary_reader.hpp")
+# Glob header(s), supported in CMake 3.12 or later, so they show up in IDE
+file(GLOB HEADER_LIST CONFIGURE_DEPENDS
+    "${libio_SOURCE_DIR}/include/binaryreader/*.hpp")
 
 # Make an automatic library - will be static or dynamic based on user setting
-#add_library(binary_reader binary_reader.cpp ${HEADER_LIST})
-add_library(binary_reader binary_reader.cpp)
+add_library(binary_reader binary_reader.cpp ${HEADER_LIST})
 
 # All users of this library will need at least C++17
 target_compile_features(binary_reader PUBLIC cxx_std_17)

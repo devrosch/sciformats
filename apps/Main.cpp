@@ -61,12 +61,14 @@ int main()
              << endl;
 
         std::vector<UChar> target{};
-        target.resize(vec.size() / minCharSize + 1);
+        target.resize(2 * vec.size());
         cout << "target.size(): " << target.size() << endl;
-        ucnv_toUChars(converter, target.data(), target.size(), vec.data(),
-            vec.size(), &status);
+        UChar* targetPtr = target.data();
+        int32_t length = ucnv_toUChars(converter, targetPtr, target.size(),
+            vec.data(), vec.size(), &status);
         cout << "error status: " << u_errorName(status) << " (" << status << ")"
              << endl;
+        cout << "numBytesWritten: " << length << endl;
         // NOLINTNEXTLINE(readability-implicit-bool-conversion)
         if (U_FAILURE(status))
         {

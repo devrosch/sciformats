@@ -399,3 +399,28 @@ TEST_CASE("read bytes into vector correctly", "[BinaryReader]")
     REQUIRE(output.at(2) == bytes[2]);
     REQUIRE(output.at(3) == bytes[3]);
 }
+
+TEST_CASE("read ISO-8859-1 encoded string correctly", "[BinaryReader]")
+{
+    // TODO: test for all ISO-8859-1 characters
+
+    // "abcABCÄÖÜäöü" ISO-8859-1 encoded
+    std::vector<uint8_t> bytes{
+        0x41, 0x42, 0x43, 0x61, 0x62, 0x63, 0xc4, 0xd6, 0xdc, 0xe4, 0xf6, 0xfc};
+    sciformats::io::BinaryReader reader(bytes);
+    size_t size = bytes.size();
+
+    auto output = reader.readString("ISO-8859-1", size);
+    // specifying UTF-8 string literals is error prone
+    // see:
+    // https://stackoverflow.com/questions/23471935/how-are-u8-literals-supposed-to-work?rq=1
+    auto expected = std::string{u8"ABCabcÄÖÜäöü"};
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+// TODO: add tests for additional encodings

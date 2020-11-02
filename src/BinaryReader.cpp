@@ -1,6 +1,9 @@
 #include "binaryreader/BinaryReader.hpp"
 #include "binaryreader/Endianness.hpp"
 
+#include <unicode/ucnv.h>
+#include <unicode/unistr.h>
+
 #include <array>
 #include <climits>
 #include <cstring>
@@ -330,4 +333,57 @@ std::vector<uint8_t> sciformats::io::BinaryReader::readBytes(size_t size)
     //     dest.push_back(m_istream.get());
     // }
     return dest;
+}
+
+std::string sciformats::io::BinaryReader::readString(
+    const std::string& encoding, int32_t maxSize)
+{
+    // TODO: possibly use UnicodeString as buffer already for efficiency
+    std::vector<char> input = readChars(maxSize);
+    UErrorCode status = U_ZERO_ERROR;
+    UConverter* converter = ucnv_open(encoding.c_str(), &status);
+    try
+    {
+        // ideomatic ICU
+        // NOLINTNEXTLINE(readability-implicit-bool-conversion)
+        if (U_FAILURE(status))
+        {
+            std::string message = std::string{std::to_string(status)} + ": "
+                                  + u_errorName(status);
+            throw std::runtime_error(message.c_str());
+        }
+        // U_SUCCESS(status) must be truthy
+        // reserve buffer
+        std::vector<UChar> target{};
+        // 2 * maxSize UChars is the upper required limit
+        // see:
+        // https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/ucnv_8h.html#aa3d7e4ae84f8a95b9735ed3491cdb77e
+        target.resize(2 * maxSize);
+        // convert input and store in buffer
+        // return value length of output string (exclusive terminating NULL)
+        // ignored
+        ucnv_toUChars(converter, target.data(), target.size(), input.data(),
+            input.size(), &status);
+        // ideomatic ICU
+        // NOLINTNEXTLINE(readability-implicit-bool-conversion)
+        if (U_FAILURE(status))
+        {
+            std::string message = std::string{std::to_string(status)} + ": "
+                                  + u_errorName(status);
+            throw std::runtime_error(message.c_str());
+        }
+        // TODO: possibly use readonly constructor for efficiency
+        // convert to UTF-8 string
+        icu::UnicodeString output{target.data()};
+        std::string outputString{};
+        output.toUTF8String(outputString);
+        // clean up and return
+        ucnv_close(converter);
+        return outputString;
+    }
+    catch (...)
+    {
+        ucnv_close(converter);
+        throw;
+    }
 }

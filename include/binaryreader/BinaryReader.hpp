@@ -2,7 +2,9 @@
 #define LIBIO_BINARYREADER_HPP
 
 #include "binaryreader/Endianness.hpp"
+#include "binaryreader/StringPrefixConfig.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <istream>
 #include <optional>
@@ -220,6 +222,10 @@ public:
      * @return The bytes read.
      */
     std::vector<uint8_t> readBytes(size_t size);
+
+    std::string readString(const std::string& encoding, int32_t maxSize);
+    std::string readPrefixedString(const std::string& encoding, int32_t maxSize,
+        StringPrefixConfig prefixConfig);
 
 private:
     std::optional<std::ifstream> m_ifstream;

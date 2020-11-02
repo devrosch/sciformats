@@ -1,11 +1,7 @@
 #ifndef LIBIO_ENDIANNESS_HPP
 #define LIBIO_ENDIANNESS_HPP
 
-#include <fstream>
-#include <istream>
-#include <optional>
-#include <sstream>
-#include <vector>
+#include <cstdint>
 
 namespace sciformats::io
 {

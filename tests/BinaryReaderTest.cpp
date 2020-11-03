@@ -6,6 +6,7 @@
 
 #include <array>
 #include <climits>
+#include <string>
 
 static_assert(CHAR_BIT == 8, "Char size is not 8.");
 
@@ -454,6 +455,49 @@ TEST_CASE("read ISO-8859-1 encoded string correctly", "[BinaryReader]")
     }
 }
 
+TEST_CASE("all single byte values can be converted from ISO-8859-1 to UTF-8",
+    "[BinaryReader]")
+{
+    // all 255 non \0 ISO-8859-1 characters from 0x01 to 0xff, see:
+    // https://icu4c-demos.unicode.org/icu-bin/convexp?conv=ISO-8859-1&s=ALL
+    std::vector<uint8_t> bytes{};
+    bytes.resize(255);
+    std::iota(std::begin(bytes), std::end(bytes), 1);
+
+    // U+FFFD REPLACEMENT CHARACTER for unmappable sequence, see:
+    // http://userguide.icu-project.org/conversion/converters
+    auto replacementChar = std::string{u8"�"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("ISO-8859-1", bytes.size());
+
+    // REPLACEMENT CHARACTER not in generated UTF-8 string
+    REQUIRE(output.find(replacementChar) == std::string::npos);
+    // first 127 chars (after initial \0) as single byte UTF-8 code points,
+    // 2nd 128 chars as 2 byte UTF-8 code points
+    REQUIRE(output.size() == 127 + 128 * 2);
+}
+
+TEST_CASE("show escape character for byte values illegal in ASCII",
+    "[BinaryReader]")
+{
+    // characters not defined in ASCII
+    std::vector<uint8_t> bytes{
+        0x41, 0x42, 0x43, 0x80, 0x90, 0xa0, 0x61, 0x62, 0x63};
+    // U+FFFD REPLACEMENT CHARACTER for unmappable sequence, see:
+    // http://userguide.icu-project.org/conversion/converters
+    auto expected = std::string{u8"ABC���abc"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("ASCII", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
 TEST_CASE("read UTF-8 encoded string correctly", "[BinaryReader]")
 {
     // "!\"#123ABCabcä®€𝄞ह한" UTF-8 encoded
@@ -472,6 +516,25 @@ TEST_CASE("read UTF-8 encoded string correctly", "[BinaryReader]")
     }
 }
 
+TEST_CASE("show escape character for byte sequences illegal in UTF-8",
+    "[BinaryReader]")
+{
+    // characters not defined in UTF-8
+    std::vector<uint8_t> bytes{0x41, 0x80, 0x61};
+    // U+FFFD REPLACEMENT CHARACTER for unmappable sequence, see:
+    // http://userguide.icu-project.org/conversion/converters
+    auto expected = std::string{u8"A�a"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("ASCII", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
 TEST_CASE("read UTF-16BE encoded string correctly", "[BinaryReader]")
 {
     // "!\"#123ABCabcä®€𝄞ह한" UTF-16BE encoded
@@ -480,6 +543,25 @@ TEST_CASE("read UTF-16BE encoded string correctly", "[BinaryReader]")
         0x00, 0x62, 0x00, 0x63, 0x00, 0xe4, 0x00, 0xae, 0x20, 0xac, 0xd8, 0x34,
         0xdd, 0x1e, 0x09, 0x39, 0xd5, 0x5c};
     auto expected = std::string{u8"!\"#123ABCabcä®€𝄞ह한"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("UTF-16BE", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+TEST_CASE("show escape character for byte sequences illegal in UTF-16BE",
+    "[BinaryReader]")
+{
+    // characters not defined in UTF-16BE
+    std::vector<uint8_t> bytes{0x00, 0x41, 0xd8, 0x34, 0x00, 0x61};
+    // U+FFFD REPLACEMENT CHARACTER for unmappable sequence, see:
+    // http://userguide.icu-project.org/conversion/converters
+    auto expected = std::string{u8"A�a"};
 
     sciformats::io::BinaryReader reader(bytes);
     auto output = reader.readString("UTF-16BE", bytes.size());
@@ -509,10 +591,8 @@ TEST_CASE("read UTF-16LE encoded string correctly", "[BinaryReader]")
     REQUIRE(output.size() == expected.size());
     for (auto i = 0; i < expected.size(); i++)
     {
-        // std::cout << i << " ";
         REQUIRE(output.at(i) == expected.at(i));
     }
-    // std::cout << std::endl;
 }
 
 TEST_CASE("read zero terminated ISO-8859-1 encoded string correctly",
@@ -559,6 +639,25 @@ TEST_CASE(
 
     sciformats::io::BinaryReader reader(bytes);
     auto output = reader.readString("UTF-16BE", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+TEST_CASE("show escape character for byte sequences illegal in UTF-16LE",
+    "[BinaryReader]")
+{
+    // characters not defined in UTF-16LE
+    std::vector<uint8_t> bytes{0x41, 0x00, 0x34, 0xd8, 0x61, 0x00};
+    // U+FFFD REPLACEMENT CHARACTER for unmappable sequence, see:
+    // http://userguide.icu-project.org/conversion/converters
+    auto expected = std::string{u8"A�a"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("UTF-16LE", bytes.size());
 
     REQUIRE(output.size() == expected.size());
     for (auto i = 0; i < expected.size(); i++)

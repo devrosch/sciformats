@@ -515,4 +515,72 @@ TEST_CASE("read UTF-16LE encoded string correctly", "[BinaryReader]")
     // std::cout << std::endl;
 }
 
-// TODO: add tests for zero termination and other cases
+TEST_CASE("read zero terminated ISO-8859-1 encoded string correctly",
+    "[BinaryReader]")
+{
+    // "ab\0cd" ISO-8859-1 encoded
+    std::vector<uint8_t> bytes{0x61, 0x62, 0x00, 0x63, 0x64};
+    auto expected = std::string{u8"ab"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("ISO-8859-1", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+TEST_CASE(
+    "read zero terminated UTF-8 encoded string correctly", "[BinaryReader]")
+{
+    // "aäb\0cd" UTF-8 encoded
+    std::vector<uint8_t> bytes{0x61, 0xc3, 0xa4, 0x62, 0x00, 0x63, 0x64};
+    auto expected = std::string{u8"aäb"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("UTF-8", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+TEST_CASE(
+    "read zero terminated UTF-16BE encoded string correctly", "[BinaryReader]")
+{
+    // "aä\0bc" UTF-16BE encoded
+    std::vector<uint8_t> bytes{
+        0x00, 0x61, 0x00, 0xe4, 0x00, 0x00, 0x00, 0x62, 0x00, 0x63};
+    auto expected = std::string{u8"aä"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("UTF-16BE", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+TEST_CASE(
+    "read zero terminated UTF-16LE encoded string correctly", "[BinaryReader]")
+{
+    // "aä\0bc" UTF-16LE encoded
+    std::vector<uint8_t> bytes{
+        0x61, 0x00, 0xe4, 0x00, 0x00, 0x00, 0x62, 0x00, 0x63, 0x00};
+    auto expected = std::string{u8"aä"};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("UTF-16LE", bytes.size());
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}

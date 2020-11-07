@@ -478,8 +478,8 @@ TEST_CASE("all single byte values can be converted from ISO-8859-1 to UTF-8",
     REQUIRE(output.size() == 127 + 128 * 2);
 }
 
-TEST_CASE("show escape character for byte values illegal in ASCII",
-    "[BinaryReader]")
+TEST_CASE(
+    "show escape character for byte values illegal in ASCII", "[BinaryReader]")
 {
     // characters not defined in ASCII
     std::vector<uint8_t> bytes{
@@ -585,14 +585,12 @@ TEST_CASE("read UTF-16LE encoded string correctly", "[BinaryReader]")
     sciformats::io::BinaryReader reader(bytes);
     auto output = reader.readString("UTF-16LE", bytes.size());
 
-    // std::cout << "output:\t" << output << std::endl;
-    // std::cout << "expected:\t" << expected << std::endl;
-
     REQUIRE(output.size() == expected.size());
     for (auto i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
+    std::cout << std::endl;
 }
 
 TEST_CASE("read zero terminated ISO-8859-1 encoded string correctly",
@@ -640,6 +638,19 @@ TEST_CASE(
     sciformats::io::BinaryReader reader(bytes);
     auto output = reader.readString("UTF-16BE", bytes.size());
 
+    //    std::cout << "output:\t" << output << std::endl;
+    //    for (auto val : output)
+    //    {
+    //        std::cout << static_cast<int32_t>(val) << " ";
+    //    }
+    //    std::cout << std::endl;
+    //    std::cout << "expected:\t" << expected << std::endl;
+    //    for (auto val : expected)
+    //    {
+    //        std::cout << static_cast<int32_t>(val) << " ";
+    //    }
+    //    std::cout << std::endl;
+
     REQUIRE(output.size() == expected.size());
     for (auto i = 0; i < expected.size(); i++)
     {
@@ -682,4 +693,29 @@ TEST_CASE(
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
+}
+
+TEST_CASE(
+    "reading negative length string results in empty string", "[BinaryReader]")
+{
+    // "a" UTF-16LE encoded
+    std::vector<uint8_t> bytes{0x61, 0x00};
+
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readString("UTF-16LE", -1);
+
+    REQUIRE(output.empty());
+}
+
+TEST_CASE(
+    "reading string with length exceeding half maximum for int32_t results in "
+    "runtime_error",
+    "[BinaryReader]")
+{
+    // "a" UTF-16LE encoded
+    std::vector<uint8_t> bytes{0x61, 0x00};
+
+    sciformats::io::BinaryReader reader(bytes);
+    REQUIRE_THROWS(reader.readString(
+        "UTF-16LE", std::numeric_limits<int32_t>::max() / 2 + 1));
 }

@@ -336,10 +336,27 @@ std::vector<uint8_t> sciformats::io::BinaryReader::readBytes(size_t size)
 }
 
 std::string sciformats::io::BinaryReader::readString(
-    const std::string& encoding, int32_t maxSize)
+    const std::string& encoding, int32_t size)
 {
+    if (size < 0)
+    {
+        return std::string{};
+    }
+    if (size > std::numeric_limits<int32_t>::max() / 2)
+    {
+        std::string message
+            = std::to_string(size)
+              + std::string{" exceeds maximum permitted string char size: "}
+              + std::to_string(std::numeric_limits<int32_t>::max() / 2);
+        throw std::runtime_error(message.c_str());
+    }
+    // see: https://unicode-org.github.io/icu/userguide/conversion/
+    // see:
+    // https://github.com/unicode-org/icu/blob/master/icu4c/source/samples/ucnv/convsamp.cpp
+    // see:
+    // https://stackoverflow.com/questions/6010793/looking-for-simple-practical-c-examples-of-how-to-use-icu
     // TODO: possibly use UnicodeString as buffer already for efficiency
-    std::vector<char> input = readChars(maxSize);
+    std::vector<char> input = readChars(size);
     UErrorCode status = U_ZERO_ERROR;
     UConverter* converter = ucnv_open(encoding.c_str(), &status);
     try
@@ -354,16 +371,20 @@ std::string sciformats::io::BinaryReader::readString(
         }
         // U_SUCCESS(status) must be truthy
         // reserve buffer
-        std::vector<UChar> target{};
-        // 2 * maxSize UChars is the upper required limit
+        // 2 * size UChars is the upper required limit
         // see:
         // https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/ucnv_8h.html#aa3d7e4ae84f8a95b9735ed3491cdb77e
-        target.resize(2 * maxSize);
+        int32_t maxUCharBufferSize = 2 * size;
+        icu::UnicodeString target(maxUCharBufferSize, UChar32{0}, size);
+        UChar* buffer = target.getBuffer(maxUCharBufferSize);
         // convert input and store in buffer
-        // return value length of output string (exclusive terminating NULL)
-        // ignored
-        ucnv_toUChars(converter, target.data(), target.size(), input.data(),
+        // ignore returned length as it will always give the number of UChars
+        // for the whole input sequence, possibly including NULL UChars
+        ucnv_toUChars(converter, buffer, maxUCharBufferSize, input.data(),
             input.size(), &status);
+        // do not use length returned from ucnv_toUChars as the string then may
+        // include intermediate nulls
+        target.releaseBuffer();
         // ideomatic ICU
         // NOLINTNEXTLINE(readability-implicit-bool-conversion)
         if (U_FAILURE(status))
@@ -372,11 +393,9 @@ std::string sciformats::io::BinaryReader::readString(
                                   + u_errorName(status);
             throw std::runtime_error(message.c_str());
         }
-        // TODO: possibly use readonly constructor for efficiency
         // convert to UTF-8 string
-        icu::UnicodeString output{target.data()};
         std::string outputString{};
-        output.toUTF8String(outputString);
+        target.toUTF8String(outputString);
         // clean up and return
         ucnv_close(converter);
         return outputString;

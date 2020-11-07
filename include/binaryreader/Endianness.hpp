@@ -1,7 +1,7 @@
 #ifndef LIBIO_ENDIANNESS_HPP
 #define LIBIO_ENDIANNESS_HPP
 
-#include <cstdint>
+#include <cstdint> // for uint8_t
 
 namespace sciformats::io
 {
@@ -10,14 +10,8 @@ namespace sciformats::io
  */
 enum class Endianness : uint8_t
 {
-    /**
-      The least significant byte comes first.
-    */
-    LittleEndian,
-    /**
-      The most significant byte comes first.
-    */
-    BigEndian,
+    LittleEndian, ///< The least significant byte comes first.
+    BigEndian, ///< The most significant byte comes first.
 };
 
 } // namespace sciformats::io

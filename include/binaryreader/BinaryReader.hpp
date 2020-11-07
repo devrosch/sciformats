@@ -2,7 +2,7 @@
 #define LIBIO_BINARYREADER_HPP
 
 #include "binaryreader/Endianness.hpp"
-#include "binaryreader/StringPrefixConfig.hpp"
+#include "binaryreader/StringPrefixType.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -222,10 +222,28 @@ public:
      * @return The bytes read.
      */
     std::vector<uint8_t> readBytes(size_t size);
-
-    std::string readString(const std::string& encoding, int32_t maxSize);
-    std::string readPrefixedString(const std::string& encoding, int32_t maxSize,
-        StringPrefixConfig prefixConfig);
+    /**
+     * @brief readString Read \p size chars and convert them from \p encoding to
+     * a UTF-8 string.
+     * @param encoding The encoding for reading the chars.
+     * @param size The number of chars to read. Must not exceed 1073741823 (< 1
+     * GiB).
+     * @return A UTF-8 string for the read chars. Empty string if \p size < 0.
+     * Output string will be truncated if input contains NULL terminator.
+     */
+    std::string readString(const std::string& encoding, int32_t size);
+    /**
+     * @brief readPrefixedString Read size prefixed chars and convert them from
+     * \p encoding to a UTF-8 string.
+     * @param prefixType The type of the prefix preceding the chars.
+     * @param encoding The encoding for reading the chars.
+     * @param maxSize Maximum permitted number of input chars. Optional.
+     * Default: 536870911 (< 0.5 GiB).
+     * @return A UTF-8 string for the read chars. Empty string if \p size < 0.
+     * Output string will be truncated if input contains NULL terminator.
+     */
+    std::string readPrefixedString(StringPrefixType prefixType,
+        const std::string& encoding, int32_t maxSize = 536870911);
 
 private:
     std::optional<std::ifstream> m_ifstream;

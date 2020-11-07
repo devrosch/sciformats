@@ -406,3 +406,85 @@ std::string sciformats::io::BinaryReader::readString(
         throw;
     }
 }
+
+std::string sciformats::io::BinaryReader::readPrefixedString(
+    StringPrefixType prefixType, const std::string& encoding, int32_t maxSize)
+{
+    if (maxSize > std::numeric_limits<int32_t>::max() / 2)
+    {
+        std::string message = std::string{"maxSize exceeds permitted maximum "
+                                          "size of 1073741823: "}
+                              + std::to_string(maxSize);
+        throw std::runtime_error(message.c_str());
+    }
+
+    int32_t numChars = -1;
+    int32_t multiplicationFactor = 1;
+
+    switch (prefixType.numericType)
+    {
+    case StringPrefixNumericType::Int8Chars8:
+        // signed char should be interpreted as a signed number here
+        // NOLINTNEXTLINE(bugprone-signed-char-misuse)
+        numChars = readInt8();
+        multiplicationFactor = 1;
+        break;
+    case StringPrefixNumericType::UInt8Chars8:
+        numChars = readUInt8();
+        multiplicationFactor = 1;
+        break;
+    case StringPrefixNumericType::Int8Chars16:
+        // signed char should be interpreted as a signed number here
+        // NOLINTNEXTLINE(bugprone-signed-char-misuse)
+        numChars = static_cast<int32_t>(readInt8());
+        multiplicationFactor = 2;
+        break;
+    case StringPrefixNumericType::UInt8Chars16:
+        numChars = readUInt8();
+        multiplicationFactor = 2;
+        break;
+    case StringPrefixNumericType::Int16Chars8:
+        numChars = readInt16(prefixType.endianness);
+        multiplicationFactor = 1;
+        break;
+    case StringPrefixNumericType::UInt16Chars8:
+        numChars = readUInt16(prefixType.endianness);
+        multiplicationFactor = 1;
+        break;
+    case StringPrefixNumericType::Int16Chars16:
+        numChars = readInt16(prefixType.endianness);
+        multiplicationFactor = 2;
+        break;
+    case StringPrefixNumericType::UInt16Chars16:
+        numChars = readUInt16(prefixType.endianness);
+        multiplicationFactor = 2;
+        break;
+    case StringPrefixNumericType::Int32Chars8:
+        numChars = readInt32(prefixType.endianness);
+        multiplicationFactor = 1;
+        break;
+    case StringPrefixNumericType::Int32Chars16:
+        numChars = readInt32(prefixType.endianness);
+        multiplicationFactor = 2;
+        break;
+    default:
+        std::string message
+            = std::string{"Unsupported string prefix type: "}
+              + std::to_string(static_cast<int>(prefixType.numericType));
+        throw std::runtime_error(message.c_str());
+        break;
+    }
+
+    // this assumes that multiplicationFactor is 1 or 2
+    if (static_cast<int64_t>(numChars) * multiplicationFactor
+        > static_cast<int64_t>(std::numeric_limits<int32_t>::max() / 2))
+    {
+        std::string message
+            = std::string{"String size exceeds maximum permitted size: "}
+              + std::to_string(numChars);
+        throw std::runtime_error(message.c_str());
+    }
+
+    numChars *= multiplicationFactor;
+    return readString(encoding, numChars);
+}

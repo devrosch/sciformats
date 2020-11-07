@@ -719,3 +719,25 @@ TEST_CASE(
     REQUIRE_THROWS(reader.readString(
         "UTF-16LE", std::numeric_limits<int32_t>::max() / 2 + 1));
 }
+
+TEST_CASE("read Int16LEChars16 prefixed UTF-8 encoded string correctly",
+    "[BinaryReader]")
+{
+    // "abc" UTF-8 encoded
+    std::vector<uint8_t> bytes{0x03, 0x00, 0x61, 0x62, 0x63};
+    auto expected = std::string{u8"abc"};
+
+    sciformats::io::StringPrefixType prefixType{
+        sciformats::io::StringPrefixNumericType::Int16Chars8,
+        sciformats::io::Endianness::LittleEndian};
+    sciformats::io::BinaryReader reader(bytes);
+    auto output = reader.readPrefixedString(prefixType, "UTF-8");
+
+    REQUIRE(output.size() == expected.size());
+    for (auto i = 0; i < expected.size(); i++)
+    {
+        REQUIRE(output.at(i) == expected.at(i));
+    }
+}
+
+// TODO: add more tests for reading prefixed strings

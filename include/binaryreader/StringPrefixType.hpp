@@ -20,7 +20,7 @@ struct StringPrefixType
      * @brief prefixEndianness The endianness of the prefix chars. Only relevant
      * if prefix consist of more than one char. Default: LittleEndian.
      */
-    Endianness prefixEndianness = Endianness::LittleEndian;
+    Endianness endianness = Endianness::LittleEndian;
 };
 
 } // namespace sciformats::io

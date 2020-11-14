@@ -410,10 +410,12 @@ std::string sciformats::io::BinaryReader::readString(
 std::string sciformats::io::BinaryReader::readPrefixedString(
     StringPrefixType prefixType, const std::string& encoding, int32_t maxSize)
 {
-    if (maxSize > std::numeric_limits<int32_t>::max() / 2)
+    static_assert(CHAR_BIT == 8, "Char size is not 8.");
+
+    if (maxSize > std::numeric_limits<uint16_t>::max())
     {
         std::string message = std::string{"maxSize exceeds permitted maximum "
-                                          "size of 1073741823: "}
+                                          "size of 32767: "}
                               + std::to_string(maxSize);
         throw std::runtime_error(message.c_str());
     }
@@ -459,14 +461,6 @@ std::string sciformats::io::BinaryReader::readPrefixedString(
         numChars = readUInt16(prefixType.endianness);
         multiplicationFactor = 2;
         break;
-    case StringPrefixNumericType::Int32Chars8:
-        numChars = readInt32(prefixType.endianness);
-        multiplicationFactor = 1;
-        break;
-    case StringPrefixNumericType::Int32Chars16:
-        numChars = readInt32(prefixType.endianness);
-        multiplicationFactor = 2;
-        break;
     default:
         std::string message
             = std::string{"Unsupported string prefix type: "}
@@ -475,16 +469,18 @@ std::string sciformats::io::BinaryReader::readPrefixedString(
         break;
     }
 
-    // this assumes that multiplicationFactor is 1 or 2
-    if (static_cast<int64_t>(numChars) * multiplicationFactor
-        > static_cast<int64_t>(std::numeric_limits<int32_t>::max() / 2))
+    int32_t numBytes = numChars * multiplicationFactor;
+
+    if (numBytes > maxSize)
     {
-        std::string message
-            = std::string{"String size exceeds maximum permitted size: "}
-              + std::to_string(numChars);
+        std::string message = std::string{"Number of bytes \""}
+                              + std::to_string(numBytes)
+                              + std::string{"\" from string prefix "
+                                            "exceeds specified maximum "
+                                            "size of: "}
+                              + std::to_string(maxSize);
         throw std::runtime_error(message.c_str());
     }
 
-    numChars *= multiplicationFactor;
-    return readString(encoding, numChars);
+    return readString(encoding, numBytes);
 }

@@ -223,27 +223,28 @@ public:
      */
     std::vector<uint8_t> readBytes(size_t size);
     /**
-     * @brief readString Read \p size chars and convert them from \p encoding to
+     * @brief readString Read \p size bytes and convert them from \p encoding to
      * a UTF-8 string.
-     * @param encoding The encoding for reading the chars.
-     * @param size The number of chars to read. Must not exceed 1073741823 (< 1
+     * @param encoding The encoding for reading the bytes.
+     * @param size The number of bytes to read. Must not exceed 1073741823 (< 1
      * GiB).
-     * @return A UTF-8 string for the read chars. Empty string if \p size < 0.
+     * @return A UTF-8 string for the read bytes. Empty string if \p size < 0.
      * Output string will be truncated if input contains NULL terminator.
      */
     std::string readString(const std::string& encoding, int32_t size);
     /**
-     * @brief readPrefixedString Read size prefixed chars and convert them from
+     * @brief readPrefixedString Read size prefixed bytes and convert them from
      * \p encoding to a UTF-8 string.
-     * @param prefixType The type of the prefix preceding the chars.
-     * @param encoding The encoding for reading the chars.
-     * @param maxSize Maximum permitted number of input chars. Optional.
-     * Must not exceed 1073741823. Default: 1073741823 (< 1 GiB).
-     * @return A UTF-8 string for the read chars. Empty string if \p size < 0.
+     * @param prefixType The type of the prefix preceding the bytes.
+     * @param encoding The encoding for reading the bytes.
+     * @param maxSize Maximum permitted number of input bytes. Optional.
+     * Must not exceed 32767. Default: 32767.
+     * @return A UTF-8 string for the read bytes. Empty string if \p size < 0.
      * Output string will be truncated if input contains NULL terminator.
      */
     std::string readPrefixedString(StringPrefixType prefixType,
-        const std::string& encoding, int32_t maxSize = 1073741823);
+        const std::string& encoding,
+        int32_t maxSize = std::numeric_limits<uint16_t>::max());
 
 private:
     std::optional<std::ifstream> m_ifstream;

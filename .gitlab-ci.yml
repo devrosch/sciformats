@@ -2,16 +2,47 @@ image: devrosch/cppcicdenv:2020-11-15
 
 stages:
   - build
+  - test
+  - format
+  - quality
 
-build:
+build:linux_gcc:
   stage: build
   script:
+    - set -eo pipefail
     - mkdir build && cd build
     - cmake ..
     - make
   artifacts:
     paths:
       - build
+  only:
+    - master
+
+test:linux_gcc:
+  stage: test
+  script:
+    - cd build && ctest
+  dependencies:
+    - build:linux_gcc
+  only:
+    - master
+
+format:
+  stage: format
+  script:
+    - cd build && make clang-format-check
+  dependencies:
+    - build:linux_gcc
+  only:
+    - master
+
+quality:
+  stage: quality
+  script:
+    - cd build && make clang-tidy
+  dependencies:
+    - build:linux_gcc
   only:
     - master
 

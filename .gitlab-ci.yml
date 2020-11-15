@@ -1,0 +1,17 @@
+image: devrosch/cppcicdenv:2020-11-15
+
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - mkdir build && cd build
+    - cmake ..
+    - make
+  artifacts:
+    paths:
+      - build
+  only:
+    - master
+

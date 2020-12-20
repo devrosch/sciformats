@@ -1,23 +1,23 @@
-image: devrosch/cppcicdenv:2020-11-15
+image: devrosch/cppcicdenv:2020-12-20
 
 stages:
   - build
   - test
+  - coverage
   - format
   - quality
+  - report
 
 build:linux_gcc:
   stage: build
   script:
     - set -eo pipefail
     - mkdir build && cd build
-    - cmake ..
+    - cmake -DCMAKE_BUILD_TYPE=DEBUG ..
     - make
   artifacts:
     paths:
       - build
-  only:
-    - master
 
 test:linux_gcc:
   stage: test
@@ -25,8 +25,20 @@ test:linux_gcc:
     - cd build && ctest
   dependencies:
     - build:linux_gcc
-  only:
-    - master
+  artifacts:
+    paths:
+      - build
+
+coverage:linux_gcc:
+  stage: coverage
+  script:
+    - cd build
+    - lcov --capture --directory . -o coverage.info
+    - lcov --remove coverage.info '/usr/*' '*/libio/lib/*' '*/libio/tests/*' -o coverage_filtered.info
+    - genhtml coverage_filtered.info -o coverage
+  dependencies:
+    - test:linux_gcc
+  coverage: '/lines\.+: \d+\.\d+%/'
 
 format:
   stage: format
@@ -34,8 +46,6 @@ format:
     - cd build && make clang-format-check
   dependencies:
     - build:linux_gcc
-  only:
-    - master
 
 quality:
   stage: quality
@@ -43,6 +53,17 @@ quality:
     - cd build && make clang-tidy
   dependencies:
     - build:linux_gcc
+
+pages:
+  stage: report
+  script:
+    - rm -rf public
+    - mv build/coverage public
+  dependencies:
+    - coverage:linux_gcc
+  artifacts:
+    paths:
+      - public
   only:
     - master
 

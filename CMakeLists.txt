@@ -17,6 +17,11 @@ project(
 #SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -s USE_ICU=1")
 
 # --------------------------------------------------------------
+# Add code coverage support
+# --------------------------------------------------------------
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+
+# --------------------------------------------------------------
 # Collect sources info for clang-tidy and clang-format
 # --------------------------------------------------------------
 
@@ -83,18 +88,29 @@ add_subdirectory(apps)
 
 # Make testing available if this is the main app (and not included through add_subdirectory)
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  # Let's ensure -std=c++xx instead of -std=g++xx
-  set(CMAKE_CXX_EXTENSIONS OFF)
+    # Let's ensure -std=c++xx instead of -std=g++xx
+    set(CMAKE_CXX_EXTENSIONS OFF)
 
-  # Testing only available if this is the main app
-  # Note this needs to be done in the main CMakeLists
-  # since it calls enable_testing, which must be in the
-  # main CMakeLists.
-  include(CTest)
+    # Testing only available if this is the main app
+    # Note this needs to be done in the main CMakeLists
+    # since it calls enable_testing, which must be in the
+    # main CMakeLists.
+    include(CTest)
 endif()
 
 # Make testing available if this is the main app
 if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) AND BUILD_TESTING)
-  add_subdirectory(lib/catch2)
-  add_subdirectory(tests)
+    add_subdirectory(lib/catch2)
+    add_subdirectory(tests)
+endif()
+
+
+# --------------------------------------------------------------
+# Add code coverage support
+# --------------------------------------------------------------
+
+if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+    # assumes we're using GCC
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+    message("set GCC coverage flags")
 endif()

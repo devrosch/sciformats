@@ -23,8 +23,10 @@ project(
 if (CMAKE_BUILD_TYPE MATCHES DEBUG)
     if (CMAKE_COMPILER_IS_GNUCXX)
         # we're using GCC
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
-        message("set G++ coverage flags: ${CMAKE_CXX_FLAGS}")
+        add_compile_options(-g -O0 --coverage -fprofile-arcs -ftest-coverage)
+        add_link_options(-lgcov --coverage)
+        message(STATUS "set compile options: -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+        message(STATUS "set link options: -lgcov --coverage")
     endif()
 endif()
 

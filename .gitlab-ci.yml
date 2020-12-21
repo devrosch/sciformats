@@ -39,6 +39,9 @@ coverage:linux_gcc:
   dependencies:
     - test:linux_gcc
   coverage: '/lines\.+: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - build/coverage
 
 format:
   stage: format

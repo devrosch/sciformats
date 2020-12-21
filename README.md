@@ -1,3 +1,6 @@
+[![pipeline](https://gitlab.com/devrosch/libio/badges/master/pipeline.svg)](https://gitlab.com/devrosch/libio/commits/master)
+[![coverage](https://gitlab.com/devrosch/libio/badges/master/coverage.svg)](https://gitlab.com/devrosch/libio/commits/master)
+
 # libio
 
 Library for reading from and writing to various file formats
@@ -16,7 +19,7 @@ tbd
 
 ## Running the tests
 
-tbd
+The test report from the CI/CD pipeline is located at: [GitLab Pages](https://devrosch.gitlab.io/libio)
 
 ## Deployment
 

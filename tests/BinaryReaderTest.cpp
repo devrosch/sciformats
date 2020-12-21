@@ -968,7 +968,8 @@ TEST_CASE("when reading zero terminated string reader is moved forward by "
 }
 
 TEST_CASE("throws exception when Int16LEChars16 prefix value "
-          "exceeds specified maxSize", "[BinaryReader]")
+          "exceeds specified maxSize",
+    "[BinaryReader]")
 {
     // "ab" UTF-16LE encoded
     std::vector<uint8_t> bytes{0x02, 0x00, 0x61, 0x00, 0x62};
@@ -981,7 +982,8 @@ TEST_CASE("throws exception when Int16LEChars16 prefix value "
 }
 
 TEST_CASE("throws exception when maxSize exceeds "
-          "std::numeric_limits<uint16_t>::max()", "[BinaryReader]")
+          "std::numeric_limits<uint16_t>::max()",
+    "[BinaryReader]")
 {
     // "abc" with zero terminator and trailing char UTF-16LE encoded
     std::vector<uint8_t> bytes{0x03, 0x00, 0x61, 0x00, 0x62, 0x00, 0x63, 0x00};
@@ -1008,7 +1010,9 @@ TEST_CASE("negative prefix results in empty string", "[BinaryReader]")
     REQUIRE(output.empty());
 }
 
-TEST_CASE("throws exception when trying to readi string with non-existent encoding", "[BinaryReader]")
+TEST_CASE(
+    "throws exception when trying to readi string with non-existent encoding",
+    "[BinaryReader]")
 {
     // "abc" in ASCII
     std::vector<uint8_t> bytes{0x61, 0x62, 0x63};

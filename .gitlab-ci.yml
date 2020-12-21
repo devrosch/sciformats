@@ -1,4 +1,4 @@
-image: devrosch/cppcicdenv:2020-12-20
+image: devrosch/cppcicdenv:2020-12-21
 
 stages:
   - build
@@ -13,7 +13,7 @@ build:linux_gcc:
   script:
     - set -eo pipefail
     - mkdir build && cd build
-    - cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+    - cmake -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_CXX_COMPILER=g++ ..
     - make
   artifacts:
     paths:
@@ -34,7 +34,7 @@ coverage:linux_gcc:
   script:
     - cd build
     - lcov --capture --directory . -o coverage.info
-    - lcov --remove coverage.info '/usr/*' '*/libio/lib/*' '*/libio/tests/*' -o coverage_filtered.info
+    - lcov --remove coverage.info '/usr/*' '*/libio/lib/*' '*/libio/tests/*' '*catch.hpp' -o coverage_filtered.info
     - genhtml coverage_filtered.info -o coverage
   dependencies:
     - test:linux_gcc

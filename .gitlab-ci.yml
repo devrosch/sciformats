@@ -4,9 +4,6 @@ stages:
   - build
   - test
   - coverage
-  - format
-  - quality
-  - report
 
 build:linux_gcc:
   stage: build
@@ -22,19 +19,36 @@ build:linux_gcc:
 test:linux_gcc:
   stage: test
   script:
-    - cd build && ctest
+    - cd build
+    - lcov --capture --initial --base-directory .. --directory . --output-file coverage_base.info
+    - ctest
   dependencies:
     - build:linux_gcc
   artifacts:
     paths:
       - build
 
+format:
+  stage: test
+  script:
+    - cd build && make clang-format-check
+  dependencies:
+    - build:linux_gcc
+
+quality:
+  stage: test
+  script:
+    - cd build && make clang-tidy
+  dependencies:
+    - build:linux_gcc
+
 coverage:linux_gcc:
   stage: coverage
   script:
     - cd build
-    - lcov --capture --directory . -o coverage.info
-    - lcov --remove coverage.info '/usr/*' '*/libio/lib/*' '*/libio/tests/*' '*catch.hpp' -o coverage_filtered.info
+    - lcov --capture --base-directory .. --directory . --output-file coverage.info
+    - lcov --add-tracefile coverage_base.info --add-tracefile coverage.info --output-file coverage_total.info
+    - lcov --remove coverage_total.info '/usr/*' '*/lib/*' '*/tests/*' -o coverage_filtered.info
     - genhtml coverage_filtered.info -o coverage
   dependencies:
     - test:linux_gcc
@@ -43,22 +57,8 @@ coverage:linux_gcc:
     paths:
       - build/coverage
 
-format:
-  stage: format
-  script:
-    - cd build && make clang-format-check
-  dependencies:
-    - build:linux_gcc
-
-quality:
-  stage: quality
-  script:
-    - cd build && make clang-tidy
-  dependencies:
-    - build:linux_gcc
-
 pages:
-  stage: report
+  stage: coverage
   script:
     - rm -rf public
     - mv build/coverage public

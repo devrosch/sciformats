@@ -54,7 +54,7 @@ coverage:linux_gcc:
     - genhtml coverage_filtered.info --output-directory coverage
       | tee /dev/tty
       | grep -E 'lines\.{6,}:'
-      | awk -F': |%' '{print $2}'
+      | awk -F": |%" "{print $2}"
       | { read coverage; (( $(echo "$coverage >= 95.0" | bc -l) )); }
   dependencies:
     - test:linux_gcc

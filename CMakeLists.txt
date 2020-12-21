@@ -19,7 +19,14 @@ project(
 # --------------------------------------------------------------
 # Add code coverage support
 # --------------------------------------------------------------
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+
+if (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    if (CMAKE_COMPILER_IS_GNUCXX)
+        # we're using GCC
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-arcs -ftest-coverage")
+        message("set G++ coverage flags: ${CMAKE_CXX_FLAGS}")
+    endif()
+endif()
 
 # --------------------------------------------------------------
 # Collect sources info for clang-tidy and clang-format
@@ -80,7 +87,7 @@ include(cmake/clang-dev-tools.cmake)
 # The compiled library code is here
 add_subdirectory(src)
 # The executable code is here
-add_subdirectory(apps)
+# add_subdirectory(apps) # not used by this library
 
 # --------------------------------------------------------------
 # Add code for testing
@@ -102,15 +109,4 @@ endif()
 if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) AND BUILD_TESTING)
     add_subdirectory(lib/catch2)
     add_subdirectory(tests)
-endif()
-
-
-# --------------------------------------------------------------
-# Add code coverage support
-# --------------------------------------------------------------
-
-if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-    # assumes we're using GCC
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-    message("set GCC coverage flags")
 endif()

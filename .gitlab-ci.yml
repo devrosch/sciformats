@@ -49,8 +49,8 @@ coverage:linux_gcc:
     - cd build
     - lcov --capture --base-directory .. --directory . --output-file coverage.info
     - lcov --add-tracefile coverage_base.info --add-tracefile coverage.info --output-file coverage_total.info
-    - lcov --remove coverage_total.info '/usr/*' '*/lib/*' '*/tests/*' -o coverage_filtered.info
-    - genhtml coverage_filtered.info -o coverage
+    - lcov --remove coverage_total.info '/usr/*' '*/lib/*' '*/tests/*' --output-file coverage_filtered.info
+    - genhtml coverage_filtered.info --output-file coverage
   dependencies:
     - test:linux_gcc
   coverage: '/lines\.+: \d+\.\d+%/'

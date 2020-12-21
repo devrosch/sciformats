@@ -51,11 +51,11 @@ coverage:linux_gcc:
     - lcov --capture --base-directory .. --directory . --output-file coverage.info
     - lcov --add-tracefile coverage_base.info --add-tracefile coverage.info --output-file coverage_total.info
     - lcov --remove coverage_total.info '/usr/*' '*/lib/*' '*/tests/*' --output-file coverage_filtered.info
-    - genhtml coverage_filtered.info --output-directory coverage
+    - "genhtml coverage_filtered.info --output-directory coverage
       | tee /dev/tty
-      | grep -E 'lines\.{6,}:'
-      | awk -F": |%" "{print $2}"
-      | { read coverage; (( $(echo "$coverage >= 95.0" | bc -l) )); }
+      | grep -E 'lines\\.{6,}:'
+      | awk -F': |%' '{print $2}'
+      | { read coverage; (( $(echo \"$coverage >= 95.0\" | bc -l) )); }"
   dependencies:
     - test:linux_gcc
   coverage: '/lines\.+: \d+\.\d+%/'

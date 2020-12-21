@@ -4,6 +4,7 @@ stages:
   - build
   - test
   - coverage
+  - publish
 
 build:linux_gcc:
   stage: build
@@ -58,7 +59,7 @@ coverage:linux_gcc:
       - build/coverage
 
 pages:
-  stage: coverage
+  stage: publish
   script:
     - rm -rf public
     - mv build/coverage public

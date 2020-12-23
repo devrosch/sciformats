@@ -1,5 +1,5 @@
 set(HEADER_LIST
-    "${PROJECT_SOURCE_DIR}/include/jdxparser/JdxParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
     "${PROJECT_SOURCE_DIR}/lib/catch2/include/catch2/catch.hpp")
 
 # Tests need to be added as executables first

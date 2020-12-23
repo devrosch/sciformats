@@ -1,8 +1,13 @@
 set(HEADER_LIST
-    "${PROJECT_SOURCE_DIR}/include/jdxparser/JdxParser.hpp")
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxBlock.hpp"
+    )
 
 # Make an automatic library - will be static or dynamic based on user setting
-add_library(jdxparser JdxParser.cpp ${HEADER_LIST})
+add_library(jdxparser
+    JdxParser.cpp
+    JdxBlock.cpp
+    ${HEADER_LIST})
 
 # All users of this library will need at least C++17
 target_compile_features(jdxparser PUBLIC cxx_std_17)

@@ -1,6 +1,8 @@
 #ifndef LIBJDX_JDXPARSER_HPP
 #define LIBJDX_JDXPARSER_HPP
 
+#include "jdx/JdxBlock.hpp"
+
 #include <cstdint>
 #include <fstream>
 #include <istream>
@@ -17,24 +19,22 @@ class JdxParser
 {
 public:
     /**
-     * @brief sciformats::io::JdxParser::JdxParser Constructs from file.
+     * @brief sciformats::jdx::JdxParser::canParse Shallow check if the data can be parsed, e.g. by checking the file extension or magic bytes.
      * @param filePath Path to the file.
-     * @param endian Default endianness of data.
+     * @param inputStream Input stream with binary data.
      */
-    explicit JdxParser(const std::string& filePath);
+    bool static canParse(const std::string& filePath, std::istream& inputStream);
 
     /**
-     * @brief sciformats::io::JdxParser::JdxParser Constructs from
-     * istream. Does not change exceptions flags.
+     * @brief sciformats::jdx::JdxParser::parse .
      * @param inputStream Input stream with binary data.
      * @param activateExceptions Activate exceptions for input_stream.
      */
-    explicit JdxParser(
+    JdxBlock static parse(
         std::istream& inputStream, bool activateExceptions = true);
 
 private:
-    std::optional<std::ifstream> m_ifstream;
-    std::istream& m_istream;
+    std::vector<std::string> m_acceptedExtensions{"jdx", "dx", "jcm"};
 };
 } // namespace sciformats::jdx
 

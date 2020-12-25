@@ -54,8 +54,6 @@ sciformats::jdx::JdxBlock sciformats::jdx::JdxParser::parse(
 {
     if (activateExceptions)
     {
-        // this also activates exceptions on input_stream, as as m_istream is
-        // a reference to input_stream
         inputStream.exceptions(
             std::ios::eofbit | std::ios::failbit | std::ios::badbit);
     }

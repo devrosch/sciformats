@@ -1,9 +1,10 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdrParser.hpp"
     "${PROJECT_SOURCE_DIR}/lib/catch2/include/catch2/catch.hpp")
 
 # Tests need to be added as executables first
-add_executable(jdxparser_test JdxParserTest.cpp)
+add_executable(jdxparser_test JdxParserTest.cpp JdxLdrParserTest.cpp)
 
 # I'm using C++17 in the test
 target_compile_features(jdxparser_test PRIVATE cxx_std_17)

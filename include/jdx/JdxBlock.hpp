@@ -17,20 +17,12 @@ class JdxBlock
 {
 public:
     /**
-     * @brief sciformats::io::JdxBlock::JdxBlock Constructs from file.
-     * @param filePath Path to the file.
-     * @param endian Default endianness of data.
-     */
-    explicit JdxBlock(const std::string& filePath);
-
-    /**
      * @brief sciformats::io::JdxBlock::JdxBlock Constructs from istream.
      * @param inputStream Input stream with binary data.
      */
     explicit JdxBlock(std::istream& inputStream);
 
 private:
-    std::optional<std::ifstream> m_ifstream;
     std::istream& m_istream;
 };
 } // namespace sciformats::jdx

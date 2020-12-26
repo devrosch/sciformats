@@ -10,13 +10,13 @@ namespace sciformats::jdx
 class JdxLdrParser
 {
 public:
-    bool static isLdrStart(std::string& line);
-    JdxLdr static readLdr(std::istream& istream);
     std::string static readLine(std::istream& istream);
+    bool static isLdrStart(const std::string& line);
     void static trim(std::string& s);
     void static trimLeft(std::string& s);
     void static trimRight(std::string& s);
-    std::string normalizeLdrLabel(std::string ldr);
+    std::string static normalizeLdrLabel(const std::string& ldr);
+//    JdxLdr static parseLdrStart(std::string& ldrStart);
 private:
 };
 } // namespace sciformats::jdx

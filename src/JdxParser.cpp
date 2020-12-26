@@ -36,7 +36,7 @@ bool sciformats::jdx::JdxParser::canParse(
     std::ios::pos_type position = inputStream.tellg();
     std::string magic{"##TITLE="};
     bool match = true;
-    for (auto i{0}; i < magic.size(); i++)
+    for (size_t i{0}; i < magic.size(); i++)
     {
         // TODO: label should be normalized before comparison
         if (inputStream.eof() || magic.at(i) != inputStream.get())

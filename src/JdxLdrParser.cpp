@@ -100,3 +100,37 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
     output.append(it, ldr.end());
     return output;
 }
+
+std::pair<std::string, std::string>
+sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
+{
+    size_t posEquals = ldrStart.find('=');
+    if (std::string::npos == posEquals)
+    {
+        throw std::runtime_error(
+            std::string{"Malformed LDR start, missing equals: "} + ldrStart);
+    }
+    std::string label = ldrStart.substr(0, posEquals + 1);
+    std::string normalizedLabel = normalizeLdrLabel(label);
+    if (normalizedLabel.size() < 3 || normalizedLabel.at(0) != '#'
+        || normalizedLabel.at(1) != '#'
+        || normalizedLabel.at(normalizedLabel.size() - 1) != '=')
+    {
+        throw std::runtime_error(
+            std::string{
+                "Malformed LDR start, normalization yields illegal label: "}
+            + normalizedLabel);
+    }
+    // strip leading and trailing symbols from label
+    normalizedLabel.erase(0, 2);
+    normalizedLabel.erase(normalizedLabel.size() - 1);
+
+    std::string value = ldrStart.substr(posEquals + 1);
+    if (!value.empty() && value.at(0) == ' ')
+    {
+        // strip leading blank from value if present
+        value.erase(0, 1);
+    }
+
+    return std::make_pair(normalizedLabel, value);
+}

@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-TEST_CASE("reads two lines with \\n endlines", "[JdxLdrParser]")
+TEST_CASE("reads two lines with \\n endlines", "[JdxLdrParser][readLine]")
 {
     std::string input{"abc\ndef\n"};
     std::stringstream stream{std::ios_base::in};
@@ -19,7 +19,7 @@ TEST_CASE("reads two lines with \\n endlines", "[JdxLdrParser]")
     REQUIRE(std::string{"def"} == line1);
 }
 
-TEST_CASE("reads two lines with \\r\\n endlines", "[JdxLdrParser]")
+TEST_CASE("reads two lines with \\r\\n endlines", "[JdxLdrParser][readLine]")
 {
     std::string input{"abc\r\ndef\r\n"};
     std::stringstream stream{std::ios_base::in};
@@ -32,18 +32,21 @@ TEST_CASE("reads two lines with \\r\\n endlines", "[JdxLdrParser]")
     REQUIRE(std::string{"def"} == line1);
 }
 
-TEST_CASE("reads line ending with EOF", "[JdxLdrParser]")
+TEST_CASE("reads line ending with EOF", "[JdxLdrParser][readLine]")
 {
     std::string input{"abc"};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
+    // the underlying getline() method sets failbit at end of file, so do not
+    // set std::ios::eofbit
+    stream.exceptions(std::ios::failbit | std::ios::badbit);
 
     std::string line0 = sciformats::jdx::JdxLdrParser::readLine(stream);
 
     REQUIRE(std::string{"abc"} == line0);
 }
 
-TEST_CASE("throws when trying to read past end", "[JdxLdrParser]")
+TEST_CASE("throws when trying to read past end", "[JdxLdrParser][readLine]")
 {
     std::string input{};
     std::stringstream stream{std::ios_base::in};
@@ -52,14 +55,15 @@ TEST_CASE("throws when trying to read past end", "[JdxLdrParser]")
     REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::readLine(stream));
 }
 
-TEST_CASE("recognizes regular LDR start", "[JdxLdrParser]")
+TEST_CASE("recognizes regular LDR start", "[JdxLdrParser][isLdrStart]")
 {
     std::string input{"##TITLE= abc"};
 
     REQUIRE(true == sciformats::jdx::JdxLdrParser::isLdrStart(input));
 }
 
-TEST_CASE("recognizes LDR start with leading white spaces", "[JdxLdrParser]")
+TEST_CASE("recognizes LDR start with leading white spaces",
+    "[JdxLdrParser][isLdrStart]")
 {
     std::string input{"\t\n\v\f\r ##TITLE= abc"};
 
@@ -68,21 +72,21 @@ TEST_CASE("recognizes LDR start with leading white spaces", "[JdxLdrParser]")
 
 TEST_CASE("recognizes LDR start with labels containing special characters and "
           "numbers",
-    "[JdxLdrParser]")
+    "[JdxLdrParser][isLdrStart]")
 {
     std::string input{"##.N_A/M2E$= abc"};
 
     REQUIRE(true == sciformats::jdx::JdxLdrParser::isLdrStart(input));
 }
 
-TEST_CASE("rejects non LDR start", "[JdxLdrParser]")
+TEST_CASE("rejects non LDR start", "[JdxLdrParser][isLdrStart]")
 {
     std::string input{"#NAME= ##NOT_LDR=abc"};
 
     REQUIRE(false == sciformats::jdx::JdxLdrParser::isLdrStart(input));
 }
 
-TEST_CASE("left trims white space", "[JdxLdrParser]")
+TEST_CASE("left trims white space", "[JdxLdrParser][trimLeft]")
 {
     std::string actual{"\t\n\v\f\r abc \t\n\v\f\r"};
     std::string expect{"abc \t\n\v\f\r"};
@@ -92,7 +96,7 @@ TEST_CASE("left trims white space", "[JdxLdrParser]")
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("right trims white space", "[JdxLdrParser]")
+TEST_CASE("right trims white space", "[JdxLdrParser][trimRight]")
 {
     std::string actual{"\t\n\v\f\r abc \t\n\v\f\r"};
     std::string expect{"\t\n\v\f\r abc"};
@@ -102,7 +106,7 @@ TEST_CASE("right trims white space", "[JdxLdrParser]")
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("trims white space", "[JdxLdrParser]")
+TEST_CASE("trims white space", "[JdxLdrParser][trim]")
 {
     std::string actual{"\t\n\v\f\r abc \t\n\v\f\r"};
     std::string expect{"abc"};
@@ -112,7 +116,8 @@ TEST_CASE("trims white space", "[JdxLdrParser]")
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("normalize LDR label removes \" -/_\" from label", "[JdxLdrParser]")
+TEST_CASE("normalize LDR label removes \" -/_\" from label",
+    "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"##A B-C/D_E= abc"};
     std::string expect{"##ABCDE= abc"};
@@ -123,8 +128,8 @@ TEST_CASE("normalize LDR label removes \" -/_\" from label", "[JdxLdrParser]")
     REQUIRE(expect == actual);
 }
 
-TEST_CASE(
-    "normalize LDR label leaves normalized label intact", "[JdxLdrParser]")
+TEST_CASE("normalize LDR label leaves normalized label intact",
+    "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"##ABCDE= abc"};
     std::string expect{"##ABCDE= abc"};
@@ -135,7 +140,8 @@ TEST_CASE(
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("normalize LDR label removes leading white spaces", "[JdxLdrParser]")
+TEST_CASE("normalize LDR label removes leading white spaces",
+    "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"\t\n\v\f\r ##ABCDE= abc"};
     std::string expect{"##ABCDE= abc"};
@@ -147,7 +153,7 @@ TEST_CASE("normalize LDR label removes leading white spaces", "[JdxLdrParser]")
 }
 
 TEST_CASE("normalize LDR label turns (only) ASCII letters to upper case",
-    "[JdxLdrParser]")
+    "[JdxLdrParser][normalizeLdrLabel]")
 {
     // label: abcdeäöüÄÖÜ in ISO-8859-1 encoding
     std::string input{"##abcde\xE4\xF6\xFC\xC4\xD6\xDC= abc"};
@@ -159,16 +165,75 @@ TEST_CASE("normalize LDR label turns (only) ASCII letters to upper case",
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("rejects missing double hashes in LDR start", "[JdxLdrParser]")
+TEST_CASE("rejects missing double hashes in LDR start",
+    "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"#LABEL= abc"};
 
     REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input));
 }
 
-TEST_CASE("rejects missing enquals in LDR start", "[JdxLdrParser]")
+TEST_CASE(
+    "rejects missing equals in LDR start", "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"##LABEL abc"};
 
     REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input));
+}
+
+TEST_CASE("tokenizes regular LDR start", "[JdxLdrParser][parseLdrStart]")
+{
+    std::string input{"##LABEL=abc"};
+
+    auto [label, value] = sciformats::jdx::JdxLdrParser::parseLdrStart(input);
+
+    REQUIRE("LABEL" == label);
+    REQUIRE("abc" == value);
+}
+
+TEST_CASE(
+    "tokenizes LDR start with missing value", "[JdxLdrParser][parseLdrStart]")
+{
+    std::string input{"##LABEL="};
+
+    auto [label, value] = sciformats::jdx::JdxLdrParser::parseLdrStart(input);
+
+    REQUIRE("LABEL" == label);
+    REQUIRE(value.empty());
+}
+
+TEST_CASE("removes (only) first leading space LDR start value",
+    "[JdxLdrParser][parseLdrStart]")
+{
+    std::string input{"##LABEL=  abc"};
+
+    auto [label, value] = sciformats::jdx::JdxLdrParser::parseLdrStart(input);
+
+    REQUIRE("LABEL" == label);
+    REQUIRE(" abc" == value);
+}
+
+TEST_CASE("normalizes LDR start label", "[JdxLdrParser][parseLdrStart]")
+{
+    std::string input{"\t\n\v\f\r ##abcde\xE4\xF6\xFC\xC4\xD6\xDC="};
+
+    auto [label, value] = sciformats::jdx::JdxLdrParser::parseLdrStart(input);
+
+    REQUIRE("ABCDE\xE4\xF6\xFC\xC4\xD6\xDC" == label);
+}
+
+TEST_CASE("rejects malformed LDR start (missing hash)",
+    "[JdxLdrParser][parseLdrStart]")
+{
+    std::string input{"#LABEL="};
+
+    REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::parseLdrStart(input));
+}
+
+TEST_CASE("rejects malformed LDR start (missing equals)",
+    "[JdxLdrParser][parseLdrStart]")
+{
+    std::string input{"##LABEL"};
+
+    REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::parseLdrStart(input));
 }

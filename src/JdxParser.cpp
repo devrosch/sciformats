@@ -54,8 +54,9 @@ sciformats::jdx::JdxBlock sciformats::jdx::JdxParser::parse(
 {
     if (activateExceptions)
     {
-        inputStream.exceptions(
-            std::ios::eofbit | std::ios::failbit | std::ios::badbit);
+        // the underlying getline() method sets failbit at end of file, so do
+        // not set std::ios::eofbit
+        inputStream.exceptions(std::ios::failbit | std::ios::badbit);
     }
     sciformats::jdx::JdxBlock block{inputStream};
     return block;

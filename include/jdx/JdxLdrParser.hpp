@@ -16,8 +16,7 @@ public:
     void static trimLeft(std::string& s);
     void static trimRight(std::string& s);
     std::string static normalizeLdrLabel(const std::string& ldr);
-//    JdxLdr static parseLdrStart(std::string& ldrStart);
-private:
+    std::pair<std::string, std::string> static parseLdrStart(const std::string& ldrStart);
 };
 } // namespace sciformats::jdx
 

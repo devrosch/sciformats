@@ -5,10 +5,21 @@
 
 namespace sciformats::jdx
 {
+/**
+ * @brief A JCAMP-DX labelled data record (LDR).
+ */
 class JdxLdr
 {
 public:
-    explicit JdxLdr(std::string& label);
+    explicit JdxLdr(const std::string& label);
+    JdxLdr(const std::string& label, const std::string& value);
+    void addValueLine(const std::string& line);
+    const std::string& getLabel() const;
+    const std::string& getValue() const;
+
+private:
+    std::string m_label;
+    std::string m_value;
 };
 } // namespace sciformats::jdx
 

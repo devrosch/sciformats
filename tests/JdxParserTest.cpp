@@ -7,12 +7,6 @@
 #include <climits>
 #include <string>
 
-// see: https://stackoverflow.com/a/47934240
-constexpr auto operator"" _c(unsigned long long arg) noexcept
-{
-    return static_cast<char>(arg);
-}
-
 TEST_CASE("accepts legal file", "[JdxParser]")
 {
     const std::string path{"resources/Claniline.jdx"};
@@ -38,4 +32,20 @@ TEST_CASE("rejects illegal file (wrong magic bytes)", "[JdxParser]")
 
     bool canParse = sciformats::jdx::JdxParser::canParse(path, istream);
     REQUIRE(canParse == false);
+}
+
+TEST_CASE("parse succeeds for legal file", "[JdxParser]")
+{
+    const std::string path{"resources/Claniline.jdx"};
+    std::ifstream istream{path};
+
+    REQUIRE_NOTHROW(sciformats::jdx::JdxParser::parse(istream));
+}
+
+TEST_CASE("parse throws for illegal file", "[JdxParser]")
+{
+    const std::string path{"resources/dummy.jdx"};
+    std::ifstream istream{path};
+
+    REQUIRE_THROWS(sciformats::jdx::JdxParser::parse(istream));
 }

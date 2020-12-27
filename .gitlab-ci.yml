@@ -46,7 +46,7 @@ quality:
 coverage:linux_gcc:
   stage: coverage
   variables:
-    - COVERAGE_THRESHOLD: 95.0
+    COVERAGE_THRESHOLD: "95.0"
   script:
     - cd build
     - set -eo pipefail
@@ -57,7 +57,7 @@ coverage:linux_gcc:
       | tee /dev/stderr
       | grep -E 'lines\\.{6,}:'
       | awk -F': |%' '{print $2}'
-      | { read coverage; echo \"line coverage: $coverage, threshold: $COVERAGE_THRESHOLD\" (( $(echo \"$coverage >= $COVERAGE_THRESHOLD\" | bc -l) )); }"
+      | { read coverage; echo \"=== line coverage: $coverage, threshold: $COVERAGE_THRESHOLD ===\" (( $(echo \"$coverage >= $COVERAGE_THRESHOLD\" | bc -l) )); }"
   dependencies:
     - test:linux_gcc
   coverage: '/lines\.+: \d+\.\d+%/'

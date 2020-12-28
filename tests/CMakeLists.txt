@@ -1,22 +1,13 @@
-set(HEADER_LIST
-    "${PROJECT_SOURCE_DIR}/lib/catch2/include/catch2/catch.hpp"
-    )
-
 # Tests need to be added as executables first
 add_executable(jdxparser_test
     JdxParserTest.cpp
     JdxLdrParserTest.cpp
     JdxLdrTest.cpp
     JdxBlockTest.cpp
-    ${HEADER_LIST})
+    )
 
 # I'm using C++17 in the test
 target_compile_features(jdxparser_test PRIVATE cxx_std_17)
-
-# We need these directories
-target_include_directories(jdxparser_test PRIVATE
-    ${PROJECT_SOURCE_DIR}/lib/catch2/include
-    ${PROJECT_SOURCE_DIR}/include)
 
 # Should be linked to the library, as well as the Catch2 testing library
 target_link_libraries(jdxparser_test PRIVATE jdxparser catch2)

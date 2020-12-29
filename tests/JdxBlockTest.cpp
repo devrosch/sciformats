@@ -95,3 +95,26 @@ TEST_CASE("treats block comments different from other LDRs", "[JdxBlock]")
     REQUIRE("comment 1" == ldrComments.at(0));
     REQUIRE("comment 2 line 1\ncomment 2 line 2" == ldrComments.at(1));
 }
+
+TEST_CASE("throws on illegal block start", "[JdxBlock]")
+{
+    std::string input{"##ILLEGAL_BLOCK_START= Test Block\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
+}
+
+TEST_CASE("throws on duplicate LDRs in block", "[JdxBlock]")
+{
+    std::string input{"##TITLE= Test Block\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##JCAMP-DX= 5.00\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
+}

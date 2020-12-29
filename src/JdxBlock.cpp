@@ -91,7 +91,8 @@ void sciformats::jdx::JdxBlock::parseInput()
     }
 }
 
-const std::map<std::string, std::string>& sciformats::jdx::JdxBlock::getLdrs() const
+const std::map<std::string, std::string>&
+sciformats::jdx::JdxBlock::getLdrs() const
 {
     return m_ldrs;
 }
@@ -102,7 +103,8 @@ sciformats::jdx::JdxBlock::getBlocks() const
     return m_blocks;
 }
 
-const std::vector<std::string>& sciformats::jdx::JdxBlock::getLdrComments() const
+const std::vector<std::string>&
+sciformats::jdx::JdxBlock::getLdrComments() const
 {
     return m_ldrComments;
 }

@@ -238,11 +238,11 @@ TEST_CASE("rejects malformed LDR start (missing equals)",
     REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::parseLdrStart(input));
 }
 
-TEST_CASE("strips line comment",
-    "[JdxLdrParser][stripLineComment]")
+TEST_CASE("strips line comment", "[JdxLdrParser][stripLineComment]")
 {
     std::string input{"line start $$ comment"};
-    auto [content, comment] = sciformats::jdx::JdxLdrParser::stripLineComment(input);
+    auto [content, comment]
+        = sciformats::jdx::JdxLdrParser::stripLineComment(input);
 
     REQUIRE("line start " == content);
     REQUIRE(comment.has_value());
@@ -253,7 +253,8 @@ TEST_CASE("indicates missing comment with nullopt",
     "[JdxLdrParser][stripLineComment]")
 {
     std::string input{"line content"};
-    auto [content, comment] = sciformats::jdx::JdxLdrParser::stripLineComment(input);
+    auto [content, comment]
+        = sciformats::jdx::JdxLdrParser::stripLineComment(input);
 
     REQUIRE("line content" == content);
     REQUIRE(!comment.has_value());
@@ -263,7 +264,8 @@ TEST_CASE("indicates empty content if whole line is comment",
     "[JdxLdrParser][stripLineComment]")
 {
     std::string input{"$$line comment"};
-    auto [content, comment] = sciformats::jdx::JdxLdrParser::stripLineComment(input);
+    auto [content, comment]
+        = sciformats::jdx::JdxLdrParser::stripLineComment(input);
 
     REQUIRE(content.empty());
     REQUIRE(comment.has_value());
@@ -274,7 +276,8 @@ TEST_CASE("indicates empty comment with empty string",
     "[JdxLdrParser][stripLineComment]")
 {
     std::string input{"line content$$"};
-    auto [content, comment] = sciformats::jdx::JdxLdrParser::stripLineComment(input);
+    auto [content, comment]
+        = sciformats::jdx::JdxLdrParser::stripLineComment(input);
 
     REQUIRE(!content.empty());
     REQUIRE("line content" == content);

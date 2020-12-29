@@ -55,33 +55,54 @@ void sciformats::jdx::JdxBlock::parseInput()
                 m_blocks.push_back(std::move(block));
                 continue;
             }
-            // TODO: add special treatment for data LDRs (e.g. XYDATA, RADATA,
-            // NTUPLES, PEAK TABLE, ...
+            if (label.empty())
+            {
+                // start of block comment "##="
+                m_ldrComments.push_back(value);
+                continue;
+            }
+            // TODO: add special treatment for data LDRs (e.g. XYDATA,
+            // XYPOINTS, RADATA, PEAK TABLE, PEAK ASSIGNMENTS, NTUPLES, ...)
             auto [it, success] = m_ldrs.emplace(label, value);
             if (!success)
             {
-                // TODO: log warning or throw
                 // reference implementation seems to overwrite LDR with
-                // duplicate
-                //                throw std::runtime_error(
-                //                    std::string{"Duplicate LDR in Block \""} +
-                //                    m_ldrs["TITLE"] + "\": " + line);
+                // duplicate, but spec (JCAMP-DX IR 3.2) says
+                // a duplicate LDR is illegal in a block => throw
+                throw std::runtime_error(
+                    std::string{"Duplicate LDR in Block \""} + m_ldrs["TITLE"]
+                    + "\": " + line);
             }
         }
         else
         {
-            m_ldrs.at(lastLabel).append('\n' + line);
+            if (lastLabel.empty())
+            {
+                // TODO: check case that no LDR has yet been encountered
+                // last LDR start was an LDR comment "##="
+                m_ldrComments.back().append('\n' + line);
+            }
+            else
+            {
+                // last LDR was a regular LDR
+                m_ldrs.at(lastLabel).append('\n' + line);
+            }
         }
     }
 }
 
-const std::map<std::string, std::string>& sciformats::jdx::JdxBlock::getLdrs()
+const std::map<std::string, std::string>& sciformats::jdx::JdxBlock::getLdrs() const
 {
     return m_ldrs;
 }
 
 const std::vector<sciformats::jdx::JdxBlock>&
-sciformats::jdx::JdxBlock::getBlocks()
+sciformats::jdx::JdxBlock::getBlocks() const
 {
     return m_blocks;
+}
+
+const std::vector<std::string>& sciformats::jdx::JdxBlock::getLdrComments() const
+{
+    return m_ldrComments;
 }

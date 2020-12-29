@@ -17,15 +17,15 @@ TEST_CASE("parses all LDRs in block", "[JdxBlock]")
                       "##LASTX= 451\r\n"
                       "##NPOINTS= 2\r\n"
                       "##FIRSTY= 10\r\n"
-                      "##XYDATA= (XY..XY)\r\n"
+                      "##XYPOINTS= (XY..XY)\r\n"
                       "450.0, 10.0"
                       "451.0, 11.0"
-                      "END="};
+                      "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
     auto block = sciformats::jdx::JdxBlock(stream);
-    auto ldrs = block.getLdrs();
+    const auto& ldrs = block.getLdrs();
 
     // does not contain "##END=" even though technically an LDR
     REQUIRE(14 == ldrs.size());
@@ -52,18 +52,18 @@ TEST_CASE("parses nested blocks", "[JdxBlock]")
                       "##LASTX= 451\r\n"
                       "##NPOINTS= 2\r\n"
                       "##FIRSTY= 10\r\n"
-                      "##XYDATA= (XY..XY)\r\n"
+                      "##XYPOINTS= (XY..XY)\r\n"
                       "450.0, 10.0"
                       "451.0, 11.0"
-                      "END="
+                      "##END="
 
-                      "END="};
+                      "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
     auto block = sciformats::jdx::JdxBlock(stream);
-    auto ldrs = block.getLdrs();
-    auto innerBlocks = block.getBlocks();
+    const auto& ldrs = block.getLdrs();
+    const auto& innerBlocks = block.getBlocks();
 
     // does not contain "##END=" even though technically an LDR
     REQUIRE(4 == ldrs.size());
@@ -73,4 +73,25 @@ TEST_CASE("parses nested blocks", "[JdxBlock]")
     REQUIRE(1 == innerBlocks.size());
     auto innerBlock = innerBlocks.at(0);
     REQUIRE("Test Nested Block" == innerBlock.getLdrs().at("TITLE"));
+}
+
+TEST_CASE("treats block comments different from other LDRs", "[JdxBlock]")
+{
+    std::string input{"##TITLE= Test Block\r\n"
+                      "##= comment 1\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##= comment 2 line 1\r\n"
+                      "comment 2 line 2\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto block = sciformats::jdx::JdxBlock(stream);
+    const auto& ldrs = block.getLdrs();
+    const auto& ldrComments = block.getLdrComments();
+
+    REQUIRE(2 == ldrs.size());
+    REQUIRE(2 == ldrComments.size());
+    REQUIRE("comment 1" == ldrComments.at(0));
+    REQUIRE("comment 2 line 1\ncomment 2 line 2" == ldrComments.at(1));
 }

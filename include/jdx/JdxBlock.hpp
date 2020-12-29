@@ -28,12 +28,14 @@ public:
      * @param inputStream Input stream with JCAMP-DX data. The stream position is assumed to be at the start of the second line (the line following the TITLE line) of the block. The inputStream is expected to exist for the lifetime of this object.
      */
     JdxBlock(const std::string& title, std::istream& inputStream);
-    const std::map<std::string, std::string>& getLdrs();
-    const std::vector<JdxBlock>& getBlocks();
+    const std::map<std::string, std::string>& getLdrs() const;
+    const std::vector<JdxBlock>& getBlocks() const;
+    const std::vector<std::string>& getLdrComments() const;
 
 private:
     std::istream& m_istream;
     std::map<std::string, std::string> m_ldrs;
+    std::vector<std::string> m_ldrComments;
     std::vector<JdxBlock> m_blocks;
 
     void parseInput();

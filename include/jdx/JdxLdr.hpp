@@ -16,6 +16,7 @@ public:
     void addValueLine(const std::string& line);
     const std::string& getLabel() const;
     const std::string& getValue() const;
+    bool isUserDefined() const;
 
 private:
     std::string m_label;

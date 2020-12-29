@@ -844,7 +844,6 @@ M  END
 <PeakData id="4" title="C3,C5 ~130" peakShape="multiplet" model="pchloroaniline" atoms="1,5" xMax="131" xMin="129"    />
 </Peaks>
 ##SOLVENTNAME= MeOD
-##.OBSERVE FREQUENCY= 50.329
 ##XUNITS= HZ
 ##YUNITS= ARBITRARY UNITS
 ##XFACTOR= 1.25655834E-2
@@ -3974,7 +3973,6 @@ M  END
 <PeakData id="6" title="C6 ~113" peakShape="multiplet" model="mchloroaniline" atoms="2" xMax="114" xMin="112"    />
 </Peaks>
 ##SOLVENTNAME= CHLOROFORM-D
-##.OBSERVE FREQUENCY= 125.773
 ##XUNITS= HZ
 ##YUNITS= ARBITRARY UNITS
 ##XFACTOR= 2.56003952E-2
@@ -6825,7 +6823,6 @@ M  END
 <PeakData id="6" title="C6 ~116" peakShape="multiplet" model="ochloroaniline" atoms="2" xMax="117" xMin="115"    />
 </Peaks>
 ##SOLVENTNAME= CHLOROFORM-D
-##.OBSERVE FREQUENCY= 50.329
 ##XUNITS= HZ
 ##YUNITS= ARBITRARY UNITS
 ##XFACTOR= 1.01899596E-2

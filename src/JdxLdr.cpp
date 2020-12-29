@@ -26,3 +26,8 @@ const std::string& sciformats::jdx::JdxLdr::getValue() const
 {
     return m_value;
 }
+
+bool sciformats::jdx::JdxLdr::isUserDefined() const
+{
+    return !m_label.empty() && m_label.at(0) == '$';
+}

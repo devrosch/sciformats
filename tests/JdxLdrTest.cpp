@@ -34,3 +34,13 @@ TEST_CASE("LDR value can be added to", "[JdxLdr]")
     ldr.addValueLine(line1);
     REQUIRE(line0 + "\n" + line1 == ldr.getValue());
 }
+
+TEST_CASE("user defined LDRs are recognized", "[JdxLdr]")
+{
+    auto standardLdr = sciformats::jdx::JdxLdr{"TITLE", "value"};
+    auto userDefinedLdr
+        = sciformats::jdx::JdxLdr{"$USER_DEFINED_LABEL", "user value"};
+
+    REQUIRE(false == standardLdr.isUserDefined());
+    REQUIRE(true == userDefinedLdr.isUserDefined());
+}

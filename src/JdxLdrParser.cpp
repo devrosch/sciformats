@@ -134,3 +134,17 @@ sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
 
     return std::make_pair(normalizedLabel, value);
 }
+
+std::pair<std::string, std::optional<std::string>>
+sciformats::jdx::JdxLdrParser::stripLineComment(const std::string& line)
+{
+    const auto pos = line.find("$$");
+    if (pos == std::string::npos)
+    {
+        // no comment
+        return make_pair(line, std::nullopt);
+    }
+    auto content = line.substr(0, pos);
+    auto comment = line.substr(pos + 2);
+    return make_pair(content, comment);
+}

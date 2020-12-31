@@ -79,7 +79,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYLine(
 }
 
 std::vector<double> sciformats::jdx::JdxDataParser::readValues(
-        std::string& encodedValues)
+    std::string& encodedValues)
 {
     // output
     std::vector<double> yValues{};
@@ -98,7 +98,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readValues(
     // loop
     size_t index = 0;
     while (index <= encodedValues.size())
-    {        
+    {
         auto isDelim = isTokenDelimiter(encodedValues, index);
         auto isStart = isTokenStart(encodedValues, index);
         if (isStart || isDelim)
@@ -106,20 +106,21 @@ std::vector<double> sciformats::jdx::JdxDataParser::readValues(
             if ((tokenType == TokenType::Dup || tokenType == TokenType::Dif)
                 && !previousTokenValue.has_value())
             {
-                auto message = tokenType == TokenType::Dup
-                    ? std::string{"DUP"} : std::string{"DIF"};
+                auto message = tokenType == TokenType::Dup ? std::string{"DUP"}
+                                                           : std::string{"DIF"};
                 message += " token without preceding token"
-                    " encountered in sequence: ";
+                           " encountered in sequence: ";
                 message += encodedValues;
                 throw std::runtime_error(message);
             }
             if ((tokenType == TokenType::Dup && previousTokenValue.has_value()
-                && previousTokenType == TokenType::Dup))
+                    && previousTokenType == TokenType::Dup))
             {
                 throw std::runtime_error(
-                    std::string{"DUP token with preceding DUP token encountered "
+                    std::string{
+                        "DUP token with preceding DUP token encountered "
                         "in sequence: "}
-                            + encodedValues);
+                    + encodedValues);
             }
 
             if (!tokenString.empty())
@@ -133,7 +134,8 @@ std::vector<double> sciformats::jdx::JdxDataParser::readValues(
                         if (previousTokenType == TokenType::Dif)
                         {
                             auto lastValue = yValues.back();
-                            auto nextValue = lastValue + previousTokenValue.value();
+                            auto nextValue
+                                = lastValue + previousTokenValue.value();
                             yValues.push_back(nextValue);
                         }
                         else
@@ -205,20 +207,21 @@ std::vector<double> sciformats::jdx::JdxDataParser::readValues(
     return yValues;
 }
 
-bool sciformats::jdx::JdxDataParser::isTokenDelimiter(std::string encodedValues, size_t index)
+bool sciformats::jdx::JdxDataParser::isTokenDelimiter(
+    std::string encodedValues, size_t index)
 {
     if (index >= encodedValues.size())
     {
         return true;
     }
     char c = encodedValues.at(index);
-    auto static isspace = [](unsigned char ch) {
-        return static_cast<bool>(std::isspace(ch));
-    };
+    auto static isspace
+        = [](unsigned char ch) { return static_cast<bool>(std::isspace(ch)); };
     return isspace(static_cast<unsigned char>(c)) || c == ';' || c == ',';
 }
 
-bool sciformats::jdx::JdxDataParser::isTokenStart(std::string encodedValues, size_t index)
+bool sciformats::jdx::JdxDataParser::isTokenStart(
+    std::string encodedValues, size_t index)
 {
     if (index >= encodedValues.size())
     {
@@ -238,7 +241,7 @@ bool sciformats::jdx::JdxDataParser::isTokenStart(std::string encodedValues, siz
         // apply heuristic to provide answer
         auto substr = encodedValues.substr(index, 6);
         return !std::regex_match(substr, regex)
-            && !std::regex_match(substr, altRegex);
+               && !std::regex_match(substr, altRegex);
     }
     if (c == '+' || c == '-')
     {
@@ -250,25 +253,26 @@ bool sciformats::jdx::JdxDataParser::isTokenStart(std::string encodedValues, siz
         // apply heuristic to provide answer
         auto substr = encodedValues.substr(index - 1, 6);
         return !std::regex_match(substr, regex)
-            && !std::regex_match(substr, altRegex);
+               && !std::regex_match(substr, altRegex);
     }
     if (getSqzDigitValue(c).has_value() || getDifDigitValue(c).has_value()
-            || getDupDigitValue(c).has_value())
+        || getDupDigitValue(c).has_value())
     {
         return true;
     }
     return false;
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getAsciiDigitValue(const char c)
+std::optional<char> sciformats::jdx::JdxDataParser::getAsciiDigitValue(char c)
 {
     static const std::string asciiDigits = "0123456789";
     auto pos = asciiDigits.find(c);
     return pos == std::string::npos
-            ? std::nullopt : std::make_optional(static_cast<char>(pos));
+               ? std::nullopt
+               : std::make_optional(static_cast<char>(pos));
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getSqzDigitValue(const char c)
+std::optional<char> sciformats::jdx::JdxDataParser::getSqzDigitValue(char c)
 {
     static const std::string positiveSqzDigits = "@ABCDEFGHI";
     auto pos = positiveSqzDigits.find(c);
@@ -279,10 +283,11 @@ std::optional<char> sciformats::jdx::JdxDataParser::getSqzDigitValue(const char 
     static const std::string negativeSqzDigits = "abcdefghi";
     pos = negativeSqzDigits.find(c);
     return pos == std::string::npos
-            ? std::nullopt : std::make_optional(static_cast<char>(-pos - 1));
+               ? std::nullopt
+               : std::make_optional(static_cast<char>(-pos - 1));
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getDifDigitValue(const char c)
+std::optional<char> sciformats::jdx::JdxDataParser::getDifDigitValue(char c)
 {
     static const std::string positiveDifDigits = "%JKLMNOPQR";
     auto pos = positiveDifDigits.find(c);
@@ -293,13 +298,15 @@ std::optional<char> sciformats::jdx::JdxDataParser::getDifDigitValue(const char 
     static const std::string negativeDifDigits = "jklmnopqr";
     pos = negativeDifDigits.find(c);
     return pos == std::string::npos
-            ? std::nullopt : std::make_optional(static_cast<char>(-pos - 1));
+               ? std::nullopt
+               : std::make_optional(static_cast<char>(-pos - 1));
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getDupDigitValue(const char c)
+std::optional<char> sciformats::jdx::JdxDataParser::getDupDigitValue(char c)
 {
     static const std::string positiveDupDigits = "STUVWXYZs";
     auto pos = positiveDupDigits.find(c);
     return pos == std::string::npos
-            ? std::nullopt : std::make_optional(static_cast<char>(pos + 1));
+               ? std::nullopt
+               : std::make_optional(static_cast<char>(pos + 1));
 }

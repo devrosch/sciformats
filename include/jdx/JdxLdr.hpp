@@ -14,9 +14,9 @@ public:
     explicit JdxLdr(const std::string& label);
     JdxLdr(const std::string& label, const std::string& value);
     void addValueLine(const std::string& line);
-    const std::string& getLabel() const;
-    const std::string& getValue() const;
-    bool isUserDefined() const;
+    [[nodiscard]] const std::string& getLabel() const;
+    [[nodiscard]] const std::string& getValue() const;
+    [[nodiscard]] bool isUserDefined() const;
 
 private:
     std::string m_label;

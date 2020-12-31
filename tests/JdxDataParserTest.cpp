@@ -5,7 +5,7 @@
 TEST_CASE("parses AFFN data", "[JdxDataParser]")
 {
     // TODO: make this case pass as well
-//    std::string input{"1.23 4.5E2  600"};
+    //    std::string input{"1.23 4.5E2  600"};
     std::string input{"1.23 4.5E23 4.5E2 600"};
 
     auto output = sciformats::jdx::JdxDataParser::readValues(input);

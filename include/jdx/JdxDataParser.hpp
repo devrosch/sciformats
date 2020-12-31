@@ -17,13 +17,14 @@ public:
     std::vector<double> static readXppYYLine(
         std::string& line, const std::optional<double>& yValueCheck);
     std::vector<double> static readValues(std::string& encodedValues);
+
 private:
     static bool isTokenStart(std::string encodedValues, size_t index);
     static bool isTokenDelimiter(std::string encodedValues, size_t index);
-    static std::optional<char> getAsciiDigitValue(const char c);
-    static std::optional<char> getSqzDigitValue(const char c);
-    static std::optional<char> getDifDigitValue(const char c);
-    static std::optional<char> getDupDigitValue(const char c);
+    static std::optional<char> getAsciiDigitValue(char c);
+    static std::optional<char> getSqzDigitValue(char c);
+    static std::optional<char> getDifDigitValue(char c);
+    static std::optional<char> getDupDigitValue(char c);
 };
 } // namespace sciformats::jdx
 

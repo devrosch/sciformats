@@ -35,9 +35,9 @@ public:
      * lifetime of this object.
      */
     JdxBlock(const std::string& title, std::istream& inputStream);
-    const std::map<std::string, std::string>& getLdrs() const;
-    const std::vector<JdxBlock>& getBlocks() const;
-    const std::vector<std::string>& getLdrComments() const;
+    [[nodiscard]] const std::map<std::string, std::string>& getLdrs() const;
+    [[nodiscard]] const std::vector<JdxBlock>& getBlocks() const;
+    [[nodiscard]] const std::vector<std::string>& getLdrComments() const;
 
 private:
     std::istream& m_istream;

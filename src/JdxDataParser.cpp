@@ -26,7 +26,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
             = sciformats::jdx::JdxLdrParser::stripLineComment(line);
         sciformats::jdx::JdxLdrParser::trim(data);
         // read Y values from line
-        std::vector<double> lineYValues = readXppYYLine(data, yValueCheck);
+        auto [lineYValues, isDifEncoded] = readXppYYLine(data, yValueCheck);
         if (yValueCheck.has_value())
         {
             // y value is duplicated in new line, trust new value
@@ -36,7 +36,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
         yValues.insert(
             std::end(yValues), std::begin(lineYValues), std::end(lineYValues));
         // if last and second to last values are defined, use last as y check
-        if (lineYValues.empty()
+        if (!isDifEncoded || lineYValues.empty()
             || (lineYValues.size() == 1 && std::isnan(lineYValues.back()))
             || (lineYValues.size() >= 2
                 && (std::isnan(lineYValues.back())
@@ -55,11 +55,12 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
     return yValues;
 }
 
-std::vector<double> sciformats::jdx::JdxDataParser::readXppYYLine(
+std::pair<std::vector<double>, bool>
+sciformats::jdx::JdxDataParser::readXppYYLine(
     std::string& line, const std::optional<double>& yValueCheck)
 {
     // read (X++(Y..Y)) data line
-    auto values = readValues(line);
+    auto [values, difEncoded] = readValues(line);
     if (!values.empty())
     {
         // remove initial x value (not required for (X++(Y..Y)) encoded data)
@@ -75,14 +76,15 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYLine(
                 std::string{"Y value check failed in line: "} + line);
         }
     }
-    return values;
+    return {values, difEncoded};
 }
 
-std::vector<double> sciformats::jdx::JdxDataParser::readValues(
+std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
     std::string& encodedValues)
 {
     // output
     std::vector<double> yValues{};
+    bool difEncoded = false;
     // state
     enum class TokenType
     {
@@ -182,6 +184,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readValues(
                 // replace DIF char (first char) with (signed) value
                 tokenString = std::to_string(difDigit.value());
                 tokenType = TokenType::Dif;
+                difEncoded = true;
             }
             else if (auto dupDigit = getDupDigitValue(c))
             {
@@ -204,7 +207,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readValues(
         }
         index++;
     }
-    return yValues;
+    return {yValues, difEncoded};
 }
 
 bool sciformats::jdx::JdxDataParser::isTokenDelimiter(

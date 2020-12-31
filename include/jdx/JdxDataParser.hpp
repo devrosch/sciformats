@@ -14,9 +14,10 @@ class JdxDataParser
 {
 public:
     std::vector<double> static readXppYYData(std::istream& istream);
-    std::vector<double> static readXppYYLine(
+    std::pair<std::vector<double>, bool> static readXppYYLine(
         std::string& line, const std::optional<double>& yValueCheck);
-    std::vector<double> static readValues(std::string& encodedValues);
+    std::pair<std::vector<double>, bool> static readValues(
+        std::string& encodedValues);
 
 private:
     static bool isTokenStart(std::string encodedValues, size_t index);

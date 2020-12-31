@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <fstream>
 #include <istream>
+#include <map>
 #include <optional>
 #include <sstream>
 #include <vector>
-#include <map>
 
 namespace sciformats::jdx
 {
@@ -19,13 +19,20 @@ class JdxBlock
 public:
     /**
      * @brief JdxBlock Constructs from istream.
-     * @param inputStream Input stream with JCAMP-DX data. The stream position is assumed to be at the start of the first line of the block (containing the TITLE LDR). The inputStream is expected to exist for the lifetime of this object.
+     * @param inputStream Input stream with JCAMP-DX data. The stream position
+     * is assumed to be at the start of the first line of the block (containing
+     * the TITLE LDR). The inputStream is expected to exist for the lifetime of
+     * this object.
      */
     explicit JdxBlock(std::istream& inputStream);
     /**
      * @brief JdxBlock Constructs from first line value and istream.
-     * @param title The value of the first line of the block, i.e. the content of the line following the `##TITLE=` label.
-     * @param inputStream Input stream with JCAMP-DX data. The stream position is assumed to be at the start of the second line (the line following the TITLE line) of the block. The inputStream is expected to exist for the lifetime of this object.
+     * @param title The value of the first line of the block, i.e. the content
+     * of the line following the `##TITLE=` label.
+     * @param inputStream Input stream with JCAMP-DX data. The stream position
+     * is assumed to be at the start of the second line (the line following the
+     * TITLE line) of the block. The inputStream is expected to exist for the
+     * lifetime of this object.
      */
     JdxBlock(const std::string& title, std::istream& inputStream);
     const std::map<std::string, std::string>& getLdrs() const;

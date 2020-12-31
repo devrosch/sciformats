@@ -17,7 +17,7 @@ file(GLOB_RECURSE ALL_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/apps/*.cpp"
     "${PROJECT_SOURCE_DIR}/src/*.cpp"
     "${PROJECT_SOURCE_DIR}/tests/*.cpp"
-    "${INCLUDE_DIRECTORIES}/*.hpp")
+    "${PROJECT_SOURCE_DIR}/include/*.hpp")
 message(STATUS "clang-tidy INCLUDE_DIRECTORIES: ${INCLUDE_DIRECTORIES}")
 message(STATUS "clang-tidy/clang-format ALL_SOURCE_FILES: ${ALL_SOURCE_FILES}")
 

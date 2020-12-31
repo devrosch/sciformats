@@ -19,11 +19,13 @@ class JdxParser
 {
 public:
     /**
-     * @brief sciformats::jdx::JdxParser::canParse Shallow check if the data can be parsed, e.g. by checking the file extension or magic bytes.
+     * @brief sciformats::jdx::JdxParser::canParse Shallow check if the data can
+     * be parsed, e.g. by checking the file extension or magic bytes.
      * @param filePath Path to the file.
      * @param inputStream Input stream with binary data.
      */
-    bool static canParse(const std::string& filePath, std::istream& inputStream);
+    bool static canParse(
+        const std::string& filePath, std::istream& inputStream);
 
     /**
      * @brief sciformats::jdx::JdxParser::parse .

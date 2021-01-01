@@ -85,3 +85,6 @@ if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) AND BUILD_TESTING)
     add_subdirectory(lib/catch2)
     add_subdirectory(tests)
 endif()
+
+# Including cmake script to create coverage-prepare and coverage targets
+include(cmake/coverage.cmake)

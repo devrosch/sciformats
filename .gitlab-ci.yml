@@ -21,7 +21,7 @@ test:linux_gcc:
   stage: test
   script:
     - cd build
-    - lcov --capture --initial --base-directory .. --directory . --output-file coverage_base.info
+    - make coverage-base
     - ctest
   dependencies:
     - build:linux_gcc
@@ -50,10 +50,8 @@ coverage:linux_gcc:
   script:
     - cd build
     - set -eo pipefail
-    - lcov --capture --base-directory .. --directory . --output-file coverage.info
-    - lcov --add-tracefile coverage_base.info --add-tracefile coverage.info --output-file coverage_total.info
-    - lcov --remove coverage_total.info '/usr/*' '*/lib/*' '*/tests/*' --output-file coverage_filtered.info
-    - "genhtml coverage_filtered.info --output-directory coverage
+    - make coverage-capture
+    - "make coverage-report
       | tee /dev/stderr
       | grep -E 'lines\\.{6,}:'
       | awk -F': |%' '{print $2}'

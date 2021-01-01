@@ -62,7 +62,7 @@ coverage:linux_gcc:
   coverage: '/lines\.+: \d+\.\d+%/'
   artifacts:
     paths:
-      - build
+      - build/coverage
 
 doc:doxygen:
   stage: doc
@@ -72,15 +72,17 @@ doc:doxygen:
     - coverage:linux_gcc
   artifacts:
     paths:
-      - build
+      - build/doc
 
 pages:
   stage: publish
   script:
     - rm -rf public
+    - mkdir public
     - mv build/coverage public/coverage
     - mv build/doc/html public/doc
   dependencies:
+    - coverage:linux_gcc
     - doc:doxygen
   artifacts:
     paths:

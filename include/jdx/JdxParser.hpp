@@ -13,7 +13,7 @@
 namespace sciformats::jdx
 {
 /**
- * @brief The JdxParser class provides mechanisms for reading JCAMP-DX data.
+ * @brief A parser for JCAMP-DX data.
  */
 class JdxParser
 {

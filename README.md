@@ -21,6 +21,10 @@ tbd
 
 The test report from the CI/CD pipeline is located at: [GitLab Pages](https://devrosch.gitlab.io/libjdx)
 
+## Documentation
+
+Documentation generated during the build by the CI/CD pipeline is located at: [GitLab Pages](https://devrosch.gitlab.io/libjdx/doc)
+
 ### Sample data
 
 Public domain sample data taken from [JSpecView2](http://wwwchem.uwimona.edu.jm/spectra/JSpecView2/sample/).

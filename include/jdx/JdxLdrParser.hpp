@@ -8,6 +8,9 @@
 
 namespace sciformats::jdx
 {
+/**
+ * @brief Helper functions for parsing JCAMP-DX labeled data records (LDRs).
+ */
 class JdxLdrParser
 {
 public:

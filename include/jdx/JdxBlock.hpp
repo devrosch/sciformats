@@ -12,7 +12,7 @@
 namespace sciformats::jdx
 {
 /**
- * @brief The JdxDataSet class represents JCAMP-DX data.
+ * @brief A JCAMP-DX block.
  */
 class JdxBlock
 {

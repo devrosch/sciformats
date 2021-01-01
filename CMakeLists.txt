@@ -88,3 +88,8 @@ endif()
 
 # Including cmake script to create coverage-prepare and coverage targets
 include(cmake/coverage.cmake)
+
+# --------------------------------------------------------------
+# Set correct paths in doxygen config
+# --------------------------------------------------------------
+configure_file("${PROJECT_SOURCE_DIR}/doxy.config.in" "${PROJECT_SOURCE_DIR}/doxy.config")

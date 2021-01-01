@@ -1,9 +1,10 @@
-image: devrosch/cppcicdenv:2020-12-22
+image: devrosch/cppcicdenv:2021-01-01
 
 stages:
   - build
   - test
   - coverage
+  - doc
   - publish
 
 build:linux_gcc:
@@ -63,13 +64,25 @@ coverage:linux_gcc:
     paths:
       - build/coverage
 
+doc:doxygen:
+  stage: doc
+  script:
+    - cd build && doxygen ../doxy.config
+  dependencies:
+    - build:linux_gcc
+  artifacts:
+    paths:
+      - build/doc
+
 pages:
   stage: publish
   script:
     - rm -rf public
     - mv build/coverage public
+    - mv build/doc/html public/doc
   dependencies:
     - coverage:linux_gcc
+    - doc:doxygen
   artifacts:
     paths:
       - public

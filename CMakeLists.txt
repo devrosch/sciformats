@@ -92,4 +92,4 @@ include(cmake/coverage.cmake)
 # --------------------------------------------------------------
 # Set correct paths in doxygen config
 # --------------------------------------------------------------
-configure_file("${PROJECT_SOURCE_DIR}/doxy.config.in" "${PROJECT_SOURCE_DIR}/doxy.config")
+configure_file("${PROJECT_SOURCE_DIR}/doxy.config.in" "${PROJECT_BINARY_DIR}/doxy.config")

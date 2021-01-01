@@ -67,7 +67,7 @@ coverage:linux_gcc:
 doc:doxygen:
   stage: doc
   script:
-    - cd build && doxygen ../doxy.config
+    - cd build && doxygen ./doxy.config
   dependencies:
     - build:linux_gcc
   artifacts:
@@ -78,7 +78,7 @@ pages:
   stage: publish
   script:
     - rm -rf public
-    - mv build/coverage public
+    - mv build/coverage public/coverage
     - mv build/doc/html public/doc
   dependencies:
     - coverage:linux_gcc

@@ -1,5 +1,5 @@
 [![pipeline](https://gitlab.com/devrosch/libjdx/badges/master/pipeline.svg)](https://gitlab.com/devrosch/libjdx/commits/master)
-[![coverage](https://gitlab.com/devrosch/libjdx/badges/master/coverage.svg)](https://devrosch.gitlab.io/libjdx)
+[![coverage](https://gitlab.com/devrosch/libjdx/badges/master/coverage.svg)](https://devrosch.gitlab.io/libjdx/coverage)
 
 # libjdx
 
@@ -19,7 +19,7 @@ tbd
 
 ## Running the tests
 
-The test report from the CI/CD pipeline is located at: [GitLab Pages](https://devrosch.gitlab.io/libjdx)
+The test report from the CI/CD pipeline is located at: [GitLab Pages](https://devrosch.gitlab.io/libjdx/coverage)
 
 ## Documentation
 

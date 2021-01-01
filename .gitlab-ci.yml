@@ -69,7 +69,7 @@ doc:doxygen:
   script:
     - cd build && doxygen ./doxy.config
   dependencies:
-    - coverage:linux_gcc
+    - build:linux_gcc
   artifacts:
     paths:
       - build/doc

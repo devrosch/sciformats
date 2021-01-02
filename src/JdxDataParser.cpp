@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <regex>
+#include <string>
 
 std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
     std::istream& istream)
@@ -55,6 +56,85 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
     return yValues;
 }
 
+std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
+    std::string& encodedValues)
+{
+    // output
+    std::vector<double> yValues{};
+    bool difEncoded = false;
+    // state
+    std::optional<double> previousValue{};
+    TokenType previousTokenType = TokenType::Affn;
+    // loop
+    size_t index = 0;
+    while (auto token = nextToken(encodedValues, index))
+    {
+        TokenType tokenType = toAffn(token.value());
+        if (tokenType == TokenType::Dif)
+        {
+            difEncoded = true;
+        }
+
+        // check for logical errors
+        if ((tokenType == TokenType::Dup || tokenType == TokenType::Dif)
+            && !previousValue.has_value())
+        {
+            auto message = tokenType == TokenType::Dup ? std::string{"DUP"}
+                                                       : std::string{"DIF"};
+            message += " token without preceding token"
+                       " encountered in sequence: ";
+            message += encodedValues;
+            throw std::runtime_error(message);
+        }
+        if ((tokenType == TokenType::Dup && previousValue.has_value()
+                && previousTokenType == TokenType::Dup))
+        {
+            throw std::runtime_error(
+                std::string{"DUP token with preceding DUP token encountered "
+                            "in sequence: "}
+                + encodedValues);
+        }
+
+        // process token
+        if (tokenType == TokenType::Dup)
+        {
+            auto numRepeats = std::stol(token.value());
+            for (auto i{0}; i < numRepeats - 1; i++)
+            {
+                if (previousTokenType == TokenType::Dif)
+                {
+                    auto lastValue = yValues.back();
+                    auto nextValue = lastValue + previousValue.value();
+                    yValues.push_back(nextValue);
+                }
+                else
+                {
+                    yValues.push_back(yValues.back());
+                }
+            }
+            previousValue = numRepeats;
+        }
+        else
+        {
+            // TODO: also account for ? values
+            auto value = std::stod(token.value());
+            if (tokenType == TokenType::Dif)
+            {
+                auto lastValue = yValues.back();
+                auto nextValue = lastValue + value;
+                yValues.push_back(nextValue);
+            }
+            else
+            {
+                yValues.push_back(value);
+            }
+            previousValue = value;
+        }
+        previousTokenType = tokenType;
+    }
+    return {yValues, difEncoded};
+}
+
 std::pair<std::vector<double>, bool>
 sciformats::jdx::JdxDataParser::readXppYYLine(
     std::string& line, const std::optional<double>& yValueCheck)
@@ -79,135 +159,58 @@ sciformats::jdx::JdxDataParser::readXppYYLine(
     return {values, difEncoded};
 }
 
-std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
-    std::string& encodedValues)
+std::optional<std::string> sciformats::jdx::JdxDataParser::nextToken(
+    const std::string& line, size_t& pos)
 {
-    // output
-    std::vector<double> yValues{};
-    bool difEncoded = false;
-    // state
-    enum class TokenType
+    // skip delimiters
+    while (pos < line.size() && isTokenDelimiter(line, pos))
     {
-        Affn,
-        Sqz,
-        Dif,
-        Dup,
-    };
-    std::string tokenString{};
-    TokenType tokenType = TokenType::Affn;
-    std::optional<double> previousTokenValue{};
-    TokenType previousTokenType = TokenType::Affn;
-    // loop
-    size_t index = 0;
-    while (index <= encodedValues.size())
-    {
-        auto isDelim = isTokenDelimiter(encodedValues, index);
-        auto isStart = isTokenStart(encodedValues, index);
-        if (isStart || isDelim)
-        {
-            if ((tokenType == TokenType::Dup || tokenType == TokenType::Dif)
-                && !previousTokenValue.has_value())
-            {
-                auto message = tokenType == TokenType::Dup ? std::string{"DUP"}
-                                                           : std::string{"DIF"};
-                message += " token without preceding token"
-                           " encountered in sequence: ";
-                message += encodedValues;
-                throw std::runtime_error(message);
-            }
-            if ((tokenType == TokenType::Dup && previousTokenValue.has_value()
-                    && previousTokenType == TokenType::Dup))
-            {
-                throw std::runtime_error(
-                    std::string{
-                        "DUP token with preceding DUP token encountered "
-                        "in sequence: "}
-                    + encodedValues);
-            }
-
-            if (!tokenString.empty())
-            {
-                // a complete token has been captured
-                if (tokenType == TokenType::Dup)
-                {
-                    auto numRepeats = std::stol(tokenString);
-                    for (auto i{0}; i < numRepeats - 1; i++)
-                    {
-                        if (previousTokenType == TokenType::Dif)
-                        {
-                            auto lastValue = yValues.back();
-                            auto nextValue
-                                = lastValue + previousTokenValue.value();
-                            yValues.push_back(nextValue);
-                        }
-                        else
-                        {
-                            yValues.push_back(yValues.back());
-                        }
-                    }
-                    previousTokenValue = numRepeats;
-                }
-                else
-                {
-                    // TODO: also account for ? values
-                    auto value = std::stod(tokenString);
-                    if (tokenType == TokenType::Dif)
-                    {
-                        auto lastValue = yValues.back();
-                        auto nextValue = lastValue + value;
-                        yValues.push_back(nextValue);
-                    }
-                    else
-                    {
-                        yValues.push_back(value);
-                    }
-                    previousTokenValue = value;
-                }
-                previousTokenType = tokenType;
-                tokenString.clear();
-                tokenType = TokenType::Affn;
-            }
-        }
-
-        if (isStart)
-        {
-            // start recording new token
-            auto c = encodedValues.at(index);
-            if (auto sqzDigit = getSqzDigitValue(c))
-            {
-                // replace SQZ char (first char) with (signed) value
-                tokenString = std::to_string(sqzDigit.value());
-                tokenType = TokenType::Sqz;
-            }
-            else if (auto difDigit = getDifDigitValue(c))
-            {
-                // replace DIF char (first char) with (signed) value
-                tokenString = std::to_string(difDigit.value());
-                tokenType = TokenType::Dif;
-                difEncoded = true;
-            }
-            else if (auto dupDigit = getDupDigitValue(c))
-            {
-                // replace DUP char (first char) with unsigned value
-                tokenString = std::to_string(dupDigit.value());
-                tokenType = TokenType::Dup;
-            }
-            else
-            {
-                // must be plain AFFN or PAC (or illegal)
-                tokenString = c;
-                tokenType = TokenType::Affn;
-            }
-        }
-        else if (!isDelim)
-        {
-            // non start digit of token
-            auto c = encodedValues.at(index);
-            tokenString.push_back(c);
-        }
-        index++;
+        pos++;
     }
-    return {yValues, difEncoded};
+    if (pos >= line.size())
+    {
+        return std::nullopt;
+    }
+    if (!isTokenStart(line, pos))
+    {
+        throw std::runtime_error(
+            std::string{"illegal sequence encountered in line \""} + line
+            + "\" at position: " + std::to_string(pos));
+    }
+    std::string token;
+    do
+    {
+        token += line.at(pos++);
+    } while (!isTokenDelimiter(line, pos) && !isTokenStart(line, pos));
+    return token;
+}
+
+sciformats::jdx::JdxDataParser::TokenType
+sciformats::jdx::JdxDataParser::toAffn(std::string& token)
+{
+    auto c = token.front();
+    TokenType tokenType = TokenType::Affn;
+    std::optional<char> firstDigit;
+    if ((firstDigit = getSqzDigitValue(c)))
+    {
+        tokenType = TokenType::Sqz;
+    }
+    else if ((firstDigit = getDifDigitValue(c)))
+    {
+        tokenType = TokenType::Dif;
+    }
+    else if ((firstDigit = getDupDigitValue(c)))
+    {
+        tokenType = TokenType::Dup;
+    }
+    if (TokenType::Affn != tokenType)
+    {
+        // replace SQZ/DIF/DUP char (first char) with (signed) value
+        token.erase(0, 1);
+        token.insert(0, std::to_string(firstDigit.value()));
+    }
+    // must be plain AFFN or PAC (or illegal)
+    return tokenType;
 }
 
 bool sciformats::jdx::JdxDataParser::isTokenDelimiter(

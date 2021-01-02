@@ -85,6 +85,13 @@ TEST_CASE("parses DIF data line", "[JdxDataParser]")
     }
 }
 
+TEST_CASE("fails if sequence starts with DIF token", "[JdxDataParser]")
+{
+    std::string input{"jjj"};
+
+    REQUIRE_THROWS(sciformats::jdx::JdxDataParser::readValues(input));
+}
+
 TEST_CASE("parses DIFDUP data line", "[JdxDataParser]")
 {
     std::string input{"1JT%jX"};
@@ -99,6 +106,22 @@ TEST_CASE("parses DIFDUP data line", "[JdxDataParser]")
     {
         REQUIRE((expect.at(i) == Approx(actual.at(i))));
     }
+}
+
+TEST_CASE(
+    "fails if sequence contains two consecutive DUP tokens", "[JdxDataParser]")
+{
+    std::string input{"1VZ"};
+
+    REQUIRE_THROWS(sciformats::jdx::JdxDataParser::readValues(input));
+}
+
+TEST_CASE("fails for illegal token start character", "[JdxDataParser]")
+{
+    // "u" is an illegal character
+    std::string input{"123 u45"};
+
+    REQUIRE_THROWS(sciformats::jdx::JdxDataParser::readValues(input));
 }
 
 TEST_CASE("parses mixed PAC/AFFN stream", "[JdxDataParser]")
@@ -125,6 +148,18 @@ TEST_CASE("parses mixed PAC/AFFN stream", "[JdxDataParser]")
     {
         REQUIRE((expect.at(i) == Approx(actual.at(i))));
     }
+}
+
+TEST_CASE("detects failing Y check", "[JdxDataParser]")
+{
+    // first line ends with y value 3, next line should duplicate it but is 4
+    std::string input{"599.000+1jj\r\n"
+                      "600.000+4jj\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS(sciformats::jdx::JdxDataParser::readXppYYData(stream));
 }
 
 TEST_CASE("parses DIFDUP stream", "[JdxDataParser]")

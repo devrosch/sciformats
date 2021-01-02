@@ -119,3 +119,13 @@ TEST_CASE("throws on duplicate LDRs in block", "[JdxBlock]")
 
     REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
 }
+
+TEST_CASE("throws on missing END LDR in block", "[JdxBlock]")
+{
+    std::string input{"##TITLE= Test Block\r\n"
+                      "##JCAMP-DX= 5.00\r\n"};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
+}

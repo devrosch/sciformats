@@ -1,6 +1,8 @@
 #ifndef LIBJDX_JDXBLOCK_HPP
 #define LIBJDX_JDXBLOCK_HPP
 
+#include <jdx/JdxLdr.hpp>
+
 #include <cstdint>
 #include <fstream>
 #include <istream>
@@ -26,16 +28,6 @@ public:
      */
     explicit JdxBlock(std::istream& iStream);
     /**
-     * @brief Constructs a JdxBlock from first line value and istream.
-     * @param title The value of the first line of the block, i.e. the content
-     * of the line following the "##TITLE=" label.
-     * @param iStream Input stream with JCAMP-DX data. The stream position
-     * is assumed to be at the start of the second line (the line following the
-     * TITLE line) of the block. The inputStream is expected to exist for the
-     * lifetime of this object.
-     */
-    JdxBlock(const std::string& title, std::istream& iStream);
-    /**
      * @brief Provides the labeled data records (LDRs) of the JdxBlock.
      * This does \em not include the following LDRs:
      * - comments ("##=")
@@ -47,7 +39,16 @@ public:
      * and the value is the content (without initial blank character if any).
      * E.g. the LDR "##TITLE= abc" has label "TITLE" and content "abc".
      */
-    [[nodiscard]] const std::map<std::string, std::string>& getLdrs() const;
+    [[nodiscard]] const std::vector<JdxLdr>& getLdrs() const;
+    /**
+     * @brief Provides a labeled data record (LDR) from the block. The same
+     * exclusions as for \code getLdrs() apply.
+     * @param label The label of the LDR.
+     * @return The LDR for the given label if it exists in the block,
+     * std::nullopt otherwise.
+     */
+    [[nodiscard]] std::optional<const JdxLdr> getLdr(
+        const std::string& label) const;
     /**
      * @brief Provides the nested JdxBlocks of the JdxBlock.
      * @return JDXBlocks that are nested in this (LINK) block.
@@ -64,11 +65,21 @@ public:
 
 private:
     std::istream& m_istream;
-    std::map<std::string, std::string> m_ldrs;
+    std::vector<JdxLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
     std::vector<JdxBlock> m_blocks;
 
-    void parseInput();
+    /**
+     * @brief Constructs a JdxBlock from first line value and istream.
+     * @param title The value of the first line of the block, i.e. the content
+     * of the line following the "##TITLE=" label.
+     * @param iStream Input stream with JCAMP-DX data. The stream position
+     * is assumed to be at the start of the second line (the line following the
+     * TITLE line) of the block. The inputStream is expected to exist for the
+     * lifetime of this object.
+     */
+    JdxBlock(const std::string& title, std::istream& iStream);
+    void parseInput(const std::string& title);
 };
 } // namespace sciformats::jdx
 

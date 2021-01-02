@@ -1,20 +1,10 @@
 #include "jdx/JdxLdr.hpp"
 
-sciformats::jdx::JdxLdr::JdxLdr(const std::string& label)
-{
-    m_label = label;
-}
-
 sciformats::jdx::JdxLdr::JdxLdr(
     const std::string& label, const std::string& value)
-    : JdxLdr(label)
 {
+    m_label = label;
     m_value = value;
-}
-
-void sciformats::jdx::JdxLdr::addValueLine(const std::string& line)
-{
-    m_value += "\n" + line;
 }
 
 const std::string& sciformats::jdx::JdxLdr::getLabel() const
@@ -30,4 +20,9 @@ const std::string& sciformats::jdx::JdxLdr::getValue() const
 bool sciformats::jdx::JdxLdr::isUserDefined() const
 {
     return !m_label.empty() && m_label.at(0) == '$';
+}
+
+bool sciformats::jdx::JdxLdr::isTechniqueSpecific() const
+{
+    return !m_label.empty() && m_label.at(0) == '.';
 }

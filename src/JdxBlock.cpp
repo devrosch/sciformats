@@ -1,6 +1,7 @@
 #include "jdx/JdxBlock.hpp"
 #include "jdx/JdxLdrParser.hpp"
 
+#include <algorithm>
 #include <array>
 #include <climits>
 #include <cstring>
@@ -21,77 +22,109 @@ sciformats::jdx::JdxBlock::JdxBlock(std::istream& iStream)
         throw std::runtime_error(
             std::string{"Malformed Block start, wrong label: "} + firstLine);
     }
-    m_ldrs.insert(std::make_pair("TITLE", title));
-    parseInput();
+    parseInput(title);
 }
 
 sciformats::jdx::JdxBlock::JdxBlock(
     const std::string& title, std::istream& iStream)
     : m_istream{iStream}
 {
-    m_ldrs.insert(std::make_pair("TITLE", title));
-    parseInput();
+    parseInput(title);
 }
 
-void sciformats::jdx::JdxBlock::parseInput()
+void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
 {
-    std::string lastLabel;
+    std::optional<std::string> label = "TITLE";
+    std::string value = title;
     while (!m_istream.eof())
     {
         auto line = JdxLdrParser::readLine(m_istream);
-        if (JdxLdrParser::isLdrStart(line))
+
+        if (!JdxLdrParser::isLdrStart(line))
         {
-            auto [label, value] = JdxLdrParser::parseLdrStart(line);
-            lastLabel = label;
-            if ("END" == label)
+            // should be continuation of previous LDR
+            if (!label.has_value())
             {
-                // end of block
-                break;
-            }
-            if ("TITLE" == label)
-            {
-                // nested block
-                auto block = JdxBlock(value, m_istream);
-                m_blocks.push_back(std::move(block));
-                continue;
-            }
-            if (label.empty())
-            {
-                // start of block comment "##="
-                m_ldrComments.push_back(value);
-                continue;
-            }
-            // TODO: add special treatment for data LDRs (e.g. XYDATA,
-            // XYPOINTS, RADATA, PEAK TABLE, PEAK ASSIGNMENTS, NTUPLES, ...)
-            auto [it, success] = m_ldrs.emplace(label, value);
-            if (!success)
-            {
-                // reference implementation seems to overwrite LDR with
-                // duplicate, but spec (JCAMP-DX IR 3.2) says
-                // a duplicate LDR is illegal in a block => throw
                 throw std::runtime_error(
-                    std::string{"Duplicate LDR in Block \""} + m_ldrs["TITLE"]
-                    + "\": " + line);
+                    std::string{"Unexpected content found in block \""}
+                    + getLdr("TITLE").value().getValue() + "\": " + line);
             }
+            value.append('\n' + line);
+            continue;
         }
-        else
+
+        // start of new LDR
+        // previous LDR completed
+        if (label.has_value())
         {
-            if (lastLabel.empty())
+            if (label.value().empty())
             {
-                // TODO: check case that no LDR has yet been encountered
                 // last LDR start was an LDR comment "##="
-                m_ldrComments.back().append('\n' + line);
+                m_ldrComments.push_back(value);
             }
             else
             {
                 // last LDR was a regular LDR
-                m_ldrs.at(lastLabel).append('\n' + line);
+                if (getLdr(label.value()))
+                {
+                    // reference implementation seems to overwrite LDR with
+                    // duplicate, but spec (JCAMP-DX IR 3.2) says
+                    // a duplicate LDR is illegal in a block => throw
+                    throw std::runtime_error(
+                        std::string{"Duplicate LDR in Block \""}
+                        + getLdr("TITLE").value().getValue() + "\": " + line);
+                }
+                m_ldrs.emplace_back(label.value(), value);
             }
         }
+
+        // parse new LDR
+        std::tie(label, value) = JdxLdrParser::parseLdrStart(line);
+        // cover special cases
+        if ("END" == label)
+        {
+            // end of block
+            break;
+        }
+        if ("TITLE" == label)
+        {
+            // nested block
+            auto block = JdxBlock(value, m_istream);
+            m_blocks.push_back(std::move(block));
+            label = std::nullopt;
+            continue;
+        }
+        // TODO: add special treatment for data LDRs (e.g. XYDATA,
+        // XYPOINTS, RADATA, PEAK TABLE, PEAK ASSIGNMENTS, NTUPLES, ...)
+    }
+    if ("END" != label)
+    {
+        throw std::runtime_error(
+            std::string{"Unexpected end of block. No END label found: \""}
+            + getLdr("TITLE").value().getValue());
     }
 }
 
-const std::map<std::string, std::string>&
+std::optional<const sciformats::jdx::JdxLdr> sciformats::jdx::JdxBlock::getLdr(
+    const std::string& label) const
+{
+    std::string normalizedLabel = "##" + label + "=";
+    // TODO: make normalizeLdrLabel() more generic
+    sciformats::jdx::JdxLdrParser::normalizeLdrLabel(normalizedLabel);
+    normalizedLabel = normalizedLabel.substr(2, normalizedLabel.size() - 3);
+    auto it = std::find_if(
+        m_ldrs.begin(), m_ldrs.end(), [&normalizedLabel](const JdxLdr& ldr) {
+            return ldr.getLabel() == normalizedLabel;
+        });
+
+    if (it != m_ldrs.end())
+    {
+        return *it;
+    }
+    return std::nullopt;
+}
+
+const std::vector<sciformats::jdx::JdxLdr>&
 sciformats::jdx::JdxBlock::getLdrs() const
 {
     return m_ldrs;

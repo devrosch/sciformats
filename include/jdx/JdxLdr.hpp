@@ -11,14 +11,12 @@ namespace sciformats::jdx
 class JdxLdr
 {
 public:
-    explicit JdxLdr(const std::string& label);
     /**
      * @brief Constructs a JdxLdr from label and value.
      * @param label The label of the LDR, e.g. "TITLE" for "##TITLE= abc".
      * @param value The value of the LDR, e.g. "abc" for "##TITLE= abc".
      */
     JdxLdr(const std::string& label, const std::string& value);
-    void addValueLine(const std::string& line);
     /**
      * @brief The label of the LDR, e.g. "TITLE" for "##TITLE= abc".
      * @return The label of the LDR.
@@ -37,6 +35,12 @@ public:
      * @return "true" if label is user defined, otherwise "false".
      */
     [[nodiscard]] bool isUserDefined() const;
+    /**
+     * @brief Whether LDR is technique specific, i.e. the label starts
+     * with ".", e.g. "##.OBSERVE_FREQUENCY= 50.0".
+     * @return "true" if label is user defined, otherwise "false".
+     */
+    [[nodiscard]] bool isTechniqueSpecific() const;
 
 private:
     std::string m_label;

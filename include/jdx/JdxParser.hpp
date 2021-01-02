@@ -19,18 +19,19 @@ class JdxParser
 {
 public:
     /**
-     * @brief Shallow check if the data can be parsed, e.g. by checking the file extension or magic bytes.
+     * @brief Shallow check if the data can be parsed, e.g. by checking the file
+     * extension or magic bytes.
      * @param filePath Path to the file.
      * @param iStream Binary input stream.
      * @return A tentative indication whether this parser can process the file.
      */
-    bool static canParse(
-        const std::string& filePath, std::istream& iStream);
+    bool static canParse(const std::string& filePath, std::istream& iStream);
 
     /**
      * @brief Parses the data.
      * @param iStream Binary input stream.
-     * @param activateExceptions Activate exceptions for input_stream. Defaults to "true".
+     * @param activateExceptions Activate exceptions for input_stream. Defaults
+     * to "true".
      * @return A JdxBlock representing the data.
      */
     JdxBlock static parse(

@@ -18,8 +18,8 @@ TEST_CASE("parses all LDRs in block", "[JdxBlock]")
                       "##NPOINTS= 2\r\n"
                       "##FIRSTY= 10\r\n"
                       "##XYPOINTS= (XY..XY)\r\n"
-                      "450.0, 10.0"
-                      "451.0, 11.0"
+                      "450.0, 10.0\r\n"
+                      "451.0, 11.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
@@ -29,7 +29,7 @@ TEST_CASE("parses all LDRs in block", "[JdxBlock]")
 
     // does not contain "##END=" even though technically an LDR
     REQUIRE(14 == ldrs.size());
-    REQUIRE("Test" == ldrs.at("TITLE"));
+    REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
 }
 
 TEST_CASE("parses nested blocks", "[JdxBlock]")
@@ -53,9 +53,9 @@ TEST_CASE("parses nested blocks", "[JdxBlock]")
                       "##NPOINTS= 2\r\n"
                       "##FIRSTY= 10\r\n"
                       "##XYPOINTS= (XY..XY)\r\n"
-                      "450.0, 10.0"
-                      "451.0, 11.0"
-                      "##END="
+                      "450.0, 10.0\r\n"
+                      "451.0, 11.0\r\n"
+                      "##END=\r\n"
 
                       "##END="};
     std::stringstream stream{std::ios_base::in};
@@ -67,12 +67,13 @@ TEST_CASE("parses nested blocks", "[JdxBlock]")
 
     // does not contain "##END=" even though technically an LDR
     REQUIRE(4 == ldrs.size());
-    REQUIRE("Test Link Block" == ldrs.at("TITLE"));
-    REQUIRE("LINK" == ldrs.at("DATATYPE"));
+    REQUIRE("Test Link Block" == block.getLdr("TITLE").value().getValue());
+    REQUIRE("LINK" == block.getLdr("DATATYPE").value().getValue());
 
     REQUIRE(1 == innerBlocks.size());
     auto innerBlock = innerBlocks.at(0);
-    REQUIRE("Test Nested Block" == innerBlock.getLdrs().at("TITLE"));
+    REQUIRE(
+        "Test Nested Block" == innerBlock.getLdr("TITLE").value().getValue());
 }
 
 TEST_CASE("treats block comments different from other LDRs", "[JdxBlock]")

@@ -6,8 +6,8 @@
 #include <cstring>
 #include <limits>
 
-sciformats::jdx::JdxBlock::JdxBlock(std::istream& inputStream)
-    : m_istream{inputStream}
+sciformats::jdx::JdxBlock::JdxBlock(std::istream& iStream)
+    : m_istream{iStream}
 {
     auto firstLine = JdxLdrParser::readLine(m_istream);
     if (!JdxLdrParser::isLdrStart(firstLine))
@@ -26,8 +26,8 @@ sciformats::jdx::JdxBlock::JdxBlock(std::istream& inputStream)
 }
 
 sciformats::jdx::JdxBlock::JdxBlock(
-    const std::string& title, std::istream& inputStream)
-    : m_istream{inputStream}
+    const std::string& title, std::istream& iStream)
+    : m_istream{iStream}
 {
     m_ldrs.insert(std::make_pair("TITLE", title));
     parseInput();

@@ -18,25 +18,48 @@ class JdxBlock
 {
 public:
     /**
-     * @brief JdxBlock Constructs from istream.
-     * @param inputStream Input stream with JCAMP-DX data. The stream position
+     * @brief Constructs a JdxBlock from istream.
+     * @param iStream Input stream with JCAMP-DX data. The stream position
      * is assumed to be at the start of the first line of the block (containing
      * the TITLE LDR). The inputStream is expected to exist for the lifetime of
      * this object.
      */
-    explicit JdxBlock(std::istream& inputStream);
+    explicit JdxBlock(std::istream& iStream);
     /**
-     * @brief JdxBlock Constructs from first line value and istream.
+     * @brief Constructs a JdxBlock from first line value and istream.
      * @param title The value of the first line of the block, i.e. the content
-     * of the line following the `##TITLE=` label.
-     * @param inputStream Input stream with JCAMP-DX data. The stream position
+     * of the line following the "##TITLE=" label.
+     * @param iStream Input stream with JCAMP-DX data. The stream position
      * is assumed to be at the start of the second line (the line following the
      * TITLE line) of the block. The inputStream is expected to exist for the
      * lifetime of this object.
      */
-    JdxBlock(const std::string& title, std::istream& inputStream);
+    JdxBlock(const std::string& title, std::istream& iStream);
+    /**
+     * @brief Provides the labeled data records (LDRs) of the JdxBlock.
+     * This does \em not include the following LDRs:
+     * - comments ("##=")
+     * - data ("##XYDATA=", "##XYPOINTS=", "##PEAK TABLE=", "##PEAK
+     * ASSIGNMENTS=", "##RADATA=", "##NTUPLES=") Use the specialized member
+     * functions to retrieve the respective data.
+     *
+     * @return The LDRs in this block. The key is the label without "##" and "="
+     * and the value is the content (without initial blank character if any).
+     * E.g. the LDR "##TITLE= abc" has label "TITLE" and content "abc".
+     */
     [[nodiscard]] const std::map<std::string, std::string>& getLdrs() const;
+    /**
+     * @brief Provides the nested JdxBlocks of the JdxBlock.
+     * @return JDXBlocks that are nested in this (LINK) block.
+     */
     [[nodiscard]] const std::vector<JdxBlock>& getBlocks() const;
+    /**
+     * @brief Provides the labeled data records (LDRs) of the
+     * JdxBlock that are comments (i.e. "##= <comment>").
+     * @return The comment contents. The content of a comment is the text
+     * following the "=" without initial blank character if any. E.g. the
+     * comment "##= abc" has content "abc".
+     */
     [[nodiscard]] const std::vector<std::string>& getLdrComments() const;
 
 private:

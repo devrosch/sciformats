@@ -8,7 +8,7 @@
 #include <algorithm>
 
 bool sciformats::jdx::JdxParser::canParse(
-    const std::string& filePath, std::istream& inputStream)
+    const std::string& filePath, std::istream& iStream)
 {
     // check extension
     // TODO: in the future use
@@ -33,31 +33,31 @@ bool sciformats::jdx::JdxParser::canParse(
     }
 
     // check magic bytes
-    std::ios::pos_type position = inputStream.tellg();
+    std::ios::pos_type position = iStream.tellg();
     std::string magic{"##TITLE="};
     bool match = true;
     for (size_t i{0}; i < magic.size(); i++)
     {
         // TODO: label should be normalized before comparison
-        if (inputStream.eof() || magic.at(i) != inputStream.get())
+        if (iStream.eof() || magic.at(i) != iStream.get())
         {
             match = false;
             break;
         }
     }
-    inputStream.seekg(position, std::ios_base::beg);
+    iStream.seekg(position, std::ios_base::beg);
     return match;
 }
 
 sciformats::jdx::JdxBlock sciformats::jdx::JdxParser::parse(
-    std::istream& inputStream, bool activateExceptions)
+    std::istream& iStream, bool activateExceptions)
 {
     if (activateExceptions)
     {
         // the underlying getline() method sets failbit at end of file, so do
         // not set std::ios::eofbit
-        inputStream.exceptions(std::ios::failbit | std::ios::badbit);
+        iStream.exceptions(std::ios::failbit | std::ios::badbit);
     }
-    sciformats::jdx::JdxBlock block{inputStream};
+    sciformats::jdx::JdxBlock block{iStream};
     return block;
 }

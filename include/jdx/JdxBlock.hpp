@@ -42,7 +42,7 @@ public:
     [[nodiscard]] const std::vector<JdxLdr>& getLdrs() const;
     /**
      * @brief Provides a labeled data record (LDR) from the block. The same
-     * exclusions as for \code getLdrs() apply.
+     * exclusions as for getLdrs() apply.
      * @param label The label of the LDR.
      * @return The LDR for the given label if it exists in the block,
      * std::nullopt otherwise.

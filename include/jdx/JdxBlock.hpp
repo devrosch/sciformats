@@ -68,32 +68,32 @@ public:
      * @brief Getter for FIRSTX LDR value.
      * @return FIRSTX value.
      */
-    std::optional<double> getFirstX() const;
+    [[nodiscard]] std::optional<double> getFirstX() const;
     /**
      * @brief Getter for LASTX LDR value.
      * @return Parsed value if any.
      */
-    std::optional<double> getLastX() const;
+    [[nodiscard]] std::optional<double> getLastX() const;
     /**
      * @brief Getter for XFACTOR LDR value.
      * @return Parsed value if any.
      */
-    std::optional<double> getXFactor() const;
+    [[nodiscard]] std::optional<double> getXFactor() const;
     /**
      * @brief Getter for YFACTOR LDR value.
      * @return Parsed value if any.
      */
-    std::optional<double> getYFactor() const;
+    [[nodiscard]] std::optional<double> getYFactor() const;
     /**
      * @brief Getter for NPOINTS LDR value.
      * @return Parsed value if any.
      */
-    std::optional<unsigned long> getNPoints() const;
+    [[nodiscard]] std::optional<unsigned long> getNPoints() const;
     /**
      * @brief Provides the XYDATA record if available.
      * @return XYDATA record.
      */
-    const std::optional<JdxXyData>& getXyData() const;
+    [[nodiscard]] const std::optional<JdxXyData>& getXyData() const;
 
 private:
     std::istream& m_istream;

@@ -126,12 +126,13 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
 
             // we're using unsigned long NPOINTS in a function expecting size_t
             static_assert(std::numeric_limits<unsigned long>::max()
-                // NOLINTNEXTLINE(misc-redundant-expression)
-                <= std::numeric_limits<size_t>::max(),
-                    "unsigned long max larger than size_t max");
+                              // NOLINTNEXTLINE(misc-redundant-expression)
+                              <= std::numeric_limits<size_t>::max(),
+                "unsigned long max larger than size_t max");
 
-            auto xyData = JdxXyData(label.value(), value, m_istream, firstX.value(),
-                lastX.value(), xFactor.value(), yFactor.value(), nPoints.value());
+            auto xyData = JdxXyData(label.value(), value, m_istream,
+                firstX.value(), lastX.value(), xFactor.value(), yFactor.value(),
+                nPoints.value());
             m_xyData.emplace(xyData);
         }
         // TODO: add special treatment for data LDRs (e.g. XYDATA,
@@ -218,9 +219,9 @@ std::optional<double> sciformats::jdx::JdxBlock::getYFactor() const
 std::optional<unsigned long> sciformats::jdx::JdxBlock::getNPoints() const
 {
     auto ldr = getLdr("NPOINTS");
-    return ldr.has_value()
-               ? std::optional<unsigned long>(std::stoul(ldr.value().getValue()))
-               : std::nullopt;
+    return ldr.has_value() ? std::optional<unsigned long>(
+               std::stoul(ldr.value().getValue()))
+                           : std::nullopt;
 }
 
 const std::optional<sciformats::jdx::JdxXyData>&

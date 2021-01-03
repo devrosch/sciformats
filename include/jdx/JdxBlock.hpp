@@ -1,7 +1,8 @@
 #ifndef LIBJDX_JDXBLOCK_HPP
 #define LIBJDX_JDXBLOCK_HPP
 
-#include <jdx/JdxLdr.hpp>
+#include "jdx/JdxLdr.hpp"
+#include "jdx/JdxXyData.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -32,8 +33,9 @@ public:
      * This does \em not include the following LDRs:
      * - comments ("##=")
      * - data ("##XYDATA=", "##XYPOINTS=", "##PEAK TABLE=", "##PEAK
-     * ASSIGNMENTS=", "##RADATA=", "##NTUPLES=") Use the specialized member
-     * functions to retrieve the respective data.
+     * ASSIGNMENTS=", "##RADATA=", "##NTUPLES=")
+     *
+     * Use the specialized member functions to retrieve the respective data.
      *
      * @return The LDRs in this block. The key is the label without "##" and "="
      * and the value is the content (without initial blank character if any).
@@ -62,12 +64,43 @@ public:
      * comment "##= abc" has content "abc".
      */
     [[nodiscard]] const std::vector<std::string>& getLdrComments() const;
+    /**
+     * @brief Getter for FIRSTX LDR value.
+     * @return FIRSTX value.
+     */
+    std::optional<double> getFirstX() const;
+    /**
+     * @brief Getter for LASTX LDR value.
+     * @return Parsed value if any.
+     */
+    std::optional<double> getLastX() const;
+    /**
+     * @brief Getter for XFACTOR LDR value.
+     * @return Parsed value if any.
+     */
+    std::optional<double> getXFactor() const;
+    /**
+     * @brief Getter for YFACTOR LDR value.
+     * @return Parsed value if any.
+     */
+    std::optional<double> getYFactor() const;
+    /**
+     * @brief Getter for NPOINTS LDR value.
+     * @return Parsed value if any.
+     */
+    std::optional<unsigned long> getNPoints() const;
+    /**
+     * @brief Provides the XYDATA record if available.
+     * @return XYDATA record.
+     */
+    const std::optional<JdxXyData>& getXyData() const;
 
 private:
     std::istream& m_istream;
     std::vector<JdxLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
     std::vector<JdxBlock> m_blocks;
+    std::optional<JdxXyData> m_xyData;
 
     /**
      * @brief Constructs a JdxBlock from first line value and istream.

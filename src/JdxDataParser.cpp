@@ -145,7 +145,7 @@ sciformats::jdx::JdxDataParser::readXppYYLine(
     {
         // remove initial x value (not required for (X++(Y..Y)) encoded data)
         values.erase(values.begin());
-        // TODO: maybe perform some kind of X value check
+        // TODO: perform X value check
     }
     if (yValueCheck.has_value() && !values.empty())
     {

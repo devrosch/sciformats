@@ -32,6 +32,33 @@ TEST_CASE("parses all LDRs in block", "[JdxBlock]")
     REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
 }
 
+TEST_CASE("throws if required LDRs for xy data are missing", "[JdxBlock]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED SPECTRUM\r\n"
+                      "##ORIGIN= devrosch\r\n"
+                      "##OWNER= PUBLIC DOMAIN\r\n"
+                      "##XUNITS= 1/CM\r\n"
+                      "##YUNITS= ABSORBANCE\r\n"
+                      "##XFACTOR= 1.0\r\n"
+                      "##YFACTOR= 1.0\r\n"
+                      // "##FIRSTX= 450\r\n" // required for XYDATA
+                      "##LASTX= 451\r\n"
+                      // "##NPOINTS= 2\r\n" // required for XYDATA
+                      "##FIRSTY= 10\r\n"
+                      "##XYDATA= (XY..XY)\r\n"
+                      "450.0, 10.0\r\n"
+                      "451.0, 11.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::JdxBlock(stream),
+        Catch::Matchers::Contains("NPOINTS")
+            && Catch::Matchers::Contains("FIRSTX"));
+}
+
 TEST_CASE("parses nested blocks", "[JdxBlock]")
 {
     std::string input{"##TITLE= Test Link Block\r\n"

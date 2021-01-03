@@ -4,6 +4,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdrParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxDataParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxXyData.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
@@ -13,6 +14,7 @@ add_library(jdxparser
     JdxLdrParser.cpp
     JdxLdr.cpp
     JdxDataParser.cpp
+    JdxXyData.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

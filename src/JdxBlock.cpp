@@ -1,5 +1,6 @@
 #include "jdx/JdxBlock.hpp"
 #include "jdx/JdxLdrParser.hpp"
+#include "jdx/JdxXyData.hpp"
 
 #include <algorithm>
 #include <array>
@@ -49,6 +50,7 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
                     std::string{"Unexpected content found in block \""}
                     + getLdr("TITLE").value().getValue() + "\": " + line);
             }
+            // TODO: account for terminal "=" as non line breaking marker
             value.append('\n' + line);
             continue;
         }
@@ -94,13 +96,51 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
             label = std::nullopt;
             continue;
         }
+        if ("XYDATA" == label)
+        {
+            if (getXyData())
+            {
+                // duplicate
+                throw std::runtime_error(
+                    "Multiple XYDATA LDRs encountered in block: \""
+                    + getLdr("TITLE").value().getValue());
+            }
+            auto firstX = getFirstX();
+            auto lastX = getLastX();
+            auto xFactor = getXFactor();
+            auto yFactor = getYFactor();
+            auto nPoints = getNPoints();
+            if (!firstX.has_value() || !lastX.has_value()
+                || !xFactor.has_value() || !yFactor.has_value()
+                || !nPoints.has_value())
+            {
+                std::string missing{};
+                missing += firstX.has_value() ? "" : " FIRSTX";
+                missing += lastX.has_value() ? "" : " LASTX";
+                missing += xFactor.has_value() ? "" : " XFACTOR";
+                missing += yFactor.has_value() ? "" : " YFACTOR";
+                missing += nPoints.has_value() ? "" : " NPOINTS";
+                throw std::runtime_error(
+                    "Required LDR(s) missing for XYDATA: {" + missing + " }");
+            }
+
+            // we're using unsigned long NPOINTS in a function expecting size_t
+            static_assert(std::numeric_limits<unsigned long>::max()
+                // NOLINTNEXTLINE(misc-redundant-expression)
+                <= std::numeric_limits<size_t>::max(),
+                    "unsigned long max larger than size_t max");
+
+            auto xyData = JdxXyData(label.value(), value, m_istream, firstX.value(),
+                lastX.value(), xFactor.value(), yFactor.value(), nPoints.value());
+            m_xyData.emplace(xyData);
+        }
         // TODO: add special treatment for data LDRs (e.g. XYDATA,
         // XYPOINTS, RADATA, PEAK TABLE, PEAK ASSIGNMENTS, NTUPLES, ...)
     }
     if ("END" != label)
     {
         throw std::runtime_error(
-            std::string{"Unexpected end of block. No END label found: \""}
+            "Unexpected end of block. No END label found: \""
             + getLdr("TITLE").value().getValue());
     }
 }
@@ -140,4 +180,51 @@ const std::vector<std::string>&
 sciformats::jdx::JdxBlock::getLdrComments() const
 {
     return m_ldrComments;
+}
+
+// TODO: combine getXXX() for doubles
+std::optional<double> sciformats::jdx::JdxBlock::getFirstX() const
+{
+    auto ldr = getLdr("FIRSTX");
+    return ldr.has_value()
+               ? std::optional<double>(std::stod(ldr.value().getValue()))
+               : std::nullopt;
+}
+
+std::optional<double> sciformats::jdx::JdxBlock::getLastX() const
+{
+    auto ldr = getLdr("LASTX");
+    return ldr.has_value()
+               ? std::optional<double>(std::stod(ldr.value().getValue()))
+               : std::nullopt;
+}
+
+std::optional<double> sciformats::jdx::JdxBlock::getXFactor() const
+{
+    auto ldr = getLdr("XFACTOR");
+    return ldr.has_value()
+               ? std::optional<double>(std::stod(ldr.value().getValue()))
+               : std::nullopt;
+}
+
+std::optional<double> sciformats::jdx::JdxBlock::getYFactor() const
+{
+    auto ldr = getLdr("YFACTOR");
+    return ldr.has_value()
+               ? std::optional<double>(std::stod(ldr.value().getValue()))
+               : std::nullopt;
+}
+
+std::optional<unsigned long> sciformats::jdx::JdxBlock::getNPoints() const
+{
+    auto ldr = getLdr("NPOINTS");
+    return ldr.has_value()
+               ? std::optional<unsigned long>(std::stoul(ldr.value().getValue()))
+               : std::nullopt;
+}
+
+const std::optional<sciformats::jdx::JdxXyData>&
+sciformats::jdx::JdxBlock::getXyData() const
+{
+    return m_xyData;
 }

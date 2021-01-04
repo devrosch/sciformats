@@ -2,15 +2,15 @@
 #include "jdx/JdxDataParser.hpp"
 #include "jdx/JdxLdrParser.hpp"
 
-sciformats::jdx::JdxXyData::JdxXyData(std::istream& iStream, double firstX,
-    double lastX, double xFactor, double yFactor, uint64_t nPoints)
+sciformats::jdx::JdxXyData::JdxXyData(
+    std::istream& iStream, const XyParameters& parameters)
     : m_istream{iStream}
     , m_streamDataPos{iStream.tellg()}
-    , m_firstX{firstX}
-    , m_lastX{lastX}
-    , m_xFactor{xFactor}
-    , m_yFactor{yFactor}
-    , m_nPoints{nPoints}
+    , m_firstX{parameters.firstX}
+    , m_lastX{parameters.lastX}
+    , m_xFactor{parameters.xFactor}
+    , m_yFactor{parameters.yFactor}
+    , m_nPoints{parameters.nPoints}
 {
     auto line = JdxLdrParser::readLine(iStream);
     m_streamDataPos = iStream.tellg();
@@ -31,18 +31,17 @@ sciformats::jdx::JdxXyData::JdxXyData(std::istream& iStream, double firstX,
 }
 
 sciformats::jdx::JdxXyData::JdxXyData(const std::string& label,
-    const std::string& variableList, std::istream& iStream, double firstX,
-    double lastX, double xFactor, double yFactor, uint64_t nPoints)
+    const std::string& variableList, std::istream& iStream,
+    const XyParameters& parameters)
     : m_istream{iStream}
     , m_streamDataPos{iStream.tellg()}
     , m_label{label}
     , m_variableList{variableList}
-    , m_firstX{firstX}
-    , m_lastX{lastX}
-    , m_xFactor{xFactor}
-    , m_yFactor{yFactor}
-    , m_nPoints{nPoints}
-
+    , m_firstX{parameters.firstX}
+    , m_lastX{parameters.lastX}
+    , m_xFactor{parameters.xFactor}
+    , m_yFactor{parameters.yFactor}
+    , m_nPoints{parameters.nPoints}
 {
     validateInput(label, variableList);
     skipToNextLdr(iStream);

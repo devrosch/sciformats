@@ -1,4 +1,5 @@
 #include "jdx/JdxXyData.hpp"
+#include "jdx/XyParameters.hpp"
 
 #include "catch2/catch.hpp"
 
@@ -14,8 +15,9 @@ TEST_CASE("parses AFFN xy data, stream at LDR start", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto xyDataRecord
-        = sciformats::jdx::JdxXyData(stream, 450.0, 452.0, 1.0, 1.0, 3);
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 452.0, 452.0, 450.0,
+        12.0, 10.0, 1.0, 1.0, 3, 10.0, 1.0, 1.0};
+    auto xyDataRecord = sciformats::jdx::JdxXyData(stream, params);
     auto xyData = xyDataRecord.getXyData();
 
     REQUIRE(3 == xyData.size());
@@ -36,8 +38,10 @@ TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto xyDataRecord = sciformats::jdx::JdxXyData(
-        "XYDATA", "(XY..XY)", stream, 450.0, 452.0, 1.0, 1.0, 3);
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 452.0, 452.0, 450.0,
+        12.0, 10.0, 1.0, 1.0, 3, 10.0, 1.0, 1.0};
+    auto xyDataRecord
+        = sciformats::jdx::JdxXyData("XYDATA", "(XY..XY)", stream, params);
     auto xyData = xyDataRecord.getXyData();
 
     REQUIRE(3 == xyData.size());
@@ -57,8 +61,9 @@ TEST_CASE("parses single data point record", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto xyDataRecord
-        = sciformats::jdx::JdxXyData(stream, 450.0, 450.0, 1.0, 1.0, 1);
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
+        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
+    auto xyDataRecord = sciformats::jdx::JdxXyData(stream, params);
     auto xyData = xyDataRecord.getXyData();
 
     REQUIRE(1 == xyData.size());
@@ -76,8 +81,9 @@ TEST_CASE("detects mismatching NPOINTS", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto xyDataRecord
-        = sciformats::jdx::JdxXyData(stream, 450.0, 452.0, 1.0, 1.0, 2);
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 452.0, 452.0, 450.0,
+        12.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
+    auto xyDataRecord = sciformats::jdx::JdxXyData(stream, params);
     REQUIRE_THROWS(xyDataRecord.getXyData());
 }
 
@@ -89,8 +95,9 @@ TEST_CASE("detects mismatching variables list for XYDATA", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(
-        sciformats::jdx::JdxXyData(stream, 450.0, 450.0, 1.0, 1.0, 1));
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
+        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
+    REQUIRE_THROWS(sciformats::jdx::JdxXyData(stream, params));
 }
 
 TEST_CASE("detects mismatching variables list for RADATA", "[JdxXyData]")
@@ -101,8 +108,9 @@ TEST_CASE("detects mismatching variables list for RADATA", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(
-        sciformats::jdx::JdxXyData(stream, 450.0, 450.0, 1.0, 1.0, 1));
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
+        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
+    REQUIRE_THROWS(sciformats::jdx::JdxXyData(stream, params));
 }
 
 TEST_CASE("detects illegal stream position (wrong label)", "[JdxXyData]")
@@ -114,8 +122,9 @@ TEST_CASE("detects illegal stream position (wrong label)", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(
-        sciformats::jdx::JdxXyData(stream, 450.0, 450.0, 1.0, 1.0, 1));
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
+        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
+    REQUIRE_THROWS(sciformats::jdx::JdxXyData(stream, params));
 }
 
 TEST_CASE("detects illegal stream position (not LDR start)", "[JdxXyData]")
@@ -125,6 +134,7 @@ TEST_CASE("detects illegal stream position (not LDR start)", "[JdxXyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(
-        sciformats::jdx::JdxXyData(stream, 450.0, 450.0, 1.0, 1.0, 1));
+    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
+        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
+    REQUIRE_THROWS(sciformats::jdx::JdxXyData(stream, params));
 }

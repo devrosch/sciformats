@@ -1,6 +1,8 @@
 #ifndef LIBJDX_JDXXYDATA_HPP
 #define LIBJDX_JDXXYDATA_HPP
 
+#include "jdx/XyParameters.hpp"
+
 #include <istream>
 #include <vector>
 
@@ -19,16 +21,9 @@ public:
      * assumed to be at the start of the first line of the record (the line
      * containing "##XYDATA=" or "##RADATA="). The inputStream is expected to
      * exist for the lifetime of this object.
-     * @param firstX The first X value.
-     * @param lastX The last X value.
-     * @param xFactor The factor by which to multiply raw x values to arrive at
-     * the actual value.
-     * @param yFactor The factor by which to multiply raw y values to arrive at
-     * the actual value.
-     * @param nPoints The number of xy pairs in this record.
+     * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
-    explicit JdxXyData(std::istream& iStream, double firstX, double lastX,
-        double xFactor, double yFactor, uint64_t nPoints);
+    explicit JdxXyData(std::istream& iStream, const XyParameters& parameters);
     /**
      * @brief Constructs JdxXyData from first line value and istream.
      * @param label The label of the first line of the record, i.e. either
@@ -39,17 +34,10 @@ public:
      * assumed to be at the start of the second line (the line following the
      * "##XYDATA=" or "##RADATA=" line) of the record. The inputStream is
      * expected to exist for the lifetime of this object.
-     * @param firstX The first X value.
-     * @param lastX The last X value.
-     * @param xFactor The factor by which to multiply raw x values to arrive at
-     * the actual value.
-     * @param yFactor The factor by which to multiply raw y values to arrive at
-     * the actual value.
-     * @param nPoints The number of xy pairs in this record.
+     * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
     JdxXyData(const std::string& label, const std::string& variableList,
-        std::istream& iStream, double firstX, double lastX, double xFactor,
-        double yFactor, uint64_t nPoints);
+        std::istream& iStream, const XyParameters& parameters);
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by

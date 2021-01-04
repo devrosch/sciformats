@@ -1,6 +1,8 @@
 #include "jdx/JdxBlock.hpp"
 #include "jdx/JdxLdrParser.hpp"
 #include "jdx/JdxXyData.hpp"
+#include "jdx/RaParameters.hpp"
+#include "jdx/XyParameters.hpp"
 
 #include <algorithm>
 #include <array>
@@ -94,9 +96,8 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
             auto block = JdxBlock(value, m_istream);
             m_blocks.push_back(std::move(block));
             label = std::nullopt;
-            continue;
         }
-        if ("XYDATA" == label)
+        else if ("XYDATA" == label)
         {
             if (getXyData())
             {
@@ -105,34 +106,11 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
                     "Multiple XYDATA LDRs encountered in block: \""
                     + getLdr("TITLE").value().getValue());
             }
-            auto firstX = getFirstX();
-            auto lastX = getLastX();
-            auto xFactor = getXFactor();
-            auto yFactor = getYFactor();
-            auto nPoints = getNPoints();
-            if (!firstX.has_value() || !lastX.has_value()
-                || !xFactor.has_value() || !yFactor.has_value()
-                || !nPoints.has_value())
-            {
-                std::string missing{};
-                missing += firstX.has_value() ? "" : " FIRSTX";
-                missing += lastX.has_value() ? "" : " LASTX";
-                missing += xFactor.has_value() ? "" : " XFACTOR";
-                missing += yFactor.has_value() ? "" : " YFACTOR";
-                missing += nPoints.has_value() ? "" : " NPOINTS";
-                throw std::runtime_error(
-                    "Required LDR(s) missing for XYDATA: {" + missing + " }");
-            }
 
-            // we're using unsigned long NPOINTS in a function expecting size_t
-            static_assert(std::numeric_limits<unsigned long>::max()
-                              // NOLINTNEXTLINE(misc-redundant-expression)
-                              <= std::numeric_limits<size_t>::max(),
-                "unsigned long max larger than size_t max");
-
-            auto xyData = JdxXyData(label.value(), value, m_istream,
-                firstX.value(), lastX.value(), xFactor.value(), yFactor.value(),
-                nPoints.value());
+            auto parameters = parseXyParameters(getLdrs());
+            m_xyParameters = parameters;
+            auto xyData
+                = JdxXyData(label.value(), value, m_istream, parameters);
             m_xyData.emplace(xyData);
         }
         // TODO: add special treatment for data LDRs (e.g. XYDATA,
@@ -183,49 +161,91 @@ sciformats::jdx::JdxBlock::getLdrComments() const
     return m_ldrComments;
 }
 
-// TODO: combine getXXX() for doubles
-std::optional<double> sciformats::jdx::JdxBlock::getFirstX() const
-{
-    auto ldr = getLdr("FIRSTX");
-    return ldr.has_value()
-               ? std::optional<double>(std::stod(ldr.value().getValue()))
-               : std::nullopt;
-}
-
-std::optional<double> sciformats::jdx::JdxBlock::getLastX() const
-{
-    auto ldr = getLdr("LASTX");
-    return ldr.has_value()
-               ? std::optional<double>(std::stod(ldr.value().getValue()))
-               : std::nullopt;
-}
-
-std::optional<double> sciformats::jdx::JdxBlock::getXFactor() const
-{
-    auto ldr = getLdr("XFACTOR");
-    return ldr.has_value()
-               ? std::optional<double>(std::stod(ldr.value().getValue()))
-               : std::nullopt;
-}
-
-std::optional<double> sciformats::jdx::JdxBlock::getYFactor() const
-{
-    auto ldr = getLdr("YFACTOR");
-    return ldr.has_value()
-               ? std::optional<double>(std::stod(ldr.value().getValue()))
-               : std::nullopt;
-}
-
-std::optional<unsigned long> sciformats::jdx::JdxBlock::getNPoints() const
-{
-    auto ldr = getLdr("NPOINTS");
-    return ldr.has_value() ? std::optional<unsigned long>(
-               std::stoul(ldr.value().getValue()))
-                           : std::nullopt;
-}
-
 const std::optional<sciformats::jdx::JdxXyData>&
 sciformats::jdx::JdxBlock::getXyData() const
 {
     return m_xyData;
+}
+
+const std::optional<sciformats::jdx::XyParameters>&
+sciformats::jdx::JdxBlock::getXyDataParameters() const
+{
+    return m_xyParameters;
+}
+
+sciformats::jdx::XyParameters sciformats::jdx::JdxBlock::parseXyParameters(
+    const std::vector<JdxLdr>& ldrs)
+{
+    auto findLdr = [ldrs](const std::string& label) {
+        auto it = std::find_if(ldrs.begin(), ldrs.end(),
+            [&label](const JdxLdr& ldr) { return ldr.getLabel() == label; });
+        return it == ldrs.end() ? std::optional<std::string>(std::nullopt)
+                                : std::optional<std::string>((*it).getValue());
+    };
+
+    // required
+    // string
+    auto xUnits = findLdr("XUNITS");
+    auto yUnits = findLdr("YUNITS");
+    // double
+    auto firstX = findLdr("FIRSTX");
+    auto lastX = findLdr("LASTX");
+    auto xFactor = findLdr("XFACTOR");
+    auto yFactor = findLdr("YFACTOR");
+    auto nPoints = findLdr("NPOINTS");
+    // optional
+    // double
+    auto firstY = findLdr("FIRSTY");
+    auto maxX = findLdr("MAXX");
+    auto minX = findLdr("MINX");
+    auto maxY = findLdr("MAXY");
+    auto minY = findLdr("MINY");
+
+    std::string missing{};
+    missing += xUnits.has_value() ? "" : " XUNITS";
+    missing += yUnits.has_value() ? "" : " YUNITS";
+    missing += firstX.has_value() ? "" : " FIRSTX";
+    missing += lastX.has_value() ? "" : " LASTX";
+    missing += xFactor.has_value() ? "" : " XFACTOR";
+    missing += yFactor.has_value() ? "" : " YFACTOR";
+    missing += nPoints.has_value() ? "" : " NPOINTS";
+
+    if (!missing.empty())
+    {
+        throw std::runtime_error(
+            "Required LDR(s) missing for XYDATA: {" + missing + " }");
+    }
+
+    // we're parsing NPOINTS as unsigned long and assigning to unint_64
+    static_assert(std::numeric_limits<unsigned long>::max()
+                      // NOLINTNEXTLINE(misc-redundant-expression)
+                      <= std::numeric_limits<uint64_t>::max(),
+        "unsigned long max larger than uint_64_t max");
+
+    // parse values
+    XyParameters parms;
+    parms.xUnits = xUnits.value();
+    parms.yUnits = yUnits.value();
+    parms.firstX = std::stod(firstX.value());
+    parms.lastX = std::stod(firstX.value());
+    parms.xFactor = std::stod(firstX.value());
+    parms.yFactor = std::stod(firstX.value());
+    parms.nPoints = std::stoul(firstX.value());
+    parms.firstY = firstY.has_value()
+                       ? std::optional<double>(std::stod(firstY.value()))
+                       : std::nullopt;
+    parms.maxX = maxX.has_value()
+                     ? std::optional<double>(std::stod(maxX.value()))
+                     : std::nullopt;
+    parms.minX = maxX.has_value()
+                     ? std::optional<double>(std::stod(minX.value()))
+                     : std::nullopt;
+    parms.maxY = maxX.has_value()
+                     ? std::optional<double>(std::stod(maxY.value()))
+                     : std::nullopt;
+    parms.minY = maxX.has_value()
+                     ? std::optional<double>(std::stod(minY.value()))
+                     : std::nullopt;
+
+    return parms;
 }

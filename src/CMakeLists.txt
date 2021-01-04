@@ -5,6 +5,8 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxDataParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxXyData.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting

@@ -3,6 +3,8 @@
 
 #include "jdx/JdxLdr.hpp"
 #include "jdx/JdxXyData.hpp"
+#include "jdx/RaParameters.hpp"
+#include "jdx/XyParameters.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -65,30 +67,11 @@ public:
      */
     [[nodiscard]] const std::vector<std::string>& getLdrComments() const;
     /**
-     * @brief Getter for FIRSTX LDR value.
-     * @return FIRSTX value.
+     * @brief Provides parameters specific to XYDATA.
+     * @return The parameters.
      */
-    [[nodiscard]] std::optional<double> getFirstX() const;
-    /**
-     * @brief Getter for LASTX LDR value.
-     * @return Parsed value if any.
-     */
-    [[nodiscard]] std::optional<double> getLastX() const;
-    /**
-     * @brief Getter for XFACTOR LDR value.
-     * @return Parsed value if any.
-     */
-    [[nodiscard]] std::optional<double> getXFactor() const;
-    /**
-     * @brief Getter for YFACTOR LDR value.
-     * @return Parsed value if any.
-     */
-    [[nodiscard]] std::optional<double> getYFactor() const;
-    /**
-     * @brief Getter for NPOINTS LDR value.
-     * @return Parsed value if any.
-     */
-    [[nodiscard]] std::optional<unsigned long> getNPoints() const;
+    [[nodiscard]] const std::optional<XyParameters>&
+    getXyDataParameters() const;
     /**
      * @brief Provides the XYDATA record if available.
      * @return XYDATA record.
@@ -100,6 +83,8 @@ private:
     std::vector<JdxLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
     std::vector<JdxBlock> m_blocks;
+    std::optional<XyParameters> m_xyParameters;
+    std::optional<RaParameters> m_raParameters;
     std::optional<JdxXyData> m_xyData;
 
     /**
@@ -113,6 +98,7 @@ private:
      */
     JdxBlock(const std::string& title, std::istream& iStream);
     void parseInput(const std::string& title);
+    static XyParameters parseXyParameters(const std::vector<JdxLdr>& ldrs);
 };
 } // namespace sciformats::jdx
 

@@ -4,9 +4,12 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdrParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxDataParser.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/JdxXyData.hpp"
+    #"${PROJECT_SOURCE_DIR}/include/jdx/JdxXyData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/Data2D.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/XyData.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/RaData.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
@@ -16,7 +19,10 @@ add_library(jdxparser
     JdxLdrParser.cpp
     JdxLdr.cpp
     JdxDataParser.cpp
-    JdxXyData.cpp
+    #JdxXyData.cpp
+    Data2D.cpp
+    XyData.cpp
+    RaData.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

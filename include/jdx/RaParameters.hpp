@@ -18,12 +18,13 @@ struct RaParameters
     std::string aUnits; // not required for parsing but for displaying
     double firstR;
     double lastR;
+    // no MAXR, MINR according to standard
     std::optional<double> maxA; // required, according to standard
     std::optional<double> minA; // required, according to standard
     double rFactor;
     double aFactor;
     uint64_t nPoints;
-    double firstA;
+    std::optional<double> firstA;
     std::optional<double> resolution;
     std::optional<double> deltaR;
     std::optional<double> zdp;

@@ -2,7 +2,8 @@
 #define LIBJDX_JDXBLOCK_HPP
 
 #include "jdx/JdxLdr.hpp"
-#include "jdx/JdxXyData.hpp"
+#include "jdx/XyData.hpp"
+#include "jdx/RaData.hpp"
 #include "jdx/RaParameters.hpp"
 #include "jdx/XyParameters.hpp"
 
@@ -76,7 +77,18 @@ public:
      * @brief Provides the XYDATA record if available.
      * @return XYDATA record.
      */
-    [[nodiscard]] const std::optional<JdxXyData>& getXyData() const;
+    [[nodiscard]] const std::optional<XyData>& getXyData() const;
+    /**
+     * @brief Provides parameters specific to RADATA.
+     * @return The parameters.
+     */
+    [[nodiscard]] const std::optional<RaParameters>&
+    getRaDataParameters() const;
+    /**
+     * @brief Provides the RADATA record if available.
+     * @return RADATA record.
+     */
+    [[nodiscard]] const std::optional<RaData>& getRaData() const;
 
 private:
     std::istream& m_istream;
@@ -85,7 +97,8 @@ private:
     std::vector<JdxBlock> m_blocks;
     std::optional<XyParameters> m_xyParameters;
     std::optional<RaParameters> m_raParameters;
-    std::optional<JdxXyData> m_xyData;
+    std::optional<XyData> m_xyData;
+    std::optional<RaData> m_raData;
 
     /**
      * @brief Constructs a JdxBlock from first line value and istream.
@@ -99,6 +112,11 @@ private:
     JdxBlock(const std::string& title, std::istream& iStream);
     void parseInput(const std::string& title);
     static XyParameters parseXyParameters(const std::vector<JdxLdr>& ldrs);
+    static RaParameters parseRaParameters(const std::vector<JdxLdr>& ldrs);
+    static std::optional<const JdxLdr> findLdr(
+        const std::vector<JdxLdr>& ldrs, const std::string& label);
+    static std::optional<std::string> findLdrValue(
+        const std::vector<JdxLdr>& ldrs, const std::string& label);
 };
 } // namespace sciformats::jdx
 

@@ -3,123 +3,35 @@
 #include "jdx/JdxLdrParser.hpp"
 
 sciformats::jdx::XyData::XyData(
-    std::istream& iStream, const XyParameters& parameters)
-    : m_istream{iStream}
-    , m_streamDataPos{iStream.tellg()}
-    , m_firstX{parameters.firstX}
-    , m_lastX{parameters.lastX}
-    , m_xFactor{parameters.xFactor}
-    , m_yFactor{parameters.yFactor}
-    , m_nPoints{parameters.nPoints}
+    std::istream& iStream, const std::vector<JdxLdr>& ldrs)
+    : Data2D(iStream)
 {
-    auto line = JdxLdrParser::readLine(iStream);
-    m_streamDataPos = iStream.tellg();
-
-    if (!JdxLdrParser::isLdrStart(line))
-    {
-        throw std::runtime_error(
-            "Cannot parse xy data. Stream position not at LDR start: " + line);
-    }
-    auto [label, variableList] = JdxLdrParser::parseLdrStart(line);
-    JdxLdrParser::stripLineComment(variableList);
-    JdxLdrParser::trim(variableList);
-    m_label = label;
-    m_variableList = variableList;
-
-    validateInput(label, variableList);
+    validateInput(getLabel(), getVariableList());
+    m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
 
 sciformats::jdx::XyData::XyData(const std::string& label,
     const std::string& variableList, std::istream& iStream,
-    const XyParameters& parameters)
-    : m_istream{iStream}
-    , m_streamDataPos{iStream.tellg()}
-    , m_label{label}
-    , m_variableList{variableList}
-    , m_firstX{parameters.firstX}
-    , m_lastX{parameters.lastX}
-    , m_xFactor{parameters.xFactor}
-    , m_yFactor{parameters.yFactor}
-    , m_nPoints{parameters.nPoints}
+    const std::vector<JdxLdr>& ldrs)
+    : Data2D(label, variableList, iStream)
 {
     validateInput(label, variableList);
+    m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
+}
+
+const sciformats::jdx::XyParameters&
+sciformats::jdx::XyData::getParameters() const
+{
+    return m_parameters;
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyData::getData()
 {
-    auto pos = m_istream.tellg();
-    auto startPos = m_streamDataPos;
-    try
-    {
-        m_istream.seekg(startPos);
-        auto data = parseInput(
-            m_label, m_istream, m_firstX, m_lastX, m_yFactor, m_nPoints);
-        m_istream.seekg(pos);
-        return data;
-    }
-    catch (...)
-    {
-        try
-        {
-            m_istream.seekg(pos);
-        }
-        catch (...)
-        {
-        }
-        throw;
-    }
+    return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
+        m_parameters.yFactor, m_parameters.nPoints);
 }
-
-//std::vector<std::pair<double, double>> sciformats::jdx::XyData::parseInput(
-//    const std::string& label, std::istream& iStream, double firstX,
-//    double lastX, double yFactor, size_t nPoints)
-//{
-//    // parse
-//    auto yData = sciformats::jdx::JdxDataParser::readXppYYData(iStream);
-//    if (yData.size() != nPoints)
-//    {
-//        throw std::runtime_error(
-//            "Mismatch betwee NPOINTS and actual number of points in \"" + label
-//            + "\". NPOINTS: " + std::to_string(nPoints)
-//            + ", actual: " + std::to_string(yData.size()));
-//    }
-//    // prepare processing
-//    std::vector<std::pair<double, double>> xyData{};
-//    xyData.reserve(yData.size());
-//    // cover special cases nPoints == 0 and nPoints == 1
-//    if (nPoints == 0)
-//    {
-//        return xyData;
-//    }
-//    auto nominator = nPoints == 1 ? firstX : (lastX - firstX);
-//    auto denominator = nPoints == 1 ? 1 : nPoints - 1;
-//    // generate and return xy data
-//    uint64_t count = 0;
-//    for (auto yRaw : yData)
-//    {
-//        auto x = firstX + nominator / denominator * count++;
-//        auto y = yFactor * yRaw;
-//        xyData.emplace_back(x, y);
-//    }
-//    return xyData;
-//}
-
-//void sciformats::jdx::XyData::skipToNextLdr(std::istream& iStream)
-//{
-//    while (!iStream.eof())
-//    {
-//        std::istream::pos_type pos = iStream.tellg();
-//        std::string line = sciformats::jdx::JdxLdrParser::readLine(iStream);
-//        if (sciformats::jdx::JdxLdrParser::isLdrStart(line))
-//        {
-//            // move back to start of LDR
-//            iStream.seekg(pos);
-//            break;
-//        }
-//    }
-//}
 
 void sciformats::jdx::XyData::validateInput(
     const std::string& label, const std::string& variableList)
@@ -134,4 +46,81 @@ void sciformats::jdx::XyData::validateInput(
         throw std::runtime_error(
             "Illegal variable list for XYDATA encountered: " + variableList);
     }
+}
+
+sciformats::jdx::XyParameters sciformats::jdx::XyData::parseParameters(
+    const std::vector<JdxLdr>& ldrs)
+{
+    // required
+    // string
+    auto xUnits = JdxLdrParser::findLdrValue(ldrs, "XUNITS");
+    auto yUnits = JdxLdrParser::findLdrValue(ldrs, "YUNITS");
+    // double
+    auto firstX = JdxLdrParser::findLdrValue(ldrs, "FIRSTX");
+    auto lastX = JdxLdrParser::findLdrValue(ldrs, "LASTX");
+    auto xFactor = JdxLdrParser::findLdrValue(ldrs, "XFACTOR");
+    auto yFactor = JdxLdrParser::findLdrValue(ldrs, "YFACTOR");
+    auto nPoints = JdxLdrParser::findLdrValue(ldrs, "NPOINTS");
+    // optional
+    // double
+    auto firstY = JdxLdrParser::findLdrValue(ldrs, "FIRSTY");
+    auto maxX = JdxLdrParser::findLdrValue(ldrs, "MAXX");
+    auto minX = JdxLdrParser::findLdrValue(ldrs, "MINX");
+    auto maxY = JdxLdrParser::findLdrValue(ldrs, "MAXY");
+    auto minY = JdxLdrParser::findLdrValue(ldrs, "MINY");
+    auto resolution = JdxLdrParser::findLdrValue(ldrs, "RESOLUTION");
+    auto deltaX = JdxLdrParser::findLdrValue(ldrs, "DELTAX");
+
+    std::string missing{};
+    missing += xUnits.has_value() ? "" : " XUNITS";
+    missing += yUnits.has_value() ? "" : " YUNITS";
+    missing += firstX.has_value() ? "" : " FIRSTX";
+    missing += lastX.has_value() ? "" : " LASTX";
+    missing += xFactor.has_value() ? "" : " XFACTOR";
+    missing += yFactor.has_value() ? "" : " YFACTOR";
+    missing += nPoints.has_value() ? "" : " NPOINTS";
+
+    if (!missing.empty())
+    {
+        throw std::runtime_error(
+            "Required LDR(s) missing for XYDATA: {" + missing + " }");
+    }
+
+    // we're parsing NPOINTS as unsigned long and assigning to unint_64
+    static_assert(std::numeric_limits<unsigned long>::max()
+                      // NOLINTNEXTLINE(misc-redundant-expression)
+                      <= std::numeric_limits<uint64_t>::max(),
+        "unsigned long max larger than uint_64_t max");
+
+    // parse values
+    XyParameters parms;
+    parms.xUnits = xUnits.value();
+    parms.yUnits = yUnits.value();
+    parms.firstX = std::stod(firstX.value());
+    parms.lastX = std::stod(lastX.value());
+    parms.xFactor = std::stod(xFactor.value());
+    parms.yFactor = std::stod(yFactor.value());
+    parms.nPoints = std::stoul(nPoints.value());
+    parms.firstY = firstY.has_value()
+                       ? std::optional<double>(std::stod(firstY.value()))
+                       : std::nullopt;
+    parms.maxX = maxX.has_value()
+                     ? std::optional<double>(std::stod(maxX.value()))
+                     : std::nullopt;
+    parms.minX = minX.has_value()
+                     ? std::optional<double>(std::stod(minX.value()))
+                     : std::nullopt;
+    parms.maxY = maxY.has_value()
+                     ? std::optional<double>(std::stod(maxY.value()))
+                     : std::nullopt;
+    parms.minY = minY.has_value()
+                     ? std::optional<double>(std::stod(minY.value()))
+                     : std::nullopt;
+    parms.resolution = resolution.has_value() ? std::optional<double>(
+                           std::stod(resolution.value()))
+                                              : std::nullopt;
+    parms.deltaX = deltaX.has_value()
+                       ? std::optional<double>(std::stod(deltaX.value()))
+                       : std::nullopt;
+    return parms;
 }

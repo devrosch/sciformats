@@ -4,7 +4,6 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdrParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxLdr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxDataParser.hpp"
-    #"${PROJECT_SOURCE_DIR}/include/jdx/JdxXyData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Data2D.hpp"

@@ -2,6 +2,7 @@
 #define LIBJDX_XYDATA_HPP
 
 #include "jdx/Data2D.hpp"
+#include "jdx/JdxLdr.hpp"
 #include "jdx/XyParameters.hpp"
 
 #include <istream>
@@ -10,7 +11,7 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX xy data record. Can represent "##XYDATA=" and "##RADATA="
+ * @brief A JCAMP-DX XYDATA record.
  * LDRs.
  */
 class XyData : Data2D
@@ -20,21 +21,29 @@ public:
      * @brief Constructs XyData from istream.
      * @param iStream Input stream with JCAMP-DX data. The stream position is
      * assumed to be at the start of the first line of the record (the line
-     * containing "##XYDATA="). The istream is expected to exist for the lifetime of this object.
+     * containing "##XYDATA="). The istream is expected to exist for the
+     * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
-    XyData(std::istream& istream, const XyParameters& parameters);
+    XyData(std::istream& istream, const std::vector<JdxLdr>& ldrs);
     /**
      * @brief Constructs XyData from first line and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA".
      * @param variableList The value of the first line of the record
      * representing the structure of the data, e.g. "(X++(Y..Y))".
      * @param iStream Input stream with JCAMP-DX data. The stream position is
-     * assumed to be at the start of the second line (the line following the "##XYDATA=" line) of the record. The istream is expected to exist for the lifetime of this object.
+     * assumed to be at the start of the second line (the line following the
+     * "##XYDATA=" line) of the record. The istream is expected to exist for the
+     * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
     XyData(const std::string& label, const std::string& variableList,
-        std::istream& iStream, const XyParameters& parameters);
+        std::istream& iStream, const std::vector<JdxLdr>& ldrs);
+    /**
+     * @brief Provides parameters specific to XYDATA.
+     * @return The parameters.
+     */
+    [[nodiscard]] const XyParameters& getParameters() const;
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by
@@ -43,51 +52,18 @@ public:
     std::vector<std::pair<double, double>> getData();
 
 private:
-    std::istream& m_istream;
-    std::streampos m_streamDataPos;
-    std::string m_label;
-    std::string m_variableList;
-    const double m_firstX;
-    const double m_lastX;
-    const double m_xFactor;
-    const double m_yFactor;
-    const uint64_t m_nPoints;
+    XyParameters m_parameters;
 
-//    /**
-//     * @brief Parses the xy data from first line value and istream.
-//     * @param label The label of the first line of the record, i.e. "XYDATA".
-//     * @param iStream Input stream with JCAMP-DX data. The stream position is
-//     * assumed to be at the start of the second line (the line following the "##XYDATA=" line) of the record. The istream is expected to exist for the lifetime of this object.
-//     * @param firstX The first X value.
-//     * @param lastX The last X value.
-//     * @param yFactor The factor by which to multiply raw y values to arrive at
-//     * the actual value.
-//     * @param nPoints The number of xy pairs in this record.
-//     * @return Pairs of xy data. Invalid values ("?") will be represented by
-//     * std::numeric_limits<T>::quiet_NaN.
-//     *
-//     * Note: XFACTOR is not required for parsing as the x values are determined
-//     * by FIRSTX, LASTX and NPOINTS.
-//     */
-//    static std::vector<std::pair<double, double>> parseInput(
-//        const std::string& label, std::istream& iStream, double firstX,
-//        double lastX, double yFactor, size_t nPoints);
-//    /**
-//     * @brief Moves the stream position to the start of the next LDR or to the
-//     * EOF if no LDR follows.
-//     * @param iStream The stream whose position will be changed.
-//     */
-//    static void skipToNextLdr(std::istream& iStream);
     /**
      * @brief Validates if input is a valid XYDATA LDR.
-     * @param label LDR label. Must match "XYDATA" or "RADATA".
-     * @param variableList LDR value. Must represent a variable list and match
-     * "(X++(Y..Y))" or "(XY..XY)" for XYDATA and "(R++(A..A))" or "(RA..RA)"
-     * for RADATA.
+     * @param label LDR label. Must match "XYDATA".
+     * @param variableList First line LDR value. Must represent a variable list
+     * and match "(X++(Y..Y))" or "(XY..XY)".
      * @throws If label or variable list don't match expectations.
      */
     static void validateInput(
         const std::string& label, const std::string& variableList);
+    static XyParameters parseParameters(const std::vector<JdxLdr>& ldrs);
 };
 } // namespace sciformats::jdx
 

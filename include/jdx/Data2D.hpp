@@ -14,13 +14,35 @@ namespace sciformats::jdx
 class Data2D
 {
 public:
-
 protected:
     /**
-     * @brief Parses the xy data from first line value and istream.
-     * @param label The label of the first line of the record, i.e. "XYDATA".
+     * @brief Constructs Data2D from istream.
      * @param iStream Input stream with JCAMP-DX data. The stream position is
-     * assumed to be at the start of the second line (the line following the "##XYDATA=" line) of the record. The istream is expected to exist for the lifetime of this object.
+     * assumed to be at the start of the first line of the record (the line
+     * containing "##XYDATA=" or "##RADATA="). The istream is expected to exist
+     * for the lifetime of this object.
+     */
+    explicit Data2D(std::istream& iStream);
+    /**
+     * @brief Constructs Data2D from first line value and istream.
+     * @param label The label of the first line of the record, i.e. "XYDATA" or
+     * "RADATA".
+     * @param variableList The value of the first line of the record
+     * representing the structure of the data, e.g. "(X++(Y..Y))".
+     * @param iStream Input stream with JCAMP-DX data. The stream position is
+     * assumed to be at the start of the first line (the line containing
+     * "##XYDATA=" or "##RADATA=") of the record. The istream is expected to
+     * exist for the lifetime of this object.
+     */
+    Data2D(std::string label, std::string variableList, std::istream& iStream);
+    /**
+     * @brief Parses the xy data from first line value and istream.
+     * @param label The label of the first line of the record, i.e. "XYDATA" or
+     * "RADATA".
+     * @param iStream Input stream with JCAMP-DX data. The stream position is
+     * assumed to be at the start of the second line (the line following the
+     * "##XYDATA=" or "##XYDATA=" line) of the record. The istream is expected
+     * to exist for the lifetime of this object.
      * @param firstX The first X value.
      * @param lastX The last X value.
      * @param yFactor The factor by which to multiply raw y values to arrive at
@@ -41,9 +63,19 @@ protected:
      * @param iStream The stream whose position will be changed.
      */
     static void skipToNextLdr(std::istream& iStream);
+    static std::pair<std::string, std::string> readFirstLine(
+        std::istream& istream);
+    static std::optional<std::string> findLdrValue();
+    std::vector<std::pair<double, double>> getData(
+        double firstX, double lastX, double yFactor, uint64_t nPoints);
+    const std::string& getLabel();
+    const std::string& getVariableList();
 
 private:
-
+    std::istream& m_istream;
+    std::streampos m_streamDataPos;
+    std::string m_label;
+    std::string m_variableList;
 };
 } // namespace sciformats::jdx
 

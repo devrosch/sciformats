@@ -148,3 +148,31 @@ sciformats::jdx::JdxLdrParser::stripLineComment(const std::string& line)
     auto comment = line.substr(pos + 2);
     return make_pair(content, comment);
 }
+
+std::optional<const sciformats::jdx::JdxLdr>
+sciformats::jdx::JdxLdrParser::findLdr(
+    const std::vector<JdxLdr>& ldrs, const std::string& label)
+{
+    std::string normalizedLabel = "##" + label + "=";
+    // TODO: make normalizeLdrLabel() more generic
+    sciformats::jdx::JdxLdrParser::normalizeLdrLabel(normalizedLabel);
+    normalizedLabel = normalizedLabel.substr(2, normalizedLabel.size() - 3);
+    auto it = std::find_if(
+        ldrs.begin(), ldrs.end(), [&normalizedLabel](const JdxLdr& ldr) {
+            return ldr.getLabel() == normalizedLabel;
+        });
+
+    if (it != ldrs.end())
+    {
+        return *it;
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> sciformats::jdx::JdxLdrParser::findLdrValue(
+    const std::vector<JdxLdr>& ldrs, const std::string& label)
+{
+    auto ldr = JdxLdrParser::findLdr(ldrs, label);
+    return ldr.has_value() ? std::optional<std::string>(ldr.value().getValue())
+                           : std::optional<std::string>(std::nullopt);
+}

@@ -5,6 +5,7 @@
 
 #include <istream>
 #include <optional>
+#include <vector>
 
 namespace sciformats::jdx
 {
@@ -24,6 +25,10 @@ public:
         const std::string& ldrStart);
     std::pair<std::string, std::optional<std::string>> static stripLineComment(
         const std::string& line);
+    static std::optional<const JdxLdr> findLdr(
+        const std::vector<JdxLdr>& ldrs, const std::string& label);
+    static std::optional<std::string> findLdrValue(
+        const std::vector<JdxLdr>& ldrs, const std::string& label);
 };
 } // namespace sciformats::jdx
 

@@ -1,5 +1,6 @@
+#include "jdx/JdxLdr.hpp"
+#include "jdx/RaData.hpp"
 #include "jdx/XyData.hpp"
-#include "jdx/XyParameters.hpp"
 
 #include "catch2/catch.hpp"
 
@@ -15,9 +16,16 @@ TEST_CASE("parses AFFN xy data, stream at LDR start", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 452.0, 452.0, 450.0,
-        12.0, 10.0, 1.0, 1.0, 3, 10.0, 1.0, 1.0};
-    auto xyDataRecord = sciformats::jdx::XyData(stream, params);
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "452.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "3");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
+
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(3 == xyData.size());
@@ -38,10 +46,16 @@ TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 452.0, 452.0, 450.0,
-        12.0, 10.0, 1.0, 1.0, 3, 10.0, 1.0, 1.0};
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "452.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "3");
     auto xyDataRecord
-        = sciformats::jdx::XyData("XYDATA", "(XY..XY)", stream, params);
+        = sciformats::jdx::XyData("XYDATA", "(XY..XY)", stream, ldrs);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(3 == xyData.size());
@@ -61,9 +75,15 @@ TEST_CASE("parses single data point record", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
-        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
-    auto xyDataRecord = sciformats::jdx::XyData(stream, params);
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(1 == xyData.size());
@@ -81,9 +101,15 @@ TEST_CASE("detects mismatching NPOINTS", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 452.0, 452.0, 450.0,
-        12.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
-    auto xyDataRecord = sciformats::jdx::XyData(stream, params);
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "452.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
     REQUIRE_THROWS(xyDataRecord.getData());
 }
 
@@ -95,12 +121,16 @@ TEST_CASE("detects mismatching variables list for XYDATA", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
-        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
-    REQUIRE_THROWS(sciformats::jdx::XyData(stream, params));
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    REQUIRE_THROWS(sciformats::jdx::XyData(stream, ldrs));
 }
 
-TEST_CASE("detects mismatching variables list for RADATA", "[XyData]")
+// TODO: move RADATA test to separate file
+TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
 {
     std::string input{"##RADATA= (XY..XY)\r\n"
                       "450.0, 10.0\r\n"
@@ -108,9 +138,12 @@ TEST_CASE("detects mismatching variables list for RADATA", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
-        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
-    REQUIRE_THROWS(sciformats::jdx::XyData(stream, params));
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("FIRSTR", "450.0");
+    ldrs.emplace_back("LASTR", "450.0");
+    ldrs.emplace_back("AFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    REQUIRE_THROWS(sciformats::jdx::RaData(stream, ldrs));
 }
 
 TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
@@ -122,9 +155,12 @@ TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
-        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
-    REQUIRE_THROWS(sciformats::jdx::XyData(stream, params));
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    REQUIRE_THROWS(sciformats::jdx::XyData(stream, ldrs));
 }
 
 TEST_CASE("detects illegal stream position (not LDR start)", "[XyData]")
@@ -134,7 +170,10 @@ TEST_CASE("detects illegal stream position (not LDR start)", "[XyData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    sciformats::jdx::XyParameters params = {"", "", 450.0, 450.0, 450.0, 450.0,
-        10.0, 10.0, 1.0, 1.0, 1, 10.0, 1.0, 1.0};
-    REQUIRE_THROWS(sciformats::jdx::XyData(stream, params));
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    REQUIRE_THROWS(sciformats::jdx::XyData(stream, ldrs));
 }

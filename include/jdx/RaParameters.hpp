@@ -2,6 +2,7 @@
 #define LIBJDX_RAPARAMETERS_HPP
 
 #include <optional>
+#include <string>
 
 namespace sciformats::jdx
 {

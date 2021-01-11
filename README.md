@@ -36,6 +36,19 @@ tbd
 
 ### Emscripten
 
+Build WebAssembly with Emscripten using the following commands:
+```
+emcmake cmake <path/to/project/dir>
+```
+followed by:
+```
+make
+```
+or
+```
+cmake --build . --verbose
+```
+
 see: [Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
 see: [Stack Overflow](https://stackoverflow.com/questions/15724357/using-boost-with-emscripten)
 

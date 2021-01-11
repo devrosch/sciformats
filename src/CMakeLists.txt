@@ -18,7 +18,6 @@ add_library(jdxparser
     JdxLdrParser.cpp
     JdxLdr.cpp
     JdxDataParser.cpp
-    #JdxXyData.cpp
     Data2D.cpp
     XyData.cpp
     RaData.cpp

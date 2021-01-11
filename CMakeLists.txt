@@ -45,10 +45,13 @@ set(CLANG_TIDY_CHECKS
     ,portability-*\
     ,readability-*,-readability-magic-numbers")
 
-# activate clang-tidy for all targets
-# see: https://stackoverflow.com/questions/40433573/how-can-i-specify-additional-arguments-for-use-with-cmake-cxx-clang-tidy-variabl
-set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=${CLANG_TIDY_CHECKS})
-message(STATUS "CMAKE_CXX_CLANG_TIDY: ${CMAKE_CXX_CLANG_TIDY}")
+# alternatively: if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "[Ee]mscripten")
+if(NOT EMSCRIPTEN)
+    # activate clang-tidy for all targets when not cross-compiling to WebAssembly
+    # see: https://stackoverflow.com/questions/40433573/how-can-i-specify-additional-arguments-for-use-with-cmake-cxx-clang-tidy-variabl
+    set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=${CLANG_TIDY_CHECKS})
+    message(STATUS "CMAKE_CXX_CLANG_TIDY: ${CMAKE_CXX_CLANG_TIDY}")
+endif()
 
 # Including cmake script to create clang-tidy and clang-format targets
 # see: https://stackoverflow.com/questions/32280717/cmake-clang-tidy-or-other-script-as-custom-target

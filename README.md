@@ -49,6 +49,12 @@ or
 cmake --build . --verbose
 ```
 
+For running tests for Emscripten compiled code, Node.js (available as command "node") is required. Run:
+
+```
+ctest -VV
+```
+
 see: [Emscripten](https://emscripten.org/docs/getting_started/downloads.html)
 see: [Stack Overflow](https://stackoverflow.com/questions/15724357/using-boost-with-emscripten)
 

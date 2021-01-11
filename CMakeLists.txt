@@ -7,10 +7,19 @@ cmake_minimum_required(VERSION 3.15...3.18)
 
 # Project name and a few useful settings. Other commands can pick up the results
 project(
-  libjdx
-  VERSION 0.1
-  DESCRIPTION "A library for reading JCAMP-DX data"
-  LANGUAGES CXX)
+    libjdx
+    VERSION 0.1
+    DESCRIPTION "A library for reading JCAMP-DX data"
+    LANGUAGES CXX)
+
+# --------------------------------------------------------------
+# Add Emscripten flags
+# --------------------------------------------------------------
+
+if (EMSCRIPTEN)
+    add_compile_options(-s DISABLE_EXCEPTION_CATCHING=0)
+    add_link_options(-s DISABLE_EXCEPTION_CATCHING=0)
+endif()
 
 # --------------------------------------------------------------
 # Add code coverage support

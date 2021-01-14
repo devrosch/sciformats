@@ -18,6 +18,17 @@ build:linux_gcc:
     paths:
       - build
 
+build:wasm_emcc:
+  stage: build
+  script:
+    - set -eo pipefail
+    - mkdir build && cd build
+    - emcmake cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+    - make
+  artifacts:
+    paths:
+      - build
+
 test:linux_gcc:
   stage: test
   script:
@@ -26,6 +37,17 @@ test:linux_gcc:
     - ctest
   dependencies:
     - build:linux_gcc
+  artifacts:
+    paths:
+      - build
+
+test:wasm_emcc:
+  stage: test
+  script:
+    - cd build
+    - ctest -VV
+  dependencies:
+    - build:wasm_emcc
   artifacts:
     paths:
       - build

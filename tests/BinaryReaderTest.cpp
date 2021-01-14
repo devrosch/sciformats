@@ -109,7 +109,7 @@ TEST_CASE("correctly reads char vector", "[BinaryReader]")
     REQUIRE(reader.readUInt8() == 0x00);
     REQUIRE(reader.readUInt8() == 0xFF);
     REQUIRE(reader.readUInt8() == 0x7F);
-    REQUIRE(reader.tellg() == bytes.size());
+    REQUIRE(reader.tellg() == static_cast<std::streamoff>(bytes.size()));
     reader.seekg(1);
     REQUIRE(reader.tellg() == 1);
     REQUIRE(reader.readUInt8() == 0xFF);
@@ -136,7 +136,7 @@ TEST_CASE("correctly reads uint8_t vector", "[BinaryReader]")
     REQUIRE(reader.readUInt8() == 0x00);
     REQUIRE(reader.readUInt8() == 0xFF);
     REQUIRE(reader.readUInt8() == 0x7F);
-    REQUIRE(reader.tellg() == bytes.size());
+    REQUIRE(reader.tellg() == static_cast<std::streamoff>(bytes.size()));
     reader.seekg(1);
     REQUIRE(reader.tellg() == 1);
     REQUIRE(reader.readUInt8() == 0xFF);
@@ -446,10 +446,11 @@ TEST_CASE("read ISO-8859-1 encoded string correctly", "[BinaryReader]")
         "ôõö÷øùúûüýþÿ"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("ISO-8859-1", bytes.size());
+    auto output
+        = reader.readString("ISO-8859-1", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -469,7 +470,8 @@ TEST_CASE("all single byte values can be converted from ISO-8859-1 to UTF-8",
     auto replacementChar = std::string{u8"�"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("ISO-8859-1", bytes.size());
+    auto output
+        = reader.readString("ISO-8859-1", static_cast<int32_t>(bytes.size()));
 
     // REPLACEMENT CHARACTER not in generated UTF-8 string
     REQUIRE(output.find(replacementChar) == std::string::npos);
@@ -490,10 +492,11 @@ TEST_CASE(
 
     sciformats::io::BinaryReader reader(bytes);
     // does not accept "ASCII" in Emscripten build, but in Linux build
-    auto output = reader.readString("US-ASCII", bytes.size());
+    auto output
+        = reader.readString("US-ASCII", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -508,10 +511,11 @@ TEST_CASE("read UTF-8 encoded string correctly", "[BinaryReader]")
     auto expected = std::string{u8"!\"#123ABCabcä®€𝄞ह한"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-8", bytes.size());
+    auto output
+        = reader.readString("UTF-8", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -527,10 +531,11 @@ TEST_CASE("show escape character for byte sequences illegal in UTF-8",
     auto expected = std::string{u8"A�a"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-8", bytes.size());
+    auto output
+        = reader.readString("UTF-8", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -546,10 +551,11 @@ TEST_CASE("read UTF-16BE encoded string correctly", "[BinaryReader]")
     auto expected = std::string{u8"!\"#123ABCabcä®€𝄞ह한"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-16BE", bytes.size());
+    auto output
+        = reader.readString("UTF-16BE", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -565,10 +571,11 @@ TEST_CASE("show escape character for byte sequences illegal in UTF-16BE",
     auto expected = std::string{u8"A�a"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-16BE", bytes.size());
+    auto output
+        = reader.readString("UTF-16BE", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -584,10 +591,11 @@ TEST_CASE("read UTF-16LE encoded string correctly", "[BinaryReader]")
     auto expected = std::string{u8"!\"#123ABCabcä®€𝄞ह한"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-16LE", bytes.size());
+    auto output
+        = reader.readString("UTF-16LE", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -602,10 +610,11 @@ TEST_CASE("read zero terminated ISO-8859-1 encoded string correctly",
     auto expected = std::string{u8"ab"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("ISO-8859-1", bytes.size());
+    auto output
+        = reader.readString("ISO-8859-1", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -619,10 +628,11 @@ TEST_CASE(
     auto expected = std::string{u8"aäb"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-8", bytes.size());
+    auto output
+        = reader.readString("UTF-8", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -637,23 +647,11 @@ TEST_CASE(
     auto expected = std::string{u8"aä"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-16BE", bytes.size());
-
-    //    std::cout << "output:\t" << output << std::endl;
-    //    for (auto val : output)
-    //    {
-    //        std::cout << static_cast<int32_t>(val) << " ";
-    //    }
-    //    std::cout << std::endl;
-    //    std::cout << "expected:\t" << expected << std::endl;
-    //    for (auto val : expected)
-    //    {
-    //        std::cout << static_cast<int32_t>(val) << " ";
-    //    }
-    //    std::cout << std::endl;
+    auto output
+        = reader.readString("UTF-16BE", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -669,10 +667,11 @@ TEST_CASE("show escape character for byte sequences illegal in UTF-16LE",
     auto expected = std::string{u8"A�a"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-16LE", bytes.size());
+    auto output
+        = reader.readString("UTF-16LE", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -687,10 +686,11 @@ TEST_CASE(
     auto expected = std::string{u8"aä"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("UTF-16LE", bytes.size());
+    auto output
+        = reader.readString("UTF-16LE", static_cast<int32_t>(bytes.size()));
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -735,7 +735,7 @@ TEST_CASE(
     auto output = reader.readPrefixedString(prefixType, "UTF-8");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -755,7 +755,7 @@ TEST_CASE("read UInt8Chars8 prefixed UTF-8 encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-8");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -775,7 +775,7 @@ TEST_CASE("read Int8Chars16 prefixed UTF-8 encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-16LE");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -795,7 +795,7 @@ TEST_CASE("read UInt8Chars16 prefixed UTF-8 encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-16LE");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -815,7 +815,7 @@ TEST_CASE("read Int16LEChars8 prefixed UTF-8 encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-8");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -835,7 +835,7 @@ TEST_CASE("read Int16BEChars8 prefixed UTF-8 encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-8");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -855,7 +855,7 @@ TEST_CASE("read UInt16LEChars8 prefixed UTF-8 encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-8");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -875,7 +875,7 @@ TEST_CASE("read Int16LEChars16 prefixed UTF-16LE encoded string correctly",
     auto output = reader.readPrefixedString(prefixType, "UTF-16LE");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -897,7 +897,7 @@ TEST_CASE("read Int16LEChars16 prefixed UTF-16LE encoded "
     auto output = reader.readPrefixedString(prefixType, "UTF-16LE");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -917,7 +917,7 @@ TEST_CASE(
     auto output = reader.readPrefixedString(prefixType, "UTF-16LE");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -940,7 +940,7 @@ TEST_CASE("read UInt16LEChars16 prefixed UTF-16LE encoded"
     auto output = reader.readPrefixedString(prefixType, "UTF-16LE");
 
     REQUIRE(output.size() == expected.size());
-    for (auto i = 0; i < expected.size(); i++)
+    for (size_t i = 0; i < expected.size(); i++)
     {
         REQUIRE(output.at(i) == expected.at(i));
     }
@@ -1012,15 +1012,12 @@ TEST_CASE("negative prefix results in empty string", "[BinaryReader]")
 }
 
 TEST_CASE(
-    "throws exception when trying to readi string with non-existent encoding",
+    "throws exception when trying to reading string with non-existent encoding",
     "[BinaryReader]")
 {
     // "abc" in ASCII
     std::vector<uint8_t> bytes{0x61, 0x62, 0x63};
-
-    sciformats::io::StringPrefixType prefixType{
-        sciformats::io::StringPrefixNumericType::Int16Chars16,
-        sciformats::io::Endianness::LittleEndian};
     sciformats::io::BinaryReader reader(bytes);
+
     REQUIRE_THROWS(reader.readString("non-existent encoding name", 1));
 }

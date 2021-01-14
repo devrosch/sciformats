@@ -9,6 +9,15 @@
 #include <cstring>
 #include <limits>
 
+// switch off disabled-macro-expansion warning
+// see:
+// https://stackoverflow.com/questions/52485278/pragma-diagnostic-when-mixing-clang-analyzers-with-a-gcc-compiler
+#if defined(__has_warning)
+#if __has_warning("-Wdisabled-macro-expansion")
+#pragma GCC diagnostic ignored "-Wdisabled-macro-expansion"
+#endif
+#endif
+
 sciformats::io::BinaryReader::BinaryReader(
     const std::string& filePath, sciformats::io::Endianness endian)
     : m_ifstream{std::ifstream{}}
@@ -60,7 +69,8 @@ sciformats::io::BinaryReader::BinaryReader(
     m_stringstream.value().write(
         vec.data(), static_cast<std::streamsize>(vec.size()));
 #else
-    m_stringstream.value().rdbuf()->pubsetbuf(vec.data(), vec.size());
+    m_stringstream.value().rdbuf()->pubsetbuf(
+        vec.data(), static_cast<std::streamsize>(vec.size()));
 #endif
 }
 
@@ -87,7 +97,8 @@ sciformats::io::BinaryReader::BinaryReader(
 #else
     m_stringstream.value().rdbuf()->pubsetbuf(
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        reinterpret_cast<char*>(vec.data()), vec.size());
+        reinterpret_cast<char*>(vec.data()),
+        static_cast<std::streamsize>(vec.size()));
 #endif
 }
 
@@ -115,13 +126,13 @@ int8_t sciformats::io::BinaryReader::readInt8()
 {
     static_assert(sizeof(char) == sizeof(int8_t),
         "Char size does not match int8_t size.");
-    return m_istream.get();
+    return static_cast<int8_t>(m_istream.get());
 }
 
 uint8_t sciformats::io::BinaryReader::readUInt8()
 {
     static_assert(CHAR_BIT == 8, "Char size is not 8.");
-    return m_istream.get();
+    return static_cast<uint8_t>(m_istream.get());
 }
 
 uint16_t sciformats::io::BinaryReader::readUInt16()
@@ -138,10 +149,12 @@ uint16_t sciformats::io::BinaryReader::readUInt16(
     std::array<char, 2> bytes;
     m_istream.read(bytes.data(), bytes.size());
     return endian == Endianness::LittleEndian
-               ? ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 0U)
-                     | ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 8U)
-               : ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 0U)
-                     | ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 8U);
+               ? static_cast<uint16_t>(
+                   ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 0U)
+                   | ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 8U))
+               : static_cast<uint16_t>(
+                   ((static_cast<uint8_t>(bytes[1]) & 0xFFU) << 0U)
+                   | ((static_cast<uint8_t>(bytes[0]) & 0xFFU) << 8U));
 }
 
 int16_t sciformats::io::BinaryReader::readInt16()
@@ -154,7 +167,7 @@ int16_t sciformats::io::BinaryReader::readInt16(
 {
     static_assert(sizeof(uint16_t) == sizeof(int16_t),
         "Size of uinte16_t does not match size of int16_t.");
-    return readUInt16(endian);
+    return static_cast<int16_t>(readUInt16(endian));
 }
 
 uint32_t sciformats::io::BinaryReader::readUInt32()
@@ -191,7 +204,7 @@ int32_t sciformats::io::BinaryReader::readInt32(
 {
     static_assert(sizeof(uint32_t) == sizeof(int32_t),
         "Size of uinte32_t does not match size of int32_t.");
-    return readUInt32(endian);
+    return static_cast<int32_t>(readUInt32(endian));
 }
 
 uint64_t sciformats::io::BinaryReader::readUInt64()
@@ -267,7 +280,7 @@ int64_t sciformats::io::BinaryReader::readInt64(
 {
     static_assert(sizeof(uint64_t) == sizeof(int64_t),
         "Size of uinte64_t does not match size of int64_t.");
-    return readUInt64(endian);
+    return static_cast<int64_t>(readUInt64(endian));
 }
 
 float sciformats::io::BinaryReader::readFloat()
@@ -325,7 +338,7 @@ std::vector<char> sciformats::io::BinaryReader::readChars(size_t size)
 {
     std::vector<char> dest;
     dest.resize(size);
-    m_istream.read(dest.data(), size);
+    m_istream.read(dest.data(), static_cast<std::streamsize>(size));
     return dest;
 }
 
@@ -341,7 +354,8 @@ std::vector<uint8_t> sciformats::io::BinaryReader::readBytes(size_t size)
     // https://stackoverflow.com/questions/15078638/can-i-turn-unsigned-char-into-char-and-vice-versa/15172304
     dest.resize(size);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    m_istream.read(reinterpret_cast<char*>(dest.data()), size);
+    m_istream.read(reinterpret_cast<char*>(dest.data()),
+        static_cast<std::streamsize>(size));
     // alternative implementation:
     // dest.reserve(size);
     // for (auto i = 0; i<size; i++)
@@ -371,8 +385,7 @@ std::string sciformats::io::BinaryReader::readString(
     // https://github.com/unicode-org/icu/blob/master/icu4c/source/samples/ucnv/convsamp.cpp
     // see:
     // https://stackoverflow.com/questions/6010793/looking-for-simple-practical-c-examples-of-how-to-use-icu
-    // TODO: possibly use UnicodeString as buffer already for efficiency
-    std::vector<char> input = readChars(size);
+    std::vector<char> input = readChars(static_cast<size_t>(size));
     UErrorCode status = U_ZERO_ERROR;
     UConverter* converter = ucnv_open(encoding.c_str(), &status);
     try
@@ -398,7 +411,7 @@ std::string sciformats::io::BinaryReader::readString(
         // ignore returned length as it will always give the number of UChars
         // for the whole input sequence, possibly including NULL UChars
         ucnv_toUChars(converter, buffer, maxUCharBufferSize, input.data(),
-            input.size(), &status);
+            static_cast<int32_t>(input.size()), &status);
         // do not use length returned from ucnv_toUChars as the string then may
         // include intermediate nulls
         target.releaseBuffer();
@@ -477,12 +490,6 @@ std::string sciformats::io::BinaryReader::readPrefixedString(
     case StringPrefixNumericType::UInt16Chars16:
         numChars = readUInt16(prefixType.endianness);
         multiplicationFactor = 2;
-        break;
-    default:
-        std::string message
-            = std::string{"Unsupported string prefix type: "}
-              + std::to_string(static_cast<int>(prefixType.numericType));
-        throw std::runtime_error(message.c_str());
         break;
     }
 

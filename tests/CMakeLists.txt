@@ -25,6 +25,16 @@ add_custom_command(
         VERBATIM # use VERBATIM to correctly handle paths that include spaces
 )
 
-# If you register a test, then ctest and make test will run it.
-# You can also run examples and check the output, as well.
-add_test(NAME binaryreader_test COMMAND binaryreader_test) # Command can be a target
+if (EMSCRIPTEN)
+    # Embed test files, make available in sub directory "resources" (specified after @)
+    target_link_options(binaryreader_test PRIVATE "SHELL:--embed-file ${CMAKE_CURRENT_SOURCE_DIR}/resources@resources")
+endif()
+
+# Register test for ctest
+if (EMSCRIPTEN)
+    # run test with node.js
+    add_test(NAME binaryreader_test COMMAND node "${CMAKE_CURRENT_BINARY_DIR}/binaryreader_test.js")
+else()
+    # run natively
+    add_test(NAME binaryreader_test COMMAND binaryreader_test) # Command can be a target
+endif()

@@ -12,7 +12,7 @@
 sciformats::io::BinaryReader::BinaryReader(
     const std::string& filePath, sciformats::io::Endianness endian)
     : m_ifstream{std::ifstream{}}
-    , m_istringstream{std::nullopt}
+    , m_stringstream{std::nullopt}
     , m_istream{m_ifstream.value()}
     , m_endianness{endian}
 {
@@ -24,7 +24,7 @@ sciformats::io::BinaryReader::BinaryReader(
 sciformats::io::BinaryReader::BinaryReader(std::istream& inputStream,
     sciformats::io::Endianness endian, bool activateExceptions)
     : m_ifstream{std::nullopt}
-    , m_istringstream{std::nullopt}
+    , m_stringstream{std::nullopt}
     , m_istream{inputStream}
     , m_endianness{endian}
 {
@@ -40,8 +40,8 @@ sciformats::io::BinaryReader::BinaryReader(std::istream& inputStream,
 sciformats::io::BinaryReader::BinaryReader(
     std::vector<char>& vec, sciformats::io::Endianness endian)
     : m_ifstream{std::nullopt}
-    , m_istringstream{std::istringstream{}}
-    , m_istream{m_istringstream.value()}
+    , m_stringstream{std::stringstream{}}
+    , m_istream{m_stringstream.value()}
     , m_endianness{endian}
 {
     // see:
@@ -51,28 +51,44 @@ sciformats::io::BinaryReader::BinaryReader(
     // =>
     // https://stackoverflow.com/questions/23630386/read-vectorchar-as-stream?rq=1
     // https://stackoverflow.com/questions/45722747/how-can-i-create-a-istream-from-a-uint8-t-vector
-    m_istringstream.value().exceptions(
+    m_stringstream.value().exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
-    m_istringstream.value().rdbuf()->pubsetbuf(vec.data(), vec.size());
+#ifdef __EMSCRIPTEN__
+    // pubsetbuf() does not work for Emscripten
+    // probable reason:
+    // https://stackoverflow.com/questions/12481463/stringstream-rdbuf-pubsetbuf-is-not-setting-the-buffer
+    m_stringstream.value().write(
+        vec.data(), static_cast<std::streamsize>(vec.size()));
+#else
+    m_stringstream.value().rdbuf()->pubsetbuf(vec.data(), vec.size());
+#endif
 }
 
 sciformats::io::BinaryReader::BinaryReader(
     std::vector<uint8_t>& vec, sciformats::io::Endianness endian)
     : m_ifstream{std::nullopt}
-    , m_istringstream{std::istringstream{}}
-    , m_istream{m_istringstream.value()}
+    , m_stringstream{std::stringstream{}}
+    , m_istream{m_stringstream.value()}
     , m_endianness{endian}
 {
-    m_istringstream.value().exceptions(
+    m_stringstream.value().exceptions(
         std::ios::eofbit | std::ios::failbit | std::ios::badbit);
     // make sure the reinterpret_cast is legal
     // https://stackoverflow.com/questions/16260033/reinterpret-cast-between-char-and-stduint8-t-safe
     static_assert(std::is_same_v<std::uint8_t,
                       char> || std::is_same_v<std::uint8_t, unsigned char>,
         "uint8_t is not a typedef of char or unsigned char.");
-    m_istringstream.value().rdbuf()->pubsetbuf(
+#ifdef __EMSCRIPTEN__
+    // pubsetbuf() does not work for Emscripten
+    // probable reason:
+    // https://stackoverflow.com/questions/12481463/stringstream-rdbuf-pubsetbuf-is-not-setting-the-buffer
+    m_stringstream.value().write(reinterpret_cast<char*>(vec.data()),
+        static_cast<std::streamsize>(vec.size()));
+#else
+    m_stringstream.value().rdbuf()->pubsetbuf(
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         reinterpret_cast<char*>(vec.data()), vec.size());
+#endif
 }
 
 std::ios::pos_type sciformats::io::BinaryReader::tellg() const
@@ -369,6 +385,7 @@ std::string sciformats::io::BinaryReader::readString(
                                   + u_errorName(status);
             throw std::runtime_error(message.c_str());
         }
+
         // U_SUCCESS(status) must be truthy
         // reserve buffer
         // 2 * size UChars is the upper required limit

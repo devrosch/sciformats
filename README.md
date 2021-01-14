@@ -1,5 +1,5 @@
 [![pipeline](https://gitlab.com/devrosch/libio/badges/master/pipeline.svg)](https://gitlab.com/devrosch/libio/commits/master)
-[![coverage](https://gitlab.com/devrosch/libio/badges/master/coverage.svg)](https://gitlab.com/devrosch/libio/commits/master)
+[![coverage](https://gitlab.com/devrosch/libio/badges/master/coverage.svg)](https://devrosch.gitlab.io/libio)
 
 # libio
 

@@ -248,7 +248,7 @@ public:
 
 private:
     std::optional<std::ifstream> m_ifstream;
-    std::optional<std::istringstream> m_istringstream;
+    std::optional<std::stringstream> m_stringstream;
     std::istream& m_istream;
     Endianness m_endianness;
 };

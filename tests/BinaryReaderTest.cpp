@@ -489,7 +489,8 @@ TEST_CASE(
     auto expected = std::string{u8"ABC���abc"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("ASCII", bytes.size());
+    // does not accept "ASCII" in Emscripten build, but in Linux build
+    auto output = reader.readString("US-ASCII", bytes.size());
 
     REQUIRE(output.size() == expected.size());
     for (auto i = 0; i < expected.size(); i++)
@@ -526,7 +527,7 @@ TEST_CASE("show escape character for byte sequences illegal in UTF-8",
     auto expected = std::string{u8"A�a"};
 
     sciformats::io::BinaryReader reader(bytes);
-    auto output = reader.readString("ASCII", bytes.size());
+    auto output = reader.readString("UTF-8", bytes.size());
 
     REQUIRE(output.size() == expected.size());
     for (auto i = 0; i < expected.size(); i++)

@@ -6,6 +6,7 @@ add_executable(jdxparser_test
     JdxBlockTest.cpp
     JdxDataParserTest.cpp
     JdxXyDataTest.cpp
+    JdxRaDataTest.cpp
     )
 
 # I'm using C++17 in the test

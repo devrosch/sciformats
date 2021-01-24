@@ -2,7 +2,7 @@
 
 #include "catch2/catch.hpp"
 
-TEST_CASE("parses all LDRs in block", "[JdxBlock]")
+TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
 {
     std::string input{"##TITLE= Test\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -17,7 +17,7 @@ TEST_CASE("parses all LDRs in block", "[JdxBlock]")
                       "##LASTX= 451\r\n"
                       "##NPOINTS= 2\r\n"
                       "##FIRSTY= 10\r\n"
-                      "##XYPOINTS= (XY..XY)\r\n"
+                      "##XYDATA= (X++(Y..Y))\r\n"
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
                       "##END="};
@@ -27,9 +27,43 @@ TEST_CASE("parses all LDRs in block", "[JdxBlock]")
     auto block = sciformats::jdx::JdxBlock(stream);
     const auto& ldrs = block.getLdrs();
 
-    // does not contain "##END=" even though technically an LDR
+    // does NOT contain "##END=" even though technically an LDR
+    // DOES contain "##XYDATA=" with its variable list as value
     REQUIRE(14 == ldrs.size());
     REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
+    REQUIRE(true == block.getXyData().has_value());
+}
+
+TEST_CASE("parses all LDRs in block with RADATA", "[JdxBlock]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED INTERFEROGRAM\r\n"
+                      "##ORIGIN= devrosch\r\n"
+                      "##OWNER= PUBLIC DOMAIN\r\n"
+                      "##RUNITS= MICROMETERS\r\n"
+                      "##AUNITS= ARBITRARY UNITS\r\n"
+                      "##RFACTOR= 1.0\r\n"
+                      "##AFACTOR= 1.0\r\n"
+                      "##FIRSTR= 0\r\n"
+                      "##LASTR= 1\r\n"
+                      "##NPOINTS= 2\r\n"
+                      "##FIRSTA= 10\r\n"
+                      "##RADATA= (R++(A..A))\r\n"
+                      "0, 10.0\r\n"
+                      "1, 11.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto block = sciformats::jdx::JdxBlock(stream);
+    const auto& ldrs = block.getLdrs();
+
+    // does NOT contain "##END=" even though technically an LDR
+    // DOES contain "##RADATA=" with its variable list as value
+    REQUIRE(14 == ldrs.size());
+    REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
+    REQUIRE(true == block.getRaData().has_value());
 }
 
 TEST_CASE("throws if required LDRs for xy data are missing", "[JdxBlock]")
@@ -47,7 +81,7 @@ TEST_CASE("throws if required LDRs for xy data are missing", "[JdxBlock]")
                       "##LASTX= 451\r\n"
                       // "##NPOINTS= 2\r\n" // required for XYDATA
                       "##FIRSTY= 10\r\n"
-                      "##XYDATA= (XY..XY)\r\n"
+                      "##XYDATA= (X++(Y..Y))\r\n"
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
                       "##END="};

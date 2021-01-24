@@ -1,5 +1,4 @@
 #include "jdx/JdxLdr.hpp"
-#include "jdx/RaData.hpp"
 #include "jdx/XyData.hpp"
 
 #include "catch2/catch.hpp"
@@ -8,7 +7,7 @@
 
 TEST_CASE("parses AFFN xy data, stream at LDR start", "[XyData]")
 {
-    std::string input{"##XYDATA= (XY..XY)\r\n"
+    std::string input{"##XYDATA= (X++(Y..Y))\r\n"
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
                       "452.0, 12.0\r\n"
@@ -35,6 +34,16 @@ TEST_CASE("parses AFFN xy data, stream at LDR start", "[XyData]")
     REQUIRE(11.0 == Approx(xyData.at(1).second));
     REQUIRE(452.0 == Approx(xyData.at(2).first));
     REQUIRE(12.0 == Approx(xyData.at(2).second));
+    auto params = xyDataRecord.getParameters();
+    REQUIRE("1/CM" == params.xUnits);
+    REQUIRE("ABSORBANCE" == params.yUnits);
+    REQUIRE(450.0 == Approx(params.firstX));
+    REQUIRE(452.0 == Approx(params.lastX));
+    REQUIRE(1.0 == Approx(params.xFactor));
+    REQUIRE(1.0 == Approx(params.yFactor));
+    REQUIRE(3 == params.nPoints);
+    REQUIRE_FALSE(params.deltaX.has_value());
+    REQUIRE_FALSE(params.resolution.has_value());
 }
 
 TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[XyData]")
@@ -55,7 +64,7 @@ TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[XyData]")
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
     auto xyDataRecord
-        = sciformats::jdx::XyData("XYDATA", "(XY..XY)", stream, ldrs);
+        = sciformats::jdx::XyData("XYDATA", "(X++(Y..Y))", stream, ldrs);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(3 == xyData.size());
@@ -69,7 +78,7 @@ TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[XyData]")
 
 TEST_CASE("parses single data point record", "[XyData]")
 {
-    std::string input{"##XYDATA= (XY..XY)\r\n"
+    std::string input{"##XYDATA= (X++(Y..Y))\r\n"
                       "450.0, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
@@ -93,7 +102,7 @@ TEST_CASE("parses single data point record", "[XyData]")
 
 TEST_CASE("detects mismatching NPOINTS", "[XyData]")
 {
-    std::string input{"##XYDATA= (XY..XY)\r\n"
+    std::string input{"##XYDATA= (X++(Y..Y))\r\n"
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
                       "452.0, 12.0\r\n"
@@ -115,7 +124,7 @@ TEST_CASE("detects mismatching NPOINTS", "[XyData]")
 
 TEST_CASE("detects mismatching variables list for XYDATA", "[XyData]")
 {
-    std::string input{"##XYDATA= (RA..RA)\r\n"
+    std::string input{"##XYDATA= (R++(A..A))\r\n"
                       "450.0, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
@@ -127,23 +136,6 @@ TEST_CASE("detects mismatching variables list for XYDATA", "[XyData]")
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
     REQUIRE_THROWS(sciformats::jdx::XyData(stream, ldrs));
-}
-
-// TODO: move RADATA test to separate file
-TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
-{
-    std::string input{"##RADATA= (XY..XY)\r\n"
-                      "450.0, 10.0\r\n"
-                      "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
-
-    std::vector<sciformats::jdx::JdxLdr> ldrs;
-    ldrs.emplace_back("FIRSTR", "450.0");
-    ldrs.emplace_back("LASTR", "450.0");
-    ldrs.emplace_back("AFACTOR", "1.0");
-    ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::RaData(stream, ldrs));
 }
 
 TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")

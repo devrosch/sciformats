@@ -20,7 +20,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
     while (!sciformats::jdx::JdxLdrParser::isLdrStart(
         line = sciformats::jdx::JdxLdrParser::readLine(istream)))
     {
-        // save position to move back if next readLine() encouinters LDR start
+        // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
         auto [data, comment]

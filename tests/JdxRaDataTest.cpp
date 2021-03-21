@@ -93,3 +93,45 @@ TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
     ldrs.emplace_back("NPOINTS", "1");
     REQUIRE_THROWS(sciformats::jdx::RaData(stream, ldrs));
 }
+
+TEST_CASE("parses unevenly spaced RA data", "[RaData]")
+{
+    std::string input{"##RADATA= (RA..RA)\r\n"
+                      "0.0, 10.0; 2.0, 11.0\r\n"
+                      "5.0, 20.0; 6.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("RUNITS", "MICROMETERS");
+    ldrs.emplace_back("AUNITS", "ARBITRYRY UNITS");
+    ldrs.emplace_back("FIRSTR", "0.0");
+    ldrs.emplace_back("LASTR", "12.0");
+    ldrs.emplace_back("RFACTOR", "2.0");
+    ldrs.emplace_back("AFACTOR", "10.0");
+    ldrs.emplace_back("NPOINTS", "4");
+    auto raDataRecord = sciformats::jdx::RaData(stream, ldrs);
+
+    auto raData = raDataRecord.getData();
+
+    REQUIRE(4 == raData.size());
+    REQUIRE(0.0 == Approx(raData.at(0).first));
+    REQUIRE(100.0 == Approx(raData.at(0).second));
+    REQUIRE(4.0 == Approx(raData.at(1).first));
+    REQUIRE(110.0 == Approx(raData.at(1).second));
+    REQUIRE(10.0 == Approx(raData.at(2).first));
+    REQUIRE(200.0 == Approx(raData.at(2).second));
+    REQUIRE(12.0 == Approx(raData.at(3).first));
+    REQUIRE(210.0 == Approx(raData.at(3).second));
+    auto params = raDataRecord.getParameters();
+    REQUIRE("MICROMETERS" == params.rUnits);
+    REQUIRE("ARBITRYRY UNITS" == params.aUnits);
+    REQUIRE(0.0 == Approx(params.firstR));
+    REQUIRE(12.0 == Approx(params.lastR));
+    REQUIRE(2.0 == Approx(params.rFactor));
+    REQUIRE(10.0 == Approx(params.aFactor));
+    REQUIRE(4 == params.nPoints);
+    REQUIRE_FALSE(params.deltaR.has_value());
+    REQUIRE_FALSE(params.resolution.has_value());
+}

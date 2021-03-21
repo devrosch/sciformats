@@ -51,6 +51,10 @@ public:
     std::vector<std::pair<double, double>> getData();
 
 private:
+    static constexpr char const* s_label = "RADATA";
+    static constexpr char const* s_rppAAVariableList = "(R++(A..A))";
+    static constexpr char const* s_raVariableList = "(RA..RA)";
+
     RaParameters m_parameters;
 
     /**

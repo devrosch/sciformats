@@ -21,13 +21,11 @@ sciformats::jdx::Data2D::Data2D(
 {
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseInput(
+std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXppYYInput(
     const std::string& label, std::istream& iStream, double firstX,
     double lastX, double yFactor, size_t nPoints)
 {
     // parse
-    // TODO: based on the variables list, either parse as (X++(Y..Y)) or
-    // (XY..XY)
     auto yData = sciformats::jdx::JdxDataParser::readXppYYData(iStream);
     if (yData.size() != nPoints)
     {
@@ -53,6 +51,27 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseInput(
         auto x = firstX + nominator / denominator * count++;
         auto y = yFactor * yRaw;
         xyData.emplace_back(x, y);
+    }
+    return xyData;
+}
+
+std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyInput(
+    const std::string& label, std::istream& iStream, double xFactor,
+    double yFactor, size_t nPoints)
+{
+    // parse
+    auto xyData = sciformats::jdx::JdxDataParser::readXyXyData(iStream);
+    if (xyData.size() != nPoints)
+    {
+        throw std::runtime_error(
+            "Mismatch between NPOINTS and actual number of points in \"" + label
+            + "\". NPOINTS: " + std::to_string(nPoints)
+            + ", actual: " + std::to_string(xyData.size()));
+    }
+    for (auto& pair : xyData)
+    {
+        pair.first *= xFactor;
+        pair.second *= yFactor;
     }
     return xyData;
 }
@@ -92,15 +111,30 @@ std::pair<std::string, std::string> sciformats::jdx::Data2D::readFirstLine(
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
-    double firstX, double lastX, double yFactor, uint64_t nPoints)
+    double firstX, double lastX, double xFactor, double yFactor,
+    uint64_t nPoints, DataEncoding dataEncoding)
 {
     auto pos = m_istream.tellg();
     auto startPos = m_streamDataPos;
     try
     {
         m_istream.seekg(startPos);
-        auto data
-            = parseInput(m_label, m_istream, firstX, lastX, yFactor, nPoints);
+        std::vector<std::pair<double, double>> data{};
+        if (dataEncoding == DataEncoding::XppYY)
+        {
+            data = parseXppYYInput(
+                m_label, m_istream, firstX, lastX, yFactor, nPoints);
+        }
+        else if (dataEncoding == DataEncoding::XyXy)
+        {
+            data
+                = parseXyXyInput(m_label, m_istream, xFactor, yFactor, nPoints);
+        }
+        else
+        {
+            throw std::runtime_error(
+                "Cannot parse xy data. Unsupported encoding.");
+        }
         m_istream.seekg(pos);
         return data;
     }

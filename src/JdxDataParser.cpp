@@ -56,6 +56,63 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
     return yValues;
 }
 
+std::vector<std::pair<double, double>>
+sciformats::jdx::JdxDataParser::readXyXyData(std::istream& istream)
+{
+    static_assert(
+        std::numeric_limits<double>::has_quiet_NaN, "No quiet NaN available.");
+
+    // read (XY..XY) data
+    std::vector<std::pair<double, double>> xyValues;
+    bool lastValueIsXOnly = false;
+    std::string line;
+    std::streamoff pos = istream.tellg();
+    while (!sciformats::jdx::JdxLdrParser::isLdrStart(
+        line = sciformats::jdx::JdxLdrParser::readLine(istream)))
+    {
+        // save position to move back if next readLine() encounters LDR start
+        pos = istream.tellg();
+        // pre-process line
+        auto [data, comment]
+            = sciformats::jdx::JdxLdrParser::stripLineComment(line);
+        sciformats::jdx::JdxLdrParser::trim(data);
+        // read xy values from line
+        auto [lineValues, isDifEncoded] = readValues(data);
+        // turn line values into pairs and append line values to xyValues
+        for (auto value : lineValues)
+        {
+            if (lastValueIsXOnly)
+            {
+                // must be y value
+                xyValues.back().second = value;
+                lastValueIsXOnly = false;
+                continue;
+            }
+            // must be x value
+            if (std::isnan(value))
+            {
+                throw std::runtime_error(
+                    "NaN value encountered as x value in line: " + line);
+            }
+            std::pair<double, double> xyValue{
+                value, std::numeric_limits<double>::quiet_NaN()};
+            lastValueIsXOnly = true;
+            xyValues.push_back(xyValue);
+        }
+    }
+    // next LDR encountered => all data read => move back to start of next LDR
+    istream.seekg(pos);
+
+    if (lastValueIsXOnly)
+    {
+        // uneven number of single values
+        throw std::runtime_error("uneven number of values for xy data "
+                                 "encountered. No y value for x value: "
+                                 + std::to_string(xyValues.back().first));
+    }
+    return xyValues;
+}
+
 std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
     std::string& encodedValues)
 {

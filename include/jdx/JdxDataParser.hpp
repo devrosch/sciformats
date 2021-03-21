@@ -14,6 +14,8 @@ class JdxDataParser
 {
 public:
     static std::vector<double> readXppYYData(std::istream& istream);
+    static std::vector<std::pair<double, double>> readXyXyData(
+        std::istream& istream);
     static std::pair<std::vector<double>, bool> readValues(
         std::string& encodedValues);
 

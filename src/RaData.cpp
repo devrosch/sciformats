@@ -30,8 +30,21 @@ sciformats::jdx::RaData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
-    return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
-        m_parameters.aFactor, m_parameters.nPoints);
+    auto variableList = getVariableList();
+    if (variableList == s_rppAAVariableList)
+    {
+        return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
+            m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
+            Data2D::DataEncoding::XppYY);
+    }
+    if (variableList == s_raVariableList)
+    {
+        return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
+            m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
+            Data2D::DataEncoding::XyXy);
+    }
+    throw std::runtime_error(std::string{"Illegal variable list at "} + s_label
+                             + " start encountered: " + variableList);
 }
 
 void sciformats::jdx::RaData::validateInput(

@@ -169,3 +169,68 @@ TEST_CASE("detects illegal stream position (not LDR start)", "[XyData]")
     ldrs.emplace_back("NPOINTS", "1");
     REQUIRE_THROWS(sciformats::jdx::XyData(stream, ldrs));
 }
+
+TEST_CASE("parses unevenly spaced xy data", "[XyData]")
+{
+    std::string input{"##XYDATA= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "460.0, 20.0; 461.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "900.0");
+    ldrs.emplace_back("LASTX", "922.0");
+    ldrs.emplace_back("XFACTOR", "2.0");
+    ldrs.emplace_back("YFACTOR", "10.0");
+    ldrs.emplace_back("NPOINTS", "4");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
+
+    auto xyData = xyDataRecord.getData();
+
+    REQUIRE(4 == xyData.size());
+    REQUIRE(900.0 == Approx(xyData.at(0).first));
+    REQUIRE(100.0 == Approx(xyData.at(0).second));
+    REQUIRE(902.0 == Approx(xyData.at(1).first));
+    REQUIRE(110.0 == Approx(xyData.at(1).second));
+    REQUIRE(920.0 == Approx(xyData.at(2).first));
+    REQUIRE(200.0 == Approx(xyData.at(2).second));
+    REQUIRE(922.0 == Approx(xyData.at(3).first));
+    REQUIRE(210.0 == Approx(xyData.at(3).second));
+    auto params = xyDataRecord.getParameters();
+    REQUIRE("1/CM" == params.xUnits);
+    REQUIRE("ABSORBANCE" == params.yUnits);
+    REQUIRE(900.0 == Approx(params.firstX));
+    REQUIRE(922.0 == Approx(params.lastX));
+    REQUIRE(2.0 == Approx(params.xFactor));
+    REQUIRE(10.0 == Approx(params.yFactor));
+    REQUIRE(4 == params.nPoints);
+    REQUIRE_FALSE(params.deltaX.has_value());
+    REQUIRE_FALSE(params.resolution.has_value());
+}
+
+TEST_CASE("fails when x value undefined while parsing unevenly spaced xy data",
+    "[XyData]")
+{
+    std::string input{"##XYDATA= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "?, 20.0; 461.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "900.0");
+    ldrs.emplace_back("LASTX", "922.0");
+    ldrs.emplace_back("XFACTOR", "2.0");
+    ldrs.emplace_back("YFACTOR", "10.0");
+    ldrs.emplace_back("NPOINTS", "4");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
+
+    REQUIRE_THROWS(xyDataRecord.getData());
+}

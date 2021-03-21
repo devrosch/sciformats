@@ -83,8 +83,6 @@ private:
     std::vector<JdxLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
     std::vector<JdxBlock> m_blocks;
-    std::optional<XyParameters> m_xyParameters;
-    std::optional<RaParameters> m_raParameters;
     std::optional<XyData> m_xyData;
     std::optional<RaData> m_raData;
 
@@ -99,9 +97,6 @@ private:
      */
     JdxBlock(const std::string& title, std::istream& iStream);
     void parseInput(const std::string& title);
-    //    static XyParameters parseXyParameters(const std::vector<JdxLdr>&
-    //    ldrs); static RaParameters parseRaParameters(const
-    //    std::vector<JdxLdr>& ldrs);
 };
 } // namespace sciformats::jdx
 

@@ -29,19 +29,32 @@ sciformats::jdx::XyData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyData::getData()
 {
-    return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
-        m_parameters.yFactor, m_parameters.nPoints);
+    auto variableList = getVariableList();
+    if (variableList == s_xppYYVariableList)
+    {
+        return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
+            m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
+            Data2D::DataEncoding::XppYY);
+    }
+    if (variableList == s_xyVariableList)
+    {
+        return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
+            m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
+            Data2D::DataEncoding::XyXy);
+    }
+    throw std::runtime_error(std::string{"Illegal variable list at "} + s_label
+                             + " start encountered: " + variableList);
 }
 
 void sciformats::jdx::XyData::validateInput(
     const std::string& label, const std::string& variableList)
 {
-    if (label != "XYDATA")
+    if (label != s_label)
     {
         throw std::runtime_error(
             "Illegal label at XYDATA start encountered: " + label);
     }
-    if (variableList != "(X++(Y..Y))" && variableList != "(XY..XY)")
+    if (variableList != s_xppYYVariableList && variableList != s_xyVariableList)
     {
         throw std::runtime_error(
             "Illegal variable list for XYDATA encountered: " + variableList);

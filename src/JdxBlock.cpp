@@ -103,12 +103,6 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
                     "Multiple XYDATA LDRs encountered in block: \""
                     + getLdr("TITLE").value().getValue());
             }
-
-            //            auto parameters = parseXyParameters(getLdrs());
-            //            m_xyParameters = parameters;
-            //            auto xyData
-            //                = XyData(label.value(), value, m_istream,
-            //                parameters);
             auto xyData = XyData(label.value(), value, m_istream, m_ldrs);
             m_xyData.emplace(std::move(xyData));
         }
@@ -121,12 +115,6 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
                     "Multiple RADATA LDRs encountered in block: \""
                     + getLdr("TITLE").value().getValue());
             }
-
-            //            auto parameters = parseRaParameters(getLdrs());
-            //            m_raParameters = parameters;
-            //            auto raData
-            //                = RaData(label.value(), value, m_istream,
-            //                parameters);
             auto raData = RaData(label.value(), value, m_istream, m_ldrs);
             m_raData.emplace(std::move(raData));
         }

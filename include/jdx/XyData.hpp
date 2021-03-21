@@ -52,6 +52,10 @@ public:
     std::vector<std::pair<double, double>> getData();
 
 private:
+    static constexpr char const* s_label = "XYDATA";
+    static constexpr char const* s_xppYYVariableList = "(X++(Y..Y))";
+    static constexpr char const* s_xyVariableList = "(XY..XY)";
+
     XyParameters m_parameters;
 
     /**

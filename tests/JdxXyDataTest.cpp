@@ -235,7 +235,8 @@ TEST_CASE("fails when x value undefined while parsing unevenly spaced xy data",
     REQUIRE_THROWS(xyDataRecord.getData());
 }
 
-TEST_CASE("fails when NPOINTS does not match number of xy data points", "[XyData]")
+TEST_CASE(
+    "fails when NPOINTS does not match number of xy data points", "[XyData]")
 {
     std::string input{"##XYDATA= (XY..XY)\r\n"
                       "450.0, 10.0; 451.0, 11.0\r\n"

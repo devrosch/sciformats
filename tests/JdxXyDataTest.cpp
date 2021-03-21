@@ -234,3 +234,50 @@ TEST_CASE("fails when x value undefined while parsing unevenly spaced xy data",
 
     REQUIRE_THROWS(xyDataRecord.getData());
 }
+
+TEST_CASE("fails when NPOINTS does not match number of xy data points", "[XyData]")
+{
+    std::string input{"##XYDATA= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "460.0, 20.0; 461.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "900.0");
+    ldrs.emplace_back("LASTX", "922.0");
+    ldrs.emplace_back("XFACTOR", "2.0");
+    ldrs.emplace_back("YFACTOR", "10.0");
+    ldrs.emplace_back("NPOINTS", "3");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
+
+    REQUIRE_THROWS_WITH(xyDataRecord.getData(),
+        Catch::Matchers::Contains("NPOINTS")
+            && Catch::Matchers::Contains("mismatch", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails for XYDATA illegal variable list", "[XyData]")
+{
+    std::string input{"##XYDATA= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "460.0, 20.0; 461.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "900.0");
+    ldrs.emplace_back("LASTX", "922.0");
+    ldrs.emplace_back("XFACTOR", "2.0");
+    ldrs.emplace_back("YFACTOR", "10.0");
+    ldrs.emplace_back("NPOINTS", "4");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
+
+    REQUIRE_THROWS_WITH(xyDataRecord.getData(),
+        Catch::Matchers::Contains("uneven", Catch::CaseSensitive::No));
+}

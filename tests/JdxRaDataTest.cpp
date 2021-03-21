@@ -71,6 +71,7 @@ TEST_CASE("parses AFFN RA data, stream at 2nd line start", "[RaData]")
     // no "LASTA" defined in standard
     ldrs.emplace_back("MAXA", "12.0");
     ldrs.emplace_back("MINA", "10.0");
+    ldrs.emplace_back("RESOLUTION", "1.0");
     ldrs.emplace_back("DELTAR", "1.0");
 
     auto raDataRecord
@@ -90,6 +91,7 @@ TEST_CASE("parses AFFN RA data, stream at 2nd line start", "[RaData]")
     REQUIRE(10.0 == Approx(params.firstA.value()));
     REQUIRE(12.0 == Approx(params.maxA.value()));
     REQUIRE(10.0 == Approx(params.minA.value()));
+    REQUIRE(1.0 == Approx(params.resolution.value()));
     REQUIRE(1.0 == Approx(params.deltaR.value()));
 }
 

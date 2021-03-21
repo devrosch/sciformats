@@ -34,6 +34,7 @@ TEST_CASE("parses AFFN RA data, stream at LDR start", "[RaData]")
     REQUIRE(11.0 == Approx(raData.at(1).second));
     REQUIRE(2 == Approx(raData.at(2).first));
     REQUIRE(12.0 == Approx(raData.at(2).second));
+
     auto params = raDataRecord.getParameters();
     REQUIRE("MICROMETERS" == params.rUnits);
     REQUIRE("ARBITRARY UNITS" == params.aUnits);
@@ -65,6 +66,13 @@ TEST_CASE("parses AFFN RA data, stream at 2nd line start", "[RaData]")
     ldrs.emplace_back("RFACTOR", "1.0");
     ldrs.emplace_back("AFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
+    // optional
+    ldrs.emplace_back("FIRSTA", "10.0");
+    // no "LASTA" defined in standard
+    ldrs.emplace_back("MAXA", "12.0");
+    ldrs.emplace_back("MINA", "10.0");
+    ldrs.emplace_back("DELTAR", "1.0");
+
     auto raDataRecord
         = sciformats::jdx::RaData("RADATA", "(R++(A..A))", stream, ldrs);
     auto raData = raDataRecord.getData();
@@ -76,6 +84,13 @@ TEST_CASE("parses AFFN RA data, stream at 2nd line start", "[RaData]")
     REQUIRE(11.0 == Approx(raData.at(1).second));
     REQUIRE(2 == Approx(raData.at(2).first));
     REQUIRE(12.0 == Approx(raData.at(2).second));
+
+    auto params = raDataRecord.getParameters();
+    // optional parameters
+    REQUIRE(10.0 == Approx(params.firstA.value()));
+    REQUIRE(12.0 == Approx(params.maxA.value()));
+    REQUIRE(10.0 == Approx(params.minA.value()));
+    REQUIRE(1.0 == Approx(params.deltaR.value()));
 }
 
 TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")

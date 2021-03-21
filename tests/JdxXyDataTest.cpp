@@ -63,10 +63,16 @@ TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[XyData]")
     ldrs.emplace_back("XFACTOR", "1.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
+    // optional
+    ldrs.emplace_back("MAXX", "452.0");
+    ldrs.emplace_back("MINX", "450.0");
+    ldrs.emplace_back("MAXY", "12.0");
+    ldrs.emplace_back("MINY", "10.0");
+
     auto xyDataRecord
         = sciformats::jdx::XyData("XYDATA", "(X++(Y..Y))", stream, ldrs);
-    auto xyData = xyDataRecord.getData();
 
+    auto xyData = xyDataRecord.getData();
     REQUIRE(3 == xyData.size());
     REQUIRE(450.0 == Approx(xyData.at(0).first));
     REQUIRE(10.0 == Approx(xyData.at(0).second));
@@ -74,6 +80,12 @@ TEST_CASE("parses AFFN xy data, stream at 2nd line start", "[XyData]")
     REQUIRE(11.0 == Approx(xyData.at(1).second));
     REQUIRE(452.0 == Approx(xyData.at(2).first));
     REQUIRE(12.0 == Approx(xyData.at(2).second));
+
+    auto params = xyDataRecord.getParameters();
+    REQUIRE(452.0 == Approx(params.maxX.value()));
+    REQUIRE(450.0 == Approx(params.minX.value()));
+    REQUIRE(12.0 == Approx(params.maxY.value()));
+    REQUIRE(10.0 == Approx(params.minY.value()));
 }
 
 TEST_CASE("parses single data point record", "[XyData]")
@@ -92,6 +104,7 @@ TEST_CASE("parses single data point record", "[XyData]")
     ldrs.emplace_back("XFACTOR", "1.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
+
     auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
     auto xyData = xyDataRecord.getData();
 

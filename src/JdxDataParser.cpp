@@ -264,7 +264,8 @@ sciformats::jdx::JdxDataParser::toAffn(std::string& token)
     auto c = token.front();
     TokenType tokenType = TokenType::Affn;
     std::optional<char> firstDigit;
-    if (c == '?') {
+    if (c == '?')
+    {
         tokenType = TokenType::Missing;
     }
     else if ((firstDigit = getSqzDigitValue(c)))

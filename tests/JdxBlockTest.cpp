@@ -9,6 +9,8 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
                       "##DATA TYPE= INFRARED SPECTRUM\r\n"
                       "##ORIGIN= devrosch\r\n"
                       "##OWNER= PUBLIC DOMAIN\r\n"
+                      "##SPECTROMETER/DATA SYSTEM= Dum=\r\n"
+                      "my\r\n"
                       "##XUNITS= 1/CM\r\n"
                       "##YUNITS= ABSORBANCE\r\n"
                       "##XFACTOR= 1.0\r\n"
@@ -29,8 +31,10 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
 
     // does NOT contain "##END=" even though technically an LDR
     // DOES contain "##XYDATA=" with its variable list as value
-    REQUIRE(14 == ldrs.size());
+    REQUIRE(15 == ldrs.size());
     REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
+    REQUIRE(
+        "Dummy" == block.getLdr("SPECTROMETERDATASYSTEM").value().getValue());
     REQUIRE(true == block.getXyData().has_value());
 }
 

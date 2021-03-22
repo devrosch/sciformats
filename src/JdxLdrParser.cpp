@@ -57,6 +57,7 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
     // skip leading white spaces
     for (; it != ldr.cend(); ++it)
     {
+        // TODO: account for negative values passed to isspace()
         if (!static_cast<bool>(std::isspace(*it)))
         {
             break;

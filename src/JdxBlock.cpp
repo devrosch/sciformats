@@ -42,15 +42,23 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
 
         if (!JdxLdrParser::isLdrStart(line))
         {
-            // should be continuation of previous LDR
+            // continuation of previous LDR
             if (!label.has_value())
             {
                 throw std::runtime_error(
                     std::string{"Unexpected content found in block \""}
                     + getLdr("TITLE").value().getValue() + "\": " + line);
             }
-            // TODO: account for terminal "=" as non line breaking marker
-            value.append('\n' + line);
+            if (!value.empty() && value.back() == '=')
+            {
+                // account for terminal "=" as non line breaking marker
+                value.pop_back();
+                value.append(line);
+            }
+            else
+            {
+                value.append('\n' + line);
+            }
             continue;
         }
 
@@ -132,6 +140,7 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
 std::optional<const sciformats::jdx::JdxLdr> sciformats::jdx::JdxBlock::getLdr(
     const std::string& label) const
 {
+    // TODO: normalize search label before search
     return JdxLdrParser::findLdr(m_ldrs, label);
 }
 

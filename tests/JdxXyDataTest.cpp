@@ -187,7 +187,7 @@ TEST_CASE("parses unevenly spaced xy data", "[XyData]")
 {
     std::string input{"##XYDATA= (XY..XY)\r\n"
                       "450.0, 10.0; 451.0, 11.0\r\n"
-                      "460.0, 20.0; 461.0, 21.0\r\n"
+                      "460.0, ?; 461.0, 21.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
@@ -210,7 +210,7 @@ TEST_CASE("parses unevenly spaced xy data", "[XyData]")
     REQUIRE(902.0 == Approx(xyData.at(1).first));
     REQUIRE(110.0 == Approx(xyData.at(1).second));
     REQUIRE(920.0 == Approx(xyData.at(2).first));
-    REQUIRE(200.0 == Approx(xyData.at(2).second));
+    REQUIRE(std::isnan(xyData.at(2).second));
     REQUIRE(922.0 == Approx(xyData.at(3).first));
     REQUIRE(210.0 == Approx(xyData.at(3).second));
     auto params = xyDataRecord.getParameters();
@@ -294,4 +294,28 @@ TEST_CASE("fails for XYDATA illegal variable list", "[XyData]")
 
     REQUIRE_THROWS_WITH(xyDataRecord.getData(),
         Catch::Matchers::Contains("uneven", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails parsing ? as X value", "[XyData]")
+{
+    std::string input{"##XYDATA= (XY..XY)\r\n"
+                      "450.0, 10.0; ?, 11.0\r\n"
+                      "460.0, 20.0; 461.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::JdxLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "461.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "4");
+    auto xyDataRecord = sciformats::jdx::XyData(stream, ldrs);
+
+    REQUIRE_THROWS_WITH(xyDataRecord.getData(),
+        Catch::Matchers::Contains("NaN", Catch::CaseSensitive::No)
+            && Catch::Matchers::Contains("x value", Catch::CaseSensitive::No));
 }

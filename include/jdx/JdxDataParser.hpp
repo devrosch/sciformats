@@ -26,6 +26,7 @@ private:
         Sqz,
         Dif,
         Dup,
+        Missing,
     };
     static std::pair<std::vector<double>, bool> readXppYYLine(
         std::string& line, const std::optional<double>& yValueCheck);

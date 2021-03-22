@@ -120,7 +120,8 @@ std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
     std::vector<double> yValues{};
     bool difEncoded = false;
     // state
-    std::optional<double> previousValue{};
+    // for DIF/DUP previousTokenValue not same as last yValues value
+    std::optional<double> previousTokenValue{};
     TokenType previousTokenType = TokenType::Affn;
     // loop
     size_t index = 0;
@@ -134,26 +135,32 @@ std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
 
         // check for logical errors
         if ((tokenType == TokenType::Dup || tokenType == TokenType::Dif)
-            && !previousValue.has_value())
+            && !previousTokenValue.has_value())
         {
-            auto message = tokenType == TokenType::Dup ? std::string{"DUP"}
-                                                       : std::string{"DIF"};
-            message += " token without preceding token"
-                       " encountered in sequence: ";
-            message += encodedValues;
-            throw std::runtime_error(message);
+            throw std::runtime_error(
+                tokenType == TokenType::Dup
+                    ? std::string{"DUP"}
+                    : std::string{"DIF"}
+                          + " token without preceding token encountered in "
+                            "sequence: "
+                          + encodedValues);
         }
-        if ((tokenType == TokenType::Dup && previousValue.has_value()
+        if ((tokenType == TokenType::Dup && previousTokenValue.has_value()
                 && previousTokenType == TokenType::Dup))
         {
             throw std::runtime_error(
-                std::string{"DUP token with preceding DUP token encountered "
-                            "in sequence: "}
+                "DUP token with preceding DUP token encountered in sequence: "
                 + encodedValues);
         }
 
         // process token
-        if (tokenType == TokenType::Dup)
+        if (tokenType == TokenType::Missing)
+        {
+            // ?
+            yValues.push_back(std::numeric_limits<double>::quiet_NaN());
+            previousTokenValue = std::numeric_limits<double>::quiet_NaN();
+        }
+        else if (tokenType == TokenType::Dup)
         {
             auto numRepeats = std::stol(token.value());
             for (auto i{0}; i < numRepeats - 1; i++)
@@ -161,7 +168,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
                 if (previousTokenType == TokenType::Dif)
                 {
                     auto lastValue = yValues.back();
-                    auto nextValue = lastValue + previousValue.value();
+                    auto nextValue = lastValue + previousTokenValue.value();
                     yValues.push_back(nextValue);
                 }
                 else
@@ -169,14 +176,19 @@ std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
                     yValues.push_back(yValues.back());
                 }
             }
-            previousValue = numRepeats;
+            previousTokenValue = numRepeats;
         }
         else
         {
-            // TODO: also account for ? values
             auto value = std::stod(token.value());
             if (tokenType == TokenType::Dif)
             {
+                if (previousTokenType == TokenType::Missing)
+                {
+                    throw std::runtime_error("DIF token with preceding ? token "
+                                             "encountered in sequence: "
+                                             + encodedValues);
+                }
                 auto lastValue = yValues.back();
                 auto nextValue = lastValue + value;
                 yValues.push_back(nextValue);
@@ -185,7 +197,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
             {
                 yValues.push_back(value);
             }
-            previousValue = value;
+            previousTokenValue = value;
         }
         previousTokenType = tokenType;
     }
@@ -219,6 +231,10 @@ sciformats::jdx::JdxDataParser::readXppYYLine(
 std::optional<std::string> sciformats::jdx::JdxDataParser::nextToken(
     const std::string& line, size_t& pos)
 {
+    if (line == "460.0, ?; 461.0, 21.0")
+    {
+        int i = 0;
+    }
     // skip delimiters
     while (pos < line.size() && isTokenDelimiter(line, pos))
     {
@@ -248,7 +264,10 @@ sciformats::jdx::JdxDataParser::toAffn(std::string& token)
     auto c = token.front();
     TokenType tokenType = TokenType::Affn;
     std::optional<char> firstDigit;
-    if ((firstDigit = getSqzDigitValue(c)))
+    if (c == '?') {
+        tokenType = TokenType::Missing;
+    }
+    else if ((firstDigit = getSqzDigitValue(c)))
     {
         tokenType = TokenType::Sqz;
     }
@@ -260,7 +279,8 @@ sciformats::jdx::JdxDataParser::toAffn(std::string& token)
     {
         tokenType = TokenType::Dup;
     }
-    if (TokenType::Affn != tokenType)
+
+    if (TokenType::Affn != tokenType && TokenType::Missing != tokenType)
     {
         // replace SQZ/DIF/DUP char (first char) with (signed) value
         token.erase(0, 1);
@@ -321,6 +341,11 @@ bool sciformats::jdx::JdxDataParser::isTokenStart(
     if (getSqzDigitValue(c).has_value() || getDifDigitValue(c).has_value()
         || getDupDigitValue(c).has_value())
     {
+        return true;
+    }
+    if (c == '?')
+    {
+        // "invalid" data symbol
         return true;
     }
     return false;

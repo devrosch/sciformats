@@ -36,6 +36,9 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
     REQUIRE(
         "Dummy" == block.getLdr("SPECTROMETERDATASYSTEM").value().getValue());
     REQUIRE(true == block.getXyData().has_value());
+    REQUIRE(
+        "Dummy" == block.getLdr("Spectrometer/DATA SYSTEM").value().getValue());
+    REQUIRE(true == block.getXyData().has_value());
 }
 
 TEST_CASE("parses all LDRs in block with RADATA", "[JdxBlock]")

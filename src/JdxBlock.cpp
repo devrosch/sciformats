@@ -140,7 +140,6 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
 std::optional<const sciformats::jdx::JdxLdr> sciformats::jdx::JdxBlock::getLdr(
     const std::string& label) const
 {
-    // TODO: normalize search label before search
     return JdxLdrParser::findLdr(m_ldrs, label);
 }
 

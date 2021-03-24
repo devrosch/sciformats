@@ -48,7 +48,8 @@ public:
     /**
      * @brief Provides a labeled data record (LDR) from the block. The same
      * exclusions as for getLdrs() apply.
-     * @param label The label of the LDR.
+     * @param label The label of the LDR. Search will use normalized form of
+     * label, e.g. "Title" and "TI TLE" will both find the "TITLE" LDR.
      * @return The LDR for the given label if it exists in the block,
      * std::nullopt otherwise.
      */

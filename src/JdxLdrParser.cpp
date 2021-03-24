@@ -49,7 +49,7 @@ void sciformats::jdx::JdxLdrParser::trim(std::string& s)
     trimLeft(s);
 }
 
-std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
+std::string sciformats::jdx::JdxLdrParser::normalizeLdrStart(
     const std::string& ldr)
 {
     std::string output{};
@@ -57,8 +57,7 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
     // skip leading white spaces
     for (; it != ldr.cend(); ++it)
     {
-        // TODO: account for negative values passed to isspace()
-        if (!static_cast<bool>(std::isspace(*it)))
+        if (!static_cast<bool>(std::isspace(static_cast<unsigned char>(*it))))
         {
             break;
         }
@@ -75,15 +74,30 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
         output += *(it++);
     }
     // normalize label
-    auto makeUpperCase = [](const unsigned char c) { return std::toupper(c); };
-    for (; it != ldr.cend(); ++it)
+    std::string label{};
+    while (it != ldr.cend() && *it != '=')
     {
-        const char c = *it;
-        if (c == '=')
-        {
-            // end of label
-            break;
-        }
+        label += *it++;
+    }
+    output.append(normalizeLdrLabel(label));
+    // add remaining string content
+    if (it == ldr.cend() || *it != '=')
+    {
+        throw std::runtime_error(
+            std::string{"Malformed LDR start, missing equals: "} + ldr);
+    }
+    output.append(it, ldr.end());
+    return output;
+}
+
+std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
+    const std::string& label)
+{
+    std::string output{};
+    // normalize LDR label, i.e. the string between ## and =
+    auto makeUpperCase = [](const unsigned char c) { return std::toupper(c); };
+    for (const char c : label)
+    {
         if (c == ' ' || c == '-' || c == '/' || c == '_')
         {
             // discard
@@ -92,13 +106,6 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
         output += static_cast<char>(
             makeUpperCase(static_cast<const unsigned char>(c)));
     }
-    if (*it != '=')
-    {
-        throw std::runtime_error(
-            std::string{"Malformed LDR start, missing equals: "} + ldr);
-    }
-    // add remaining string content
-    output.append(it, ldr.end());
     return output;
 }
 
@@ -112,7 +119,7 @@ sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
             std::string{"Malformed LDR start, missing equals: "} + ldrStart);
     }
     std::string label = ldrStart.substr(0, posEquals + 1);
-    std::string normalizedLabel = normalizeLdrLabel(label);
+    std::string normalizedLabel = normalizeLdrStart(label);
     if (normalizedLabel.size() < 3 || normalizedLabel.at(0) != '#'
         || normalizedLabel.at(1) != '#'
         || normalizedLabel.at(normalizedLabel.size() - 1) != '=')
@@ -154,10 +161,7 @@ std::optional<const sciformats::jdx::JdxLdr>
 sciformats::jdx::JdxLdrParser::findLdr(
     const std::vector<JdxLdr>& ldrs, const std::string& label)
 {
-    std::string normalizedLabel = "##" + label + "=";
-    // TODO: make normalizeLdrLabel() more generic
-    sciformats::jdx::JdxLdrParser::normalizeLdrLabel(normalizedLabel);
-    normalizedLabel = normalizedLabel.substr(2, normalizedLabel.size() - 3);
+    std::string normalizedLabel = normalizeLdrLabel(label);
     auto it = std::find_if(
         ldrs.begin(), ldrs.end(), [&normalizedLabel](const JdxLdr& ldr) {
             return ldr.getLabel() == normalizedLabel;

@@ -20,7 +20,8 @@ public:
     void static trim(std::string& s);
     void static trimLeft(std::string& s);
     void static trimRight(std::string& s);
-    std::string static normalizeLdrLabel(const std::string& ldr);
+    std::string static normalizeLdrStart(const std::string& ldr);
+    std::string static normalizeLdrLabel(const std::string& label);
     std::pair<std::string, std::string> static parseLdrStart(
         const std::string& ldrStart);
     std::pair<std::string, std::optional<std::string>> static stripLineComment(

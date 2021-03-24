@@ -116,43 +116,43 @@ TEST_CASE("trims white space", "[JdxLdrParser][trim]")
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("normalize LDR label removes \" -/_\" from label",
+TEST_CASE("normalize LDR start removes \" -/_\" from label",
     "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"##A B-C/D_E= abc"};
     std::string expect{"##ABCDE= abc"};
 
     std::string actual
-        = sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input);
+        = sciformats::jdx::JdxLdrParser::normalizeLdrStart(input);
 
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("normalize LDR label leaves normalized label intact",
+TEST_CASE("normalize LDR start leaves normalized label intact",
     "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"##ABCDE= abc"};
     std::string expect{"##ABCDE= abc"};
 
     std::string actual
-        = sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input);
+        = sciformats::jdx::JdxLdrParser::normalizeLdrStart(input);
 
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("normalize LDR label removes leading white spaces",
+TEST_CASE("normalize LDR start removes leading white spaces",
     "[JdxLdrParser][normalizeLdrLabel]")
 {
     std::string input{"\t\n\v\f\r ##ABCDE= abc"};
     std::string expect{"##ABCDE= abc"};
 
     std::string actual
-        = sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input);
+        = sciformats::jdx::JdxLdrParser::normalizeLdrStart(input);
 
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("normalize LDR label turns (only) ASCII letters to upper case",
+TEST_CASE("normalize LDR start turns (only) ASCII letters to upper case",
     "[JdxLdrParser][normalizeLdrLabel]")
 {
     // label: abcdeäöüÄÖÜ in ISO-8859-1 encoding
@@ -160,7 +160,7 @@ TEST_CASE("normalize LDR label turns (only) ASCII letters to upper case",
     std::string expect{"##ABCDE\xE4\xF6\xFC\xC4\xD6\xDC= abc"};
 
     std::string actual
-        = sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input);
+        = sciformats::jdx::JdxLdrParser::normalizeLdrStart(input);
 
     REQUIRE(expect == actual);
 }
@@ -170,7 +170,7 @@ TEST_CASE("rejects missing double hashes in LDR start",
 {
     std::string input{"#LABEL= abc"};
 
-    REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input));
+    REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::normalizeLdrStart(input));
 }
 
 TEST_CASE(
@@ -178,7 +178,7 @@ TEST_CASE(
 {
     std::string input{"##LABEL abc"};
 
-    REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::normalizeLdrLabel(input));
+    REQUIRE_THROWS(sciformats::jdx::JdxLdrParser::normalizeLdrStart(input));
 }
 
 TEST_CASE("tokenizes regular LDR start", "[JdxLdrParser][parseLdrStart]")

@@ -103,7 +103,6 @@ private:
         double yFactor, size_t nPoints);
     static std::pair<std::string, std::string> readFirstLine(
         std::istream& istream);
-    static std::optional<std::string> findLdrValue();
 };
 } // namespace sciformats::jdx
 

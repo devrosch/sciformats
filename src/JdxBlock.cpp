@@ -13,14 +13,13 @@ sciformats::jdx::JdxBlock::JdxBlock(std::istream& iStream)
     auto firstLine = JdxLdrParser::readLine(m_istream);
     if (!JdxLdrParser::isLdrStart(firstLine))
     {
-        throw std::runtime_error(
-            std::string{"Malformed LDR start: "} + firstLine);
+        throw std::runtime_error("Malformed LDR start: " + firstLine);
     }
     auto [label, title] = JdxLdrParser::parseLdrStart(firstLine);
     if (label != "TITLE")
     {
         throw std::runtime_error(
-            std::string{"Malformed Block start, wrong label: "} + firstLine);
+            "Malformed Block start, wrong label: " + firstLine);
     }
     parseInput(title);
 }
@@ -45,9 +44,9 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
             // continuation of previous LDR
             if (!label.has_value())
             {
-                throw std::runtime_error(
-                    std::string{"Unexpected content found in block \""}
-                    + getLdr("TITLE").value().getValue() + "\": " + line);
+                throw std::runtime_error("Unexpected content found in block \""
+                                         + getLdr("TITLE").value().getValue()
+                                         + "\": " + line);
             }
             if (!value.empty() && value.back() == '=')
             {
@@ -80,7 +79,7 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
                     // duplicate, but spec (JCAMP-DX IR 3.2) says
                     // a duplicate LDR is illegal in a block => throw
                     throw std::runtime_error(
-                        std::string{"Duplicate LDR in Block \""}
+                        "Duplicate LDR in Block \""
                         + getLdr("TITLE").value().getValue() + "\": " + line);
                 }
                 m_ldrs.emplace_back(label.value(), value);
@@ -126,8 +125,8 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
             auto raData = RaData(label.value(), value, m_istream, m_ldrs);
             m_raData.emplace(std::move(raData));
         }
-        // TODO: add special treatment for data LDRs (e.g. XYDATA,
-        // XYPOINTS, RADATA, PEAK TABLE, PEAK ASSIGNMENTS, NTUPLES, ...)
+        // TODO: add special treatment for data LDRs (e.g. XYPOINTS, PEAK TABLE,
+        // PEAK ASSIGNMENTS, NTUPLES, ...), DONE: XYDATA, RADATA
     }
     if ("END" != label)
     {

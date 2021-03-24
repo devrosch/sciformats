@@ -106,7 +106,7 @@ sciformats::jdx::JdxDataParser::readXyXyData(std::istream& istream)
     if (lastValueIsXOnly)
     {
         // uneven number of single values
-        throw std::runtime_error("uneven number of values for xy data "
+        throw std::runtime_error("Uneven number of values for xy data "
                                  "encountered. No y value for x value: "
                                  + std::to_string(xyValues.back().first));
     }
@@ -221,8 +221,7 @@ sciformats::jdx::JdxDataParser::readXppYYLine(
         // first y value is a duplicate, check if roughly the same
         if (fabs(values.front() - yValueCheck.value()) >= 1)
         {
-            throw std::runtime_error(
-                std::string{"Y value check failed in line: "} + line);
+            throw std::runtime_error("Y value check failed in line: " + line);
         }
     }
     return {values, difEncoded};
@@ -231,10 +230,6 @@ sciformats::jdx::JdxDataParser::readXppYYLine(
 std::optional<std::string> sciformats::jdx::JdxDataParser::nextToken(
     const std::string& line, size_t& pos)
 {
-    if (line == "460.0, ?; 461.0, 21.0")
-    {
-        int i = 0;
-    }
     // skip delimiters
     while (pos < line.size() && isTokenDelimiter(line, pos))
     {
@@ -246,11 +241,11 @@ std::optional<std::string> sciformats::jdx::JdxDataParser::nextToken(
     }
     if (!isTokenStart(line, pos))
     {
-        throw std::runtime_error(
-            std::string{"illegal sequence encountered in line \""} + line
-            + "\" at position: " + std::to_string(pos));
+        throw std::runtime_error("illegal sequence encountered in line \""
+                                 + line
+                                 + "\" at position: " + std::to_string(pos));
     }
-    std::string token;
+    std::string token{};
     do
     {
         token += line.at(pos++);

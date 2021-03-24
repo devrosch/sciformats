@@ -43,8 +43,8 @@ std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
             m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
             Data2D::DataEncoding::XyXy);
     }
-    throw std::runtime_error(std::string{"Illegal variable list at "} + s_label
-                             + " start encountered: " + variableList);
+    throw std::runtime_error(
+        "Illegal variable list for RADATA encountered: " + variableList);
 }
 
 void sciformats::jdx::RaData::validateInput(

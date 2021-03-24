@@ -68,10 +68,9 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrStart(
         if (it == ldr.cend() || *it != '#')
         {
             throw std::runtime_error(
-                std::string{"Malformed LDR start, missing double hashes: "}
-                + ldr);
+                "Malformed LDR start, missing double hashes: " + ldr);
         }
-        output += *(it++);
+        output += *it++;
     }
     // normalize label
     std::string label{};
@@ -83,8 +82,7 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrStart(
     // add remaining string content
     if (it == ldr.cend() || *it != '=')
     {
-        throw std::runtime_error(
-            std::string{"Malformed LDR start, missing equals: "} + ldr);
+        throw std::runtime_error("Malformed LDR start, missing equals: " + ldr);
     }
     output.append(it, ldr.end());
     return output;
@@ -116,7 +114,7 @@ sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
     if (std::string::npos == posEquals)
     {
         throw std::runtime_error(
-            std::string{"Malformed LDR start, missing equals: "} + ldrStart);
+            "Malformed LDR start, missing equals: " + ldrStart);
     }
     std::string label = ldrStart.substr(0, posEquals + 1);
     std::string normalizedLabel = normalizeLdrStart(label);
@@ -125,8 +123,7 @@ sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
         || normalizedLabel.at(normalizedLabel.size() - 1) != '=')
     {
         throw std::runtime_error(
-            std::string{
-                "Malformed LDR start, normalization yields illegal label: "}
+            "Malformed LDR start, normalization yields illegal label: "
             + normalizedLabel);
     }
     // strip leading and trailing symbols from label
@@ -167,7 +164,7 @@ sciformats::jdx::JdxLdrParser::findLdr(
             return ldr.getLabel() == normalizedLabel;
         });
 
-    if (it != ldrs.end())
+    if (it != ldrs.cend())
     {
         return *it;
     }

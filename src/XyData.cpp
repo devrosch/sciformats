@@ -42,14 +42,14 @@ std::vector<std::pair<double, double>> sciformats::jdx::XyData::getData()
             m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
             Data2D::DataEncoding::XyXy);
     }
-    throw std::runtime_error(std::string{"Illegal variable list at "} + s_label
-                             + " start encountered: " + variableList);
+    throw std::runtime_error(
+        "Illegal variable list for XYDATA encountered: " + variableList);
 }
 
 void sciformats::jdx::XyData::validateInput(
     const std::string& label, const std::string& variableList)
 {
-    if (label != s_label)
+    if (label != "XYDATA")
     {
         throw std::runtime_error(
             "Illegal label at XYDATA start encountered: " + label);

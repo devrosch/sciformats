@@ -1,12 +1,12 @@
-#include "jdx/JdxDataParser.hpp"
-#include "jdx/JdxLdrParser.hpp"
+#include "jdx/DataParser.hpp"
+#include "jdx/LdrParser.hpp"
 
 #include <cmath>
 #include <limits>
 #include <regex>
 #include <string>
 
-std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
+std::vector<double> sciformats::jdx::DataParser::readXppYYData(
     std::istream& istream)
 {
     static_assert(
@@ -17,15 +17,15 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
     std::string line;
     std::streamoff pos = istream.tellg();
     std::optional<double> yValueCheck = std::nullopt;
-    while (!sciformats::jdx::JdxLdrParser::isLdrStart(
-        line = sciformats::jdx::JdxLdrParser::readLine(istream)))
+    while (!sciformats::jdx::LdrParser::isLdrStart(
+        line = sciformats::jdx::LdrParser::readLine(istream)))
     {
         // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
         auto [data, comment]
-            = sciformats::jdx::JdxLdrParser::stripLineComment(line);
-        sciformats::jdx::JdxLdrParser::trim(data);
+            = sciformats::jdx::LdrParser::stripLineComment(line);
+        sciformats::jdx::LdrParser::trim(data);
         // read Y values from line
         auto [lineYValues, isDifEncoded] = readXppYYLine(data, yValueCheck);
         if (yValueCheck.has_value())
@@ -57,7 +57,7 @@ std::vector<double> sciformats::jdx::JdxDataParser::readXppYYData(
 }
 
 std::vector<std::pair<double, double>>
-sciformats::jdx::JdxDataParser::readXyXyData(std::istream& istream)
+sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
 {
     static_assert(
         std::numeric_limits<double>::has_quiet_NaN, "No quiet NaN available.");
@@ -67,15 +67,15 @@ sciformats::jdx::JdxDataParser::readXyXyData(std::istream& istream)
     bool lastValueIsXOnly = false;
     std::string line;
     std::streamoff pos = istream.tellg();
-    while (!sciformats::jdx::JdxLdrParser::isLdrStart(
-        line = sciformats::jdx::JdxLdrParser::readLine(istream)))
+    while (!sciformats::jdx::LdrParser::isLdrStart(
+        line = sciformats::jdx::LdrParser::readLine(istream)))
     {
         // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
         auto [data, comment]
-            = sciformats::jdx::JdxLdrParser::stripLineComment(line);
-        sciformats::jdx::JdxLdrParser::trim(data);
+            = sciformats::jdx::LdrParser::stripLineComment(line);
+        sciformats::jdx::LdrParser::trim(data);
         // read xy values from line
         auto [lineValues, isDifEncoded] = readValues(data);
         // turn line values into pairs and append line values to xyValues
@@ -113,7 +113,7 @@ sciformats::jdx::JdxDataParser::readXyXyData(std::istream& istream)
     return xyValues;
 }
 
-std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
+std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readValues(
     std::string& encodedValues)
 {
     // output
@@ -204,8 +204,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::JdxDataParser::readValues(
     return {yValues, difEncoded};
 }
 
-std::pair<std::vector<double>, bool>
-sciformats::jdx::JdxDataParser::readXppYYLine(
+std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readXppYYLine(
     std::string& line, const std::optional<double>& yValueCheck)
 {
     // read (X++(Y..Y)) data line
@@ -227,7 +226,7 @@ sciformats::jdx::JdxDataParser::readXppYYLine(
     return {values, difEncoded};
 }
 
-std::optional<std::string> sciformats::jdx::JdxDataParser::nextToken(
+std::optional<std::string> sciformats::jdx::DataParser::nextToken(
     const std::string& line, size_t& pos)
 {
     // skip delimiters
@@ -253,8 +252,8 @@ std::optional<std::string> sciformats::jdx::JdxDataParser::nextToken(
     return token;
 }
 
-sciformats::jdx::JdxDataParser::TokenType
-sciformats::jdx::JdxDataParser::toAffn(std::string& token)
+sciformats::jdx::DataParser::TokenType sciformats::jdx::DataParser::toAffn(
+    std::string& token)
 {
     auto c = token.front();
     TokenType tokenType = TokenType::Affn;
@@ -286,7 +285,7 @@ sciformats::jdx::JdxDataParser::toAffn(std::string& token)
     return tokenType;
 }
 
-bool sciformats::jdx::JdxDataParser::isTokenDelimiter(
+bool sciformats::jdx::DataParser::isTokenDelimiter(
     std::string encodedValues, size_t index)
 {
     if (index >= encodedValues.size())
@@ -299,7 +298,7 @@ bool sciformats::jdx::JdxDataParser::isTokenDelimiter(
     return isspace(static_cast<unsigned char>(c)) || c == ';' || c == ',';
 }
 
-bool sciformats::jdx::JdxDataParser::isTokenStart(
+bool sciformats::jdx::DataParser::isTokenStart(
     std::string encodedValues, size_t index)
 {
     if (index >= encodedValues.size())
@@ -347,7 +346,7 @@ bool sciformats::jdx::JdxDataParser::isTokenStart(
     return false;
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getAsciiDigitValue(char c)
+std::optional<char> sciformats::jdx::DataParser::getAsciiDigitValue(char c)
 {
     static const std::string asciiDigits = "0123456789";
     auto pos = asciiDigits.find(c);
@@ -356,7 +355,7 @@ std::optional<char> sciformats::jdx::JdxDataParser::getAsciiDigitValue(char c)
                : std::make_optional(static_cast<char>(pos));
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getSqzDigitValue(char c)
+std::optional<char> sciformats::jdx::DataParser::getSqzDigitValue(char c)
 {
     static const std::string positiveSqzDigits = "@ABCDEFGHI";
     auto pos = positiveSqzDigits.find(c);
@@ -371,7 +370,7 @@ std::optional<char> sciformats::jdx::JdxDataParser::getSqzDigitValue(char c)
                : std::make_optional(static_cast<char>(-pos - 1));
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getDifDigitValue(char c)
+std::optional<char> sciformats::jdx::DataParser::getDifDigitValue(char c)
 {
     static const std::string positiveDifDigits = "%JKLMNOPQR";
     auto pos = positiveDifDigits.find(c);
@@ -386,7 +385,7 @@ std::optional<char> sciformats::jdx::JdxDataParser::getDifDigitValue(char c)
                : std::make_optional(static_cast<char>(-pos - 1));
 }
 
-std::optional<char> sciformats::jdx::JdxDataParser::getDupDigitValue(char c)
+std::optional<char> sciformats::jdx::DataParser::getDupDigitValue(char c)
 {
     static const std::string positiveDupDigits = "STUVWXYZs";
     auto pos = positiveDupDigits.find(c);

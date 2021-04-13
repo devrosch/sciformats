@@ -49,7 +49,7 @@ bool sciformats::jdx::JdxParser::canParse(
     return match;
 }
 
-sciformats::jdx::JdxBlock sciformats::jdx::JdxParser::parse(
+sciformats::jdx::Block sciformats::jdx::JdxParser::parse(
     std::istream& iStream, bool activateExceptions)
 {
     if (activateExceptions)
@@ -58,6 +58,6 @@ sciformats::jdx::JdxBlock sciformats::jdx::JdxParser::parse(
         // not set std::ios::eofbit
         iStream.exceptions(std::ios::failbit | std::ios::badbit);
     }
-    sciformats::jdx::JdxBlock block{iStream};
+    sciformats::jdx::Block block{iStream};
     return block;
 }

@@ -1,7 +1,7 @@
 #ifndef LIBJDX_JDXPARSER_HPP
 #define LIBJDX_JDXPARSER_HPP
 
-#include "jdx/JdxBlock.hpp"
+#include "jdx/Block.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -32,10 +32,9 @@ public:
      * @param iStream Binary input stream.
      * @param activateExceptions Activate exceptions for input_stream. Defaults
      * to "true".
-     * @return A JdxBlock representing the data.
+     * @return A Block representing the data.
      */
-    JdxBlock static parse(
-        std::istream& iStream, bool activateExceptions = true);
+    Block static parse(std::istream& iStream, bool activateExceptions = true);
 
 private:
     std::vector<std::string> m_acceptedExtensions{"jdx", "dx", "jcm"};

@@ -1,8 +1,8 @@
-#include "jdx/JdxBlock.hpp"
+#include "jdx/Block.hpp"
 
 #include "catch2/catch.hpp"
 
-TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
+TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -26,7 +26,7 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto block = sciformats::jdx::JdxBlock(stream);
+    auto block = sciformats::jdx::Block(stream);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -41,7 +41,7 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[JdxBlock]")
     REQUIRE(true == block.getXyData().has_value());
 }
 
-TEST_CASE("parses all LDRs in block with RADATA", "[JdxBlock]")
+TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -63,7 +63,7 @@ TEST_CASE("parses all LDRs in block with RADATA", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto block = sciformats::jdx::JdxBlock(stream);
+    auto block = sciformats::jdx::Block(stream);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -73,7 +73,7 @@ TEST_CASE("parses all LDRs in block with RADATA", "[JdxBlock]")
     REQUIRE(true == block.getRaData().has_value());
 }
 
-TEST_CASE("throws if required LDRs for xy data are missing", "[JdxBlock]")
+TEST_CASE("throws if required LDRs for xy data are missing", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -95,12 +95,12 @@ TEST_CASE("throws if required LDRs for xy data are missing", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::JdxBlock(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
         Catch::Matchers::Contains("NPOINTS")
             && Catch::Matchers::Contains("FIRSTX"));
 }
 
-TEST_CASE("parses nested blocks", "[JdxBlock]")
+TEST_CASE("parses nested blocks", "[Block]")
 {
     std::string input{"##TITLE= Test Link Block\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -129,7 +129,7 @@ TEST_CASE("parses nested blocks", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto block = sciformats::jdx::JdxBlock(stream);
+    auto block = sciformats::jdx::Block(stream);
     const auto& ldrs = block.getLdrs();
     const auto& innerBlocks = block.getBlocks();
 
@@ -144,7 +144,7 @@ TEST_CASE("parses nested blocks", "[JdxBlock]")
         "Test Nested Block" == innerBlock.getLdr("TITLE").value().getValue());
 }
 
-TEST_CASE("treats block comments different from other LDRs", "[JdxBlock]")
+TEST_CASE("treats block comments different from other LDRs", "[Block]")
 {
     std::string input{"##TITLE= Test Block\r\n"
                       "##= comment 1\r\n"
@@ -155,7 +155,7 @@ TEST_CASE("treats block comments different from other LDRs", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto block = sciformats::jdx::JdxBlock(stream);
+    auto block = sciformats::jdx::Block(stream);
     const auto& ldrs = block.getLdrs();
     const auto& ldrComments = block.getLdrComments();
 
@@ -165,7 +165,7 @@ TEST_CASE("treats block comments different from other LDRs", "[JdxBlock]")
     REQUIRE("comment 2 line 1\ncomment 2 line 2" == ldrComments.at(1));
 }
 
-TEST_CASE("throws on illegal block start", "[JdxBlock]")
+TEST_CASE("throws on illegal block start", "[Block]")
 {
     std::string input{"##ILLEGAL_BLOCK_START= Test Block\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -173,10 +173,10 @@ TEST_CASE("throws on illegal block start", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
+    REQUIRE_THROWS(sciformats::jdx::Block(stream));
 }
 
-TEST_CASE("throws on duplicate LDRs in block", "[JdxBlock]")
+TEST_CASE("throws on duplicate LDRs in block", "[Block]")
 {
     std::string input{"##TITLE= Test Block\r\n"
                       "##JCAMP-DX= 4.24\r\n"
@@ -185,15 +185,15 @@ TEST_CASE("throws on duplicate LDRs in block", "[JdxBlock]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
+    REQUIRE_THROWS(sciformats::jdx::Block(stream));
 }
 
-TEST_CASE("throws on missing END LDR in block", "[JdxBlock]")
+TEST_CASE("throws on missing END LDR in block", "[Block]")
 {
     std::string input{"##TITLE= Test Block\r\n"
                       "##JCAMP-DX= 5.00\r\n"};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS(sciformats::jdx::JdxBlock(stream));
+    REQUIRE_THROWS(sciformats::jdx::Block(stream));
 }

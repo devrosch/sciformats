@@ -1,10 +1,10 @@
-#include "jdx/JdxLdrParser.hpp"
+#include "jdx/LdrParser.hpp"
 
 #include <algorithm>
 #include <regex>
 #include <string>
 
-std::string sciformats::jdx::JdxLdrParser::readLine(std::istream& istream)
+std::string sciformats::jdx::LdrParser::readLine(std::istream& istream)
 {
     std::string out{};
     if (std::getline(istream, out))
@@ -20,20 +20,20 @@ std::string sciformats::jdx::JdxLdrParser::readLine(std::istream& istream)
     throw std::runtime_error("Error reading line from istream.");
 }
 
-bool sciformats::jdx::JdxLdrParser::isLdrStart(const std::string& line)
+bool sciformats::jdx::LdrParser::isLdrStart(const std::string& line)
 {
     std::regex regex{"^\\s*##.*=.*"};
     return std::regex_match(line, regex);
 }
 
-void sciformats::jdx::JdxLdrParser::trimLeft(std::string& s)
+void sciformats::jdx::LdrParser::trimLeft(std::string& s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
         return !static_cast<bool>(std::isspace(ch));
     }));
 }
 
-void sciformats::jdx::JdxLdrParser::trimRight(std::string& s)
+void sciformats::jdx::LdrParser::trimRight(std::string& s)
 {
     s.erase(std::find_if(s.rbegin(), s.rend(),
                 [](unsigned char ch) {
@@ -43,13 +43,13 @@ void sciformats::jdx::JdxLdrParser::trimRight(std::string& s)
         s.end());
 }
 
-void sciformats::jdx::JdxLdrParser::trim(std::string& s)
+void sciformats::jdx::LdrParser::trim(std::string& s)
 {
     trimRight(s);
     trimLeft(s);
 }
 
-std::string sciformats::jdx::JdxLdrParser::normalizeLdrStart(
+std::string sciformats::jdx::LdrParser::normalizeLdrStart(
     const std::string& ldr)
 {
     std::string output{};
@@ -88,7 +88,7 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrStart(
     return output;
 }
 
-std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
+std::string sciformats::jdx::LdrParser::normalizeLdrLabel(
     const std::string& label)
 {
     std::string output{};
@@ -107,8 +107,8 @@ std::string sciformats::jdx::JdxLdrParser::normalizeLdrLabel(
     return output;
 }
 
-std::pair<std::string, std::string>
-sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
+std::pair<std::string, std::string> sciformats::jdx::LdrParser::parseLdrStart(
+    const std::string& ldrStart)
 {
     size_t posEquals = ldrStart.find('=');
     if (std::string::npos == posEquals)
@@ -141,7 +141,7 @@ sciformats::jdx::JdxLdrParser::parseLdrStart(const std::string& ldrStart)
 }
 
 std::pair<std::string, std::optional<std::string>>
-sciformats::jdx::JdxLdrParser::stripLineComment(const std::string& line)
+sciformats::jdx::LdrParser::stripLineComment(const std::string& line)
 {
     const auto pos = line.find("$$");
     if (pos == std::string::npos)
@@ -154,13 +154,12 @@ sciformats::jdx::JdxLdrParser::stripLineComment(const std::string& line)
     return make_pair(content, comment);
 }
 
-std::optional<const sciformats::jdx::JdxLdr>
-sciformats::jdx::JdxLdrParser::findLdr(
-    const std::vector<JdxLdr>& ldrs, const std::string& label)
+std::optional<const sciformats::jdx::Ldr> sciformats::jdx::LdrParser::findLdr(
+    const std::vector<Ldr>& ldrs, const std::string& label)
 {
     std::string normalizedLabel = normalizeLdrLabel(label);
     auto it = std::find_if(
-        ldrs.begin(), ldrs.end(), [&normalizedLabel](const JdxLdr& ldr) {
+        ldrs.begin(), ldrs.end(), [&normalizedLabel](const Ldr& ldr) {
             return ldr.getLabel() == normalizedLabel;
         });
 
@@ -171,10 +170,10 @@ sciformats::jdx::JdxLdrParser::findLdr(
     return std::nullopt;
 }
 
-std::optional<std::string> sciformats::jdx::JdxLdrParser::findLdrValue(
-    const std::vector<JdxLdr>& ldrs, const std::string& label)
+std::optional<std::string> sciformats::jdx::LdrParser::findLdrValue(
+    const std::vector<Ldr>& ldrs, const std::string& label)
 {
-    auto ldr = JdxLdrParser::findLdr(ldrs, label);
+    auto ldr = LdrParser::findLdr(ldrs, label);
     return ldr.has_value() ? std::optional<std::string>(ldr.value().getValue())
                            : std::optional<std::string>(std::nullopt);
 }

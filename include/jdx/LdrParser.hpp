@@ -1,7 +1,7 @@
-#ifndef LIBJDX_JDXLDRPARSER_HPP
-#define LIBJDX_JDXLDRPARSER_HPP
+#ifndef LIBJDX_LDRPARSER_HPP
+#define LIBJDX_LDRPARSER_HPP
 
-#include "jdx/JdxLdr.hpp"
+#include "jdx/Ldr.hpp"
 
 #include <istream>
 #include <optional>
@@ -12,7 +12,7 @@ namespace sciformats::jdx
 /**
  * @brief Helper functions for parsing JCAMP-DX labeled data records (LDRs).
  */
-class JdxLdrParser
+class LdrParser
 {
 public:
     std::string static readLine(std::istream& istream);
@@ -26,11 +26,11 @@ public:
         const std::string& ldrStart);
     std::pair<std::string, std::optional<std::string>> static stripLineComment(
         const std::string& line);
-    static std::optional<const JdxLdr> findLdr(
-        const std::vector<JdxLdr>& ldrs, const std::string& label);
+    static std::optional<const Ldr> findLdr(
+        const std::vector<Ldr>& ldrs, const std::string& label);
     static std::optional<std::string> findLdrValue(
-        const std::vector<JdxLdr>& ldrs, const std::string& label);
+        const std::vector<Ldr>& ldrs, const std::string& label);
 };
 } // namespace sciformats::jdx
 
-#endif // LIBJDX_JDXLDRPARSER_HPP
+#endif // LIBJDX_LDRPARSER_HPP

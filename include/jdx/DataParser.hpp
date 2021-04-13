@@ -1,5 +1,5 @@
-#ifndef LIBJDX_JDXDATAPARSER_HPP
-#define LIBJDX_JDXDATAPARSER_HPP
+#ifndef LIBJDX_DATAPARSER_HPP
+#define LIBJDX_DATAPARSER_HPP
 
 #include <optional>
 #include <string>
@@ -10,7 +10,7 @@ namespace sciformats::jdx
 /**
  * @brief Helper functions for parsing JCAMP-DX data.
  */
-class JdxDataParser
+class DataParser
 {
 public:
     static std::vector<double> readXppYYData(std::istream& istream);
@@ -42,4 +42,4 @@ private:
 };
 } // namespace sciformats::jdx
 
-#endif // LIBJDX_JDXDATAPARSER_HPP
+#endif // LIBJDX_DATAPARSER_HPP

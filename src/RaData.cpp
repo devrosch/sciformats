@@ -1,10 +1,10 @@
 #include "jdx/RaData.hpp"
-#include "jdx/JdxDataParser.hpp"
-#include "jdx/JdxLdrParser.hpp"
+#include "jdx/DataParser.hpp"
+#include "jdx/LdrParser.hpp"
 #include "jdx/RaParameters.hpp"
 
 sciformats::jdx::RaData::RaData(
-    std::istream& iStream, const std::vector<JdxLdr>& ldrs)
+    std::istream& iStream, const std::vector<Ldr>& ldrs)
     : Data2D(iStream)
 {
     validateInput(getLabel(), getVariableList());
@@ -14,7 +14,7 @@ sciformats::jdx::RaData::RaData(
 
 sciformats::jdx::RaData::RaData(const std::string& label,
     const std::string& variableList, std::istream& iStream,
-    const std::vector<JdxLdr>& ldrs)
+    const std::vector<Ldr>& ldrs)
     : Data2D(label, variableList, iStream)
 {
     validateInput(label, variableList);
@@ -30,21 +30,10 @@ sciformats::jdx::RaData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
-    auto variableList = getVariableList();
-    if (variableList == s_rppAAVariableList)
-    {
-        return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
-            m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
-            Data2D::DataEncoding::XppYY);
-    }
-    if (variableList == s_raVariableList)
-    {
-        return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
-            m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
-            Data2D::DataEncoding::XyXy);
-    }
-    throw std::runtime_error(
-        "Illegal variable list for RADATA encountered: " + variableList);
+    validateInput(getLabel(), getVariableList());
+    return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
+        m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
+        Data2D::DataEncoding::XppYY);
 }
 
 void sciformats::jdx::RaData::validateInput(
@@ -55,7 +44,7 @@ void sciformats::jdx::RaData::validateInput(
         throw std::runtime_error(
             "Illegal label at RADATA start encountered: " + label);
     }
-    if (variableList != "(R++(A..A))" && variableList != "(RA..RA)")
+    if (variableList != "(R++(A..A))")
     {
         throw std::runtime_error(
             "Illegal variable list for RADATA encountered: " + variableList);
@@ -63,30 +52,30 @@ void sciformats::jdx::RaData::validateInput(
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(
-    const std::vector<JdxLdr>& ldrs)
+    const std::vector<Ldr>& ldrs)
 {
     // required
     // string
-    auto rUnits = JdxLdrParser::findLdrValue(ldrs, "RUNITS");
-    auto aUnits = JdxLdrParser::findLdrValue(ldrs, "AUNITS");
+    auto rUnits = LdrParser::findLdrValue(ldrs, "RUNITS");
+    auto aUnits = LdrParser::findLdrValue(ldrs, "AUNITS");
     // double
-    auto firstR = JdxLdrParser::findLdrValue(ldrs, "FIRSTR");
-    auto lastR = JdxLdrParser::findLdrValue(ldrs, "LASTR");
-    auto rFactor = JdxLdrParser::findLdrValue(ldrs, "RFACTOR");
-    auto aFactor = JdxLdrParser::findLdrValue(ldrs, "AFACTOR");
-    auto nPoints = JdxLdrParser::findLdrValue(ldrs, "NPOINTS");
+    auto firstR = LdrParser::findLdrValue(ldrs, "FIRSTR");
+    auto lastR = LdrParser::findLdrValue(ldrs, "LASTR");
+    auto rFactor = LdrParser::findLdrValue(ldrs, "RFACTOR");
+    auto aFactor = LdrParser::findLdrValue(ldrs, "AFACTOR");
+    auto nPoints = LdrParser::findLdrValue(ldrs, "NPOINTS");
     // optional
     // double
-    auto firstA = JdxLdrParser::findLdrValue(ldrs, "FIRSTA");
-    auto maxA = JdxLdrParser::findLdrValue(
+    auto firstA = LdrParser::findLdrValue(ldrs, "FIRSTA");
+    auto maxA = LdrParser::findLdrValue(
         ldrs, "MAXA"); // required, according to standard
-    auto minA = JdxLdrParser::findLdrValue(
+    auto minA = LdrParser::findLdrValue(
         ldrs, "MINA"); // required, according to standard
-    auto resolution = JdxLdrParser::findLdrValue(ldrs, "RESOLUTION");
-    auto deltaR = JdxLdrParser::findLdrValue(ldrs, "DELTAR");
-    auto zdp = JdxLdrParser::findLdrValue(ldrs, "ZDP");
+    auto resolution = LdrParser::findLdrValue(ldrs, "RESOLUTION");
+    auto deltaR = LdrParser::findLdrValue(ldrs, "DELTAR");
+    auto zdp = LdrParser::findLdrValue(ldrs, "ZDP");
     // string
-    auto alias = JdxLdrParser::findLdrValue(ldrs, "ALIAS");
+    auto alias = LdrParser::findLdrValue(ldrs, "ALIAS");
 
     std::string missing{};
     missing += rUnits.has_value() ? "" : " RUNITS";

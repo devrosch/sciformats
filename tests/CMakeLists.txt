@@ -1,12 +1,13 @@
 # Tests need to be added as executables first
 add_executable(jdxparser_test
     JdxParserTest.cpp
-    JdxLdrParserTest.cpp
-    JdxLdrTest.cpp
-    JdxBlockTest.cpp
-    JdxDataParserTest.cpp
-    JdxXyDataTest.cpp
-    JdxRaDataTest.cpp
+    LdrParserTest.cpp
+    LdrTest.cpp
+    BlockTest.cpp
+    DataParserTest.cpp
+    XyDataTest.cpp
+    RaDataTest.cpp
+    XyPointsTest.cpp
     )
 
 # I'm using C++17 in the test

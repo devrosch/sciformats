@@ -2,7 +2,7 @@
 #define LIBJDX_RADATA_HPP
 
 #include "jdx/Data2D.hpp"
-#include "jdx/JdxLdr.hpp"
+#include "jdx/Ldr.hpp"
 #include "jdx/RaParameters.hpp"
 
 #include <istream>
@@ -24,7 +24,7 @@ public:
      * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
-    explicit RaData(std::istream& iStream, const std::vector<JdxLdr>& ldrs);
+    explicit RaData(std::istream& iStream, const std::vector<Ldr>& ldrs);
     /**
      * @brief Constructs RaData from first line value and istream.
      * @param label The label of the first line of the record, i.e. "RADATA".
@@ -37,7 +37,7 @@ public:
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
     RaData(const std::string& label, const std::string& variableList,
-        std::istream& iStream, const std::vector<JdxLdr>& ldrs);
+        std::istream& iStream, const std::vector<Ldr>& ldrs);
     /**
      * @brief Provides parameters specific to RADATA.
      * @return The parameters.
@@ -51,9 +51,6 @@ public:
     std::vector<std::pair<double, double>> getData();
 
 private:
-    static constexpr char const* s_rppAAVariableList = "(R++(A..A))";
-    static constexpr char const* s_raVariableList = "(RA..RA)";
-
     RaParameters m_parameters;
 
     /**
@@ -65,7 +62,7 @@ private:
      */
     static void validateInput(
         const std::string& label, const std::string& variableList);
-    static RaParameters parseParameters(const std::vector<JdxLdr>& ldrs);
+    static RaParameters parseParameters(const std::vector<Ldr>& ldrs);
 };
 } // namespace sciformats::jdx
 

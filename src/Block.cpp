@@ -1,5 +1,5 @@
-#include "jdx/JdxBlock.hpp"
-#include "jdx/JdxLdrParser.hpp"
+#include "jdx/Block.hpp"
+#include "jdx/LdrParser.hpp"
 
 #include <algorithm>
 #include <array>
@@ -7,15 +7,15 @@
 #include <cstring>
 #include <limits>
 
-sciformats::jdx::JdxBlock::JdxBlock(std::istream& iStream)
+sciformats::jdx::Block::Block(std::istream& iStream)
     : m_istream{iStream}
 {
-    auto firstLine = JdxLdrParser::readLine(m_istream);
-    if (!JdxLdrParser::isLdrStart(firstLine))
+    auto firstLine = LdrParser::readLine(m_istream);
+    if (!LdrParser::isLdrStart(firstLine))
     {
         throw std::runtime_error("Malformed LDR start: " + firstLine);
     }
-    auto [label, title] = JdxLdrParser::parseLdrStart(firstLine);
+    auto [label, title] = LdrParser::parseLdrStart(firstLine);
     if (label != "TITLE")
     {
         throw std::runtime_error(
@@ -24,22 +24,21 @@ sciformats::jdx::JdxBlock::JdxBlock(std::istream& iStream)
     parseInput(title);
 }
 
-sciformats::jdx::JdxBlock::JdxBlock(
-    const std::string& title, std::istream& iStream)
+sciformats::jdx::Block::Block(const std::string& title, std::istream& iStream)
     : m_istream{iStream}
 {
     parseInput(title);
 }
 
-void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
+void sciformats::jdx::Block::parseInput(const std::string& title)
 {
     std::optional<std::string> label = "TITLE";
     std::string value = title;
     while (!m_istream.eof())
     {
-        auto line = JdxLdrParser::readLine(m_istream);
+        auto line = LdrParser::readLine(m_istream);
 
-        if (!JdxLdrParser::isLdrStart(line))
+        if (!LdrParser::isLdrStart(line))
         {
             // continuation of previous LDR
             if (!label.has_value())
@@ -87,7 +86,7 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
         }
 
         // parse new LDR
-        std::tie(label, value) = JdxLdrParser::parseLdrStart(line);
+        std::tie(label, value) = LdrParser::parseLdrStart(line);
         // cover special cases
         if ("END" == label)
         {
@@ -97,7 +96,7 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
         if ("TITLE" == label)
         {
             // nested block
-            auto block = JdxBlock(value, m_istream);
+            auto block = Block(value, m_istream);
             m_blocks.push_back(std::move(block));
             label = std::nullopt;
         }
@@ -136,38 +135,36 @@ void sciformats::jdx::JdxBlock::parseInput(const std::string& title)
     }
 }
 
-std::optional<const sciformats::jdx::JdxLdr> sciformats::jdx::JdxBlock::getLdr(
+std::optional<const sciformats::jdx::Ldr> sciformats::jdx::Block::getLdr(
     const std::string& label) const
 {
-    return JdxLdrParser::findLdr(m_ldrs, label);
+    return LdrParser::findLdr(m_ldrs, label);
 }
 
-const std::vector<sciformats::jdx::JdxLdr>&
-sciformats::jdx::JdxBlock::getLdrs() const
+const std::vector<sciformats::jdx::Ldr>& sciformats::jdx::Block::getLdrs() const
 {
     return m_ldrs;
 }
 
-const std::vector<sciformats::jdx::JdxBlock>&
-sciformats::jdx::JdxBlock::getBlocks() const
+const std::vector<sciformats::jdx::Block>&
+sciformats::jdx::Block::getBlocks() const
 {
     return m_blocks;
 }
 
-const std::vector<std::string>&
-sciformats::jdx::JdxBlock::getLdrComments() const
+const std::vector<std::string>& sciformats::jdx::Block::getLdrComments() const
 {
     return m_ldrComments;
 }
 
 const std::optional<sciformats::jdx::XyData>&
-sciformats::jdx::JdxBlock::getXyData() const
+sciformats::jdx::Block::getXyData() const
 {
     return m_xyData;
 }
 
 const std::optional<sciformats::jdx::RaData>&
-sciformats::jdx::JdxBlock::getRaData() const
+sciformats::jdx::Block::getRaData() const
 {
     return m_raData;
 }

@@ -1,11 +1,9 @@
-#ifndef LIBJDX_JDXBLOCK_HPP
-#define LIBJDX_JDXBLOCK_HPP
+#ifndef LIBJDX_BLOCK_HPP
+#define LIBJDX_BLOCK_HPP
 
-#include "jdx/JdxLdr.hpp"
+#include "jdx/Ldr.hpp"
 #include "jdx/RaData.hpp"
 #include "jdx/XyData.hpp"
-//#include "jdx/RaParameters.hpp"
-//#include "jdx/XyParameters.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -18,21 +16,21 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX block.
+ * @brief A JCAMP-DX block. Can be a link or data block.
  */
-class JdxBlock
+class Block
 {
 public:
     /**
-     * @brief Constructs a JdxBlock from istream.
+     * @brief Constructs a Block from istream.
      * @param iStream Input stream with JCAMP-DX data. The stream position
      * is assumed to be at the start of the first line of the block (containing
      * the TITLE LDR). The inputStream is expected to exist for the lifetime of
      * this object.
      */
-    explicit JdxBlock(std::istream& iStream);
+    explicit Block(std::istream& iStream);
     /**
-     * @brief Provides the labeled data records (LDRs) of the JdxBlock.
+     * @brief Provides the labeled data records (LDRs) of the Block.
      * This does \em not include the following LDRs:
      * - comments ("##=")
      * - data ("##XYDATA=", "##XYPOINTS=", "##PEAK TABLE=", "##PEAK
@@ -44,7 +42,7 @@ public:
      * and the value is the content (without initial blank character if any).
      * E.g. the LDR "##TITLE= abc" has label "TITLE" and content "abc".
      */
-    [[nodiscard]] const std::vector<JdxLdr>& getLdrs() const;
+    [[nodiscard]] const std::vector<Ldr>& getLdrs() const;
     /**
      * @brief Provides a labeled data record (LDR) from the block. The same
      * exclusions as for getLdrs() apply.
@@ -53,16 +51,16 @@ public:
      * @return The LDR for the given label if it exists in the block,
      * std::nullopt otherwise.
      */
-    [[nodiscard]] std::optional<const JdxLdr> getLdr(
+    [[nodiscard]] std::optional<const Ldr> getLdr(
         const std::string& label) const;
     /**
-     * @brief Provides the nested JdxBlocks of the JdxBlock.
-     * @return JDXBlocks that are nested in this (LINK) block.
+     * @brief Provides the nested Blocks of the Block.
+     * @return Blocks that are nested in this (LINK) block.
      */
-    [[nodiscard]] const std::vector<JdxBlock>& getBlocks() const;
+    [[nodiscard]] const std::vector<Block>& getBlocks() const;
     /**
      * @brief Provides the labeled data records (LDRs) of the
-     * JdxBlock that are comments (i.e. "##= <comment>").
+     * Block that are comments (i.e. "##= <comment>").
      * @return The comment contents. The content of a comment is the text
      * following the "=" without initial blank character if any. E.g. the
      * comment "##= abc" has content "abc".
@@ -81,14 +79,14 @@ public:
 
 private:
     std::istream& m_istream;
-    std::vector<JdxLdr> m_ldrs;
+    std::vector<Ldr> m_ldrs;
     std::vector<std::string> m_ldrComments;
-    std::vector<JdxBlock> m_blocks;
+    std::vector<Block> m_blocks;
     std::optional<XyData> m_xyData;
     std::optional<RaData> m_raData;
 
     /**
-     * @brief Constructs a JdxBlock from first line value and istream.
+     * @brief Constructs a Block from first line value and istream.
      * @param title The value of the first line of the block, i.e. the content
      * of the line following the "##TITLE=" label.
      * @param iStream Input stream with JCAMP-DX data. The stream position
@@ -96,9 +94,9 @@ private:
      * TITLE line) of the block. The inputStream is expected to exist for the
      * lifetime of this object.
      */
-    JdxBlock(const std::string& title, std::istream& iStream);
+    Block(const std::string& title, std::istream& iStream);
     void parseInput(const std::string& title);
 };
 } // namespace sciformats::jdx
 
-#endif // LIBJDX_JDXBLOCK_HPP
+#endif // LIBJDX_BLOCK_HPP

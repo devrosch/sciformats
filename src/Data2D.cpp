@@ -1,6 +1,6 @@
 #include "jdx/Data2D.hpp"
-#include "jdx/JdxDataParser.hpp"
-#include "jdx/JdxLdrParser.hpp"
+#include "jdx/DataParser.hpp"
+#include "jdx/LdrParser.hpp"
 
 #include <tuple>
 
@@ -26,7 +26,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXppYYInput(
     double lastX, double yFactor, size_t nPoints)
 {
     // parse
-    auto yData = sciformats::jdx::JdxDataParser::readXppYYData(iStream);
+    auto yData = sciformats::jdx::DataParser::readXppYYData(iStream);
     if (yData.size() != nPoints)
     {
         throw std::runtime_error(
@@ -60,7 +60,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyInput(
     double yFactor, size_t nPoints)
 {
     // parse
-    auto xyData = sciformats::jdx::JdxDataParser::readXyXyData(iStream);
+    auto xyData = sciformats::jdx::DataParser::readXyXyData(iStream);
     if (xyData.size() != nPoints)
     {
         throw std::runtime_error(
@@ -81,8 +81,8 @@ void sciformats::jdx::Data2D::skipToNextLdr(std::istream& iStream)
     while (!iStream.eof())
     {
         std::istream::pos_type pos = iStream.tellg();
-        std::string line = sciformats::jdx::JdxLdrParser::readLine(iStream);
-        if (sciformats::jdx::JdxLdrParser::isLdrStart(line))
+        std::string line = sciformats::jdx::LdrParser::readLine(iStream);
+        if (sciformats::jdx::LdrParser::isLdrStart(line))
         {
             // move back to start of LDR
             iStream.seekg(pos);
@@ -95,17 +95,17 @@ std::pair<std::string, std::string> sciformats::jdx::Data2D::readFirstLine(
     std::istream& iStream)
 {
     auto pos = iStream.tellg();
-    auto line = JdxLdrParser::readLine(iStream);
-    if (!JdxLdrParser::isLdrStart(line))
+    auto line = LdrParser::readLine(iStream);
+    if (!LdrParser::isLdrStart(line))
     {
         // reset for consistent state
         iStream.seekg(pos);
         throw std::runtime_error(
             "Cannot parse xy data. Stream position not at LDR start: " + line);
     }
-    auto [label, variableList] = JdxLdrParser::parseLdrStart(line);
-    JdxLdrParser::stripLineComment(variableList);
-    JdxLdrParser::trim(variableList);
+    auto [label, variableList] = LdrParser::parseLdrStart(line);
+    LdrParser::stripLineComment(variableList);
+    LdrParser::trim(variableList);
 
     return {label, variableList};
 }

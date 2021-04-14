@@ -151,6 +151,23 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
     }
 }
 
+void sciformats::jdx::Data2D::validateInput(const std::string& label,
+    const std::string& variableList, const std::string& expectedLabel,
+    const std::string& expectedVariableList)
+{
+    if (label != expectedLabel)
+    {
+        throw std::runtime_error("Illegal label at " + expectedLabel
+                                 + " start encountered: " + label);
+    }
+    if (variableList != expectedVariableList)
+    {
+        throw std::runtime_error("Illegal variable list for "
+                                 + expectedVariableList
+                                 + " encountered: " + variableList);
+    }
+}
+
 const std::string& sciformats::jdx::Data2D::getLabel()
 {
     return m_label;

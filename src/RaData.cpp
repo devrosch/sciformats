@@ -7,7 +7,8 @@ sciformats::jdx::RaData::RaData(
     std::istream& iStream, const std::vector<Ldr>& ldrs)
     : Data2D(iStream)
 {
-    validateInput(getLabel(), getVariableList());
+    validateInput(
+        getLabel(), getVariableList(), s_raDataLabel, s_raDataVariableList);
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -17,7 +18,7 @@ sciformats::jdx::RaData::RaData(const std::string& label,
     const std::vector<Ldr>& ldrs)
     : Data2D(label, variableList, iStream)
 {
-    validateInput(label, variableList);
+    validateInput(label, variableList, s_raDataLabel, s_raDataVariableList);
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -30,25 +31,11 @@ sciformats::jdx::RaData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
-    validateInput(getLabel(), getVariableList());
+    validateInput(
+        getLabel(), getVariableList(), s_raDataLabel, s_raDataVariableList);
     return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
         m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
         Data2D::DataEncoding::XppYY);
-}
-
-void sciformats::jdx::RaData::validateInput(
-    const std::string& label, const std::string& variableList)
-{
-    if (label != "RADATA")
-    {
-        throw std::runtime_error(
-            "Illegal label at RADATA start encountered: " + label);
-    }
-    if (variableList != "(R++(A..A))")
-    {
-        throw std::runtime_error(
-            "Illegal variable list for RADATA encountered: " + variableList);
-    }
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(

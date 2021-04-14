@@ -51,17 +51,11 @@ public:
     std::vector<std::pair<double, double>> getData();
 
 private:
+    static constexpr const char* s_raDataLabel = "RADATA";
+    static constexpr const char* s_raDataVariableList = "(R++(A..A))";
+
     RaParameters m_parameters;
 
-    /**
-     * @brief Validates if input is a valid RADATA LDR.
-     * @param label LDR label. Must match "RADATA".
-     * @param variableList First line LDR value. Must represent a variable list
-     * and match "(R++(A..A))" or "(RA..RA)".
-     * @throws If label or variable list don't match expectations.
-     */
-    static void validateInput(
-        const std::string& label, const std::string& variableList);
     static RaParameters parseParameters(const std::vector<Ldr>& ldrs);
 };
 } // namespace sciformats::jdx

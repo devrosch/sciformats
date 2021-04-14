@@ -60,19 +60,10 @@ protected:
     std::vector<std::pair<double, double>> getData(Data2D::DataEncoding);
 
 private:
-    std::string m_expextedLabel;
-    std::string m_expextedVariableList;
+    std::string m_expectedLabel;
+    std::string m_expectedVariableList;
     XyParameters m_parameters;
 
-    /**
-     * @brief Validates if input is a valid XYDATA LDR.
-     * @param label LDR label. Must match "XYDATA".
-     * @param variableList First line LDR value. Must represent a variable list
-     * and match "(X++(Y..Y))" or "(XY..XY)".
-     * @throws If label or variable list don't match expectations.
-     */
-    void validateInput(
-        const std::string& label, const std::string& variableList);
     static XyParameters parseParameters(const std::vector<Ldr>& ldrs);
 };
 } // namespace sciformats::jdx

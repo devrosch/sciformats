@@ -6,10 +6,11 @@ sciformats::jdx::XyBase::XyBase(std::istream& iStream,
     const std::vector<Ldr>& ldrs, std::string expectedLabel,
     std::string expectedVariableList)
     : Data2D{iStream}
-    , m_expextedLabel{std::move(expectedLabel)}
-    , m_expextedVariableList{std::move(expectedVariableList)}
+    , m_expectedLabel{std::move(expectedLabel)}
+    , m_expectedVariableList{std::move(expectedVariableList)}
 {
-    validateInput(getLabel(), getVariableList());
+    Data2D::validateInput(
+        getLabel(), getVariableList(), m_expectedLabel, m_expectedVariableList);
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -19,10 +20,11 @@ sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::vector<Ldr>& ldrs, std::string expectedLabel,
     std::string expectedVariableList)
     : Data2D{label, variableList, iStream}
-    , m_expextedLabel{std::move(expectedLabel)}
-    , m_expextedVariableList{std::move(expectedVariableList)}
+    , m_expectedLabel{std::move(expectedLabel)}
+    , m_expectedVariableList{std::move(expectedVariableList)}
 {
-    validateInput(label, variableList);
+    Data2D::validateInput(
+        getLabel(), getVariableList(), m_expectedLabel, m_expectedVariableList);
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -36,25 +38,11 @@ sciformats::jdx::XyBase::getParameters() const
 std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
     Data2D::DataEncoding encoding)
 {
-    validateInput(getLabel(), getVariableList());
+    Data2D::validateInput(
+        getLabel(), getVariableList(), m_expectedLabel, m_expectedVariableList);
     return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
         m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
         encoding);
-}
-
-void sciformats::jdx::XyBase::validateInput(
-    const std::string& label, const std::string& variableList)
-{
-    if (label != m_expextedLabel)
-    {
-        throw std::runtime_error("Illegal label at " + m_expextedLabel
-                                 + " start encountered: " + label);
-    }
-    if (variableList != m_expextedVariableList)
-    {
-        throw std::runtime_error("Illegal variable list for " + m_expextedLabel
-                                 + " encountered: " + variableList);
-    }
 }
 
 sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(

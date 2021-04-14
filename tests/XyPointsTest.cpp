@@ -67,7 +67,9 @@ TEST_CASE("fails when x value undefined while parsing unevenly spaced xy data",
     ldrs.emplace_back("NPOINTS", "4");
     auto xyPointsRecord = sciformats::jdx::XyPoints(stream, ldrs);
 
-    REQUIRE_THROWS(xyPointsRecord.getData());
+    REQUIRE_THROWS_WITH(
+        xyPointsRecord.getData(), Catch::Matchers::Contains("NaN")
+                                      && Catch::Matchers::Contains("x value"));
 }
 
 TEST_CASE(
@@ -97,8 +99,7 @@ TEST_CASE(
 
 TEST_CASE("fails for incomplete xy pair", "[XyPoints]")
 {
-    std::string input{"##XYPOINTS= (XY..XY)\r\n"
-                      "450.0, 10.0; 451.0, 11.0\r\n"
+    std::string input{"450.0, 10.0; 451.0, 11.0\r\n"
                       "460.0, 20.0; 461.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
@@ -112,7 +113,9 @@ TEST_CASE("fails for incomplete xy pair", "[XyPoints]")
     ldrs.emplace_back("XFACTOR", "2.0");
     ldrs.emplace_back("YFACTOR", "10.0");
     ldrs.emplace_back("NPOINTS", "4");
-    auto xyPointsRecord = sciformats::jdx::XyPoints(stream, ldrs);
+    // use other constructor for better coverage
+    auto xyPointsRecord
+        = sciformats::jdx::XyPoints("XYPOINTS", "(XY..XY)", stream, ldrs);
 
     REQUIRE_THROWS_WITH(xyPointsRecord.getData(),
         Catch::Matchers::Contains("uneven", Catch::CaseSensitive::No));

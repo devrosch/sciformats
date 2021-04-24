@@ -3,6 +3,8 @@
 
 #include "jdx/Peak.hpp"
 
+#include <istream>
+#include <string>
 #include <vector>
 
 namespace sciformats::jdx

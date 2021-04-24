@@ -30,6 +30,7 @@ public:
         const std::vector<Ldr>& ldrs, const std::string& label);
     static std::optional<std::string> findLdrValue(
         const std::vector<Ldr>& ldrs, const std::string& label);
+    static bool isSpace(char c);
 };
 } // namespace sciformats::jdx
 

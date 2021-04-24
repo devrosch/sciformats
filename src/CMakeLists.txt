@@ -11,6 +11,10 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/RaData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyPoints.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyBase.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/Peak.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignments.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
@@ -25,6 +29,10 @@ add_library(jdxparser
     RaData.cpp
     XyPoints.cpp
     XyBase.cpp
+    Peak.cpp
+    PeakTable.cpp
+    PeakAssignment.cpp
+    PeakAssignments.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

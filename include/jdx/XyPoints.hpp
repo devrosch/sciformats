@@ -11,8 +11,7 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX XYDATA record.
- * LDRs.
+ * @brief A JCAMP-DX XYPOINTS record.
  */
 class XyPoints : public XyBase
 {

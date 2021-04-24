@@ -24,7 +24,7 @@ public:
      * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
-    explicit RaData(std::istream& iStream, const std::vector<Ldr>& ldrs);
+    RaData(std::istream& iStream, const std::vector<Ldr>& ldrs);
     /**
      * @brief Constructs RaData from first line value and istream.
      * @param label The label of the first line of the record, i.e. "RADATA".

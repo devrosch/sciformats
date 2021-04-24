@@ -177,3 +177,8 @@ std::optional<std::string> sciformats::jdx::LdrParser::findLdrValue(
     return ldr.has_value() ? std::optional<std::string>(ldr.value().getValue())
                            : std::optional<std::string>(std::nullopt);
 }
+
+bool sciformats::jdx::LdrParser::isSpace(char c)
+{
+    return static_cast<bool>(std::isspace(static_cast<unsigned char>(c)));
+}

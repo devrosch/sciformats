@@ -162,8 +162,7 @@ void sciformats::jdx::Data2D::validateInput(const std::string& label,
     }
     if (variableList != expectedVariableList)
     {
-        throw std::runtime_error("Illegal variable list for "
-                                 + expectedVariableList
+        throw std::runtime_error("Illegal variable list for " + label
                                  + " encountered: " + variableList);
     }
 }

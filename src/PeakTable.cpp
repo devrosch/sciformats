@@ -127,7 +127,7 @@ std::optional<sciformats::jdx::Peak> sciformats::jdx::PeakTable::nextPeak(
         if (isNewGroup && i != 0U)
         {
             throw std::runtime_error(
-                "Missing peak encountered in line " + line
+                "Missing peak component encountered in line " + line
                 + " at position: " + std::to_string(prevPos));
         }
         if (!isNewGroup && i == 0U)

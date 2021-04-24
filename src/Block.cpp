@@ -124,8 +124,20 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             auto raData = RaData(label.value(), value, m_istream, m_ldrs);
             m_raData.emplace(std::move(raData));
         }
-        // TODO: add special treatment for data LDRs (e.g. XYPOINTS, PEAK TABLE,
-        // PEAK ASSIGNMENTS, NTUPLES, ...), DONE: XYDATA, RADATA
+        else if ("PEAKTABLE" == label)
+        {
+            if (getPeakTable())
+            {
+                // duplicate
+                throw std::runtime_error(
+                    "Multiple PEAK TABLE LDRs encountered in block: \""
+                    + getLdr("TITLE").value().getValue());
+            }
+            auto peakTable = PeakTable(label.value(), value, m_istream);
+            m_peakTable.emplace(std::move(peakTable));
+        }
+        // TODO: add special treatment for data LDRs (e.g. PEAK ASSIGNMENTS,
+        // NTUPLES, ...), DONE: XYDATA, RADATA, XYPOINTS, PEAK TABLE
     }
     if ("END" != label)
     {
@@ -167,4 +179,10 @@ const std::optional<sciformats::jdx::RaData>&
 sciformats::jdx::Block::getRaData() const
 {
     return m_raData;
+}
+
+const std::optional<sciformats::jdx::PeakTable>&
+sciformats::jdx::Block::getPeakTable() const
+{
+    return m_peakTable;
 }

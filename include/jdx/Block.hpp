@@ -2,6 +2,7 @@
 #define LIBJDX_BLOCK_HPP
 
 #include "jdx/Ldr.hpp"
+#include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
 #include "jdx/XyData.hpp"
 
@@ -76,6 +77,11 @@ public:
      * @return RADATA record.
      */
     [[nodiscard]] const std::optional<RaData>& getRaData() const;
+    /**
+     * @brief Provides the PEAK TABLE record if available.
+     * @return PEAK TABLE record.
+     */
+    [[nodiscard]] const std::optional<PeakTable>& getPeakTable() const;
 
 private:
     std::istream& m_istream;
@@ -84,6 +90,7 @@ private:
     std::vector<Block> m_blocks;
     std::optional<XyData> m_xyData;
     std::optional<RaData> m_raData;
+    std::optional<PeakTable> m_peakTable;
 
     /**
      * @brief Constructs a Block from first line value and istream.

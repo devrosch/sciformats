@@ -11,7 +11,6 @@ namespace sciformats::jdx
 {
 /**
  * @brief A JCAMP-DX PEAK TABLE record.
- * LDRs.
  */
 class PeakTable
 {

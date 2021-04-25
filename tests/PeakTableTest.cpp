@@ -41,8 +41,7 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
 
 TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XYW..XYW)\r\n"
-                      "450.0, 10.0, 1.0\r\n"
+    std::string input{"450.0, 10.0, 1.0\r\n"
                       "460.0, 11.0, 2.0\r\n"
                       "470.0, 12.0, 3.0 480.0, 13.0, 4.0\r\n"
                       "490.0, 14.0, 5.0; 500.0, 15.0, 6.0\r\n"
@@ -50,7 +49,7 @@ TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable("PEAKTABLE", "(XYW..XYW)", stream);
     auto xyData = table.getData();
 
     REQUIRE(6 == xyData.size());

@@ -94,26 +94,42 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
 {
     // TODO: parse potential peak width and other peak kernel functions given as
     // comment $$ in line(s) following LDR start
-    auto streamPos = m_istream.peek();
-    m_istream.seekg(m_streamDataPos);
-    auto numComponents = m_variableList == s_peakTableXyVariableList ? 2U : 3U;
-    std::string line;
-    std::vector<sciformats::jdx::Peak> peaks;
-
-    while (!m_istream.eof()
-           && !sciformats::jdx::LdrParser::isLdrStart(
-               line = sciformats::jdx::LdrParser::readLine(m_istream)))
-    {
-        // assume that a group (i.e. peak) does not span multiple lines
-        size_t pos = 0;
-        while (auto peak = nextPeak(line, pos, numComponents))
+    auto streamPos = m_istream.eof() ? std::nullopt : std::optional<std::streampos>(m_istream.tellg());
+    try {
+        m_istream.seekg(m_streamDataPos);
+        auto numComponents = m_variableList == s_peakTableXyVariableList ? 2U : 3U;
+        std::string line;
+        std::vector<sciformats::jdx::Peak> peaks;
+        while (!m_istream.eof()
+               && !sciformats::jdx::LdrParser::isLdrStart(
+                   line = sciformats::jdx::LdrParser::readLine(m_istream)))
         {
-            peaks.push_back(peak.value());
+            // assume that a group (i.e. peak) does not span multiple lines
+            size_t pos = 0;
+            while (auto peak = nextPeak(line, pos, numComponents))
+            {
+                peaks.push_back(peak.value());
+            }
         }
+        if (streamPos)
+        {
+            m_istream.seekg(streamPos.value());
+        }
+        return peaks;
+    } catch (...) {
+        // TODO: duplicate code in Data2D
+        try
+        {
+            if (streamPos)
+            {
+                m_istream.seekg(streamPos.value());
+            }
+        }
+        catch (...)
+        {
+        }
+        throw;
     }
-
-    m_istream.seekg(streamPos);
-    return peaks;
 }
 
 std::optional<sciformats::jdx::Peak> sciformats::jdx::PeakTable::nextPeak(

@@ -39,6 +39,8 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
     REQUIRE(
         "Dummy" == block.getLdr("Spectrometer/DATA SYSTEM").value().getValue());
     REQUIRE(true == block.getXyData().has_value());
+    auto data = block.getXyData().value();
+    REQUIRE(2 == data.getData().size());
 }
 
 TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
@@ -70,7 +72,31 @@ TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
     // DOES contain "##RADATA=" with its variable list as value
     REQUIRE(14 == ldrs.size());
     REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
-    REQUIRE(true == block.getRaData().has_value());
+    REQUIRE(block.getRaData().has_value());
+    auto data = block.getRaData().value();
+    REQUIRE(2 == data.getData().size());
+}
+
+TEST_CASE("parses block with PEAK TABLE", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##PEAK TABLE= (XY..XY)\r\n"
+                      "0, 10.0\r\n"
+                      "1, 11.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto block = sciformats::jdx::Block(stream);
+    const auto& ldrs = block.getLdrs();
+
+    // does NOT contain "##END=" even though technically an LDR
+    // DOES contain "##PEAKTABLE=" with its variable list as value
+    REQUIRE(3 == ldrs.size());
+    REQUIRE(block.getPeakTable().has_value());
+    auto peakTable = block.getPeakTable().value();
+    REQUIRE(2 == peakTable.getData().size());
 }
 
 TEST_CASE("throws if required LDRs for xy data are missing", "[Block]")

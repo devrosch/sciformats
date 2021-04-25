@@ -94,10 +94,14 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
 {
     // TODO: parse potential peak width and other peak kernel functions given as
     // comment $$ in line(s) following LDR start
-    auto streamPos = m_istream.eof() ? std::nullopt : std::optional<std::streampos>(m_istream.tellg());
-    try {
+    auto streamPos = m_istream.eof()
+                         ? std::nullopt
+                         : std::optional<std::streampos>(m_istream.tellg());
+    try
+    {
         m_istream.seekg(m_streamDataPos);
-        auto numComponents = m_variableList == s_peakTableXyVariableList ? 2U : 3U;
+        auto numComponents
+            = m_variableList == s_peakTableXyVariableList ? 2U : 3U;
         std::string line;
         std::vector<sciformats::jdx::Peak> peaks;
         while (!m_istream.eof()
@@ -116,7 +120,9 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
             m_istream.seekg(streamPos.value());
         }
         return peaks;
-    } catch (...) {
+    }
+    catch (...)
+    {
         // TODO: duplicate code in Data2D
         try
         {

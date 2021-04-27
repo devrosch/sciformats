@@ -84,8 +84,9 @@ TEST_CASE("fails when excess component is encountered in two column PEAK TABLE",
 
     auto table = sciformats::jdx::PeakTable(stream);
     REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains("excess peak component",
-                             Catch::CaseSensitive::No));
+        table.getData(), Catch::Matchers::Contains(
+                             "excess peak component", Catch::CaseSensitive::No)
+                             && Catch::Matchers::Contains("position: 11"));
 }
 
 TEST_CASE(
@@ -100,8 +101,9 @@ TEST_CASE(
 
     auto table = sciformats::jdx::PeakTable(stream);
     REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains("excess peak component",
-                             Catch::CaseSensitive::No));
+        table.getData(), Catch::Matchers::Contains(
+                             "excess peak component", Catch::CaseSensitive::No)
+                             && Catch::Matchers::Contains("position: 16"));
 }
 
 TEST_CASE(
@@ -116,8 +118,9 @@ TEST_CASE(
 
     auto table = sciformats::jdx::PeakTable(stream);
     REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains("missing peak component",
-                             Catch::CaseSensitive::No));
+        table.getData(), Catch::Matchers::Contains(
+                             "missing peak component", Catch::CaseSensitive::No)
+                             && Catch::Matchers::Contains("position: 5"));
 }
 
 TEST_CASE(
@@ -131,6 +134,7 @@ TEST_CASE(
 
     auto table = sciformats::jdx::PeakTable(stream);
     REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains("missing peak component",
-                             Catch::CaseSensitive::No));
+        table.getData(), Catch::Matchers::Contains(
+                             "missing peak component", Catch::CaseSensitive::No)
+                             && Catch::Matchers::Contains("position: 6"));
 }

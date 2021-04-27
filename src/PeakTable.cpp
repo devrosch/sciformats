@@ -191,11 +191,23 @@ bool sciformats::jdx::PeakTable::skipToNextToken(
     const std::string& line, size_t& pos)
 {
     bool componentSeparatorFound = false;
+    bool nonWhitespaceDelimiterFound = false;
     while (pos < line.size() && isTokenDelimiter(line, pos))
     {
-        if (line.at(pos) == ',')
+        const char c = line.at(pos);
+        if (c == ',' || c == ';')
         {
-            componentSeparatorFound = true;
+            if (c == ',')
+            {
+                componentSeparatorFound = true;
+            }
+            if (nonWhitespaceDelimiterFound)
+            {
+                throw std::runtime_error(
+                    "Missing peak component encountered in line " + line
+                    + " at position: " + std::to_string(pos));
+            }
+            nonWhitespaceDelimiterFound = true;
         }
         ++pos;
     }

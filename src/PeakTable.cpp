@@ -90,10 +90,67 @@ void sciformats::jdx::PeakTable::validateInput(const std::string& label,
     }
 }
 
+std::optional<std::string> sciformats::jdx::PeakTable::getKernel()
+{
+    // comment $$ in line(s) following LDR start may contain peak width and
+    // other peak kernel functions
+    auto streamPos = m_istream.eof()
+                         ? std::nullopt
+                         : std::optional<std::streampos>(m_istream.tellg());
+    try
+    {
+        m_istream.seekg(m_streamDataPos);
+        std::string line;
+        std::string kernelFunctionsDescription{};
+        while (!m_istream.eof()
+               && !sciformats::jdx::LdrParser::isLdrStart(
+                   line = sciformats::jdx::LdrParser::readLine(m_istream)))
+        {
+            auto [content, comment] = LdrParser::stripLineComment(line);
+            LdrParser::trim(content);
+            if (content.empty() && comment.has_value())
+            {
+                if (!kernelFunctionsDescription.empty())
+                {
+                    kernelFunctionsDescription += '\n';
+                }
+                LdrParser::trim(comment.value());
+                kernelFunctionsDescription.append(comment.value());
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (streamPos)
+        {
+            m_istream.seekg(streamPos.value());
+        }
+        if (!kernelFunctionsDescription.empty())
+        {
+            return kernelFunctionsDescription;
+        }
+        return std::nullopt;
+    }
+    catch (...)
+    {
+        // TODO: duplicate code in Data2D
+        try
+        {
+            if (streamPos)
+            {
+                m_istream.seekg(streamPos.value());
+            }
+        }
+        catch (...)
+        {
+        }
+        throw;
+    }
+}
+
 std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
 {
-    // TODO: parse potential peak width and other peak kernel functions given as
-    // comment $$ in line(s) following LDR start
     auto streamPos = m_istream.eof()
                          ? std::nullopt
                          : std::optional<std::streampos>(m_istream.tellg());
@@ -108,9 +165,10 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
                && !sciformats::jdx::LdrParser::isLdrStart(
                    line = sciformats::jdx::LdrParser::readLine(m_istream)))
         {
+            const auto [content, comment] = LdrParser::stripLineComment(line);
             // assume that a group (i.e. peak) does not span multiple lines
             size_t pos = 0;
-            while (auto peak = nextPeak(line, pos, numComponents))
+            while (auto peak = nextPeak(content, pos, numComponents))
             {
                 peaks.push_back(peak.value());
             }
@@ -149,14 +207,14 @@ std::optional<sciformats::jdx::Peak> sciformats::jdx::PeakTable::nextPeak(
         if (isNewGroup && i != 0U)
         {
             throw std::runtime_error(
-                "Missing peak component encountered in line " + line
-                + " at position: " + std::to_string(prevPos));
+                "Missing peak component encountered in line \"" + line
+                + "\" at position: " + std::to_string(prevPos));
         }
         if (!isNewGroup && i == 0U)
         {
             throw std::runtime_error(
-                "Excess peak component encountered in line " + line
-                + " at position: " + std::to_string(prevPos));
+                "Excess peak component encountered in line \"" + line
+                + "\" at position: " + std::to_string(prevPos));
         }
         if (isNewGroup && i == 0U && pos >= line.size())
         {
@@ -167,11 +225,20 @@ std::optional<sciformats::jdx::Peak> sciformats::jdx::PeakTable::nextPeak(
         if (!token.has_value())
         {
             throw std::runtime_error(
-                "Missing peak component encountered in line " + line
-                + " at position: " + std::to_string(prevPos));
+                "Missing peak component encountered in line \"" + line
+                + "\" at position: " + std::to_string(prevPos));
         }
-        auto value = std::stod(token.value());
-        components.push_back(value);
+        try
+        {
+            auto value = std::stod(token.value());
+            components.push_back(value);
+        }
+        catch (...)
+        {
+            throw std::runtime_error(
+                "Cannot parse value in line \"" + line
+                + "\" at position: " + std::to_string(prevPos));
+        }
     }
 
     if (numComponents == 2)
@@ -183,8 +250,8 @@ std::optional<sciformats::jdx::Peak> sciformats::jdx::PeakTable::nextPeak(
         return Peak{components[0], components[1], components[2]};
     }
     throw std::runtime_error(
-        "Unexpected number of peak components encountered in line " + line
-        + ": " + std::to_string(components.size()));
+        "Unexpected number of peak components encountered in line \"" + line
+        + "\": " + std::to_string(components.size()));
 }
 
 bool sciformats::jdx::PeakTable::skipToNextToken(
@@ -204,8 +271,8 @@ bool sciformats::jdx::PeakTable::skipToNextToken(
             if (nonWhitespaceDelimiterFound)
             {
                 throw std::runtime_error(
-                    "Missing peak component encountered in line " + line
-                    + " at position: " + std::to_string(pos));
+                    "Missing peak component encountered in line \"" + line
+                    + "\" at position: " + std::to_string(pos));
             }
             nonWhitespaceDelimiterFound = true;
         }

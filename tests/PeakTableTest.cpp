@@ -7,8 +7,10 @@
 TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
 {
     std::string input{"##PEAK TABLE= (XY..XY)\r\n"
+                      "$$ peak width kernel line 1\r\n"
+                      "$$ peak width kernel line 2\r\n"
                       "450.0, 10.0\r\n"
-                      "460.0, 11.0\r\n"
+                      "460.0, 11.0 $$ test comment\r\n"
                       "470.0, 12.0 480.0, 13.0\r\n"
                       "490.0, 14.0; 500.0, 15.0\r\n"
                       "##END="};
@@ -16,7 +18,14 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
     stream.str(input);
 
     auto table = sciformats::jdx::PeakTable(stream);
+    auto kernel = table.getKernel();
     auto xyData = table.getData();
+
+    REQUIRE(kernel.has_value());
+    REQUIRE(kernel.value()
+            == "peak width kernel line 1"
+               "\n"
+               "peak width kernel line 2");
 
     REQUIRE(6 == xyData.size());
     REQUIRE(450.0 == Approx(xyData.at(0).x));

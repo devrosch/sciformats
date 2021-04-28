@@ -23,6 +23,11 @@ public:
      * @return The list of peaks.
      */
     std::vector<Peak> getData();
+    /**
+     * @brief Definition of peak width and other peak kernel functions.
+     * @return Textual description of kernel functions.
+     */
+    std::optional<std::string> getKernel();
 
 private:
     static constexpr const char* s_peakTableLabel = "PEAKTABLE";

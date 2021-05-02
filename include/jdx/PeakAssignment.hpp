@@ -13,19 +13,19 @@ struct PeakAssignment
 {
 public:
     /**
-     * @brief x Peak position.
+     * @brief Peak position.
      */
     double x;
     /**
-     * @brief y Intensity.
+     * @brief Intensity.
      */
     std::optional<double> y; // standard is ambiguous whether this is optional
     /**
-     * @brief w Width.
+     * @brief Width.
      */
     std::optional<double> w;
     /**
-     * @brief a The peak assignment string.
+     * @brief The peak assignment string.
      */
     std::string a;
 };

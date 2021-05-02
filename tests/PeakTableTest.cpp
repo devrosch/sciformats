@@ -9,10 +9,10 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
     std::string input{"##PEAK TABLE= (XY..XY)\r\n"
                       "$$ peak width kernel line 1\r\n"
                       "$$ peak width kernel line 2\r\n"
-                      "450.0, 10.0\r\n"
+                      "450.0,  10.0\r\n"
                       "460.0, 11.0 $$ test comment\r\n"
-                      "470.0, 12.0 480.0, 13.0\r\n"
-                      "490.0, 14.0; 500.0, 15.0\r\n"
+                      " 470.0, 12.0E2 480.0, 13.0\r\n"
+                      "490.0, 14.0;  500.0, 15.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
@@ -35,7 +35,7 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
     REQUIRE(11.0 == Approx(xyData.at(1).y));
     REQUIRE(!xyData.at(1).w.has_value());
     REQUIRE(470.0 == Approx(xyData.at(2).x));
-    REQUIRE(12.0 == Approx(xyData.at(2).y));
+    REQUIRE(1200.0 == Approx(xyData.at(2).y));
     REQUIRE(!xyData.at(2).w.has_value());
     REQUIRE(480.0 == Approx(xyData.at(3).x));
     REQUIRE(13.0 == Approx(xyData.at(3).y));
@@ -51,7 +51,7 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
 TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
 {
     std::string input{"450.0, 10.0, 1.0\r\n"
-                      "460.0, 11.0, 2.0\r\n"
+                      "460.0,\t11.0,\t2.0\r\n"
                       "470.0, 12.0, 3.0 480.0, 13.0, 4.0\r\n"
                       "490.0, 14.0, 5.0; 500.0, 15.0, 6.0\r\n"
                       "##END="};

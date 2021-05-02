@@ -23,10 +23,16 @@ add_custom_command(
     TARGET jdxparser_test POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/resources/"
-            "${CMAKE_CURRENT_BINARY_DIR}/resources/"
+            "$<TARGET_FILE_DIR:jdxparser_test>/resources/"
+# below works with gcc and clang but does not work with VS an Xcode as they create sub folder per build config (Debug, Release, ...)
+#            "${CMAKE_CURRENT_BINARY_DIR}/resources/"
     VERBATIM # use VERBATIM to correctly handle paths that include spaces
 )
 
+add_custom_command(
+    TARGET jdxparser_test POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E echo
+    "target dir jdxparser_test: $<TARGET_FILE_DIR:jdxparser_test>")
 
 if (EMSCRIPTEN)
     # Embed test files, make available in sub directory "resources" (specified after @)

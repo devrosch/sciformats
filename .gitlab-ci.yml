@@ -1,0 +1,114 @@
+image: devrosch/cppcicdenv:2021-01-01
+
+stages:
+  - build
+  - test
+  - coverage
+  - doc
+  - publish
+
+build:linux_gcc:
+  stage: build
+  script:
+    - set -eo pipefail
+    - mkdir build && cd build
+    - cmake -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_CXX_COMPILER=g++ ..
+    - make
+  artifacts:
+    paths:
+      - build
+
+build:wasm_emcc:
+  stage: build
+  script:
+    - set -eo pipefail
+    - mkdir build && cd build
+    - emcmake cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+    - make
+  artifacts:
+    paths:
+      - build
+
+test:linux_gcc:
+  stage: test
+  script:
+    - cd build
+    - make coverage-base
+    - ctest
+  dependencies:
+    - build:linux_gcc
+  artifacts:
+    paths:
+      - build
+
+test:wasm_emcc:
+  stage: test
+  script:
+    - cd build
+    - ctest -VV
+  dependencies:
+    - build:wasm_emcc
+  artifacts:
+    paths:
+      - build
+
+format:
+  stage: test
+  script:
+    - cd build && make clang-format-check
+  dependencies:
+    - build:linux_gcc
+
+quality:
+  stage: test
+  script:
+    - cd build && make clang-tidy
+  dependencies:
+    - build:linux_gcc
+
+coverage:linux_gcc:
+  stage: coverage
+  variables:
+    COVERAGE_THRESHOLD: "95.0"
+  script:
+    - cd build
+    - set -eo pipefail
+    - make coverage-capture
+    - "make coverage-report
+      | tee /dev/stderr
+      | grep -E 'lines\\.{6,}:'
+      | awk -F': |%' '{print $2}'
+      | { read coverage; echo \"=== line coverage: ${coverage}%, threshold: ${COVERAGE_THRESHOLD}% ===\"; (( $(echo \"$coverage >= $COVERAGE_THRESHOLD\" | bc -l) )); }"
+  dependencies:
+    - test:linux_gcc
+  coverage: '/lines\.+: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - build/coverage
+
+doc:doxygen:
+  stage: doc
+  script:
+    - cd build && doxygen ./doxy.config
+  dependencies:
+    - build:linux_gcc
+  artifacts:
+    paths:
+      - build/doc
+
+pages:
+  stage: publish
+  script:
+    - rm -rf public
+    - mkdir public
+    - mv build/coverage public/coverage
+    - mv build/doc/html public/doc
+  dependencies:
+    - coverage:linux_gcc
+    - doc:doxygen
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+

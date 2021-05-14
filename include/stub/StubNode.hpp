@@ -8,7 +8,7 @@ namespace sciformats::sciwrap::stub
 class StubNode : public model::Node
 {
 public:
-    virtual std::string getName();
+    virtual std::string getName() const;
     virtual std::vector<std::unique_ptr<model::Node>> getChildNodes();
     virtual ~StubNode() = default;
 

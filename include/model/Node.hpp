@@ -10,7 +10,7 @@ namespace sciformats::sciwrap::model
 class Node
 {
 public:
-    virtual std::string getName() = 0;
+    virtual std::string getName() const = 0;
     virtual std::vector<std::unique_ptr<Node>> getChildNodes() = 0;
     virtual ~Node() = default;
 };

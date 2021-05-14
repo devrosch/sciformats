@@ -17,8 +17,8 @@ project(
 # --------------------------------------------------------------
 
 if (EMSCRIPTEN)
-    add_compile_options(-s DISABLE_EXCEPTION_CATCHING=0)
-    add_link_options(-s DISABLE_EXCEPTION_CATCHING=0)
+    add_compile_options(-s DISABLE_EXCEPTION_CATCHING=0 --bind)
+    add_link_options(-s DISABLE_EXCEPTION_CATCHING=0 --bind -Wl,--whole-archive)
 endif()
 
 # --------------------------------------------------------------
@@ -74,7 +74,10 @@ include(cmake/clang-dev-tools.cmake)
 # The compiled library code is here
 add_subdirectory(src)
 # The executable code is here
-# add_subdirectory(apps) # not used by this library
+if(EMSCRIPTEN)
+    # required, so that CMake generates *.js and *.wasm files for library
+    add_subdirectory(apps)
+endif()
 
 # --------------------------------------------------------------
 # Add code for testing

@@ -1,7 +1,17 @@
 #define CATCH_CONFIG_MAIN
-#include "model/File.hpp"
-#include "model/Dir.hpp"
-#include "stub/StubFile.hpp"
-#include "stub/StubDir.hpp"
+#include "model/Node.hpp"
+#include "stub/StubNode.hpp"
 
 #include "catch2/catch.hpp"
+
+TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
+{
+    using namespace sciformats::sciwrap::stub;
+    StubNode node{};
+
+    REQUIRE("A Node" == node.getName());
+
+    auto childNodes = node.getChildNodes();
+    REQUIRE(childNodes.size() == 3);
+    REQUIRE("A Node" == childNodes.at(0)->getName());
+}

@@ -1,14 +1,11 @@
 set(HEADER_LIST
-    "${PROJECT_SOURCE_DIR}/include/model/File.hpp"
-    "${PROJECT_SOURCE_DIR}/include/model/Dir.hpp"
-    "${PROJECT_SOURCE_DIR}/include/stub/StubFile.hpp"
-    "${PROJECT_SOURCE_DIR}/include/stub/StubDir.hpp"
+    "${PROJECT_SOURCE_DIR}/include/model/Node.hpp"
+    "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(sciwrap
-    StubFile.cpp
-    StubDir.cpp
+    StubNode.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

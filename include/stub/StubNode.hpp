@@ -9,7 +9,8 @@ class StubNode : public model::Node
 {
 public:
     virtual std::string getName() const;
-    virtual std::vector<std::unique_ptr<model::Node>> getChildNodes();
+    virtual std::vector<std::shared_ptr<model::Node>> getChildNodes();
+    virtual std::shared_ptr<Node> getSingleChild();
     virtual ~StubNode() = default;
 
 private:

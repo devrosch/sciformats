@@ -5,6 +5,7 @@ set(HEADER_LIST
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(sciwrap
+    Node.cpp
     StubNode.cpp
     ${HEADER_LIST})
 

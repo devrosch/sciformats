@@ -1,3 +1,4 @@
+#include "model/Node.hpp"
 #include "stub/StubNode.hpp"
 
 #ifdef __EMSCRIPTEN__
@@ -6,7 +7,19 @@
 
 std::string sciformats::sciwrap::stub::StubNode::getName() const
 {
-    return "A Node";
+    return "A Stub Node";
+}
+
+std::vector<std::pair<std::string, std::string>> sciformats::sciwrap::stub::StubNode::getParameters()
+{
+    auto vec = std::vector<std::pair<std::string, std::string>>();
+    auto param0 = std::pair<std::string, std::string>{"key0", "value0"};
+    auto param1 = std::pair<std::string, std::string>{"key1", "value1"};
+    auto param2 = std::pair<std::string, std::string>{"key2", "value2"};
+    vec.push_back(param0);
+    vec.push_back(param1);
+    vec.push_back(param2);
+    return vec;
 }
 
 std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>> sciformats::sciwrap::stub::StubNode::getChildNodes()
@@ -21,34 +34,18 @@ std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>> sciformats::sciwr
     return children;
 }
 
-std::shared_ptr<sciformats::sciwrap::model::Node> sciformats::sciwrap::stub::StubNode::getSingleChild()
-{
-    std::shared_ptr<StubNode> ptr0 = std::make_shared<StubNode>(StubNode());
-    return ptr0;
-}
-
 #ifdef __EMSCRIPTEN__
 EMSCRIPTEN_BINDINGS(StubNode) {
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::stub;
     using namespace emscripten;
-    class_<Node>("Node")
-        .smart_ptr<std::shared_ptr<Node>>("Node")
-//        .allow_subclass<StubNode>("StubNode")
-    ;
     // see: https://github.com/emscripten-core/emscripten/issues/627
     class_<StubNode, base<Node>>("StubNode")
         .constructor<>()
-        .smart_ptr<std::shared_ptr<StubNode>>("StubNode")
         .property("name", &StubNode::getName)
+        .function("getParameters", &StubNode::getParameters)
         // embind fails mapping getChildNodes to property
         .function("getChildNodes", &StubNode::getChildNodes)
-//        .property("childNodes", &StubNode::getChildNodes)
-//        .function("getName", &StubNode::getName)
-        .function("getSingleChild", &StubNode::getSingleChild)
     ;
-    // cannot use unique_ptr in embind
-    // see: https://stackoverflow.com/questions/31814092/cant-use-vector-of-unique-ptr-in-emscripten-bindings
-    register_vector<std::shared_ptr<Node>>("vector<std::shared_ptr<Node>>");
 }
 #endif

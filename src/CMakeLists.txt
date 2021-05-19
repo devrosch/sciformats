@@ -1,10 +1,12 @@
 set(HEADER_LIST
+    "${PROJECT_SOURCE_DIR}/include/model/KeyValueParam.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/Node.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(sciwrap
+    KeyValueParam.cpp
     Node.cpp
     StubNode.cpp
     ${HEADER_LIST})

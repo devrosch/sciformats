@@ -1,6 +1,8 @@
 #ifndef LIBSCIWRAP_NODE_HPP
 #define LIBSCIWRAP_NODE_HPP
 
+#include "model/KeyValueParam.hpp"
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -11,7 +13,7 @@ class Node
 {
 public:
     virtual std::string getName() const = 0;
-    virtual std::vector<std::pair<std::string, std::string>> getParameters() = 0;
+    virtual std::vector<KeyValueParam> getParams() = 0;
     virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
     virtual ~Node() = default;
 };

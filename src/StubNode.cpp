@@ -1,3 +1,4 @@
+#include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
 #include "stub/StubNode.hpp"
 
@@ -10,15 +11,18 @@ std::string sciformats::sciwrap::stub::StubNode::getName() const
     return "A Stub Node";
 }
 
-std::vector<std::pair<std::string, std::string>> sciformats::sciwrap::stub::StubNode::getParameters()
+std::vector<sciformats::sciwrap::model::KeyValueParam> sciformats::sciwrap::stub::StubNode::getParams()
 {
-    auto vec = std::vector<std::pair<std::string, std::string>>();
-    auto param0 = std::pair<std::string, std::string>{"key0", "value0"};
-    auto param1 = std::pair<std::string, std::string>{"key1", "value1"};
-    auto param2 = std::pair<std::string, std::string>{"key2", "value2"};
-    vec.push_back(param0);
-    vec.push_back(param1);
-    vec.push_back(param2);
+    auto vec = std::vector<sciformats::sciwrap::model::KeyValueParam>();
+//    auto param0 = std::pair<std::string, std::string>{"key0", "value0"};
+//    auto param1 = std::pair<std::string, std::string>{"key1", "value1"};
+//    auto param2 = std::pair<std::string, std::string>{"key2", "value2"};
+//    vec.push_back(param0);
+//    vec.push_back(param1);
+//    vec.push_back(param2);
+    vec.push_back({"key0", "value0"});
+    vec.push_back({"key1", "value1"});
+    vec.push_back({"key2", "value2"});
     return vec;
 }
 
@@ -43,9 +47,9 @@ EMSCRIPTEN_BINDINGS(StubNode) {
     class_<StubNode, base<Node>>("StubNode")
         .constructor<>()
         .property("name", &StubNode::getName)
-        .function("getParameters", &StubNode::getParameters)
-        // embind fails mapping getChildNodes to property
+        // embind fails mapping getParams() or getChildNodes() to a property
+        .function("getParams", &StubNode::getParams)
         .function("getChildNodes", &StubNode::getChildNodes)
-    ;
+        ;
 }
 #endif

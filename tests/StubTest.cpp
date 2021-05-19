@@ -1,4 +1,5 @@
 #define CATCH_CONFIG_MAIN
+#include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
 #include "stub/StubNode.hpp"
 
@@ -11,10 +12,10 @@ TEST_CASE("StubNode returns dummy data", "[StubNode]")
 
     REQUIRE("A Stub Node" == node.getName());
 
-    auto params = node.getParameters();
+    auto params = node.getParams();
     REQUIRE(params.size() == 3);
-    REQUIRE("key0" == params.at(0).first);
-    REQUIRE("value0" == params.at(0).second);
+    REQUIRE("key0" == params.at(0).key);
+    REQUIRE("value0" == params.at(0).value);
 
     auto childNodes = node.getChildNodes();
     REQUIRE(childNodes.size() == 3);

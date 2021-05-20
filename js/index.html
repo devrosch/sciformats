@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+
+// see: https://stackoverflow.com/questions/47313403/passing-client-files-to-webassembly-from-the-front-end
+// https://stackoverflow.com/questions/61496876/how-can-i-load-a-file-from-a-html-input-into-emscriptens-memfs-file-system
+// https://stackoverflow.com/questions/59128901/reading-large-user-provided-file-from-emscripten-chunk-at-a-time
+        FS.createDataFile('/', 'data.txt', new Uint8Array(40, 41, 42), true, true, true);
+        FS.mkdir('/test');
+        FS.createDataFile('/test', 'data2.txt', new Uint8Array(43, 44, 45), true, true, true);
+
+        let sfr = new Module.StubFileReader();
+
+        console.log('"/data.txt" found: ' + sfr.isResponsible('/data.txt'));
+        console.log('"/non_existent.txt" found: ' + sfr.isResponsible('/non_existent.txt'));
+        console.log('"/test/data2.txt" found: ' + sfr.isResponsible('/test/data2.txt'));
+      }
+    };
+  </script>
+  <script src="sciwrap_main.js"></script>
+</html>

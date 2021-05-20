@@ -14,12 +14,6 @@ std::string sciformats::sciwrap::stub::StubNode::getName() const
 std::vector<sciformats::sciwrap::model::KeyValueParam> sciformats::sciwrap::stub::StubNode::getParams()
 {
     auto vec = std::vector<sciformats::sciwrap::model::KeyValueParam>();
-//    auto param0 = std::pair<std::string, std::string>{"key0", "value0"};
-//    auto param1 = std::pair<std::string, std::string>{"key1", "value1"};
-//    auto param2 = std::pair<std::string, std::string>{"key2", "value2"};
-//    vec.push_back(param0);
-//    vec.push_back(param1);
-//    vec.push_back(param2);
     vec.push_back({"key0", "value0"});
     vec.push_back({"key1", "value1"});
     vec.push_back({"key2", "value2"});

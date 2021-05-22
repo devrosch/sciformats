@@ -6,15 +6,13 @@
 
 namespace sciformats::sciwrap::stub
 {
-class StubFileReader: public model::FileReader
+class StubFileReader : public model::FileReader
 {
 public:
-    virtual bool isResponsible(const std::string& path);
-    virtual std::unique_ptr<model::Node> read(const std::string& path);
-    virtual ~StubFileReader() = default;
+    bool isResponsible(const std::string& path) override;
+    std::unique_ptr<model::Node> read(const std::string& path) override;
 
 private:
-
 };
 } // sciformats::sciwrap::stub
 

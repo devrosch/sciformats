@@ -5,7 +5,8 @@
 
 namespace sciformats::sciwrap::model
 {
-struct KeyValueParam {
+struct KeyValueParam
+{
     std::string key;
     std::string value;
 };

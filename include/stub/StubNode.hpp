@@ -9,13 +9,11 @@ namespace sciformats::sciwrap::stub
 class StubNode : public model::Node
 {
 public:
-    virtual std::string getName() const;
-    virtual std::vector<model::KeyValueParam> getParams();
-    virtual std::vector<std::shared_ptr<model::Node>> getChildNodes();
-    virtual ~StubNode() = default;
+    [[nodiscard]] std::string getName() const override;
+    std::vector<model::KeyValueParam> getParams() override;
+    std::vector<std::shared_ptr<model::Node>> getChildNodes() override;
 
 private:
-
 };
 } // sciformats::sciwrap::stub
 

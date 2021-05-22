@@ -3,18 +3,25 @@
 
 #include "model/KeyValueParam.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace sciformats::sciwrap::model
 {
 class Node
 {
 public:
-    virtual std::string getName() const = 0;
+    [[nodiscard]] virtual std::string getName() const = 0;
     virtual std::vector<KeyValueParam> getParams() = 0;
     virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
+
+    // https://stackoverflow.com/questions/26039907/does-rule-of-three-five-apply-to-inheritance-and-virtual-destructors
+    Node() = default;
+    Node(const Node& node) = default;
+    Node& operator=(const Node& node) = default;
+    Node(Node&&) = default;
+    Node& operator=(Node&&) = default;
     virtual ~Node() = default;
 };
 } // sciformats::sciwrap::model

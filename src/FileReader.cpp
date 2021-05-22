@@ -5,10 +5,10 @@
 #endif
 
 #ifdef __EMSCRIPTEN__
-EMSCRIPTEN_BINDINGS(FileReader) {
+EMSCRIPTEN_BINDINGS(FileReader)
+{
     using namespace sciformats::sciwrap::model;
     using namespace emscripten;
-    class_<FileReader>("FileReader")
-        ;
+    class_<FileReader>("FileReader");
 }
 #endif

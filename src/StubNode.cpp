@@ -1,6 +1,6 @@
+#include "stub/StubNode.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
-#include "stub/StubNode.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
@@ -11,7 +11,8 @@ std::string sciformats::sciwrap::stub::StubNode::getName() const
     return "A Stub Node";
 }
 
-std::vector<sciformats::sciwrap::model::KeyValueParam> sciformats::sciwrap::stub::StubNode::getParams()
+std::vector<sciformats::sciwrap::model::KeyValueParam>
+sciformats::sciwrap::stub::StubNode::getParams()
 {
     auto vec = std::vector<sciformats::sciwrap::model::KeyValueParam>();
     vec.push_back({"key0", "value0"});
@@ -20,7 +21,8 @@ std::vector<sciformats::sciwrap::model::KeyValueParam> sciformats::sciwrap::stub
     return vec;
 }
 
-std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>> sciformats::sciwrap::stub::StubNode::getChildNodes()
+std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>>
+sciformats::sciwrap::stub::StubNode::getChildNodes()
 {
     auto children = std::vector<std::shared_ptr<Node>>();
     std::shared_ptr<Node> ptr0 = std::make_shared<StubNode>(StubNode());
@@ -33,7 +35,8 @@ std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>> sciformats::sciwr
 }
 
 #ifdef __EMSCRIPTEN__
-EMSCRIPTEN_BINDINGS(StubNode) {
+EMSCRIPTEN_BINDINGS(StubNode)
+{
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::stub;
     using namespace emscripten;
@@ -43,7 +46,6 @@ EMSCRIPTEN_BINDINGS(StubNode) {
         .property("name", &StubNode::getName)
         // embind fails mapping getParams() or getChildNodes() to a property
         .function("getParams", &StubNode::getParams)
-        .function("getChildNodes", &StubNode::getChildNodes)
-        ;
+        .function("getChildNodes", &StubNode::getChildNodes);
 }
 #endif

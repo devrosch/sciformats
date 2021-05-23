@@ -16,7 +16,10 @@ public:
     virtual std::vector<KeyValueParam> getParams() = 0;
     virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
 
+    // see:
     // https://stackoverflow.com/questions/26039907/does-rule-of-three-five-apply-to-inheritance-and-virtual-destructors
+    // but also:
+    // https://stackoverflow.com/questions/32557206/inheritance-from-a-pure-abstract-class-without-default-constructor
     Node() = default;
     Node(const Node& node) = default;
     Node& operator=(const Node& node) = default;

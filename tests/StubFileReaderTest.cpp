@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include "model/Node.hpp"
 #include "stub/StubFileReader.hpp"
+#include "model/Node.hpp"
 
 #include "catch2/catch.hpp"
 

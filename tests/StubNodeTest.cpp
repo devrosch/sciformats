@@ -1,6 +1,6 @@
+#include "stub/StubNode.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
-#include "stub/StubNode.hpp"
 
 #include "catch2/catch.hpp"
 

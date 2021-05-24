@@ -4,7 +4,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <strstream>
+#include <sstream>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>

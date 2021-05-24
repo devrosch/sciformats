@@ -1,5 +1,5 @@
-#ifndef KEYVALUEPARAM_HPP
-#define KEYVALUEPARAM_HPP
+#ifndef LIBSCIWRAP_KEYVALUEPARAM_HPP
+#define LIBSCIWRAP_KEYVALUEPARAM_HPP
 
 #include <string>
 
@@ -12,4 +12,4 @@ struct KeyValueParam
 };
 } // sciformats::sciwrap::model
 
-#endif // KEYVALUEPARAM_HPP
+#endif // LIBSCIWRAP_KEYVALUEPARAM_HPP

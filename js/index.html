@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8"/>
   </head>
+<!-- -->
   <script>
     var Module = {
       onRuntimeInitialized: function() {
@@ -10,17 +11,31 @@
 // see: https://stackoverflow.com/questions/47313403/passing-client-files-to-webassembly-from-the-front-end
 // https://stackoverflow.com/questions/61496876/how-can-i-load-a-file-from-a-html-input-into-emscriptens-memfs-file-system
 // https://stackoverflow.com/questions/59128901/reading-large-user-provided-file-from-emscripten-chunk-at-a-time
-        FS.createDataFile('/', 'data.txt', new Uint8Array(40, 41, 42), true, true, true);
+        FS.createDataFile('/', 'data.txt', new Uint8Array([65, 66, 67]), true, true, true);
         FS.mkdir('/test');
-        FS.createDataFile('/test', 'data2.txt', new Uint8Array(43, 44, 45), true, true, true);
+//        FS.createDataFile('/test', 'data2.txt', new Uint8Array([68, 69, 70, 10, 71, 72, 73, 10]), true, true, true);
+        FS.writeFile('/test/data2.txt', new Uint8Array([68, 69, 70, 10, 71, 72, 73, 10]));
 
         let sfr = new Module.StubFileReader();
 
-        console.log('"/data.txt" found: ' + sfr.isResponsible('/data.txt'));
-        console.log('"/non_existent.txt" found: ' + sfr.isResponsible('/non_existent.txt'));
-        console.log('"/test/data2.txt" found: ' + sfr.isResponsible('/test/data2.txt'));
+        console.log('JS: "/data.txt" found: ' + sfr.isResponsible('/data.txt'));
+        console.log('JS: "/non_existent.txt" found: ' + sfr.isResponsible('/non_existent.txt'));
+        console.log('JS: "/test/data2.txt" found: ' + sfr.isResponsible('/test/data2.txt'));
       }
     };
   </script>
   <script src="sciwrap_main.js"></script>
+<!-- -->
+  <!-- Service Worker test -->
+  <script>
+      const worker = new Worker("worker.js");
+      function onClick() {
+          const f = document.getElementById("in-file").files[0];
+          worker.postMessage([ f ]);
+      }
+  </script>
+  <body>
+      <input type="file" id="in-file" />
+      <input type="button" onClick="onClick()" value="Load" />
+  </body>
 </html>

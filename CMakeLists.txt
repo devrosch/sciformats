@@ -17,8 +17,10 @@ project(
 # --------------------------------------------------------------
 
 if (EMSCRIPTEN)
-    add_compile_options(-s DISABLE_EXCEPTION_CATCHING=0 --bind -sNO_EXIT_RUNTIME=1 -sASSERTIONS=1)
-    add_link_options(-s DISABLE_EXCEPTION_CATCHING=0 -sNO_EXIT_RUNTIME=1 -sASSERTIONS=1 --bind -Wl,--whole-archive)
+    add_compile_options(-sDISABLE_EXCEPTION_CATCHING=0 --bind)
+    add_link_options(-sDISABLE_EXCEPTION_CATCHING=0 --bind -lworkerfs.js)
+#    add_compile_options(-s DISABLE_EXCEPTION_CATCHING=0 --bind -sNO_EXIT_RUNTIME=1 -sASSERTIONS=1)
+#    add_link_options(-s DISABLE_EXCEPTION_CATCHING=0 -sNO_EXIT_RUNTIME=1 -sASSERTIONS=1 --bind -Wl,--whole-archive -lworkerfs.js)
 endif()
 
 # --------------------------------------------------------------

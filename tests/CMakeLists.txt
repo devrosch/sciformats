@@ -1,6 +1,7 @@
 # Tests need to be added as executables first
 add_executable(sciwrap_test
-    StubTest.cpp
+    StubNodeTest.cpp
+    StubFileReaderTest.cpp
     )
 
 # I'm using C++17 in the test
@@ -26,10 +27,10 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E echo
     "target dir sciwrap_test: $<TARGET_FILE_DIR:sciwrap_test>")
 
-#if (EMSCRIPTEN)
+if (EMSCRIPTEN)
     # Embed test files, make available in sub directory "resources" (specified after @)
-#    target_link_options(sciwrap_test PRIVATE "SHELL:--embed-file ${CMAKE_CURRENT_SOURCE_DIR}/resources@resources")
-#endif()
+    target_link_options(sciwrap_test PRIVATE "SHELL:--embed-file ${CMAKE_CURRENT_SOURCE_DIR}/resources@resources")
+endif()
 
 # Register test for ctest
 if (EMSCRIPTEN)

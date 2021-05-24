@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
 #include "stub/StubNode.hpp"

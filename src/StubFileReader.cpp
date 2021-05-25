@@ -27,6 +27,7 @@ bool sciformats::sciwrap::stub::StubFileReader::isResponsible(
 
     if (input.good())
     {
+        std::cout << "C++: ----------------------\n";
         std::cout << "C++: initial streampos: " << input.tellg() << '\n';
 
         input.seekg(0, std::ios_base::end);
@@ -48,6 +49,7 @@ bool sciformats::sciwrap::stub::StubFileReader::isResponsible(
         std::cout << "C++: stream content as string(): " << str << '\n';
 
         std::cout << "C++: final streampos: " << input.tellg() << '\n';
+        std::cout << "C++: ----------------------\n";
     }
 
     return ret;
@@ -68,7 +70,9 @@ EMSCRIPTEN_BINDINGS(StubFileReader)
     using namespace sciformats::sciwrap::stub;
     using namespace emscripten;
     class_<StubFileReader, base<FileReader>>("StubFileReader")
-        .constructor<>()
+        //        .constructor<>()
+        .smart_ptr_constructor(
+            "StubFileReader", &std::make_shared<StubFileReader>)
         .function("isResponsible", &StubFileReader::isResponsible)
         .function("read", &StubFileReader::read);
 }

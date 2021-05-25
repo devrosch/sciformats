@@ -2,6 +2,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/model/KeyValueParam.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/Node.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/FileReader.hpp"
+    "${PROJECT_SOURCE_DIR}/include/model/FileReaderSelector.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubFileReader.hpp"
     )
@@ -11,6 +12,7 @@ add_library(sciwrap
     KeyValueParam.cpp
     Node.cpp
     FileReader.cpp
+    FileReaderSelector.cpp
     StubNode.cpp
     StubFileReader.cpp
     ${HEADER_LIST})

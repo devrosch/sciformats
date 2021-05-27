@@ -8,7 +8,8 @@
 #include "catch2/trompeloeil.hpp"
 
 // -Wweak-vtable warning due to QTCreator bug, see:
-// https://bugreports.qt.io/browse/QTCREATORBUG-19741
+// https://stackoverflow.com/questions/50463374/avoid-weak-vtable-warnings-for-classes-only-defined-in-a-source-file
+// , also: https://bugreports.qt.io/browse/QTCREATORBUG-19741
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wweak-vtables"
 class MockFileReader : public sciformats::sciwrap::model::FileReader
@@ -98,7 +99,8 @@ TEST_CASE("FileReaderSelector collects failed parsing error messages",
             && Catch::Matchers::Contains("Error 3"));
 }
 
-TEST_CASE("FileReaderSelector provides generic error when no suitable parser is found",
+TEST_CASE("FileReaderSelector provides generic error when no suitable parser "
+          "is found",
     "[FileReaderSelector]")
 {
     using namespace sciformats::sciwrap::model;
@@ -108,8 +110,7 @@ TEST_CASE("FileReaderSelector provides generic error when no suitable parser is 
     REQUIRE_CALL(mockReader0, isResponsible(ANY(const std::string&)))
         .TIMES(1)
         .RETURN(false);
-    REQUIRE_CALL(mockReader0, read(ANY(const std::string&)))
-        .TIMES(0);
+    REQUIRE_CALL(mockReader0, read(ANY(const std::string&))).TIMES(0);
     auto mockReaderPtr0
         = std::make_shared<MockFileReader>(std::move(mockReader0));
 
@@ -117,14 +118,13 @@ TEST_CASE("FileReaderSelector provides generic error when no suitable parser is 
     REQUIRE_CALL(mockReader1, isResponsible(ANY(const std::string&)))
         .TIMES(1)
         .RETURN(false);
-    REQUIRE_CALL(mockReader1, read(ANY(const std::string&)))
-        .TIMES(0);
+    REQUIRE_CALL(mockReader1, read(ANY(const std::string&))).TIMES(0);
     auto mockReaderPtr1
         = std::make_shared<MockFileReader>(std::move(mockReader1));
 
-    FileReaderSelector selector{
-        {mockReaderPtr0, mockReaderPtr1}};
+    FileReaderSelector selector{{mockReaderPtr0, mockReaderPtr1}};
 
     REQUIRE_THROWS_WITH(selector.read("resources/dummy.txt"),
-        Catch::Matchers::Contains("No suitable parser", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains(
+            "No suitable parser", Catch::CaseSensitive::No));
 }

@@ -128,3 +128,39 @@ TEST_CASE("FileReaderSelector provides generic error when no suitable parser "
         Catch::Matchers::Contains(
             "No suitable parser", Catch::CaseSensitive::No));
 }
+
+TEST_CASE(
+    "FileReaderSelector shallow check returns false when no suitable parser "
+    "is found",
+    "[FileReaderSelector]")
+{
+    using namespace sciformats::sciwrap::model;
+    using namespace sciformats::sciwrap::stub;
+
+    auto mockReader0 = MockFileReader();
+    REQUIRE_CALL(mockReader0, isResponsible(ANY(const std::string&)))
+        .TIMES(1)
+        .RETURN(false);
+    REQUIRE_CALL(mockReader0, read(ANY(const std::string&))).TIMES(0);
+    auto mockReaderPtr0
+        = std::make_shared<MockFileReader>(std::move(mockReader0));
+
+    FileReaderSelector selector{{mockReaderPtr0}};
+
+    REQUIRE_FALSE(selector.isResponsible("resources/dummy.txt"));
+}
+
+TEST_CASE("FileReaderSelector returns node from applicable underlying parser",
+    "[FileReaderSelector]")
+{
+    using namespace sciformats::sciwrap::model;
+    using namespace sciformats::sciwrap::stub;
+
+    auto parserPtr = std::make_shared<StubFileReader>(StubFileReader());
+    FileReaderSelector selector{{parserPtr}};
+
+    auto node = selector.read("resources/dummy.txt");
+
+    REQUIRE(node != nullptr);
+    REQUIRE(node->getName() == "A Stub Node");
+}

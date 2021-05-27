@@ -2,13 +2,14 @@
 add_executable(sciwrap_test
     StubNodeTest.cpp
     StubFileReaderTest.cpp
+    FileReaderSelectorTest.cpp
     )
 
 # I'm using C++17 in the test
 target_compile_features(sciwrap_test PRIVATE cxx_std_17)
 
 # Should be linked to the library, as well as the Catch2 testing library
-target_link_libraries(sciwrap_test PRIVATE sciwrap catch2)
+target_link_libraries(sciwrap_test PRIVATE sciwrap catch2 trompeloeil)
 
 # https://stackoverflow.com/questions/12313258/cmake-how-to-install-test-files-with-unit-tests
 # https://stackoverflow.com/questions/34799916/copy-file-from-source-directory-to-binary-directory-using-cmake

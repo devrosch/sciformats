@@ -100,6 +100,7 @@ endif()
 # Make testing available if this is the main app
 if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) AND BUILD_TESTING)
     add_subdirectory(lib/catch2)
+    add_subdirectory(lib/trompeloeil)
     add_subdirectory(tests)
 endif()
 

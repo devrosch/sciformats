@@ -29,7 +29,7 @@ bool sciformats::sciwrap::model::FileReaderSelector::isResponsible(
 std::unique_ptr<sciformats::sciwrap::model::Node>
 sciformats::sciwrap::model::FileReaderSelector::read(const std::string& path)
 {
-    auto parseErrors = std::vector<std::exception>{};
+    auto parseErrors = std::vector<std::string>{};
 
     for (auto const& readerPtr : m_fileReaders)
     {
@@ -42,7 +42,7 @@ sciformats::sciwrap::model::FileReaderSelector::read(const std::string& path)
             }
             catch (const std::exception& ex)
             {
-                parseErrors.push_back(ex);
+                parseErrors.emplace_back(ex.what());
             }
         }
     }
@@ -54,11 +54,11 @@ sciformats::sciwrap::model::FileReaderSelector::read(const std::string& path)
     // suitable file parser(s) found but all threw exceptions while parsing
     // => collect exception messages and throw new umbrella exception
     std::string message{"Errors encountered while parsing: " + path + '\n'};
-    size_t i = 1;
+    size_t i = 0;
     for (auto const& error : parseErrors)
     {
         message.append("Parser " + std::to_string(++i) + ": ")
-            .append(error.what())
+            .append(error)
             .append("\n");
     }
     throw std::runtime_error(message);

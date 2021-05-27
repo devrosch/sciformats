@@ -11,7 +11,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # include directories for use with clang-tidy and make as separate target
 set(INCLUDE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/include"
-    "${PROJECT_SOURCE_DIR}/lib/catch2/include")
+    "${PROJECT_SOURCE_DIR}/lib/catch2/include"
+    "${PROJECT_SOURCE_DIR}/lib/trompeloeil/include")
 # source files for use with clang-tidy and make as separate target
 file(GLOB_RECURSE ALL_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/apps/*.cpp"

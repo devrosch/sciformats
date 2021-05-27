@@ -21,6 +21,13 @@
         console.log('JS: "/data.txt" found: ' + sfr.isResponsible('/data.txt'));
         console.log('JS: "/non_existent.txt" found: ' + sfr.isResponsible('/non_existent.txt'));
         console.log('JS: "/test/data2.txt" found: ' + sfr.isResponsible('/test/data2.txt'));
+
+        console.log('JS: =======================================================');
+	let vec = new Module.vector$std$$shared_ptr$sciformats$$sciwrap$$model$$FileReader$$();
+	vec.push_back(sfr);
+	let frs = new Module.FileReaderSelector(vec);
+        console.log('JS: FileReaderSelector.isResponsible("/data.txt"): ' + frs.isResponsible('/data.txt'));
+        console.log('JS: FileReaderSelector.isResponsible("/non_existent.txt"): ' + frs.isResponsible('/non_existent.txt'));
       }
     };
   </script>

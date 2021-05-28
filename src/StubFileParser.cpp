@@ -1,4 +1,4 @@
-#include "stub/StubFileReader.hpp"
+#include "stub/StubFileParser.hpp"
 #include "model/Node.hpp"
 #include "stub/StubNode.hpp"
 
@@ -10,7 +10,7 @@
 #include <emscripten/bind.h>
 #endif
 
-bool sciformats::sciwrap::stub::StubFileReader::isResponsible(
+bool sciformats::sciwrap::stub::StubFileParser::isRecognized(
     const std::string& path)
 {
     // for loading data in JS, see:
@@ -19,7 +19,7 @@ bool sciformats::sciwrap::stub::StubFileReader::isResponsible(
     // https://stackoverflow.com/questions/61496876/how-can-i-load-a-file-from-a-html-input-into-emscriptens-memfs-file-system
     // also:
     // https://stackoverflow.com/questions/59128901/reading-large-user-provided-file-from-emscripten-chunk-at-a-time
-    std::cout << "C++: StubFileReader.isResponsible(): " << path << '\n';
+    std::cout << "C++: StubFileParser.isRecognized(): " << path << '\n';
     // for alternatives, see
     // https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c
     std::ifstream input{path};
@@ -56,24 +56,24 @@ bool sciformats::sciwrap::stub::StubFileReader::isResponsible(
 }
 
 std::unique_ptr<sciformats::sciwrap::model::Node>
-sciformats::sciwrap::stub::StubFileReader::read(const std::string& path)
+sciformats::sciwrap::stub::StubFileParser::parse(const std::string& path)
 {
-    std::cout << "C++: StubFileReader.read(): " << path << '\n';
+    std::cout << "C++: StubFileParser.parse(): " << path << '\n';
     std::unique_ptr<model::Node> node = std::make_unique<StubNode>(StubNode());
     return node;
 }
 
 #ifdef __EMSCRIPTEN__
-EMSCRIPTEN_BINDINGS(StubFileReader)
+EMSCRIPTEN_BINDINGS(StubFileParser)
 {
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::stub;
     using namespace emscripten;
-    class_<StubFileReader, base<FileReader>>("StubFileReader")
+    class_<StubFileParser, base<FileParser>>("StubFileParser")
         //        .constructor<>()
         .smart_ptr_constructor(
-            "StubFileReader", &std::make_shared<StubFileReader>)
-        .function("isResponsible", &StubFileReader::isResponsible)
-        .function("read", &StubFileReader::read);
+            "StubFileParser", &std::make_shared<StubFileParser>)
+        .function("isRecognized", &StubFileParser::isRecognized)
+        .function("parse", &StubFileParser::parse);
 }
 #endif

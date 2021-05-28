@@ -4,7 +4,7 @@ onmessage = function(e) {
     FS.mkdir('/work');
     FS.mount(WORKERFS, { files: [f] }, '/work');
 
-    let sfr = new Module.StubFileReader();
+    let sfr = new Module.StubFileParser();
     console.log('JS (Service Worker): "/work/' + f.name + '" found: ' + sfr.isResponsible('/work/' + f.name));
 }
 

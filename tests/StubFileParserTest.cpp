@@ -1,20 +1,20 @@
 #define CATCH_CONFIG_MAIN
-#include "stub/StubFileReader.hpp"
+#include "stub/StubFileParser.hpp"
 #include "model/Node.hpp"
 
 #include "catch2/catch.hpp"
 
-TEST_CASE("StubFileReader returns dummy Node", "[StubFileReader]")
+TEST_CASE("StubFileParser returns dummy Node", "[StubFileParser]")
 {
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::stub;
 
-    StubFileReader reader{};
+    StubFileParser parser{};
 
-    REQUIRE(reader.isResponsible("resources/dummy.txt"));
-    REQUIRE_FALSE(reader.isResponsible("resources/non_existent.txt"));
+    REQUIRE(parser.isRecognized("resources/dummy.txt"));
+    REQUIRE_FALSE(parser.isRecognized("resources/non_existent.txt"));
 
-    auto nodePtr = reader.read("resources/dummy.txt");
+    auto nodePtr = parser.parse("resources/dummy.txt");
 
     REQUIRE(nodePtr != nullptr);
     REQUIRE("A Stub Node" == nodePtr->getName());

@@ -1,8 +1,8 @@
 # Tests need to be added as executables first
 add_executable(sciwrap_test
     StubNodeTest.cpp
-    StubFileReaderTest.cpp
-    FileReaderSelectorTest.cpp
+    StubFileParserTest.cpp
+    FileParserSelectorTest.cpp
     )
 
 # I'm using C++17 in the test

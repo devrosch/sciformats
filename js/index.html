@@ -16,18 +16,18 @@
 //        FS.createDataFile('/test', 'data2.txt', new Uint8Array([68, 69, 70, 10, 71, 72, 73, 10]), true, true, true);
         FS.writeFile('/test/data2.txt', new Uint8Array([68, 69, 70, 10, 71, 72, 73, 10]));
 
-        let sfr = new Module.StubFileReader();
+        let sfr = new Module.StubFileParser();
 
-        console.log('JS: "/data.txt" found: ' + sfr.isResponsible('/data.txt'));
-        console.log('JS: "/non_existent.txt" found: ' + sfr.isResponsible('/non_existent.txt'));
-        console.log('JS: "/test/data2.txt" found: ' + sfr.isResponsible('/test/data2.txt'));
+        console.log('JS: "/data.txt" found: ' + sfr.isRecognized('/data.txt'));
+        console.log('JS: "/non_existent.txt" found: ' + sfr.isRecognized('/non_existent.txt'));
+        console.log('JS: "/test/data2.txt" found: ' + sfr.isRecognized('/test/data2.txt'));
 
         console.log('JS: =======================================================');
-	let vec = new Module.vector$std$$shared_ptr$sciformats$$sciwrap$$model$$FileReader$$();
+	let vec = new Module.vector$std$$shared_ptr$sciformats$$sciwrap$$model$$FileParser$$();
 	vec.push_back(sfr);
-	let frs = new Module.FileReaderSelector(vec);
-        console.log('JS: FileReaderSelector.isResponsible("/data.txt"): ' + frs.isResponsible('/data.txt'));
-        console.log('JS: FileReaderSelector.isResponsible("/non_existent.txt"): ' + frs.isResponsible('/non_existent.txt'));
+	let frs = new Module.FileParserSelector(vec);
+        console.log('JS: FileParserSelector.isRecognized("/data.txt"): ' + frs.isRecognized('/data.txt'));
+        console.log('JS: FileParserSelector.isRecognized("/non_existent.txt"): ' + frs.isRecognized('/non_existent.txt'));
       }
     };
   </script>

@@ -1,20 +1,20 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/model/KeyValueParam.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/Node.hpp"
-    "${PROJECT_SOURCE_DIR}/include/model/FileReader.hpp"
-    "${PROJECT_SOURCE_DIR}/include/model/FileReaderSelector.hpp"
+    "${PROJECT_SOURCE_DIR}/include/model/FileParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/model/FileParserSelector.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
-    "${PROJECT_SOURCE_DIR}/include/stub/StubFileReader.hpp"
+    "${PROJECT_SOURCE_DIR}/include/stub/StubFileParser.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(sciwrap
     KeyValueParam.cpp
     Node.cpp
-    FileReader.cpp
-    FileReaderSelector.cpp
+    FileParser.cpp
+    FileParserSelector.cpp
     StubNode.cpp
-    StubFileReader.cpp
+    StubFileParser.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

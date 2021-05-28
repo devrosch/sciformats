@@ -1,4 +1,4 @@
-#include "model/FileReaderSelector.hpp"
+#include "model/FileParserSelector.hpp"
 
 #include <vector>
 
@@ -6,19 +6,19 @@
 #include <emscripten/bind.h>
 #endif
 
-sciformats::sciwrap::model::FileReaderSelector::FileReaderSelector(
-    std::vector<std::shared_ptr<sciformats::sciwrap::model::FileReader>>
-        fileReaders)
-    : m_fileReaders{std::move(fileReaders)}
+sciformats::sciwrap::model::FileParserSelector::FileParserSelector(
+    std::vector<std::shared_ptr<sciformats::sciwrap::model::FileParser>>
+        fileParsers)
+    : m_fileParsers{std::move(fileParsers)}
 {
 }
 
-bool sciformats::sciwrap::model::FileReaderSelector::isResponsible(
+bool sciformats::sciwrap::model::FileParserSelector::isRecognized(
     const std::string& path)
 {
-    for (auto const& readerPtr : m_fileReaders)
+    for (auto const& parserPtr : m_fileParsers)
     {
-        if (readerPtr->isResponsible(path))
+        if (parserPtr->isRecognized(path))
         {
             return true;
         }
@@ -27,17 +27,17 @@ bool sciformats::sciwrap::model::FileReaderSelector::isResponsible(
 }
 
 std::unique_ptr<sciformats::sciwrap::model::Node>
-sciformats::sciwrap::model::FileReaderSelector::read(const std::string& path)
+sciformats::sciwrap::model::FileParserSelector::parse(const std::string& path)
 {
     auto parseErrors = std::vector<std::string>{};
 
-    for (auto const& readerPtr : m_fileReaders)
+    for (auto const& parserPtr : m_fileParsers)
     {
-        if (readerPtr->isResponsible(path))
+        if (parserPtr->isRecognized(path))
         {
             try
             {
-                auto node = readerPtr->read(path);
+                auto node = parserPtr->parse(path);
                 return node;
             }
             catch (const std::exception& ex)
@@ -65,16 +65,16 @@ sciformats::sciwrap::model::FileReaderSelector::read(const std::string& path)
 }
 
 #ifdef __EMSCRIPTEN__
-EMSCRIPTEN_BINDINGS(FileReaderSelector)
+EMSCRIPTEN_BINDINGS(FileParserSelector)
 {
     using namespace sciformats::sciwrap::model;
     using namespace emscripten;
-    class_<FileReaderSelector, base<FileReader>>("FileReaderSelector")
+    class_<FileParserSelector, base<FileParser>>("FileParserSelector")
         .constructor<std::vector<
-            std::shared_ptr<sciformats::sciwrap::model::FileReader>>>()
-        .function("isResponsible", &FileReaderSelector::isResponsible)
-        .function("read", &FileReaderSelector::read);
-    register_vector<std::shared_ptr<sciformats::sciwrap::model::FileReader>>(
-        "vector<std::shared_ptr<sciformats::sciwrap::model::FileReader>>");
+            std::shared_ptr<sciformats::sciwrap::model::FileParser>>>()
+        .function("isRecognized", &FileParserSelector::isRecognized)
+        .function("parse", &FileParserSelector::parse);
+    register_vector<std::shared_ptr<sciformats::sciwrap::model::FileParser>>(
+        "vector<std::shared_ptr<sciformats::sciwrap::model::FileParser>>");
 }
 #endif

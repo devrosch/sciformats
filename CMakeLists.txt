@@ -65,7 +65,10 @@ endif()
 # Including cmake script to create clang-tidy and clang-format targets
 # see: https://stackoverflow.com/questions/32280717/cmake-clang-tidy-or-other-script-as-custom-target
 # This allows to run "make clan-tidy" and "make clang-format" in the build directory
-include(cmake/clang-dev-tools.cmake)
+# Only include if this is the main app (and not included through add_subdirectory)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(cmake/clang-dev-tools.cmake)
+endif()
 
 # --------------------------------------------------------------
 # Add sub directories contaning sources
@@ -99,7 +102,10 @@ if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) AND BUILD_TESTING)
 endif()
 
 # Including cmake script to create coverage-prepare and coverage targets
-include(cmake/coverage.cmake)
+# Only include if this is the main app (and not included through add_subdirectory)
+if((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME) AND BUILD_TESTING)
+    include(cmake/coverage.cmake)
+endif()
 
 # --------------------------------------------------------------
 # Set correct paths in doxygen config

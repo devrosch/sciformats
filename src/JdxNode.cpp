@@ -41,7 +41,7 @@ sciformats::sciwrap::jdx::JdxNode::getChildNodes()
 EMSCRIPTEN_BINDINGS(JdxNode)
 {
     using namespace sciformats::sciwrap::model;
-    using namespace sciformats::sciwrap::stub;
+    using namespace sciformats::sciwrap::jdx;
     using namespace emscripten;
     // see: https://github.com/emscripten-core/emscripten/issues/627
     class_<JdxNode, base<Node>>("JdxNode")

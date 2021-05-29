@@ -35,7 +35,7 @@ sciformats::sciwrap::jdx::JdxFileParser::parse(const std::string& path)
 EMSCRIPTEN_BINDINGS(JdxFileParser)
 {
     using namespace sciformats::sciwrap::model;
-    using namespace sciformats::sciwrap::stub;
+    using namespace sciformats::sciwrap::jdx;
     using namespace emscripten;
     class_<JdxFileParser, base<FileParser>>("JdxFileParser")
         .smart_ptr_constructor(

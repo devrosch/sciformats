@@ -38,6 +38,10 @@ TEST_CASE("FileParserSelector sequentially checks parsers for applicability",
         .RETURN(false);
     auto mockParserPtr0
         = std::make_shared<MockFileParser>(std::move(mockParser0));
+    // alternatively:
+    // auto mockParserPtr0
+    //    = std::shared_ptr<MockFileParser>(&mockParser0,
+    //    [](MockFileParser*){});
 
     auto mockParser1 = MockFileParser();
     REQUIRE_CALL(mockParser1, isRecognized(ANY(const std::string&)))

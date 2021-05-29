@@ -1,5 +1,8 @@
 image: devrosch/cppcicdenv:2021-01-01
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 stages:
   - build
   - test

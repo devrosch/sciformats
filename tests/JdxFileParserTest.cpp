@@ -1,9 +1,11 @@
-#include "model/Node.hpp"
 #include "jdx/JdxFileParser.hpp"
+#include "model/Node.hpp"
 
 #include "catch2/catch.hpp"
 
-TEST_CASE("JdxFileParser rejects invalid or non existent JCAMP-DX and parses valid JCAMP-DX file", "[JdxFileParser]")
+TEST_CASE("JdxFileParser rejects invalid or non existent JCAMP-DX and parses "
+          "valid JCAMP-DX file",
+    "[JdxFileParser]")
 {
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::jdx;
@@ -17,6 +19,7 @@ TEST_CASE("JdxFileParser rejects invalid or non existent JCAMP-DX and parses val
     auto nodePtr = parser.parse("resources/Claniline.jdx");
 
     REQUIRE(nodePtr != nullptr);
-    REQUIRE("Compound file, contains several data records" == nodePtr->getName());
+    REQUIRE(
+        "Compound file, contains several data records" == nodePtr->getName());
     REQUIRE(nodePtr->getParams().size() == 6);
 }

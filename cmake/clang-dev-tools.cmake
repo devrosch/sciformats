@@ -12,13 +12,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(INCLUDE_DIRECTORIES
     "${PROJECT_SOURCE_DIR}/include"
     "${PROJECT_SOURCE_DIR}/lib/catch2/include"
-    "${PROJECT_SOURCE_DIR}/lib/trompeloeil/include")
+    "${PROJECT_SOURCE_DIR}/lib/trompeloeil/include"
+    "${PROJECT_SOURCE_DIR}/lib/libjdx/include"
+    )
 # source files for use with clang-tidy and make as separate target
 file(GLOB_RECURSE ALL_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/apps/*.cpp"
     "${PROJECT_SOURCE_DIR}/src/*.cpp"
     "${PROJECT_SOURCE_DIR}/tests/*.cpp"
-    "${PROJECT_SOURCE_DIR}/include/*.hpp")
+    "${PROJECT_SOURCE_DIR}/include/*.hpp"
+    )
 message(STATUS "clang-tidy INCLUDE_DIRECTORIES: ${INCLUDE_DIRECTORIES}")
 message(STATUS "clang-tidy/clang-format ALL_SOURCE_FILES: ${ALL_SOURCE_FILES}")
 

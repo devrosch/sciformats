@@ -1,7 +1,7 @@
 #include "jdx/JdxNode.hpp"
+#include "jdx/Block.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
-#include "jdx/Block.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
@@ -45,7 +45,7 @@ EMSCRIPTEN_BINDINGS(JdxNode)
     using namespace emscripten;
     // see: https://github.com/emscripten-core/emscripten/issues/627
     class_<JdxNode, base<Node>>("JdxNode")
-//        .constructor<>()
+        //        .constructor<>()
         .property("name", &JdxNode::getName)
         // embind fails mapping getParams() or getChildNodes() to a property
         .function("getParams", &JdxNode::getParams)

@@ -81,6 +81,9 @@ if(EMSCRIPTEN)
     add_subdirectory(apps)
 endif()
 
+# dependency, included as git submodule
+add_subdirectory(lib/libjdx)
+
 # --------------------------------------------------------------
 # Add code for testing
 # --------------------------------------------------------------

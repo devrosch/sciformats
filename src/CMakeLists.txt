@@ -5,6 +5,8 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/model/FileParserSelector.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubFileParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxNode.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxFileParser.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
@@ -15,7 +17,11 @@ add_library(sciwrap
     FileParserSelector.cpp
     StubNode.cpp
     StubFileParser.cpp
+    JdxNode.cpp
+    JdxFileParser.cpp
     ${HEADER_LIST})
+
+target_link_libraries(sciwrap PRIVATE jdxparser)
 
 # All users of this library will need at least C++17
 target_compile_features(sciwrap PUBLIC cxx_std_17)

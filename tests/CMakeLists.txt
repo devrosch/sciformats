@@ -2,6 +2,7 @@
 add_executable(sciwrap_test
     StubNodeTest.cpp
     StubFileParserTest.cpp
+    JdxFileParserTest.cpp
     FileParserSelectorTest.cpp
     )
 

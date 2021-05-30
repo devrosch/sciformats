@@ -1,6 +1,6 @@
 #include "jdx/JdxBlockNode.hpp"
-#include "jdx/JdxParser.hpp"
 #include "jdx/Block.hpp"
+#include "jdx/JdxParser.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
 
@@ -8,14 +8,16 @@
 #include <emscripten/bind.h>
 #endif
 
-sciformats::sciwrap::jdx::JdxBlockNode::JdxBlockNode(const sciformats::jdx::Block& block)
+sciformats::sciwrap::jdx::JdxBlockNode::JdxBlockNode(
+    const sciformats::jdx::Block& block)
     : m_istream{nullptr}
     , m_block{std::nullopt}
     , m_blockRef{block}
 {
 }
 
-sciformats::sciwrap::jdx::JdxBlockNode::JdxBlockNode(std::unique_ptr<std::istream> stream)
+sciformats::sciwrap::jdx::JdxBlockNode::JdxBlockNode(
+    std::unique_ptr<std::istream> stream)
     : m_istream{std::move(stream)}
     , m_block{sciformats::jdx::JdxParser::parse(*m_istream, true)}
     , m_blockRef{m_block.value()}

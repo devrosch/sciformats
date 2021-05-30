@@ -3,8 +3,8 @@
 
 #include "catch2/catch.hpp"
 
-TEST_CASE("JdxFileParser only accepts to parse valid JCAMP-DX",
-    "[JdxFileParser]")
+TEST_CASE(
+    "JdxFileParser only accepts to parse valid JCAMP-DX", "[JdxFileParser]")
 {
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::jdx;
@@ -22,8 +22,8 @@ TEST_CASE("JdxFileParser only accepts to parse valid JCAMP-DX",
         auto nodePtr = parser.parse("resources/Claniline.jdx");
 
         REQUIRE(nodePtr != nullptr);
-        REQUIRE(
-            "Compound file, contains several data records" == nodePtr->getName());
+        REQUIRE("Compound file, contains several data records"
+                == nodePtr->getName());
 
         SECTION("Parses root level parameters")
         {
@@ -41,5 +41,4 @@ TEST_CASE("JdxFileParser only accepts to parse valid JCAMP-DX",
         REQUIRE_THROWS(parser.parse("resources/dummy.txt"));
         REQUIRE_THROWS(parser.parse("resources/non_existent.txt"));
     }
-
 }

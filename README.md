@@ -1,3 +1,6 @@
+[![pipeline status](https://gitlab.com/devrosch/libsciwrap/badges/master/pipeline.svg)](https://gitlab.com/devrosch/libsciwrap/-/commits/master)
+[![coverage report](https://gitlab.com/devrosch/libsciwrap/badges/master/coverage.svg)](https://gitlab.com/devrosch/libsciwrap/-/commits/master)
+
 # libsciwrap
 
 Library for wrapping scientific data format parsers for ease of use.
@@ -8,15 +11,62 @@ tbd
 
 ### Prerequisites
 
-tbd
+On Ubuntu 20.04, you can install all required and optional prerequisites for a native with:
+
+```
+apt-get update --yes && apt-get install --yes gcc g++ clang clang-tidy clang-format lcov bc doxygen cmake libicu-dev git
+```
+
+If you would also like to cross compile to WebAssembly, you will need to do:
+```
+apt-get update --yes && apt-get install --yes python3 default-jre
+cd ~
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install 2.0.8 && ./emsdk activate 2.0.8
+```
+
+More recent versions of `emsdk` should also work.
+
+A pre-configured environment with all the above tools is also available as a Docker container on DockerHub. If you have Docker installed you can download the latest image with:
+
+```
+docker pull devrosch/cppcicdenv
+```
 
 ### Installing
 
-tbd
+First, clone the repository including its submodules:
+```
+git clone --recursive <URL>
+```
+
+In case you have already cloned the repo without submodules, you can then also run:
+```
+git submodule update --init --recursive <URL>
+```
+
+To pull updates to the code later, run:
+```
+git pull --recurse-submodules <URL>
+```
+
+On Linux, MacOS, to build this project do:
+```
+mkdir build
+cd build
+cmake ..
+make
+```
 
 ## Running the tests
 
-The test report from the CI/CD pipeline is located at: [GitLab Pages](https://devrosch.gitlab.io/libsciwrap/coverage)
+If the build has completeed successfully, you can then run the tests in the build directory with:
+```
+ctest -VV
+```
+
+The test coverage report from the latest successful CI/CD pipeline run is located at: [GitLab Pages](https://devrosch.gitlab.io/libsciwrap/coverage)
 
 ## Documentation
 

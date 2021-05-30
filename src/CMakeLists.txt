@@ -5,7 +5,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/model/FileParserSelector.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubFileParser.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/JdxNode.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxBlockNode.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxFileParser.hpp"
     )
 
@@ -17,7 +17,7 @@ add_library(sciwrap
     FileParserSelector.cpp
     StubNode.cpp
     StubFileParser.cpp
-    JdxNode.cpp
+    JdxBlockNode.cpp
     JdxFileParser.cpp
     ${HEADER_LIST})
 

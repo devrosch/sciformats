@@ -1,5 +1,5 @@
 #include "jdx/JdxFileParser.hpp"
-#include "jdx/JdxNode.hpp"
+#include "jdx/JdxBlockNode.hpp"
 #include "jdx/JdxParser.hpp"
 #include "model/Node.hpp"
 
@@ -24,13 +24,10 @@ std::unique_ptr<sciformats::sciwrap::model::Node>
 sciformats::sciwrap::jdx::JdxFileParser::parse(const std::string& path)
 {
     std::cout << "C++: JdxFileParser.parse(): " << path << '\n';
-    std::ifstream input{path};
-    auto block = sciformats::jdx::JdxParser::parse(input, true);
-    //    auto blockPtr =
-    //    std::make_unique<sciformats::jdx::Block>(sciformats::jdx::JdxParser::parse(input,
-    //    true));
+    auto streamPtr = std::make_unique<std::ifstream>(path);
+    // root node is owner of istream
     std::unique_ptr<model::Node> node
-        = std::make_unique<JdxNode>(JdxNode(block));
+        = std::make_unique<JdxBlockNode>(std::move(streamPtr));
     return node;
 }
 

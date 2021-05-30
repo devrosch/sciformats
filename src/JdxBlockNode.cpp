@@ -1,4 +1,5 @@
-#include "jdx/JdxNode.hpp"
+#include "jdx/JdxBlockNode.hpp"
+#include "jdx/JdxParser.hpp"
 #include "jdx/Block.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
@@ -7,20 +8,29 @@
 #include <emscripten/bind.h>
 #endif
 
-sciformats::sciwrap::jdx::JdxNode::JdxNode(sciformats::jdx::Block block)
-    : m_block{std::move(block)}
+sciformats::sciwrap::jdx::JdxBlockNode::JdxBlockNode(const sciformats::jdx::Block& block)
+    : m_istream{nullptr}
+    , m_block{std::nullopt}
+    , m_blockRef{block}
 {
 }
 
-std::string sciformats::sciwrap::jdx::JdxNode::getName() const
+sciformats::sciwrap::jdx::JdxBlockNode::JdxBlockNode(std::unique_ptr<std::istream> stream)
+    : m_istream{std::move(stream)}
+    , m_block{sciformats::jdx::JdxParser::parse(*m_istream, true)}
+    , m_blockRef{m_block.value()}
 {
-    return m_block.getLdr("TITLE").value().getValue();
+}
+
+std::string sciformats::sciwrap::jdx::JdxBlockNode::getName() const
+{
+    return m_blockRef.getLdr("TITLE").value().getValue();
 }
 
 std::vector<sciformats::sciwrap::model::KeyValueParam>
-sciformats::sciwrap::jdx::JdxNode::getParams()
+sciformats::sciwrap::jdx::JdxBlockNode::getParams()
 {
-    auto const& ldrs = m_block.getLdrs();
+    auto const& ldrs = m_blockRef.getLdrs();
     auto vec = std::vector<sciformats::sciwrap::model::KeyValueParam>();
     for (auto const& ldr : ldrs)
     {
@@ -30,11 +40,16 @@ sciformats::sciwrap::jdx::JdxNode::getParams()
 }
 
 std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>>
-sciformats::sciwrap::jdx::JdxNode::getChildNodes()
+sciformats::sciwrap::jdx::JdxBlockNode::getChildNodes()
 {
-    auto children = std::vector<std::shared_ptr<Node>>();
-    // TODO: populate
-    return children;
+    auto childNodes = std::vector<std::shared_ptr<Node>>();
+    for (auto const& block : m_blockRef.getBlocks())
+    {
+        auto blockPtr = std::make_shared<JdxBlockNode>(block);
+        childNodes.push_back(blockPtr);
+    }
+    // TODO: populate with other node types
+    return childNodes;
 }
 
 #ifdef __EMSCRIPTEN__

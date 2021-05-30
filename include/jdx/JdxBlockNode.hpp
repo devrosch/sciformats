@@ -1,5 +1,5 @@
-#ifndef LIBSCIWRAP_JDXNODE_HPP
-#define LIBSCIWRAP_JDXNODE_HPP
+#ifndef LIBSCIWRAP_JDXBLOCKNODE_HPP
+#define LIBSCIWRAP_JDXBLOCKNODE_HPP
 
 #include "jdx/Block.hpp"
 #include "model/KeyValueParam.hpp"
@@ -7,18 +7,21 @@
 
 namespace sciformats::sciwrap::jdx
 {
-class JdxNode : public model::Node
+class JdxBlockNode : public model::Node
 {
 public:
-    explicit JdxNode(sciformats::jdx::Block block);
+    explicit JdxBlockNode(std::unique_ptr<std::istream> stream);
+    explicit JdxBlockNode(const sciformats::jdx::Block& block);
     //    JdxNode(std::unique_ptr<sciformats::jdx::Block> blockPtr);
     [[nodiscard]] std::string getName() const override;
     std::vector<model::KeyValueParam> getParams() override;
     std::vector<std::shared_ptr<model::Node>> getChildNodes() override;
 
 private:
-    sciformats::jdx::Block m_block;
+    std::unique_ptr<std::istream> m_istream;
+    std::optional<sciformats::jdx::Block> m_block;
+    const sciformats::jdx::Block& m_blockRef;
 };
 } // sciformats::sciwrap::jdx
 
-#endif // LIBSCIWRAP_JDXNODE_HPP
+#endif // LIBSCIWRAP_JDXBLOCKNODE_HPP

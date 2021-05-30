@@ -61,11 +61,11 @@ EMSCRIPTEN_BINDINGS(JdxNode)
     using namespace sciformats::sciwrap::jdx;
     using namespace emscripten;
     // see: https://github.com/emscripten-core/emscripten/issues/627
-    class_<JdxNode, base<Node>>("JdxNode")
+    class_<JdxBlockNode, base<Node>>("JdxBlockNode")
         //        .constructor<>()
-        .property("name", &JdxNode::getName)
+        .property("name", &JdxBlockNode::getName)
         // embind fails mapping getParams() or getChildNodes() to a property
-        .function("getParams", &JdxNode::getParams)
-        .function("getChildNodes", &JdxNode::getChildNodes);
+        .function("getParams", &JdxBlockNode::getParams)
+        .function("getChildNodes", &JdxBlockNode::getChildNodes);
 }
 #endif

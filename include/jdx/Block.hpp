@@ -5,6 +5,7 @@
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
 #include "jdx/XyData.hpp"
+#include "jdx/XyPoints.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -78,6 +79,11 @@ public:
      */
     [[nodiscard]] const std::optional<RaData>& getRaData() const;
     /**
+     * @brief Provides the XYPOINTS record if available.
+     * @return XYPOINTS record.
+     */
+    [[nodiscard]] const std::optional<XyPoints>& getXyPoints() const;
+    /**
      * @brief Provides the PEAK TABLE record if available.
      * @return PEAK TABLE record.
      */
@@ -90,6 +96,7 @@ private:
     std::vector<Block> m_blocks;
     std::optional<XyData> m_xyData;
     std::optional<RaData> m_raData;
+    std::optional<XyPoints> m_xyPoints;
     std::optional<PeakTable> m_peakTable;
 
     /**

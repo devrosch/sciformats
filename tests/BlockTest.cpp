@@ -77,6 +77,30 @@ TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
     REQUIRE(2 == data.getData().size());
 }
 
+TEST_CASE("parses block with XYPOINTS", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED SPECTRUM\r\n"
+                      "##XUNITS= 1/CM\r\n"
+                      "##YUNITS= ABSORBANCE\r\n"
+                      "##XFACTOR= 1.0\r\n"
+                      "##YFACTOR= 1.0\r\n"
+                      "##FIRSTX= 450\r\n"
+                      "##LASTX= 461\r\n"
+                      "##NPOINTS= 4\r\n"
+                      "##FIRSTY= 10\r\n"
+                      "##XYPOINTS= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "460.0, ?; 461.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto block = sciformats::jdx::Block(stream);
+    REQUIRE(block.getXyPoints().has_value());
+}
+
 TEST_CASE("parses block with PEAK TABLE", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"

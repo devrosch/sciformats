@@ -124,6 +124,18 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             auto raData = RaData(label.value(), value, m_istream, m_ldrs);
             m_raData.emplace(std::move(raData));
         }
+        else if ("XYPOINTS" == label)
+        {
+            if (getXyPoints())
+            {
+                // duplicate
+                throw std::runtime_error(
+                    "Multiple XYPOINTS LDRs encountered in block: \""
+                    + getLdr("TITLE").value().getValue());
+            }
+            auto xyPoints = XyPoints(label.value(), value, m_istream, m_ldrs);
+            m_xyPoints.emplace(std::move(xyPoints));
+        }
         else if ("PEAKTABLE" == label)
         {
             if (getPeakTable())
@@ -179,6 +191,12 @@ const std::optional<sciformats::jdx::RaData>&
 sciformats::jdx::Block::getRaData() const
 {
     return m_raData;
+}
+
+const std::optional<sciformats::jdx::XyPoints>&
+sciformats::jdx::Block::getXyPoints() const
+{
+    return m_xyPoints;
 }
 
 const std::optional<sciformats::jdx::PeakTable>&

@@ -131,6 +131,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
         {
             data
                 = parseXyXyInput(m_label, m_istream, xFactor, yFactor, nPoints);
+            // TODO: check if parsed data matches firstX, lastX
         }
         else
         {

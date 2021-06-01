@@ -47,6 +47,7 @@ TEST_CASE(
             auto xyDataNode = nestedNode0->getChildNodes().at(0);
             REQUIRE(xyDataNode->getName() == "XYDATA");
             REQUIRE(xyDataNode->getParams().empty());
+            REQUIRE(xyDataNode->getChildNodes().empty());
 
             auto dataOpt = xyDataNode->getData();
             REQUIRE(dataOpt.has_value());

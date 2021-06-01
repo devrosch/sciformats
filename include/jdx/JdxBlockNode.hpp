@@ -15,6 +15,7 @@ public:
     //    JdxNode(std::unique_ptr<sciformats::jdx::Block> blockPtr);
     [[nodiscard]] std::string getName() const override;
     std::vector<model::KeyValueParam> getParams() override;
+    std::optional<std::vector<model::Point2D>> getData() override;
     std::vector<std::shared_ptr<model::Node>> getChildNodes() override;
 
 private:

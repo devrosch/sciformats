@@ -49,6 +49,8 @@ git submodule update --init --recursive <URL>
 To pull updates to the code later, run:
 ```
 git pull --recurse-submodules <URL>
+git submodule update --remote --merge
+git submodule foreach --recursive git pull
 ```
 
 On Linux, MacOS, to build this project do:

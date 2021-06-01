@@ -1,23 +1,27 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/model/KeyValueParam.hpp"
+    "${PROJECT_SOURCE_DIR}/include/model/Point2D.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/Node.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/FileParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/model/FileParserSelector.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubNode.hpp"
     "${PROJECT_SOURCE_DIR}/include/stub/StubFileParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxBlockNode.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/JdxData2DNode.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxFileParser.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(sciwrap
     KeyValueParam.cpp
+    Point2D.cpp
     Node.cpp
     FileParser.cpp
     FileParserSelector.cpp
     StubNode.cpp
     StubFileParser.cpp
     JdxBlockNode.cpp
+    JdxData2DNode.cpp
     JdxFileParser.cpp
     ${HEADER_LIST})
 

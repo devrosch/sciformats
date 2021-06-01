@@ -21,6 +21,16 @@ sciformats::sciwrap::stub::StubNode::getParams()
     return vec;
 }
 
+std::optional<std::vector<sciformats::sciwrap::model::Point2D>>
+sciformats::sciwrap::stub::StubNode::getData()
+{
+    auto vec = std::vector<sciformats::sciwrap::model::Point2D>();
+    vec.push_back({1.0, 10.0});
+    vec.push_back({2.0, 20.0});
+    vec.push_back({3.0, 30.0});
+    return vec;
+}
+
 std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>>
 sciformats::sciwrap::stub::StubNode::getChildNodes()
 {
@@ -46,6 +56,7 @@ EMSCRIPTEN_BINDINGS(StubNode)
         .property("name", &StubNode::getName)
         // embind fails mapping getParams() or getChildNodes() to a property
         .function("getParams", &StubNode::getParams)
+        .function("getData", &StubNode::getData)
         .function("getChildNodes", &StubNode::getChildNodes);
 }
 #endif

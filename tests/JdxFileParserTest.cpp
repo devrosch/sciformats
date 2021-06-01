@@ -33,6 +33,14 @@ TEST_CASE(
         SECTION("Parses nested nodes")
         {
             REQUIRE(nodePtr->getChildNodes().size() == 6);
+
+            auto nestedNode0 = nodePtr->getChildNodes().at(0);
+            REQUIRE("4-chloroaniline" == nestedNode0->getName());
+            REQUIRE(nestedNode0->getParams().size() == 30);
+            REQUIRE(nestedNode0->getChildNodes().size() == 1);
+
+            auto xyDataNode = nestedNode0->getChildNodes().at(0);
+            REQUIRE(xyDataNode->getData().has_value());
         }
     }
 

@@ -2,10 +2,12 @@
 #define LIBSCIWRAP_NODE_HPP
 
 #include "model/KeyValueParam.hpp"
+#include "model/Point2D.hpp"
 
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 namespace sciformats::sciwrap::model
 {
@@ -14,6 +16,7 @@ class Node
 public:
     [[nodiscard]] virtual std::string getName() const = 0;
     virtual std::vector<KeyValueParam> getParams() = 0;
+    virtual std::optional<std::vector<Point2D>> getData() = 0;
     virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
 
     // see:

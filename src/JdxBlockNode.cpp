@@ -3,6 +3,7 @@
 #include "jdx/JdxParser.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
+#include "jdx/JdxData2DNode.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
@@ -41,10 +42,35 @@ sciformats::sciwrap::jdx::JdxBlockNode::getParams()
     return vec;
 }
 
+std::optional<std::vector<sciformats::sciwrap::model::Point2D>>
+sciformats::sciwrap::jdx::JdxBlockNode::getData()
+{
+    return std::nullopt;
+}
+
 std::vector<std::shared_ptr<sciformats::sciwrap::model::Node>>
 sciformats::sciwrap::jdx::JdxBlockNode::getChildNodes()
 {
     auto childNodes = std::vector<std::shared_ptr<Node>>();
+    if (m_blockRef.getXyData())
+    {
+        auto data = m_blockRef.getXyData().value();
+        auto dataPtr = std::make_shared<JdxData2DNode>("XYDATA", data.getData());
+        childNodes.push_back(dataPtr);
+    }
+    if (m_blockRef.getRaData())
+    {
+        auto data = m_blockRef.getRaData().value();
+        auto dataPtr = std::make_shared<JdxData2DNode>("RADATA", data.getData());
+        childNodes.push_back(dataPtr);
+    }
+    if (m_blockRef.getXyPoints())
+    {
+        auto data = m_blockRef.getXyPoints().value();
+        auto dataPtr = std::make_shared<JdxData2DNode>("XYPOINTS", data.getData());
+        childNodes.push_back(dataPtr);
+    }
+    // TODO: add PEAK_TABLE
     for (auto const& block : m_blockRef.getBlocks())
     {
         auto blockPtr = std::make_shared<JdxBlockNode>(block);
@@ -66,6 +92,7 @@ EMSCRIPTEN_BINDINGS(JdxNode)
         .property("name", &JdxBlockNode::getName)
         // embind fails mapping getParams() or getChildNodes() to a property
         .function("getParams", &JdxBlockNode::getParams)
+        .function("getData", &JdxBlockNode::getData)
         .function("getChildNodes", &JdxBlockNode::getChildNodes);
 }
 #endif

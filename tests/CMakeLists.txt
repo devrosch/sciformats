@@ -9,6 +9,7 @@ add_executable(jdxparser_test
     RaDataTest.cpp
     XyPointsTest.cpp
     PeakTableTest.cpp
+    IntegrationTest.cpp
     )
 
 # I'm using C++17 in the test

@@ -94,7 +94,7 @@ TEST_CASE("parses DIFDUP data line", "[DataParser]")
     auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
-    REQUIRE(true == difEncoded);
+    REQUIRE(false == difEncoded); // last ordinate is in DUP format , not DIF
     REQUIRE(expect.size() == actual.size());
     for (size_t i{0}; i < expect.size(); i++)
     {

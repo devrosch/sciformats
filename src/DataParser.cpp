@@ -128,10 +128,8 @@ std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readValues(
     while (auto token = nextToken(encodedValues, index))
     {
         TokenType tokenType = toAffn(token.value());
-        if (tokenType == TokenType::Dif)
-        {
-            difEncoded = true;
-        }
+        // it's not quite clear if DUP of DIF should also count as DIF encoded
+        difEncoded = tokenType == TokenType::Dif;
 
         // check for logical errors
         if ((tokenType == TokenType::Dup || tokenType == TokenType::Dif)
@@ -180,6 +178,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readValues(
         }
         else
         {
+            auto str = token.value();
             auto value = std::stod(token.value());
             if (tokenType == TokenType::Dif)
             {
@@ -305,8 +304,9 @@ bool sciformats::jdx::DataParser::isTokenStart(
     {
         return false;
     }
-    const static std::regex regex{"^[eE][+-]{0,1}\\d{2,3}[;,\\s]{0,1}.*"};
-    const static std::regex altRegex{"^[eE][+-]{0,1}\\d{1,3}[;,\\s].*"};
+    // TODO: this is fragile
+    const static std::regex regex{"^[eE][+-]{0,1}\\d{1,3}[;,\\s]{1}.*"};
+    const static std::regex altRegex{"^[eE][+-]{0,1}\\d{1,3}[;,\\s]$"};
     char c = encodedValues.at(index);
     if ((getAsciiDigitValue(c).has_value() || c == '.')
         && (index == 0 || isTokenDelimiter(encodedValues, index - 1)))

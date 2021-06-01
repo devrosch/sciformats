@@ -183,6 +183,41 @@ TEST_CASE("detects illegal stream position (not LDR start)", "[XyData]")
     REQUIRE_THROWS(sciformats::jdx::XyData(stream, ldrs));
 }
 
+TEST_CASE(
+    "omit Y value check if last digit in previous line is not DIF encoded",
+    "[XyData]")
+{
+    // y values: 10 11 12 13  20 21 22 23
+    std::string input{"##XYDATA= (X++(Y..Y))\r\n"
+                      "1 A0JJA3\r\n"
+                      "5 B0JJB3\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::Ldr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "1.0");
+    ldrs.emplace_back("LASTX", "8.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "8");
+
+    auto xyData = sciformats::jdx::XyData(stream, ldrs);
+    auto data = xyData.getData();
+
+    REQUIRE(data.size() == 8);
+    REQUIRE(data.at(0).second == Approx(10.0));
+    REQUIRE(data.at(1).second == Approx(11.0));
+    REQUIRE(data.at(2).second == Approx(12.0));
+    REQUIRE(data.at(3).second == Approx(13.0));
+    REQUIRE(data.at(4).second == Approx(20.0));
+    REQUIRE(data.at(5).second == Approx(21.0));
+    REQUIRE(data.at(6).second == Approx(22.0));
+    REQUIRE(data.at(7).second == Approx(23.0));
+}
+
 // TODO: the next few test cases should be moved to XyPoints tests
 
 // TEST_CASE("parses unevenly spaced xy data", "[XyPoints]")

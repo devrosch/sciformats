@@ -11,15 +11,16 @@ namespace sciformats::sciwrap::jdx
 class JdxData2DNode : public model::Node
 {
 public:
-    explicit JdxData2DNode(std::string name, std::vector<std::pair<double, double>> data);
+    explicit JdxData2DNode(
+        std::string name, std::vector<std::pair<double, double>> data);
     [[nodiscard]] std::string getName() const override;
     std::vector<model::KeyValueParam> getParams() override;
     std::optional<std::vector<model::Point2D>> getData() override;
     std::vector<std::shared_ptr<model::Node>> getChildNodes() override;
-    ~JdxData2DNode() override = default;
 
 protected:
-    static std::vector<model::Point2D> mapPairsToPoints(const std::vector<std::pair<double, double>>& data);
+    static std::vector<model::Point2D> mapPairsToPoints(
+        const std::vector<std::pair<double, double>>& data);
 
 private:
     const std::string m_name;

@@ -5,9 +5,9 @@
 #include "model/Point2D.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 namespace sciformats::sciwrap::model
 {

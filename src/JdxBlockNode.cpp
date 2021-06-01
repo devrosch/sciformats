@@ -1,9 +1,9 @@
 #include "jdx/JdxBlockNode.hpp"
 #include "jdx/Block.hpp"
+#include "jdx/JdxData2DNode.hpp"
 #include "jdx/JdxParser.hpp"
 #include "model/KeyValueParam.hpp"
 #include "model/Node.hpp"
-#include "jdx/JdxData2DNode.hpp"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
@@ -55,19 +55,22 @@ sciformats::sciwrap::jdx::JdxBlockNode::getChildNodes()
     if (m_blockRef.getXyData())
     {
         auto data = m_blockRef.getXyData().value();
-        auto dataPtr = std::make_shared<JdxData2DNode>("XYDATA", data.getData());
+        auto dataPtr
+            = std::make_shared<JdxData2DNode>("XYDATA", data.getData());
         childNodes.push_back(dataPtr);
     }
     if (m_blockRef.getRaData())
     {
         auto data = m_blockRef.getRaData().value();
-        auto dataPtr = std::make_shared<JdxData2DNode>("RADATA", data.getData());
+        auto dataPtr
+            = std::make_shared<JdxData2DNode>("RADATA", data.getData());
         childNodes.push_back(dataPtr);
     }
     if (m_blockRef.getXyPoints())
     {
         auto data = m_blockRef.getXyPoints().value();
-        auto dataPtr = std::make_shared<JdxData2DNode>("XYPOINTS", data.getData());
+        auto dataPtr
+            = std::make_shared<JdxData2DNode>("XYPOINTS", data.getData());
         childNodes.push_back(dataPtr);
     }
     // TODO: add PEAK_TABLE
@@ -81,7 +84,7 @@ sciformats::sciwrap::jdx::JdxBlockNode::getChildNodes()
 }
 
 #ifdef __EMSCRIPTEN__
-EMSCRIPTEN_BINDINGS(JdxNode)
+EMSCRIPTEN_BINDINGS(JdxBlockNode)
 {
     using namespace sciformats::sciwrap::model;
     using namespace sciformats::sciwrap::jdx;

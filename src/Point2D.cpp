@@ -10,7 +10,7 @@ EMSCRIPTEN_BINDINGS(Point2D)
     using namespace sciformats::sciwrap::model;
     using namespace emscripten;
     value_object<Point2D>("Point2D")
-        .field("x", &KeyValueParam::x)
-        .field("y", &KeyValueParam::y);
+        .field("x", &Point2D::x)
+        .field("y", &Point2D::y);
 }
 #endif

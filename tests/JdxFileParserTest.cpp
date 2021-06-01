@@ -30,6 +30,11 @@ TEST_CASE(
             REQUIRE(nodePtr->getParams().size() == 6);
         }
 
+        SECTION("Root level block contains no data LDRs")
+        {
+            REQUIRE(nodePtr->getData() == std::nullopt);
+        }
+
         SECTION("Parses nested nodes")
         {
             REQUIRE(nodePtr->getChildNodes().size() == 6);
@@ -40,7 +45,16 @@ TEST_CASE(
             REQUIRE(nestedNode0->getChildNodes().size() == 1);
 
             auto xyDataNode = nestedNode0->getChildNodes().at(0);
-            REQUIRE(xyDataNode->getData().has_value());
+            REQUIRE(xyDataNode->getName() == "XYDATA");
+            REQUIRE(xyDataNode->getParams().empty());
+
+            auto dataOpt = xyDataNode->getData();
+            REQUIRE(dataOpt.has_value());
+
+            auto data = dataOpt.value();
+            REQUIRE(data.size() == 1801);
+            REQUIRE(data.at(0).x == Approx(111111 * 3.6E-3));
+            REQUIRE(data.at(0).y == Approx(864977 * 8.11943557E-7));
         }
     }
 

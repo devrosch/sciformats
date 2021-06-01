@@ -16,6 +16,12 @@ TEST_CASE("StubNode returns dummy data", "[StubNode]")
     REQUIRE("key0" == params.at(0).key);
     REQUIRE("value0" == params.at(0).value);
 
+    auto data = node.getData();
+    REQUIRE(data->size() == 3);
+    auto point0 = data->at(0);
+    REQUIRE(point0.x == Approx(1.0));
+    REQUIRE(point0.y == Approx(10.0));
+
     auto childNodes = node.getChildNodes();
     REQUIRE(childNodes.size() == 3);
     REQUIRE("A Stub Node" == childNodes.at(0)->getName());

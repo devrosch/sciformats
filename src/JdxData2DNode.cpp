@@ -40,7 +40,8 @@ std::vector<sciformats::sciwrap::model::Point2D>
 sciformats::sciwrap::jdx::JdxData2DNode::mapPairsToPoints(
     const std::vector<std::pair<double, double>>& data)
 {
-    std::vector<sciformats::sciwrap::model::Point2D> output{data.size()};
+    std::vector<sciformats::sciwrap::model::Point2D> output{};
+    output.reserve(data.size());
     for (const auto& pair : data)
     {
         output.push_back({pair.first, pair.second});

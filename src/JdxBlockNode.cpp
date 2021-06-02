@@ -45,6 +45,7 @@ sciformats::sciwrap::jdx::JdxBlockNode::getParams()
 std::optional<std::vector<sciformats::sciwrap::model::Point2D>>
 sciformats::sciwrap::jdx::JdxBlockNode::getData()
 {
+    // TODO: return data here for data blocks instead of as child node
     return std::nullopt;
 }
 
@@ -73,7 +74,7 @@ sciformats::sciwrap::jdx::JdxBlockNode::getChildNodes()
             = std::make_shared<JdxData2DNode>("XYPOINTS", data.getData());
         childNodes.push_back(dataPtr);
     }
-    // TODO: add PEAK_TABLE
+    // TODO: add PEAK TABLE
     for (auto const& block : m_blockRef.getBlocks())
     {
         auto blockPtr = std::make_shared<JdxBlockNode>(block);

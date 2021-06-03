@@ -36,18 +36,27 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
     std::string value = title;
     while (!m_istream.eof())
     {
-        auto line = LdrParser::readLine(m_istream);
+        const auto line = LdrParser::readLine(m_istream);
 
         if (!LdrParser::isLdrStart(line))
         {
             // continuation of previous LDR
             if (!label.has_value())
             {
-                throw std::runtime_error("Unexpected content found in block \""
-                                         + getLdr("TITLE").value().getValue()
-                                         + "\": " + line);
+                // account for special case that a $$ comment immediately
+                // follows a nested block
+                auto [preCommentValue, comment]
+                    = LdrParser::stripLineComment(line);
+                LdrParser::trim(preCommentValue);
+                // if not this special case, give up
+                if (!preCommentValue.empty())
+                {
+                    throw std::runtime_error(
+                        "Unexpected content found in block \"" + title
+                        + std::string{"\": "}.append(line));
+                }
             }
-            if (!value.empty() && value.back() == '=')
+            else if (!value.empty() && value.back() == '=')
             {
                 // account for terminal "=" as non line breaking marker
                 value.pop_back();
@@ -78,8 +87,8 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
                     // duplicate, but spec (JCAMP-DX IR 3.2) says
                     // a duplicate LDR is illegal in a block => throw
                     throw std::runtime_error(
-                        "Duplicate LDR in Block \""
-                        + getLdr("TITLE").value().getValue() + "\": " + line);
+                        "Duplicate LDR in Block \"" + title
+                        + std::string{"\": "}.append(line));
                 }
                 m_ldrs.emplace_back(label.value(), value);
             }
@@ -106,8 +115,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             {
                 // duplicate
                 throw std::runtime_error(
-                    "Multiple XYDATA LDRs encountered in block: \""
-                    + getLdr("TITLE").value().getValue());
+                    "Multiple XYDATA LDRs encountered in block: \"" + title);
             }
             auto xyData = XyData(label.value(), value, m_istream, m_ldrs);
             m_xyData.emplace(std::move(xyData));
@@ -118,8 +126,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             {
                 // duplicate
                 throw std::runtime_error(
-                    "Multiple RADATA LDRs encountered in block: \""
-                    + getLdr("TITLE").value().getValue());
+                    "Multiple RADATA LDRs encountered in block: \"" + title);
             }
             auto raData = RaData(label.value(), value, m_istream, m_ldrs);
             m_raData.emplace(std::move(raData));
@@ -130,8 +137,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             {
                 // duplicate
                 throw std::runtime_error(
-                    "Multiple XYPOINTS LDRs encountered in block: \""
-                    + getLdr("TITLE").value().getValue());
+                    "Multiple XYPOINTS LDRs encountered in block: \"" + title);
             }
             auto xyPoints = XyPoints(label.value(), value, m_istream, m_ldrs);
             m_xyPoints.emplace(std::move(xyPoints));
@@ -143,7 +149,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
                 // duplicate
                 throw std::runtime_error(
                     "Multiple PEAK TABLE LDRs encountered in block: \""
-                    + getLdr("TITLE").value().getValue());
+                    + title);
             }
             auto peakTable = PeakTable(label.value(), value, m_istream);
             m_peakTable.emplace(std::move(peakTable));
@@ -154,8 +160,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
     if ("END" != label)
     {
         throw std::runtime_error(
-            "Unexpected end of block. No END label found: \""
-            + getLdr("TITLE").value().getValue());
+            "Unexpected end of block. No END label found: \"" + title);
     }
 }
 

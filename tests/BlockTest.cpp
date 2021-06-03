@@ -7,6 +7,7 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
     std::string input{"##TITLE= Test\r\n"
                       "##JCAMP-DX= 4.24\r\n"
                       "##DATA TYPE= INFRARED SPECTRUM\r\n"
+                      "$$ random comment #1\r\n"
                       "##ORIGIN= devrosch\r\n"
                       "##OWNER= PUBLIC DOMAIN\r\n"
                       "##SPECTROMETER/DATA SYSTEM= Dum=\r\n"
@@ -22,7 +23,9 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
                       "##XYDATA= (X++(Y..Y))\r\n"
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
-                      "##END="};
+                      "$$ random comment #2\r\n"
+                      "##END="
+                      "$$ random comment #3\r\n"};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
@@ -121,6 +124,61 @@ TEST_CASE("parses block with PEAK TABLE", "[Block]")
     REQUIRE(block.getPeakTable().has_value());
     auto peakTable = block.getPeakTable().value();
     REQUIRE(2 == peakTable.getData().size());
+}
+
+TEST_CASE("parses LINK block", "[Block]")
+{
+    std::string input{"##TITLE= Root LINK BLOCK\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= LINK\r\n"
+                      "##BLOCKS= 3\r\n"
+                      "##TITLE= Data XYDATA (PAC) Block\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED SPECTRUM\r\n"
+                      "##XUNITS= 1/CM\r\n"
+                      "##YUNITS= ABSORBANCE\r\n"
+                      "##XFACTOR= 1.0\r\n"
+                      "##YFACTOR= 1.0\r\n"
+                      "##FIRSTX= 450\r\n"
+                      "##LASTX= 451\r\n"
+                      "##NPOINTS= 2\r\n"
+                      "##FIRSTY= 10\r\n"
+                      "##XYDATA= (X++(Y..Y))\r\n"
+                      "+450+10\r\n"
+                      "+451+11\r\n"
+                      "##END=\r\n"
+                      "##TITLE= Data RADATA (PAC) Block\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED INTERFEROGRAM\r\n"
+                      "##RUNITS= MICROMETERS\r\n"
+                      "##AUNITS= ARBITRARY UNITS\r\n"
+                      "##FIRSTR= 0\r\n"
+                      "##LASTR= 2\r\n"
+                      "##RFACTOR= 1.0\r\n"
+                      "##AFACTOR= 1.0\r\n"
+                      "##NPOINTS= 3\r\n"
+                      "##RADATA= (R++(A..A))\r\n"
+                      "+0+10\r\n"
+                      "+1+11\r\n"
+                      "+2+12\r\n"
+                      "##END=\r\n"
+                      "$$ potentially problematic comment\r\n"
+                      "##END=\r\n"};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto block = sciformats::jdx::Block(stream);
+    const auto& ldrs = block.getLdrs();
+
+    // does NOT contain "##END=" even though technically an LDR
+    // does NOT contain nested block LDRs
+    REQUIRE(4 == ldrs.size());
+    REQUIRE("Root LINK BLOCK" == block.getLdr("TITLE").value().getValue());
+    REQUIRE_FALSE(block.getXyData().has_value());
+    REQUIRE_FALSE(block.getRaData().has_value());
+    REQUIRE_FALSE(block.getXyPoints().has_value());
+    REQUIRE_FALSE(block.getPeakTable().has_value());
+    REQUIRE(2 == block.getBlocks().size());
 }
 
 TEST_CASE("throws if required LDRs for xy data are missing", "[Block]")

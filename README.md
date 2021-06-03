@@ -1,5 +1,5 @@
 [![pipeline status](https://gitlab.com/devrosch/libsciwrap/badges/master/pipeline.svg)](https://gitlab.com/devrosch/libsciwrap/-/commits/master)
-[![coverage report](https://gitlab.com/devrosch/libsciwrap/badges/master/coverage.svg)](https://gitlab.com/devrosch/libsciwrap/-/commits/master)
+[![coverage report](https://gitlab.com/devrosch/libsciwrap/badges/master/coverage.svg)](https://devrosch.gitlab.io/libsciwrap/coverage)
 
 # libsciwrap
 
@@ -43,13 +43,12 @@ git clone --recursive <URL>
 
 In case you have already cloned the repo without submodules, you can then also run:
 ```
-git submodule update --init --recursive <URL>
+git submodule update --init --recursive
 ```
 
 To pull updates to the code later, run:
 ```
-git pull --recurse-submodules <URL>
-git submodule update --remote --merge
+git pull
 git submodule foreach --recursive git pull
 ```
 

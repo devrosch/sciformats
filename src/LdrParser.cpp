@@ -22,7 +22,7 @@ std::string sciformats::jdx::LdrParser::readLine(std::istream& istream)
 
 bool sciformats::jdx::LdrParser::isLdrStart(const std::string& line)
 {
-    std::regex regex{"^\\s*##.*=.*"};
+    static const std::regex regex{"^\\s*##.*=.*"};
     return std::regex_match(line, regex);
 }
 

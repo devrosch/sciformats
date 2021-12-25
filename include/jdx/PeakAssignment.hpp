@@ -28,6 +28,19 @@ public:
      * @brief The peak assignment string.
      */
     std::string a;
+
+    PeakAssignment(const std::string& stringValue, size_t numVariables);
+    static bool isPeakAssignmentStart(const std::string& stringValue);
+    static bool isPeakAssignmentEnd(const std::string& stringValue);
+private:
+    /**
+     * @brief parseNextToken Parses the next element of the PEAK ASSIGNMENT.
+     * @param stringValue The string representing the PEAK ASSIGNMENT.
+     * @param position The position in the PEAK ASSIGNMENT the last parsing operation ended with. It will be updated with the position after the next token separator (comma or closing parenthesis).
+     * @return The next token, if any.
+     */
+    static std::optional<std::string> parseNextToken(const std::string& stringValue, size_t& position);
+    static std::string parseStringToken(const std::string& stringValue, size_t& position);
 };
 } // namespace sciformats::jdx
 

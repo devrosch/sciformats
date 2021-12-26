@@ -2,8 +2,8 @@
 
 #include "catch2/catch.hpp"
 
-#include <sstream>
 #include <cmath>
+#include <sstream>
 
 // TODO: add more tests for NMR specific assignments (XYMA), (XYMWA)
 
@@ -160,9 +160,8 @@ TEST_CASE("fails when excess component is encountered in three column PEAK "
 
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
-    REQUIRE_THROWS_WITH(
-        assignments.getData(), Catch::Matchers::Contains("illegal number",
-                                   Catch::CaseSensitive::No));
+    REQUIRE_THROWS_WITH(assignments.getData(),
+        Catch::Matchers::Contains("illegal number", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when excess component is encountered in four column PEAK "
@@ -178,9 +177,8 @@ TEST_CASE("fails when excess component is encountered in four column PEAK "
 
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
-    REQUIRE_THROWS_WITH(
-        assignments.getData(), Catch::Matchers::Contains("illegal number",
-                                   Catch::CaseSensitive::No));
+    REQUIRE_THROWS_WITH(assignments.getData(),
+        Catch::Matchers::Contains("illegal number", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when ambiguous component is encountered in four column PEAK "
@@ -213,9 +211,8 @@ TEST_CASE("fails when opening parenthesis is missing in PEAK ASSIGNMENTS",
 
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
-    REQUIRE_THROWS_WITH(
-        assignments.getData(), Catch::Matchers::Contains("illegal",
-                                   Catch::CaseSensitive::No));
+    REQUIRE_THROWS_WITH(assignments.getData(),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when closing parenthesis is missing in PEAK ASSIGNMENTS",
@@ -267,8 +264,7 @@ TEST_CASE("fails when closing angle bracket is missing in assignment string in "
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains(
-            "no delimiter", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("no delimiter", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
@@ -284,6 +280,5 @@ TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains(
-            "non whitespace", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("non whitespace", Catch::CaseSensitive::No));
 }

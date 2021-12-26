@@ -44,7 +44,8 @@ private:
         const std::vector<std::string>& expectedVariableLists);
     static std::pair<std::string, std::string> readFirstLine(
         std::istream& istream);
-    static std::optional<std::string> readNextAssignmentString(std::istream& iStream);
+    static std::optional<std::string> readNextAssignmentString(
+        std::istream& iStream);
 };
 } // namespace sciformats::jdx
 

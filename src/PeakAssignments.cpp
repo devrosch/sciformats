@@ -13,22 +13,22 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
     std::tie(m_label, m_variableList) = readFirstLine(istream);
     m_streamDataPos = istream.tellg();
     validateInput(m_label, m_variableList, s_peakAssignentsLabel,
-                  std::vector<std::string>{
-                      s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
+        std::vector<std::string>{
+            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
 }
 
 // TODO: duplicate of constructor in PeakTable
 sciformats::jdx::PeakAssignments::PeakAssignments(
-        std::string label, std::string variableList, std::istream& istream)
+    std::string label, std::string variableList, std::istream& istream)
     : m_istream{istream}
     , m_streamDataPos{istream.tellg()}
     , m_label{std::move(label)}
     , m_variableList{std::move(variableList)}
 {
     validateInput(m_label, m_variableList, s_peakAssignentsLabel,
-                  std::vector<std::string>{
-                      s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
+        std::vector<std::string>{
+            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
 }
 
@@ -59,20 +59,20 @@ sciformats::jdx::PeakAssignments::readFirstLine(std::istream& istream)
         // reset for consistent state
         istream.seekg(pos);
         throw std::runtime_error(
-                    "Cannot parse PEAK TABLE. Stream position not at LDR start: "
-                    + line);
+            "Cannot parse PEAK TABLE. Stream position not at LDR start: "
+            + line);
     }
     auto [label, variableList] = LdrParser::parseLdrStart(line);
-            LdrParser::stripLineComment(variableList);
-            LdrParser::trim(variableList);
+    LdrParser::stripLineComment(variableList);
+    LdrParser::trim(variableList);
 
-            return {label, variableList};
+    return {label, variableList};
 }
 
 // TODO: duplicate of validateInput() in PeakTable
 void sciformats::jdx::PeakAssignments::validateInput(const std::string& label,
-                                                     const std::string& variableList, const std::string& expectedLabel,
-                                                     const std::vector<std::string>& expectedVariableLists)
+    const std::string& variableList, const std::string& expectedLabel,
+    const std::vector<std::string>& expectedVariableLists)
 {
     if (label != expectedLabel)
     {
@@ -80,9 +80,9 @@ void sciformats::jdx::PeakAssignments::validateInput(const std::string& label,
                                  + " start encountered: " + label);
     }
     if (std::none_of(expectedVariableLists.begin(), expectedVariableLists.end(),
-                     [&variableList](const std::string& expectedVariableList) {
-                     return variableList == expectedVariableList;
-}))
+            [&variableList](const std::string& expectedVariableList) {
+                return variableList == expectedVariableList;
+            }))
     {
         throw std::runtime_error("Illegal variable list for " + label
                                  + " encountered: " + variableList);
@@ -94,8 +94,8 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
 {
     // comment $$ in line(s) following LDR start may contain peak function
     auto streamPos = m_istream.eof()
-            ? std::nullopt
-            : std::optional<std::streampos>(m_istream.tellg());
+                         ? std::nullopt
+                         : std::optional<std::streampos>(m_istream.tellg());
     try
     {
         m_istream.seekg(m_streamDataPos);
@@ -106,7 +106,7 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
                    line = sciformats::jdx::LdrParser::readLine(m_istream)))
         {
             auto [content, comment] = LdrParser::stripLineComment(line);
-                    LdrParser::trim(content);
+            LdrParser::trim(content);
             if (content.empty() && comment.has_value())
             {
                 if (!kernelFunctionsDescription.empty())
@@ -148,12 +148,13 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
     }
 }
 
-std::vector<sciformats::jdx::PeakAssignment> sciformats::jdx::PeakAssignments::getData()
+std::vector<sciformats::jdx::PeakAssignment>
+sciformats::jdx::PeakAssignments::getData()
 {
     // remember stream position
     auto streamPos = m_istream.eof()
-            ? std::nullopt
-            : std::optional<std::streampos>(m_istream.tellg());
+                         ? std::nullopt
+                         : std::optional<std::streampos>(m_istream.tellg());
     try
     {
         std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
@@ -195,7 +196,9 @@ std::vector<sciformats::jdx::PeakAssignment> sciformats::jdx::PeakAssignments::g
     }
 }
 
-std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentString(std::istream& istream)
+std::optional<std::string>
+sciformats::jdx::PeakAssignments::readNextAssignmentString(
+    std::istream& istream)
 {
     std::string peakAssignmentString{};
     // find start
@@ -219,8 +222,7 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentS
         if (!lineStart.empty())
         {
             throw std::runtime_error(
-                        "Illegal string found in peak assignment: "
-                        + line);
+                "Illegal string found in peak assignment: " + line);
         }
     }
     if (PeakAssignment::isPeakAssignmentEnd(peakAssignmentString))
@@ -240,8 +242,8 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentS
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
             istream.seekg(pos);
             throw std::runtime_error(
-                        "No closing parenthesis found for peak assignment: "
-                        + peakAssignmentString);
+                "No closing parenthesis found for peak assignment: "
+                + peakAssignmentString);
         }
         peakAssignmentString.append(" ");
         peakAssignmentString.append(lineStart);
@@ -254,11 +256,11 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentS
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
             istream.seekg(pos);
             throw std::runtime_error(
-                        "No closing parenthesis found for peak assignment: "
-                        + peakAssignmentString);
+                "No closing parenthesis found for peak assignment: "
+                + peakAssignmentString);
         }
     }
     throw std::runtime_error(
-                "File ended before closing parenthesis was found for peak assignment: "
-                + peakAssignmentString);
+        "File ended before closing parenthesis was found for peak assignment: "
+        + peakAssignmentString);
 }

@@ -1,5 +1,6 @@
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/LdrParser.hpp"
+#include "jdx/PeakUtils.hpp"
 
 #include <algorithm>
 #include <istream>
@@ -13,22 +14,22 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
     std::tie(m_label, m_variableList) = readFirstLine(istream);
     m_streamDataPos = istream.tellg();
     validateInput(m_label, m_variableList, s_peakAssignentsLabel,
-        std::vector<std::string>{
-            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
+        std::vector<std::string>{s_peakAssignentsXyaVariableList,
+            s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
 }
 
 // TODO: duplicate of constructor in PeakTable
-sciformats::jdx::PeakAssignments::PeakAssignments(
-    std::string label, std::string variableList, std::istream& istream)
+sciformats::jdx::PeakAssignments::PeakAssignments(std::string label,
+    std::string variableList, std::istream& istream)
     : m_istream{istream}
     , m_streamDataPos{istream.tellg()}
     , m_label{std::move(label)}
     , m_variableList{std::move(variableList)}
 {
     validateInput(m_label, m_variableList, s_peakAssignentsLabel,
-        std::vector<std::string>{
-            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
+        std::vector<std::string>{s_peakAssignentsXyaVariableList,
+            s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
 }
 
@@ -80,9 +81,8 @@ void sciformats::jdx::PeakAssignments::validateInput(const std::string& label,
                                  + " start encountered: " + label);
     }
     if (std::none_of(expectedVariableLists.begin(), expectedVariableLists.end(),
-            [&variableList](const std::string& expectedVariableList) {
-                return variableList == expectedVariableList;
-            }))
+            [&variableList](const std::string& expectedVariableList)
+            { return variableList == expectedVariableList; }))
     {
         throw std::runtime_error("Illegal variable list for " + label
                                  + " encountered: " + variableList);
@@ -168,7 +168,9 @@ sciformats::jdx::PeakAssignments::getData()
             }
             auto numComponents
                 = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
-            PeakAssignment assignment{assignmentString.value(), numComponents};
+            PeakAssignment assignment
+                = sciformats::jdx::peakutils::createPeakAssignment(
+                    assignmentString.value(), numComponents);
             peakAssignments.push_back(assignment);
         }
         // reset stream
@@ -208,7 +210,7 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
         auto line = LdrParser::readLine(istream);
         auto [lineStart, comment] = LdrParser::stripLineComment(line);
         LdrParser::trim(lineStart);
-        if (PeakAssignment::isPeakAssignmentStart(lineStart))
+        if (sciformats::jdx::peakutils::isPeakAssignmentStart(lineStart))
         {
             peakAssignmentString.append(lineStart);
             break;
@@ -225,7 +227,7 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
                 "Illegal string found in peak assignment: " + line);
         }
     }
-    if (PeakAssignment::isPeakAssignmentEnd(peakAssignmentString))
+    if (sciformats::jdx::peakutils::isPeakAssignmentEnd(peakAssignmentString))
     {
         return peakAssignmentString;
     }
@@ -247,7 +249,7 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
         }
         peakAssignmentString.append(" ");
         peakAssignmentString.append(lineStart);
-        if (PeakAssignment::isPeakAssignmentEnd(lineStart))
+        if (sciformats::jdx::peakutils::isPeakAssignmentEnd(lineStart))
         {
             return peakAssignmentString;
         }

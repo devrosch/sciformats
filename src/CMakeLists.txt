@@ -15,6 +15,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignments.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/PeakUtils.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
@@ -33,6 +34,7 @@ add_library(jdxparser
     PeakTable.cpp
     PeakAssignment.cpp
     PeakAssignments.cpp
+    PeakUtils.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

@@ -49,9 +49,7 @@ sciformats::jdx::PeakAssignment::PeakAssignment(const std::string& stringValue, 
         }
         else if (token2) {
             // 3 tokens
-            x = token0.value().empty() ? std::numeric_limits<double>::quiet_NaN() : strtod(token0.value().data(), nullptr);
-            y = token1.value().empty() ? std::numeric_limits<double>::quiet_NaN() : strtod(token1.value().data(), nullptr);
-            a = token2.value();
+            throw std::runtime_error("Ambiguous peak assignment (second variable Y or W) for four variables: " + lineStart);
         }
         else
         {
@@ -94,6 +92,10 @@ std::optional<std::string> sciformats::jdx::PeakAssignment::parseNextToken(const
                 position++;
             }
             break;
+        }
+        if (stringValue.at(position) == '>')
+        {
+            throw std::runtime_error("Missing opening angle bracket at: " + stringValue);
         }
         token += stringValue.at(position);
         position++;

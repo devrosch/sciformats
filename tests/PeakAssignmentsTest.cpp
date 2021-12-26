@@ -57,8 +57,6 @@ TEST_CASE(
     auto data3 = data.at(3);
     REQUIRE(4.0 == Approx(data3.x));
     // alternatively check for y == NaN?
-    auto d3hv = data3.y.has_value();
-    auto d3v = data3.y.value();
     REQUIRE(data3.y.has_value());
     REQUIRE(std::isnan(data3.y.value()));
     REQUIRE_FALSE(data3.w.has_value());
@@ -98,7 +96,7 @@ TEST_CASE(
     REQUIRE(widthFunction.has_value());
     REQUIRE(widthFunction.value() == "peak width function");
 
-    REQUIRE(4 == data.size());
+    REQUIRE(6 == data.size());
 
     auto data0 = data.at(0);
     REQUIRE(1.0 == Approx(data0.x));
@@ -112,8 +110,8 @@ TEST_CASE(
     REQUIRE(2.0 == Approx(data1.x));
     REQUIRE(data1.y.has_value());
     REQUIRE(20.0 == Approx(data1.y.value()));
-    REQUIRE(data0.w.has_value());
-    REQUIRE(200.0 == Approx(data0.w.value()));
+    REQUIRE(data1.w.has_value());
+    REQUIRE(200.0 == Approx(data1.w.value()));
     REQUIRE("peak assignment 2" == data1.a);
 
     auto data2 = data.at(2);
@@ -126,28 +124,26 @@ TEST_CASE(
 
     auto data3 = data.at(3);
     REQUIRE(4.0 == Approx(data3.x));
-    // alternatively check for y == NaN?
-    REQUIRE_FALSE(data3.y.has_value());
-    // alternatively check for w == NaN?
-    REQUIRE_FALSE(data3.w.has_value());
+    REQUIRE(data3.y.has_value());
+    REQUIRE(std::isnan(data3.y.value()));
+    REQUIRE(data3.w.has_value());
+    REQUIRE(std::isnan(data3.w.value()));
     REQUIRE("peak assignment 4" == data3.a);
 
     auto data4 = data.at(4);
     REQUIRE(5.0 == Approx(data4.x));
-    // alternatively check for y == NaN?
-    REQUIRE_FALSE(data4.y.has_value());
-    // alternatively check for w == NaN?
+    REQUIRE(data4.y.has_value());
+    REQUIRE(std::isnan(data4.y.value()));
     REQUIRE(data4.w.has_value());
     REQUIRE(500.0 == Approx(data4.w.value()));
     REQUIRE("peak assignment 5" == data4.a);
 
     auto data5 = data.at(5);
     REQUIRE(6.0 == Approx(data5.x));
-    // alternatively check for y == NaN?
     REQUIRE(data5.y.has_value());
     REQUIRE(60.0 == data5.y.value());
-    // alternatively check for w == NaN?
-    REQUIRE_FALSE(data5.w.has_value());
+    REQUIRE(data5.w.has_value());
+    REQUIRE(std::isnan(data5.w.value()));
     REQUIRE("peak assignment 6" == data5.a);
 }
 
@@ -165,7 +161,7 @@ TEST_CASE("fails when excess component is encountered in three column PEAK "
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
     REQUIRE_THROWS_WITH(
-        assignments.getData(), Catch::Matchers::Contains("excess assignment",
+        assignments.getData(), Catch::Matchers::Contains("illegal number",
                                    Catch::CaseSensitive::No));
 }
 
@@ -183,7 +179,7 @@ TEST_CASE("fails when excess component is encountered in four column PEAK "
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
     REQUIRE_THROWS_WITH(
-        assignments.getData(), Catch::Matchers::Contains("excess assignment",
+        assignments.getData(), Catch::Matchers::Contains("illegal number",
                                    Catch::CaseSensitive::No));
 }
 
@@ -218,7 +214,7 @@ TEST_CASE("fails when opening parenthesis is missing in PEAK ASSIGNMENTS",
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
     REQUIRE_THROWS_WITH(
-        assignments.getData(), Catch::Matchers::Contains("excess assignment",
+        assignments.getData(), Catch::Matchers::Contains("illegal",
                                    Catch::CaseSensitive::No));
 }
 
@@ -236,7 +232,7 @@ TEST_CASE("fails when closing parenthesis is missing in PEAK ASSIGNMENTS",
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains(
-            "missing closing parenthesis", Catch::CaseSensitive::No));
+            "no closing parenthesis", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when opening angle bracket is missing in assignment string in "
@@ -272,7 +268,7 @@ TEST_CASE("fails when closing angle bracket is missing in assignment string in "
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains(
-            "missing opening angle bracket", Catch::CaseSensitive::No));
+            "no delimiter", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
@@ -289,5 +285,5 @@ TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains(
-            "missing opening angle bracket", Catch::CaseSensitive::No));
+            "non whitespace", Catch::CaseSensitive::No));
 }

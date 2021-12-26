@@ -216,6 +216,12 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentS
             istream.seekg(pos);
             return std::nullopt;
         }
+        if (!lineStart.empty())
+        {
+            throw std::runtime_error(
+                        "Illegal string found in peak assignment: "
+                        + line);
+        }
     }
     if (PeakAssignment::isPeakAssignmentEnd(peakAssignmentString))
     {
@@ -228,10 +234,20 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentS
         auto line = LdrParser::readLine(istream);
         auto [lineStart, comment] = LdrParser::stripLineComment(line);
         LdrParser::trim(lineStart);
+
+        if (LdrParser::isLdrStart(lineStart))
+        {
+            // PEAKASSIGNMENT LDR ended before end of last peak assignment
+            istream.seekg(pos);
+            throw std::runtime_error(
+                        "No closing parenthesis found for peak assignment: "
+                        + peakAssignmentString);
+        }
+        peakAssignmentString.append(" ");
+        peakAssignmentString.append(lineStart);
         if (PeakAssignment::isPeakAssignmentEnd(lineStart))
         {
-            peakAssignmentString.append(lineStart);
-            break;
+            return peakAssignmentString;
         }
         if (istream.eof() || LdrParser::isLdrStart(lineStart))
         {
@@ -242,5 +258,7 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::readNextAssignmentS
                         + peakAssignmentString);
         }
     }
-    return peakAssignmentString;
+    throw std::runtime_error(
+                "File ended before closing parenthesis was found for peak assignment: "
+                + peakAssignmentString);
 }

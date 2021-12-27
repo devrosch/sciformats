@@ -1,16 +1,16 @@
 #include "jdx/PeakUtils.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 #include "jdx/PeakAssignment.hpp"
 
 #include <algorithm>
 #include <limits>
 
 sciformats::jdx::PeakAssignment
-sciformats::jdx::peakutils::createPeakAssignment(const std::string& stringValue,
+sciformats::jdx::util::createPeakAssignment(const std::string& stringValue,
     size_t numVariables)
 {
-    auto [lineStart, comment] = LdrParser::stripLineComment(stringValue);
-    LdrParser::trim(lineStart);
+    auto [lineStart, comment] = util::stripLineComment(stringValue);
+    util::trim(lineStart);
     if (!isPeakAssignmentStart(stringValue)
         || !isPeakAssignmentEnd(stringValue))
     {
@@ -18,9 +18,9 @@ sciformats::jdx::peakutils::createPeakAssignment(const std::string& stringValue,
             "Illegal peak assignment string: " + stringValue);
     }
     size_t pos = 1;
-    auto token0 = parseNextToken(stringValue, pos);
-    auto token1 = parseNextToken(stringValue, pos);
-    auto token2 = pos < stringValue.length() ? parseNextToken(stringValue, pos)
+    auto token0 = parseNextPeakAssignmentToken(stringValue, pos);
+    auto token1 = parseNextPeakAssignmentToken(stringValue, pos);
+    auto token2 = pos < stringValue.length() ? parseNextPeakAssignmentToken(stringValue, pos)
                                              : std::nullopt;
     if (numVariables <= 3 && pos < stringValue.length())
     {
@@ -28,7 +28,7 @@ sciformats::jdx::peakutils::createPeakAssignment(const std::string& stringValue,
             "Illegal peak assignment string. Illegal number of tokens: "
             + stringValue);
     }
-    auto token3 = pos < stringValue.length() ? parseNextToken(stringValue, pos)
+    auto token3 = pos < stringValue.length() ? parseNextPeakAssignmentToken(stringValue, pos)
                                              : std::nullopt;
     if (numVariables <= 4 && pos < stringValue.length())
     {
@@ -101,12 +101,12 @@ sciformats::jdx::peakutils::createPeakAssignment(const std::string& stringValue,
     return peakAssignment;
 }
 
-std::optional<std::string> sciformats::jdx::peakutils::parseNextToken(
+std::optional<std::string> sciformats::jdx::util::parseNextPeakAssignmentToken(
     const std::string& stringValue, size_t& position)
 {
     auto isTokenDelimiter = [](const std::string& string, size_t pos)
     { return string.at(pos) == ',' || string.at(pos) == ')'; };
-    auto isNonWhitespace = [](char c) { return !LdrParser::isSpace(c); };
+    auto isNonWhitespace = [](char c) { return !util::isSpace(c); };
     std::string token{};
     if (position == 0 && stringValue.at(0) == '(')
     {
@@ -126,7 +126,7 @@ std::optional<std::string> sciformats::jdx::peakutils::parseNextToken(
                     + stringValue);
             }
             position++;
-            token = parseStringToken(stringValue, position);
+            token = util::parsePeakAssignmentStringToken(stringValue, position);
             // consume whitespace characters after string end delimiter
             while (position < stringValue.length()
                    && !isTokenDelimiter(stringValue, position))
@@ -156,11 +156,11 @@ std::optional<std::string> sciformats::jdx::peakutils::parseNextToken(
             + stringValue);
     }
     position++;
-    LdrParser::trim(token);
+    util::trim(token);
     return token;
 }
 
-std::string sciformats::jdx::peakutils::parseStringToken(
+std::string sciformats::jdx::util::parsePeakAssignmentStringToken(
     const std::string& stringValue, size_t& position)
 {
     std::string token{};
@@ -179,18 +179,18 @@ std::string sciformats::jdx::peakutils::parseStringToken(
     return token;
 }
 
-bool sciformats::jdx::peakutils::isPeakAssignmentStart(
+bool sciformats::jdx::util::isPeakAssignmentStart(
     const std::string& stringValue)
 {
     std::string value{stringValue};
-    LdrParser::trimLeft(value);
+    util::trimLeft(value);
     return !value.empty() && value.at(0) == '(';
 }
 
-bool sciformats::jdx::peakutils::isPeakAssignmentEnd(
+bool sciformats::jdx::util::isPeakAssignmentEnd(
     const std::string& stringValue)
 {
     std::string value{stringValue};
-    LdrParser::trimRight(value);
+    util::trimRight(value);
     return !value.empty() && value.back() == ')';
 }

@@ -1,5 +1,5 @@
 #include "jdx/PeakAssignments.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 #include "jdx/PeakUtils.hpp"
 
 #include <algorithm>
@@ -39,8 +39,8 @@ void sciformats::jdx::PeakAssignments::skipToNextLdr(std::istream& iStream)
     while (!iStream.eof())
     {
         std::istream::pos_type pos = iStream.tellg();
-        std::string line = sciformats::jdx::LdrParser::readLine(iStream);
-        if (sciformats::jdx::LdrParser::isLdrStart(line))
+        std::string line = util::readLine(iStream);
+        if (util::isLdrStart(line))
         {
             // move back to start of LDR
             iStream.seekg(pos);
@@ -54,8 +54,8 @@ std::pair<std::string, std::string>
 sciformats::jdx::PeakAssignments::readFirstLine(std::istream& istream)
 {
     auto pos = istream.tellg();
-    auto line = LdrParser::readLine(istream);
-    if (!LdrParser::isLdrStart(line))
+    auto line = util::readLine(istream);
+    if (!util::isLdrStart(line))
     {
         // reset for consistent state
         istream.seekg(pos);
@@ -63,9 +63,9 @@ sciformats::jdx::PeakAssignments::readFirstLine(std::istream& istream)
             "Cannot parse PEAK TABLE. Stream position not at LDR start: "
             + line);
     }
-    auto [label, variableList] = LdrParser::parseLdrStart(line);
-    LdrParser::stripLineComment(variableList);
-    LdrParser::trim(variableList);
+    auto [label, variableList] = util::parseLdrStart(line);
+    util::stripLineComment(variableList);
+    util::trim(variableList);
 
     return {label, variableList};
 }
@@ -102,18 +102,18 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
         std::string line;
         std::string kernelFunctionsDescription{};
         while (!m_istream.eof()
-               && !sciformats::jdx::LdrParser::isLdrStart(
-                   line = sciformats::jdx::LdrParser::readLine(m_istream)))
+               && !util::isLdrStart(
+                   line = util::readLine(m_istream)))
         {
-            auto [content, comment] = LdrParser::stripLineComment(line);
-            LdrParser::trim(content);
+            auto [content, comment] = util::stripLineComment(line);
+            util::trim(content);
             if (content.empty() && comment.has_value())
             {
                 if (!kernelFunctionsDescription.empty())
                 {
                     kernelFunctionsDescription += '\n';
                 }
-                LdrParser::trim(comment.value());
+                util::trim(comment.value());
                 kernelFunctionsDescription.append(comment.value());
             }
             else
@@ -169,7 +169,7 @@ sciformats::jdx::PeakAssignments::getData()
             auto numComponents
                 = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
             PeakAssignment assignment
-                = sciformats::jdx::peakutils::createPeakAssignment(
+                = util::createPeakAssignment(
                     assignmentString.value(), numComponents);
             peakAssignments.push_back(assignment);
         }
@@ -207,15 +207,15 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
     while (!istream.eof())
     {
         std::streampos pos = istream.tellg();
-        auto line = LdrParser::readLine(istream);
-        auto [lineStart, comment] = LdrParser::stripLineComment(line);
-        LdrParser::trim(lineStart);
-        if (sciformats::jdx::peakutils::isPeakAssignmentStart(lineStart))
+        auto line = util::readLine(istream);
+        auto [lineStart, comment] = util::stripLineComment(line);
+        util::trim(lineStart);
+        if (util::isPeakAssignmentStart(lineStart))
         {
             peakAssignmentString.append(lineStart);
             break;
         }
-        if (LdrParser::isLdrStart(lineStart))
+        if (util::isLdrStart(lineStart))
         {
             // PEAKASSIGNMENT LDR ended, no peak assignments
             istream.seekg(pos);
@@ -227,7 +227,7 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
                 "Illegal string found in peak assignment: " + line);
         }
     }
-    if (sciformats::jdx::peakutils::isPeakAssignmentEnd(peakAssignmentString))
+    if (util::isPeakAssignmentEnd(peakAssignmentString))
     {
         return peakAssignmentString;
     }
@@ -235,11 +235,11 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
     while (!istream.eof())
     {
         std::streampos pos = istream.tellg();
-        auto line = LdrParser::readLine(istream);
-        auto [lineStart, comment] = LdrParser::stripLineComment(line);
-        LdrParser::trim(lineStart);
+        auto line = util::readLine(istream);
+        auto [lineStart, comment] = util::stripLineComment(line);
+        util::trim(lineStart);
 
-        if (LdrParser::isLdrStart(lineStart))
+        if (util::isLdrStart(lineStart))
         {
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
             istream.seekg(pos);
@@ -249,11 +249,11 @@ sciformats::jdx::PeakAssignments::readNextAssignmentString(
         }
         peakAssignmentString.append(" ");
         peakAssignmentString.append(lineStart);
-        if (sciformats::jdx::peakutils::isPeakAssignmentEnd(lineStart))
+        if (util::isPeakAssignmentEnd(lineStart))
         {
             return peakAssignmentString;
         }
-        if (istream.eof() || LdrParser::isLdrStart(lineStart))
+        if (istream.eof() || util::isLdrStart(lineStart))
         {
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
             istream.seekg(pos);

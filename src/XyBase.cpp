@@ -1,6 +1,6 @@
 #include "jdx/XyBase.hpp"
 #include "jdx/DataParser.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 
 sciformats::jdx::XyBase::XyBase(std::istream& iStream,
     const std::vector<Ldr>& ldrs, std::string expectedLabel,
@@ -50,23 +50,23 @@ sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(
 {
     // required
     // string
-    auto xUnits = LdrParser::findLdrValue(ldrs, "XUNITS");
-    auto yUnits = LdrParser::findLdrValue(ldrs, "YUNITS");
+    auto xUnits = util::findLdrValue(ldrs, "XUNITS");
+    auto yUnits = util::findLdrValue(ldrs, "YUNITS");
     // double
-    auto firstX = LdrParser::findLdrValue(ldrs, "FIRSTX");
-    auto lastX = LdrParser::findLdrValue(ldrs, "LASTX");
-    auto xFactor = LdrParser::findLdrValue(ldrs, "XFACTOR");
-    auto yFactor = LdrParser::findLdrValue(ldrs, "YFACTOR");
-    auto nPoints = LdrParser::findLdrValue(ldrs, "NPOINTS");
+    auto firstX = util::findLdrValue(ldrs, "FIRSTX");
+    auto lastX = util::findLdrValue(ldrs, "LASTX");
+    auto xFactor = util::findLdrValue(ldrs, "XFACTOR");
+    auto yFactor = util::findLdrValue(ldrs, "YFACTOR");
+    auto nPoints = util::findLdrValue(ldrs, "NPOINTS");
     // optional
     // double
-    auto firstY = LdrParser::findLdrValue(ldrs, "FIRSTY");
-    auto maxX = LdrParser::findLdrValue(ldrs, "MAXX");
-    auto minX = LdrParser::findLdrValue(ldrs, "MINX");
-    auto maxY = LdrParser::findLdrValue(ldrs, "MAXY");
-    auto minY = LdrParser::findLdrValue(ldrs, "MINY");
-    auto resolution = LdrParser::findLdrValue(ldrs, "RESOLUTION");
-    auto deltaX = LdrParser::findLdrValue(ldrs, "DELTAX");
+    auto firstY = util::findLdrValue(ldrs, "FIRSTY");
+    auto maxX = util::findLdrValue(ldrs, "MAXX");
+    auto minX = util::findLdrValue(ldrs, "MINX");
+    auto maxY = util::findLdrValue(ldrs, "MAXY");
+    auto minY = util::findLdrValue(ldrs, "MINY");
+    auto resolution = util::findLdrValue(ldrs, "RESOLUTION");
+    auto deltaX = util::findLdrValue(ldrs, "DELTAX");
 
     std::string missing{};
     missing += xUnits.has_value() ? "" : " XUNITS";

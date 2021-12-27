@@ -1,6 +1,6 @@
 #include "jdx/XyData.hpp"
 #include "jdx/DataParser.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 #include "jdx/XyBase.hpp"
 
 sciformats::jdx::XyData::XyData(

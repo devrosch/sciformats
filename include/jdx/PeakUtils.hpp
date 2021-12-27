@@ -3,7 +3,7 @@
 
 #include "jdx/PeakAssignment.hpp"
 
-namespace sciformats::jdx::peakutils
+namespace sciformats::jdx::util
 {
 sciformats::jdx::PeakAssignment createPeakAssignment(
     const std::string& stringValue, size_t numVariables);
@@ -17,9 +17,9 @@ bool isPeakAssignmentEnd(const std::string& stringValue);
  * token separator (comma or closing parenthesis).
  * @return The next token, if any.
  */
-std::optional<std::string> parseNextToken(const std::string& stringValue,
+std::optional<std::string> parseNextPeakAssignmentToken(const std::string& stringValue,
     size_t& position);
-std::string parseStringToken(const std::string& stringValue, size_t& position);
+std::string parsePeakAssignmentStringToken(const std::string& stringValue, size_t& position);
 }
 
 #endif /* LIBJDX_PEAKUTILS_HPP */

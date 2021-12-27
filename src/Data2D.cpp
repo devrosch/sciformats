@@ -1,6 +1,6 @@
 #include "jdx/Data2D.hpp"
 #include "jdx/DataParser.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 
 #include <tuple>
 
@@ -81,8 +81,8 @@ void sciformats::jdx::Data2D::skipToNextLdr(std::istream& iStream)
     while (!iStream.eof())
     {
         std::istream::pos_type pos = iStream.tellg();
-        std::string line = sciformats::jdx::LdrParser::readLine(iStream);
-        if (sciformats::jdx::LdrParser::isLdrStart(line))
+        std::string line = util::readLine(iStream);
+        if (util::isLdrStart(line))
         {
             // move back to start of LDR
             iStream.seekg(pos);
@@ -95,17 +95,17 @@ std::pair<std::string, std::string> sciformats::jdx::Data2D::readFirstLine(
     std::istream& iStream)
 {
     auto pos = iStream.tellg();
-    auto line = LdrParser::readLine(iStream);
-    if (!LdrParser::isLdrStart(line))
+    auto line = util::readLine(iStream);
+    if (!util::isLdrStart(line))
     {
         // reset for consistent state
         iStream.seekg(pos);
         throw std::runtime_error(
             "Cannot parse xy data. Stream position not at LDR start: " + line);
     }
-    auto [label, variableList] = LdrParser::parseLdrStart(line);
-    LdrParser::stripLineComment(variableList);
-    LdrParser::trim(variableList);
+    auto [label, variableList] = util::parseLdrStart(line);
+    util::stripLineComment(variableList);
+    util::trim(variableList);
 
     return {label, variableList};
 }

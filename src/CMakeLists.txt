@@ -1,7 +1,7 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/LdrParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/LdrUtils.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Ldr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/DataParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
@@ -22,7 +22,7 @@ set(HEADER_LIST
 add_library(jdxparser
     JdxParser.cpp
     Block.cpp
-    LdrParser.cpp
+    LdrUtils.cpp
     Ldr.cpp
     DataParser.cpp
     Data2D.cpp

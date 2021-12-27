@@ -1,5 +1,5 @@
 #include "jdx/PeakTable.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 #include "jdx/Peak.hpp"
 
 #include <algorithm>
@@ -39,8 +39,8 @@ void sciformats::jdx::PeakTable::skipToNextLdr(std::istream& iStream)
     while (!iStream.eof())
     {
         std::istream::pos_type pos = iStream.tellg();
-        std::string line = sciformats::jdx::LdrParser::readLine(iStream);
-        if (sciformats::jdx::LdrParser::isLdrStart(line))
+        std::string line = util::readLine(iStream);
+        if (util::isLdrStart(line))
         {
             // move back to start of LDR
             iStream.seekg(pos);
@@ -54,8 +54,8 @@ std::pair<std::string, std::string> sciformats::jdx::PeakTable::readFirstLine(
     std::istream& istream)
 {
     auto pos = istream.tellg();
-    auto line = LdrParser::readLine(istream);
-    if (!LdrParser::isLdrStart(line))
+    auto line = util::readLine(istream);
+    if (!util::isLdrStart(line))
     {
         // reset for consistent state
         istream.seekg(pos);
@@ -63,9 +63,9 @@ std::pair<std::string, std::string> sciformats::jdx::PeakTable::readFirstLine(
             "Cannot parse PEAK TABLE. Stream position not at LDR start: "
             + line);
     }
-    auto [label, variableList] = LdrParser::parseLdrStart(line);
-    LdrParser::stripLineComment(variableList);
-    LdrParser::trim(variableList);
+    auto [label, variableList] = util::parseLdrStart(line);
+    util::stripLineComment(variableList);
+    util::trim(variableList);
 
     return {label, variableList};
 }
@@ -103,18 +103,18 @@ std::optional<std::string> sciformats::jdx::PeakTable::getKernel()
         std::string line;
         std::string kernelFunctionsDescription{};
         while (!m_istream.eof()
-               && !sciformats::jdx::LdrParser::isLdrStart(
-                   line = sciformats::jdx::LdrParser::readLine(m_istream)))
+               && !util::isLdrStart(
+                   line = util::readLine(m_istream)))
         {
-            auto [content, comment] = LdrParser::stripLineComment(line);
-            LdrParser::trim(content);
+            auto [content, comment] = util::stripLineComment(line);
+            util::trim(content);
             if (content.empty() && comment.has_value())
             {
                 if (!kernelFunctionsDescription.empty())
                 {
                     kernelFunctionsDescription += '\n';
                 }
-                LdrParser::trim(comment.value());
+                util::trim(comment.value());
                 kernelFunctionsDescription.append(comment.value());
             }
             else
@@ -162,10 +162,10 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
         std::string line;
         std::vector<sciformats::jdx::Peak> peaks;
         while (!m_istream.eof()
-               && !sciformats::jdx::LdrParser::isLdrStart(
-                   line = sciformats::jdx::LdrParser::readLine(m_istream)))
+               && !util::isLdrStart(
+                   line = util::readLine(m_istream)))
         {
-            const auto [content, comment] = LdrParser::stripLineComment(line);
+            const auto [content, comment] = util::stripLineComment(line);
             // assume that a group (i.e. peak) does not span multiple lines
             size_t pos = 0;
             while (auto peak = nextPeak(content, pos, numComponents))
@@ -305,5 +305,5 @@ bool sciformats::jdx::PeakTable::isTokenDelimiter(
         return true;
     }
     const char c = line.at(pos);
-    return LdrParser::isSpace(c) || c == ';' || c == ',';
+    return util::isSpace(c) || c == ';' || c == ',';
 }

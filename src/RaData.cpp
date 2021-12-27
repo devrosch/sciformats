@@ -1,6 +1,6 @@
 #include "jdx/RaData.hpp"
 #include "jdx/DataParser.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 #include "jdx/RaParameters.hpp"
 
 sciformats::jdx::RaData::RaData(
@@ -43,26 +43,26 @@ sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(
 {
     // required
     // string
-    auto rUnits = LdrParser::findLdrValue(ldrs, "RUNITS");
-    auto aUnits = LdrParser::findLdrValue(ldrs, "AUNITS");
+    auto rUnits = util::findLdrValue(ldrs, "RUNITS");
+    auto aUnits = util::findLdrValue(ldrs, "AUNITS");
     // double
-    auto firstR = LdrParser::findLdrValue(ldrs, "FIRSTR");
-    auto lastR = LdrParser::findLdrValue(ldrs, "LASTR");
-    auto rFactor = LdrParser::findLdrValue(ldrs, "RFACTOR");
-    auto aFactor = LdrParser::findLdrValue(ldrs, "AFACTOR");
-    auto nPoints = LdrParser::findLdrValue(ldrs, "NPOINTS");
+    auto firstR = util::findLdrValue(ldrs, "FIRSTR");
+    auto lastR = util::findLdrValue(ldrs, "LASTR");
+    auto rFactor = util::findLdrValue(ldrs, "RFACTOR");
+    auto aFactor = util::findLdrValue(ldrs, "AFACTOR");
+    auto nPoints = util::findLdrValue(ldrs, "NPOINTS");
     // optional
     // double
-    auto firstA = LdrParser::findLdrValue(ldrs, "FIRSTA");
-    auto maxA = LdrParser::findLdrValue(
+    auto firstA = util::findLdrValue(ldrs, "FIRSTA");
+    auto maxA = util::findLdrValue(
         ldrs, "MAXA"); // required, according to standard
-    auto minA = LdrParser::findLdrValue(
+    auto minA = util::findLdrValue(
         ldrs, "MINA"); // required, according to standard
-    auto resolution = LdrParser::findLdrValue(ldrs, "RESOLUTION");
-    auto deltaR = LdrParser::findLdrValue(ldrs, "DELTAR");
-    auto zdp = LdrParser::findLdrValue(ldrs, "ZDP");
+    auto resolution = util::findLdrValue(ldrs, "RESOLUTION");
+    auto deltaR = util::findLdrValue(ldrs, "DELTAR");
+    auto zdp = util::findLdrValue(ldrs, "ZDP");
     // string
-    auto alias = LdrParser::findLdrValue(ldrs, "ALIAS");
+    auto alias = util::findLdrValue(ldrs, "ALIAS");
 
     std::string missing{};
     missing += rUnits.has_value() ? "" : " RUNITS";

@@ -1,5 +1,5 @@
 #include "jdx/Block.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 
 #include <algorithm>
 #include <array>
@@ -10,12 +10,12 @@
 sciformats::jdx::Block::Block(std::istream& iStream)
     : m_istream{iStream}
 {
-    auto firstLine = LdrParser::readLine(m_istream);
-    if (!LdrParser::isLdrStart(firstLine))
+    auto firstLine = util::readLine(m_istream);
+    if (!util::isLdrStart(firstLine))
     {
         throw std::runtime_error("Malformed LDR start: " + firstLine);
     }
-    auto [label, title] = LdrParser::parseLdrStart(firstLine);
+    auto [label, title] = util::parseLdrStart(firstLine);
     if (label != "TITLE")
     {
         throw std::runtime_error(
@@ -36,9 +36,9 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
     std::string value = title;
     while (!m_istream.eof())
     {
-        const auto line = LdrParser::readLine(m_istream);
+        const auto line = util::readLine(m_istream);
 
-        if (!LdrParser::isLdrStart(line))
+        if (!util::isLdrStart(line))
         {
             // continuation of previous LDR
             if (!label.has_value())
@@ -46,8 +46,8 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
                 // account for special case that a $$ comment immediately
                 // follows a nested block
                 auto [preCommentValue, comment]
-                    = LdrParser::stripLineComment(line);
-                LdrParser::trim(preCommentValue);
+                    = util::stripLineComment(line);
+                util::trim(preCommentValue);
                 // if not this special case, give up
                 if (!preCommentValue.empty())
                 {
@@ -95,7 +95,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
         }
 
         // parse new LDR
-        std::tie(label, value) = LdrParser::parseLdrStart(line);
+        std::tie(label, value) = util::parseLdrStart(line);
         // cover special cases
         if ("END" == label)
         {
@@ -167,7 +167,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
 std::optional<const sciformats::jdx::Ldr> sciformats::jdx::Block::getLdr(
     const std::string& label) const
 {
-    return LdrParser::findLdr(m_ldrs, label);
+    return util::findLdr(m_ldrs, label);
 }
 
 const std::vector<sciformats::jdx::Ldr>& sciformats::jdx::Block::getLdrs() const

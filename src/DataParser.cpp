@@ -1,5 +1,5 @@
 #include "jdx/DataParser.hpp"
-#include "jdx/LdrParser.hpp"
+#include "jdx/LdrUtils.hpp"
 
 #include <cmath>
 #include <limits>
@@ -17,15 +17,15 @@ std::vector<double> sciformats::jdx::DataParser::readXppYYData(
     std::string line;
     std::streamoff pos = istream.tellg();
     std::optional<double> yValueCheck = std::nullopt;
-    while (!sciformats::jdx::LdrParser::isLdrStart(
-        line = sciformats::jdx::LdrParser::readLine(istream)))
+    while (!util::isLdrStart(
+        line = util::readLine(istream)))
     {
         // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
         auto [data, comment]
-            = sciformats::jdx::LdrParser::stripLineComment(line);
-        sciformats::jdx::LdrParser::trim(data);
+            = util::stripLineComment(line);
+        util::trim(data);
         // read Y values from line
         auto [lineYValues, isDifEncoded] = readXppYYLine(data, yValueCheck);
         if (yValueCheck.has_value())
@@ -67,15 +67,15 @@ sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
     bool lastValueIsXOnly = false;
     std::string line;
     std::streamoff pos = istream.tellg();
-    while (!sciformats::jdx::LdrParser::isLdrStart(
-        line = sciformats::jdx::LdrParser::readLine(istream)))
+    while (!util::isLdrStart(
+        line = util::readLine(istream)))
     {
         // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
         auto [data, comment]
-            = sciformats::jdx::LdrParser::stripLineComment(line);
-        sciformats::jdx::LdrParser::trim(data);
+            = util::stripLineComment(line);
+        util::trim(data);
         // read xy values from line
         auto [lineValues, isDifEncoded] = readValues(data);
         // turn line values into pairs and append line values to xyValues

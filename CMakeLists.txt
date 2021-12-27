@@ -54,9 +54,12 @@ set(CLANG_TIDY_CHECKS
     ,portability-*\
     ,readability-*,-readability-magic-numbers")
 
+find_program(CLANG_TIDY_FOUND "clang-tidy")
+if(CLANG_TIDY_FOUND)
+#if(NOT EMSCRIPTEN)
 # alternatively: if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "[Ee]mscripten")
-if(NOT EMSCRIPTEN)
-    # activate clang-tidy for all targets when not cross-compiling to WebAssembly
+#if(UNIX AND NOT EMSCRIPTEN AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # activate clang-tidy for all targets when available
     # see: https://stackoverflow.com/questions/40433573/how-can-i-specify-additional-arguments-for-use-with-cmake-cxx-clang-tidy-variabl
     set(CMAKE_CXX_CLANG_TIDY clang-tidy -checks=${CLANG_TIDY_CHECKS})
     message(STATUS "CMAKE_CXX_CLANG_TIDY: ${CMAKE_CXX_CLANG_TIDY}")

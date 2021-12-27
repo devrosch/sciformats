@@ -1,7 +1,7 @@
 # Tests need to be added as executables first
 add_executable(jdxparser_test
     JdxParserTest.cpp
-    LdrParserTest.cpp
+    LdrUtilsTest.cpp
     LdrTest.cpp
     BlockTest.cpp
     DataParserTest.cpp

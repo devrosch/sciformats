@@ -273,7 +273,7 @@ TEST_CASE("indicates empty comment with empty string",
 {
     std::string input{"line content$$"};
     auto [content, comment]
-        = sciformats::jdx::LDRipLineComment(input);
+        = sciformats::jdx::util::stripLineComment(input);
 
     REQUIRE(!content.empty());
     REQUIRE("line content" == content);

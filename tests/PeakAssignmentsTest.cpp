@@ -282,3 +282,33 @@ TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("non whitespace", Catch::CaseSensitive::No));
 }
+
+TEST_CASE("fails when illegal variable list is encountered in PEAK ASSIGNMENTS",
+    "[PeakAssignments]")
+{
+    std::string input{"##PEAK ASSIGNMENTS= (XYAUVW)\r\n"
+                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+                      "##END="};
+
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::PeakAssignments(stream),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
+            && Catch::Matchers::Contains("variable list"));
+}
+
+TEST_CASE(
+    "fails when PEAK ASSIGNMENTS is missing a component", "[PeakAssignments]")
+{
+    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
+                      "(1.0)\r\n"
+                      "##END="};
+
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto assignments = sciformats::jdx::PeakAssignments(stream);
+
+    REQUIRE_THROWS(assignments.getData());
+}

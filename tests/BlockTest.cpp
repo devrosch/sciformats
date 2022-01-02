@@ -80,6 +80,35 @@ TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
     REQUIRE(2 == data.getData().size());
 }
 
+TEST_CASE("fails to parse block with duplicate RADATA", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED INTERFEROGRAM\r\n"
+                      "##ORIGIN= devrosch\r\n"
+                      "##OWNER= PUBLIC DOMAIN\r\n"
+                      "##RUNITS= MICROMETERS\r\n"
+                      "##AUNITS= ARBITRARY UNITS\r\n"
+                      "##RFACTOR= 1.0\r\n"
+                      "##AFACTOR= 1.0\r\n"
+                      "##FIRSTR= 0\r\n"
+                      "##LASTR= 1\r\n"
+                      "##NPOINTS= 2\r\n"
+                      "##FIRSTA= 10\r\n"
+                      "##RADATA= (R++(A..A))\r\n"
+                      "0, 10.0\r\n"
+                      "1, 11.0\r\n"
+                      "##RADATA= (R++(A..A))\r\n"
+                      "0, 10.0\r\n"
+                      "1, 11.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+        Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
+}
+
 TEST_CASE("parses block with XYPOINTS", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"
@@ -104,6 +133,33 @@ TEST_CASE("parses block with XYPOINTS", "[Block]")
     REQUIRE(block.getXyPoints().has_value());
 }
 
+TEST_CASE("fails to parse block with duplicate XYPOINTS", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED SPECTRUM\r\n"
+                      "##XUNITS= 1/CM\r\n"
+                      "##YUNITS= ABSORBANCE\r\n"
+                      "##XFACTOR= 1.0\r\n"
+                      "##YFACTOR= 1.0\r\n"
+                      "##FIRSTX= 450\r\n"
+                      "##LASTX= 461\r\n"
+                      "##NPOINTS= 4\r\n"
+                      "##FIRSTY= 10\r\n"
+                      "##XYPOINTS= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "460.0, ?; 461.0, 21.0\r\n"
+                      "##XYPOINTS= (XY..XY)\r\n"
+                      "450.0, 10.0; 451.0, 11.0\r\n"
+                      "460.0, ?; 461.0, 21.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+        Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
+}
+
 TEST_CASE("parses block with PEAK TABLE", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"
@@ -124,6 +180,24 @@ TEST_CASE("parses block with PEAK TABLE", "[Block]")
     REQUIRE(block.getPeakTable().has_value());
     auto peakTable = block.getPeakTable().value();
     REQUIRE(2 == peakTable.getData().size());
+}
+
+TEST_CASE("fails to parse block with duplicate PEAK TABLE", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##PEAK TABLE= (XY..XY)\r\n"
+                      "0, 10.0\r\n"
+                      "1, 11.0\r\n"
+                      "##PEAK TABLE= (XY..XY)\r\n"
+                      "0, 10.0\r\n"
+                      "1, 11.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+        Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("parses block with PEAK ASSIGNMENTS", "[Block]")
@@ -147,6 +221,26 @@ TEST_CASE("parses block with PEAK ASSIGNMENTS", "[Block]")
     REQUIRE(block.getPeakAssignments().has_value());
     auto peakAssignments = block.getPeakAssignments().value();
     REQUIRE(2 == peakAssignments.getData().size());
+}
+
+TEST_CASE("fails to parse block with duplicate PEAK ASSIGNMENTS", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##PEAK ASSIGNMENTS= (XYA)\r\n"
+                      "$$ peak width function\r\n"
+                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+                      "(2.0, 20.0, <peak assignment 2> )\r\n"
+                      "##PEAK ASSIGNMENTS= (XYA)\r\n"
+                      "$$ peak width function\r\n"
+                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+                      "(2.0, 20.0, <peak assignment 2> )\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+        Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("parses LINK block", "[Block]")

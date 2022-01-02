@@ -147,3 +147,29 @@ TEST_CASE(
                              "missing peak component", Catch::CaseSensitive::No)
                              && Catch::Matchers::Contains("position: 6"));
 }
+
+TEST_CASE("fails when illegal variable list is encountered in PEAK TABLE",
+    "[PeakTable]")
+{
+    std::string input{"##PEAK TABLE= (XYWABC..XYWABC)\r\n"
+                      "450.0,, 10.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::PeakTable(stream),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
+            && Catch::Matchers::Contains("variable list"));
+}
+
+TEST_CASE("fails when PEAK TABLE is missing a component", "[PeakTable]")
+{
+    std::string input{"##PEAK TABLE= (XYW..XYW)\r\n"
+                      "450.0, 10.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto table = sciformats::jdx::PeakTable(stream);
+    REQUIRE_THROWS(table.getData());
+}

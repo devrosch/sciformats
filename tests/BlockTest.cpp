@@ -126,6 +126,29 @@ TEST_CASE("parses block with PEAK TABLE", "[Block]")
     REQUIRE(2 == peakTable.getData().size());
 }
 
+TEST_CASE("parses block with PEAK ASSIGNMENTS", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##PEAK ASSIGNMENTS= (XYA)\r\n"
+                      "$$ peak width function\r\n"
+                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+                      "(2.0, 20.0, <peak assignment 2> )\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto block = sciformats::jdx::Block(stream);
+    const auto& ldrs = block.getLdrs();
+
+    // does NOT contain "##END=" even though technically an LDR
+    // DOES contain "##PEAKASSIGNMENTS=" with its variable list as value
+    REQUIRE(3 == ldrs.size());
+    REQUIRE(block.getPeakAssignments().has_value());
+    auto peakAssignments = block.getPeakAssignments().value();
+    REQUIRE(2 == peakAssignments.getData().size());
+}
+
 TEST_CASE("parses LINK block", "[Block]")
 {
     std::string input{"##TITLE= Root LINK BLOCK\r\n"

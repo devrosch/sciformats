@@ -153,8 +153,21 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             auto peakTable = PeakTable(label.value(), value, m_istream);
             m_peakTable.emplace(std::move(peakTable));
         }
-        // TODO: add special treatment for data LDRs (e.g. PEAK ASSIGNMENTS,
-        // NTUPLES, ...), DONE: XYDATA, RADATA, XYPOINTS, PEAK TABLE
+        else if ("PEAKASSIGNMENTS" == label)
+        {
+            if (getPeakAssignments())
+            {
+                // duplicate
+                throw std::runtime_error(
+                    "Multiple PEAK ASSIGNMENTS LDRs encountered in block: \""
+                    + title);
+            }
+            auto peakAssignments
+                = PeakAssignments(label.value(), value, m_istream);
+            m_peakAssignments.emplace(std::move(peakAssignments));
+        }
+        // TODO: add special treatment for data LDRs (e.g. NTUPLES, ...), DONE:
+        // XYDATA, RADATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS
     }
     if ("END" != label)
     {
@@ -207,4 +220,10 @@ const std::optional<sciformats::jdx::PeakTable>&
 sciformats::jdx::Block::getPeakTable() const
 {
     return m_peakTable;
+}
+
+const std::optional<sciformats::jdx::PeakAssignments>&
+sciformats::jdx::Block::getPeakAssignments() const
+{
+    return m_peakAssignments;
 }

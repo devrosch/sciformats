@@ -5,9 +5,8 @@
 #include <algorithm>
 #include <limits>
 
-sciformats::jdx::PeakAssignment
-sciformats::jdx::util::createPeakAssignment(const std::string& stringValue,
-    size_t numVariables)
+sciformats::jdx::PeakAssignment sciformats::jdx::util::createPeakAssignment(
+    const std::string& stringValue, size_t numVariables)
 {
     auto [lineStart, comment] = util::stripLineComment(stringValue);
     util::trim(lineStart);
@@ -20,16 +19,18 @@ sciformats::jdx::util::createPeakAssignment(const std::string& stringValue,
     size_t pos = 1;
     auto token0 = parseNextPeakAssignmentToken(stringValue, pos);
     auto token1 = parseNextPeakAssignmentToken(stringValue, pos);
-    auto token2 = pos < stringValue.length() ? parseNextPeakAssignmentToken(stringValue, pos)
-                                             : std::nullopt;
+    auto token2 = pos < stringValue.length()
+                      ? parseNextPeakAssignmentToken(stringValue, pos)
+                      : std::nullopt;
     if (numVariables <= 3 && pos < stringValue.length())
     {
         throw std::runtime_error(
             "Illegal peak assignment string. Illegal number of tokens: "
             + stringValue);
     }
-    auto token3 = pos < stringValue.length() ? parseNextPeakAssignmentToken(stringValue, pos)
-                                             : std::nullopt;
+    auto token3 = pos < stringValue.length()
+                      ? parseNextPeakAssignmentToken(stringValue, pos)
+                      : std::nullopt;
     if (numVariables <= 4 && pos < stringValue.length())
     {
         throw std::runtime_error(
@@ -104,8 +105,9 @@ sciformats::jdx::util::createPeakAssignment(const std::string& stringValue,
 std::optional<std::string> sciformats::jdx::util::parseNextPeakAssignmentToken(
     const std::string& stringValue, size_t& position)
 {
-    auto isTokenDelimiter = [](const std::string& string, size_t pos)
-    { return string.at(pos) == ',' || string.at(pos) == ')'; };
+    auto isTokenDelimiter = [](const std::string& string, size_t pos) {
+        return string.at(pos) == ',' || string.at(pos) == ')';
+    };
     auto isNonWhitespace = [](char c) { return !util::isSpace(c); };
     std::string token{};
     if (position == 0 && stringValue.at(0) == '(')
@@ -187,8 +189,7 @@ bool sciformats::jdx::util::isPeakAssignmentStart(
     return !value.empty() && value.at(0) == '(';
 }
 
-bool sciformats::jdx::util::isPeakAssignmentEnd(
-    const std::string& stringValue)
+bool sciformats::jdx::util::isPeakAssignmentEnd(const std::string& stringValue)
 {
     std::string value{stringValue};
     util::trimRight(value);

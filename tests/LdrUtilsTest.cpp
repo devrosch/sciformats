@@ -161,16 +161,15 @@ TEST_CASE("normalize LDR start turns (only) ASCII letters to upper case",
     REQUIRE(expect == actual);
 }
 
-TEST_CASE("rejects missing double hashes in LDR start",
-    "[util][normalizeLdrLabel]")
+TEST_CASE(
+    "rejects missing double hashes in LDR start", "[util][normalizeLdrLabel]")
 {
     std::string input{"#LABEL= abc"};
 
     REQUIRE_THROWS(sciformats::jdx::util::normalizeLdrStart(input));
 }
 
-TEST_CASE(
-    "rejects missing equals in LDR start", "[util][normalizeLdrLabel]")
+TEST_CASE("rejects missing equals in LDR start", "[util][normalizeLdrLabel]")
 {
     std::string input{"##LABEL abc"};
 
@@ -187,8 +186,7 @@ TEST_CASE("tokenizes regular LDR start", "[util][parseLdrStart]")
     REQUIRE("abc" == value);
 }
 
-TEST_CASE(
-    "tokenizes LDR start with missing value", "[util][parseLdrStart]")
+TEST_CASE("tokenizes LDR start with missing value", "[util][parseLdrStart]")
 {
     std::string input{"##LABEL="};
 
@@ -218,16 +216,15 @@ TEST_CASE("normalizes LDR start label", "[util][parseLdrStart]")
     REQUIRE("ABCDE\xE4\xF6\xFC\xC4\xD6\xDC" == label);
 }
 
-TEST_CASE(
-    "rejects malformed LDR start (missing hash)", "[util][parseLdrStart]")
+TEST_CASE("rejects malformed LDR start (missing hash)", "[util][parseLdrStart]")
 {
     std::string input{"#LABEL="};
 
     REQUIRE_THROWS(sciformats::jdx::util::parseLdrStart(input));
 }
 
-TEST_CASE("rejects malformed LDR start (missing equals)",
-    "[util][parseLdrStart]")
+TEST_CASE(
+    "rejects malformed LDR start (missing equals)", "[util][parseLdrStart]")
 {
     std::string input{"##LABEL"};
 
@@ -237,20 +234,17 @@ TEST_CASE("rejects malformed LDR start (missing equals)",
 TEST_CASE("strips line comment", "[util][stripLineComment]")
 {
     std::string input{"line start $$ comment"};
-    auto [content, comment]
-        = sciformats::jdx::util::stripLineComment(input);
+    auto [content, comment] = sciformats::jdx::util::stripLineComment(input);
 
     REQUIRE("line start " == content);
     REQUIRE(comment.has_value());
     REQUIRE(" comment" == comment);
 }
 
-TEST_CASE(
-    "indicates missing comment with nullopt", "[util][stripLineComment]")
+TEST_CASE("indicates missing comment with nullopt", "[util][stripLineComment]")
 {
     std::string input{"line content"};
-    auto [content, comment]
-        = sciformats::jdx::util::stripLineComment(input);
+    auto [content, comment] = sciformats::jdx::util::stripLineComment(input);
 
     REQUIRE("line content" == content);
     REQUIRE(!comment.has_value());
@@ -260,20 +254,18 @@ TEST_CASE("indicates empty content if whole line is comment",
     "[util][stripLineComment]")
 {
     std::string input{"$$line comment"};
-    auto [content, comment]
-        = sciformats::jdx::util::stripLineComment(input);
+    auto [content, comment] = sciformats::jdx::util::stripLineComment(input);
 
     REQUIRE(content.empty());
     REQUIRE(comment.has_value());
     REQUIRE("line comment" == comment);
 }
 
-TEST_CASE("indicates empty comment with empty string",
-    "[util][stripLineComment]")
+TEST_CASE(
+    "indicates empty comment with empty string", "[util][stripLineComment]")
 {
     std::string input{"line content$$"};
-    auto [content, comment]
-        = sciformats::jdx::util::stripLineComment(input);
+    auto [content, comment] = sciformats::jdx::util::stripLineComment(input);
 
     REQUIRE(!content.empty());
     REQUIRE("line content" == content);

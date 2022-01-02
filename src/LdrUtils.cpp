@@ -49,8 +49,7 @@ void sciformats::jdx::util::trim(std::string& s)
     trimLeft(s);
 }
 
-std::string sciformats::jdx::util::normalizeLdrStart(
-    const std::string& ldr)
+std::string sciformats::jdx::util::normalizeLdrStart(const std::string& ldr)
 {
     std::string output{};
     auto it = ldr.cbegin();
@@ -88,8 +87,7 @@ std::string sciformats::jdx::util::normalizeLdrStart(
     return output;
 }
 
-std::string sciformats::jdx::util::normalizeLdrLabel(
-    const std::string& label)
+std::string sciformats::jdx::util::normalizeLdrLabel(const std::string& label)
 {
     std::string output{};
     // normalize LDR label, i.e. the string between ## and =

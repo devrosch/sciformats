@@ -17,9 +17,10 @@ bool isPeakAssignmentEnd(const std::string& stringValue);
  * token separator (comma or closing parenthesis).
  * @return The next token, if any.
  */
-std::optional<std::string> parseNextPeakAssignmentToken(const std::string& stringValue,
-    size_t& position);
-std::string parsePeakAssignmentStringToken(const std::string& stringValue, size_t& position);
+std::optional<std::string> parseNextPeakAssignmentToken(
+    const std::string& stringValue, size_t& position);
+std::string parsePeakAssignmentStringToken(
+    const std::string& stringValue, size_t& position);
 }
 
 #endif /* LIBJDX_PEAKUTILS_HPP */

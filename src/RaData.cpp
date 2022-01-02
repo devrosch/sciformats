@@ -54,10 +54,10 @@ sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(
     // optional
     // double
     auto firstA = util::findLdrValue(ldrs, "FIRSTA");
-    auto maxA = util::findLdrValue(
-        ldrs, "MAXA"); // required, according to standard
-    auto minA = util::findLdrValue(
-        ldrs, "MINA"); // required, according to standard
+    auto maxA
+        = util::findLdrValue(ldrs, "MAXA"); // required, according to standard
+    auto minA
+        = util::findLdrValue(ldrs, "MINA"); // required, according to standard
     auto resolution = util::findLdrValue(ldrs, "RESOLUTION");
     auto deltaR = util::findLdrValue(ldrs, "DELTAR");
     auto zdp = util::findLdrValue(ldrs, "ZDP");

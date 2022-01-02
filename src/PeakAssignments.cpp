@@ -14,22 +14,22 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
     std::tie(m_label, m_variableList) = readFirstLine(istream);
     m_streamDataPos = istream.tellg();
     validateInput(m_label, m_variableList, s_peakAssignentsLabel,
-        std::vector<std::string>{s_peakAssignentsXyaVariableList,
-            s_peakAssignentsXywaVariableList});
+        std::vector<std::string>{
+            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
 }
 
 // TODO: duplicate of constructor in PeakTable
-sciformats::jdx::PeakAssignments::PeakAssignments(std::string label,
-    std::string variableList, std::istream& istream)
+sciformats::jdx::PeakAssignments::PeakAssignments(
+    std::string label, std::string variableList, std::istream& istream)
     : m_istream{istream}
     , m_streamDataPos{istream.tellg()}
     , m_label{std::move(label)}
     , m_variableList{std::move(variableList)}
 {
     validateInput(m_label, m_variableList, s_peakAssignentsLabel,
-        std::vector<std::string>{s_peakAssignentsXyaVariableList,
-            s_peakAssignentsXywaVariableList});
+        std::vector<std::string>{
+            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
 }
 
@@ -81,8 +81,9 @@ void sciformats::jdx::PeakAssignments::validateInput(const std::string& label,
                                  + " start encountered: " + label);
     }
     if (std::none_of(expectedVariableLists.begin(), expectedVariableLists.end(),
-            [&variableList](const std::string& expectedVariableList)
-            { return variableList == expectedVariableList; }))
+            [&variableList](const std::string& expectedVariableList) {
+                return variableList == expectedVariableList;
+            }))
     {
         throw std::runtime_error("Illegal variable list for " + label
                                  + " encountered: " + variableList);
@@ -102,8 +103,7 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
         std::string line;
         std::string kernelFunctionsDescription{};
         while (!m_istream.eof()
-               && !util::isLdrStart(
-                   line = util::readLine(m_istream)))
+               && !util::isLdrStart(line = util::readLine(m_istream)))
         {
             auto [content, comment] = util::stripLineComment(line);
             util::trim(content);
@@ -168,9 +168,8 @@ sciformats::jdx::PeakAssignments::getData()
             }
             auto numComponents
                 = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
-            PeakAssignment assignment
-                = util::createPeakAssignment(
-                    assignmentString.value(), numComponents);
+            PeakAssignment assignment = util::createPeakAssignment(
+                assignmentString.value(), numComponents);
             peakAssignments.push_back(assignment);
         }
         // reset stream

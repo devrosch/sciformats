@@ -103,8 +103,7 @@ std::optional<std::string> sciformats::jdx::PeakTable::getKernel()
         std::string line;
         std::string kernelFunctionsDescription{};
         while (!m_istream.eof()
-               && !util::isLdrStart(
-                   line = util::readLine(m_istream)))
+               && !util::isLdrStart(line = util::readLine(m_istream)))
         {
             auto [content, comment] = util::stripLineComment(line);
             util::trim(content);
@@ -162,8 +161,7 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
         std::string line;
         std::vector<sciformats::jdx::Peak> peaks;
         while (!m_istream.eof()
-               && !util::isLdrStart(
-                   line = util::readLine(m_istream)))
+               && !util::isLdrStart(line = util::readLine(m_istream)))
         {
             const auto [content, comment] = util::stripLineComment(line);
             // assume that a group (i.e. peak) does not span multiple lines

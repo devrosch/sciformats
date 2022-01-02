@@ -17,14 +17,12 @@ std::vector<double> sciformats::jdx::DataParser::readXppYYData(
     std::string line;
     std::streamoff pos = istream.tellg();
     std::optional<double> yValueCheck = std::nullopt;
-    while (!util::isLdrStart(
-        line = util::readLine(istream)))
+    while (!util::isLdrStart(line = util::readLine(istream)))
     {
         // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
-        auto [data, comment]
-            = util::stripLineComment(line);
+        auto [data, comment] = util::stripLineComment(line);
         util::trim(data);
         // read Y values from line
         auto [lineYValues, isDifEncoded] = readXppYYLine(data, yValueCheck);
@@ -67,14 +65,12 @@ sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
     bool lastValueIsXOnly = false;
     std::string line;
     std::streamoff pos = istream.tellg();
-    while (!util::isLdrStart(
-        line = util::readLine(istream)))
+    while (!util::isLdrStart(line = util::readLine(istream)))
     {
         // save position to move back if next readLine() encounters LDR start
         pos = istream.tellg();
         // pre-process line
-        auto [data, comment]
-            = util::stripLineComment(line);
+        auto [data, comment] = util::stripLineComment(line);
         util::trim(data);
         // read xy values from line
         auto [lineValues, isDifEncoded] = readValues(data);

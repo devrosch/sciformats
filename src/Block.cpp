@@ -45,8 +45,7 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
             {
                 // account for special case that a $$ comment immediately
                 // follows a nested block
-                auto [preCommentValue, comment]
-                    = util::stripLineComment(line);
+                auto [preCommentValue, comment] = util::stripLineComment(line);
                 util::trim(preCommentValue);
                 // if not this special case, give up
                 if (!preCommentValue.empty())

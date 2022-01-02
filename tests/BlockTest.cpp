@@ -46,6 +46,38 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
     REQUIRE(2 == data.getData().size());
 }
 
+TEST_CASE("fails to parse block with duplicate XYDATA", "[Block]")
+{
+    std::string input{"##TITLE= Test\r\n"
+                      "##JCAMP-DX= 4.24\r\n"
+                      "##DATA TYPE= INFRARED SPECTRUM\r\n"
+                      "$$ random comment #1\r\n"
+                      "##ORIGIN= devrosch\r\n"
+                      "##OWNER= PUBLIC DOMAIN\r\n"
+                      "##SPECTROMETER/DATA SYSTEM= Dum=\r\n"
+                      "my\r\n"
+                      "##XUNITS= 1/CM\r\n"
+                      "##YUNITS= ABSORBANCE\r\n"
+                      "##XFACTOR= 1.0\r\n"
+                      "##YFACTOR= 1.0\r\n"
+                      "##FIRSTX= 450\r\n"
+                      "##LASTX= 451\r\n"
+                      "##NPOINTS= 2\r\n"
+                      "##FIRSTY= 10\r\n"
+                      "##XYDATA= (X++(Y..Y))\r\n"
+                      "450.0, 10.0\r\n"
+                      "451.0, 11.0\r\n"
+                      "##XYDATA= (X++(Y..Y))\r\n"
+                      "450.0, 10.0\r\n"
+                      "451.0, 11.0\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+        Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
+}
+
 TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"

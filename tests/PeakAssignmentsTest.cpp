@@ -312,3 +312,20 @@ TEST_CASE(
 
     REQUIRE_THROWS(assignments.getData());
 }
+
+TEST_CASE("fails for malformed PEAK ASSIGNMENT in PEAK ASSIGNMENTS",
+    "[PeakAssignments]")
+{
+    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
+                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+                      "(1.0, 10.0, <peak assignment 1>\r\n"
+                      "##END="};
+
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto assignments = sciformats::jdx::PeakAssignments(stream);
+
+    REQUIRE_THROWS_WITH(assignments.getData(),
+        Catch::Matchers::Contains("no closing parenthesis", Catch::CaseSensitive::No));
+}

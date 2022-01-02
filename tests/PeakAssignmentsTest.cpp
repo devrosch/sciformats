@@ -327,5 +327,6 @@ TEST_CASE("fails for malformed PEAK ASSIGNMENT in PEAK ASSIGNMENTS",
     auto assignments = sciformats::jdx::PeakAssignments(stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains("no closing parenthesis", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains(
+            "no closing parenthesis", Catch::CaseSensitive::No));
 }

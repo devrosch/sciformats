@@ -5,7 +5,7 @@
 #include <algorithm>
 
 sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
-    std::istream& iStream, uint numVariables)
+    std::istream& iStream, unsigned int numVariables)
     : m_istream{iStream}
     , m_numVariables{numVariables}
     , m_isPastWidthFunction{false}

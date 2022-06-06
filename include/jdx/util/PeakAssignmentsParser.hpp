@@ -10,7 +10,8 @@ namespace sciformats::jdx::util
 class PeakAssignmentsParser
 {
 public:
-    explicit PeakAssignmentsParser(std::istream& iStream, uint numVariables);
+    explicit PeakAssignmentsParser(
+        std::istream& iStream, unsigned int numVariables);
     /**
      * @brief Next assignment item.
      * @return Either a textual description of peak width function or next peak
@@ -21,7 +22,7 @@ public:
 
 private:
     std::istream& m_istream;
-    uint m_numVariables;
+    unsigned int m_numVariables;
     bool m_isPastWidthFunction;
 
     // width function

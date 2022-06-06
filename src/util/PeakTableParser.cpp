@@ -119,8 +119,9 @@ sciformats::jdx::util::PeakTableParser::nextPeak()
             }
             auto streamPos = m_istream.tellg();
             m_currentLine = util::readLine(m_istream);
-            auto [content, comment] = util::stripLineComment(m_currentLine);
-            m_currentLine = content;
+            std::tie(m_currentLine, std::ignore) = util::stripLineComment(m_currentLine);
+//            auto [content, comment] = util::stripLineComment(m_currentLine);
+//            m_currentLine = content;
             m_currentPos = 0;
             if (util::isLdrStart(m_currentLine))
             {

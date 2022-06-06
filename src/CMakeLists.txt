@@ -8,6 +8,9 @@ set(HEADER_LIST
     # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Ldr.hpp"
+    # data
+    "${PROJECT_SOURCE_DIR}/include/jdx/DataLdr.hpp"
+    # 2D data
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Data2D.hpp"
@@ -15,6 +18,8 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/RaData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyPoints.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyBase.hpp"
+    # tabular data
+    "${PROJECT_SOURCE_DIR}/include/jdx/TabularData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Peak.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
@@ -32,11 +37,16 @@ add_library(jdxparser
     # ldr
     Block.cpp
     Ldr.cpp
+    # data
+    DataLdr.cpp
+    # 2D data
     Data2D.cpp
     XyData.cpp
     RaData.cpp
     XyPoints.cpp
     XyBase.cpp
+    # tabular data
+    TabularData.cpp
     Peak.cpp
     PeakTable.cpp
     PeakAssignment.cpp

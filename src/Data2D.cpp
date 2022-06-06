@@ -101,7 +101,7 @@ std::pair<std::string, std::string> sciformats::jdx::Data2D::readFirstLine(
         // reset for consistent state
         iStream.seekg(pos);
         throw std::runtime_error(
-            "Cannot parse xy data. Stream position not at LDR start: " + line);
+            "Cannot parse data. Stream position not at LDR start: " + line);
     }
     auto [label, variableList] = util::parseLdrStart(line);
     util::stripLineComment(variableList);

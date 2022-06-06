@@ -1,7 +1,7 @@
 #ifndef LIBJDX_DATA2D_HPP
 #define LIBJDX_DATA2D_HPP
 
-#include "jdx/XyParameters.hpp"
+#include "jdx/DataLdr.hpp"
 
 #include <istream>
 #include <vector>
@@ -41,12 +41,6 @@ protected:
      */
     Data2D(std::string label, std::string variableList, std::istream& iStream);
     /**
-     * @brief Moves the stream position to the start of the next LDR or to the
-     * EOF if no LDR follows.
-     * @param iStream The stream whose position will be changed.
-     */
-    static void skipToNextLdr(std::istream& iStream);
-    /**
      * @brief Validates if input is a valid data LDR.
      * @param label LDR label.
      * @param variableList First line LDR value. Must represent a variable list.
@@ -62,6 +56,10 @@ protected:
         DataEncoding dataEncoding);
     const std::string& getLabel();
     const std::string& getVariableList();
+
+    static void skipToNextLdr(std::istream& iStream);
+    static std::pair<std::string, std::string> readFirstLine(
+        std::istream& istream);
 
 private:
     std::istream& m_istream;
@@ -112,8 +110,6 @@ private:
     static std::vector<std::pair<double, double>> parseXyXyInput(
         const std::string& label, std::istream& iStream, double xFactor,
         double yFactor, size_t nPoints);
-    static std::pair<std::string, std::string> readFirstLine(
-        std::istream& istream);
 };
 } // namespace sciformats::jdx
 

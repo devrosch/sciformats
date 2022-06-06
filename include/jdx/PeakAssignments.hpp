@@ -2,6 +2,7 @@
 #define LIBJDX_PEAKASSIGNMENTS_HPP
 
 #include "jdx/PeakAssignment.hpp"
+#include "jdx/TabularData.hpp"
 
 #include <functional>
 #include <vector>
@@ -11,7 +12,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX PEAK ASSIGNMENTS record.
  */
-class PeakAssignments
+class PeakAssignments : public TabularData
 {
 public:
     explicit PeakAssignments(std::istream& iStream);
@@ -32,20 +33,6 @@ private:
     static constexpr const char* s_peakAssignentsLabel = "PEAKASSIGNMENTS";
     static constexpr const char* s_peakAssignentsXyaVariableList = "(XYA)";
     static constexpr const char* s_peakAssignentsXywaVariableList = "(XYWA)";
-
-    std::istream& m_istream;
-    std::streampos m_streamDataPos;
-    std::string m_label;
-    std::string m_variableList;
-
-    static void skipToNextLdr(std::istream& iStream);
-    static void validateInput(const std::string& label,
-        const std::string& variableList, const std::string& expectedLabel,
-        const std::vector<std::string>& expectedVariableLists);
-    static std::pair<std::string, std::string> readFirstLine(
-        std::istream& istream);
-    template<typename R>
-    R callAndResetStreamPos(const std::function<R()>& func);
 };
 } // namespace sciformats::jdx
 

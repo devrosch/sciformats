@@ -7,6 +7,9 @@
 
 namespace sciformats::jdx::util
 {
+/**
+ * @brief A parser for PEAK ASSIGNMENTS.
+ */
 class PeakAssignmentsParser
 {
 public:

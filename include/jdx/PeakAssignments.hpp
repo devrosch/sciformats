@@ -9,8 +9,7 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX PEAK TABLE record.
- * LDRs.
+ * @brief A JCAMP-DX PEAK ASSIGNMENTS record.
  */
 class PeakAssignments
 {

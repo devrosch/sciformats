@@ -1,0 +1,50 @@
+#ifndef LIBJDX_PEAKTABLEPARSER_HPP
+#define LIBJDX_PEAKTABLEPARSER_HPP
+
+#include "jdx/PeakTable.hpp"
+
+#include <variant>
+
+namespace sciformats::jdx::util
+{
+/**
+ * @brief A parser for PEAK TABLE.
+ */
+class PeakTableParser
+{
+public:
+    explicit PeakTableParser(std::istream& iStream, unsigned int numVariables);
+    /**
+     * @brief Next table item.
+     * @note Assumes that a peak tuple does not span multiple lines, but one
+     * line may contain multiple tuples.
+     * @return Either a textual description of peak kernel functions or next
+     * peak.
+     */
+    std::variant<std::string, Peak> next();
+    bool hasNext();
+
+private:
+    std::istream& m_istream;
+    unsigned int m_numVariables;
+    bool m_isPastInitialComment;
+    std::string m_currentLine;
+    size_t m_currentPos;
+
+    // kernel function
+    std::optional<std::string> parseKernelFunctions();
+    static bool isPureInlineComment(const std::string& line);
+    static void appendToDescription(
+        std::string comment, std::string& description);
+    // peak
+    std::optional<Peak> nextPeak();
+    static std::optional<Peak> nextPeak(
+        const std::string& line, size_t& pos, size_t numComponents);
+    static bool skipToNextToken(const std::string& line, size_t& pos);
+    static std::optional<std::string> nextToken(
+        const std::string& line, size_t& pos);
+    static bool isTokenDelimiter(const std::string& line, size_t& pos);
+};
+}
+
+#endif /* LIBJDX_PEAKTABLEPARSER_HPP */

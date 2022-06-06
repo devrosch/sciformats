@@ -13,10 +13,11 @@ namespace sciformats::jdx::util
 class PeakAssignmentsParser
 {
 public:
-    explicit PeakAssignmentsParser(
-        std::istream& iStream, unsigned int numVariables);
+    explicit PeakAssignmentsParser(std::istream& iStream, size_t numVariables);
     /**
      * @brief Next assignment item.
+     * @note Assumes that a peak assignment tuple always starts on a new line,
+     * but may span multiple lines.
      * @return Either a textual description of peak width function or next peak
      * assignment.
      */
@@ -25,8 +26,8 @@ public:
 
 private:
     std::istream& m_istream;
-    unsigned int m_numVariables;
-    bool m_isPastWidthFunction;
+    size_t m_numVariables;
+    bool m_isPastInitialComment;
 
     // width function
     std::optional<std::string> parseWidthFunction();

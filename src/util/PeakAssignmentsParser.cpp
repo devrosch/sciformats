@@ -5,20 +5,20 @@
 #include <algorithm>
 
 sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
-    std::istream& iStream, unsigned int numVariables)
+    std::istream& iStream, size_t numVariables)
     : m_istream{iStream}
     , m_numVariables{numVariables}
-    , m_isPastWidthFunction{false}
+    , m_isPastInitialComment{false}
 {
 }
 
 std::variant<std::string, sciformats::jdx::PeakAssignment>
 sciformats::jdx::util::PeakAssignmentsParser::next()
 {
-    if (!m_isPastWidthFunction)
+    if (!m_isPastInitialComment)
     {
         auto widthFunction = parseWidthFunction();
-        m_isPastWidthFunction = true;
+        m_isPastInitialComment = true;
         if (widthFunction)
         {
             return widthFunction.value();

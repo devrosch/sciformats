@@ -3,6 +3,7 @@
 
 #include "jdx/Peak.hpp"
 
+#include <functional>
 #include <istream>
 #include <string>
 #include <vector>
@@ -47,12 +48,8 @@ private:
         const std::vector<std::string>& expectedVariableLists);
     static std::pair<std::string, std::string> readFirstLine(
         std::istream& istream);
-    static std::optional<Peak> nextPeak(
-        const std::string& line, size_t& pos, size_t numComponents);
-    static bool skipToNextToken(const std::string& line, size_t& pos);
-    static std::optional<std::string> nextToken(
-        const std::string& line, size_t& pos);
-    static bool isTokenDelimiter(const std::string& line, size_t& pos);
+    template<typename R>
+    R callAndResetStreamPos(const std::function<R()>& func);
 };
 } // namespace sciformats::jdx
 

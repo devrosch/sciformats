@@ -3,6 +3,7 @@ set(HEADER_LIST
     # util
     "${PROJECT_SOURCE_DIR}/include/jdx/util/LdrUtils.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/util/DataParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakTableParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakAssignmentsParser.hpp"
     # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
@@ -26,6 +27,7 @@ add_library(jdxparser
     # util
     util/LdrUtils.cpp
     util/DataParser.cpp
+    util/PeakTableParser.cpp
     util/PeakAssignmentsParser.cpp
     # ldr
     Block.cpp

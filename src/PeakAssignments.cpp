@@ -1,6 +1,6 @@
 #include "jdx/PeakAssignments.hpp"
-#include "jdx/LdrUtils.hpp"
-#include "jdx/PeakUtils.hpp"
+#include "jdx/util/LdrUtils.hpp"
+#include "jdx/util/PeakAssignmentsParser.hpp"
 
 #include <algorithm>
 #include <istream>
@@ -93,98 +93,82 @@ void sciformats::jdx::PeakAssignments::validateInput(const std::string& label,
 // TODO: duplicate of getKernel() in PeakTable
 std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
 {
-    // comment $$ in line(s) following LDR start may contain peak function
-    auto streamPos = m_istream.eof()
-                         ? std::nullopt
-                         : std::optional<std::streampos>(m_istream.tellg());
-    try
-    {
+    // comment $$ in line(s) following LDR start may contain width function
+    auto func = [&]() {
+        std::optional<std::string> widthFunction{std::nullopt};
         m_istream.seekg(m_streamDataPos);
-        std::string line;
-        std::string kernelFunctionsDescription{};
-        while (!m_istream.eof()
-               && !util::isLdrStart(line = util::readLine(m_istream)))
+        auto numVariables
+            = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
+        util::PeakAssignmentsParser parser{m_istream, numVariables};
+
+        if (parser.hasNext())
         {
-            auto [content, comment] = util::stripLineComment(line);
-            util::trim(content);
-            if (content.empty() && comment.has_value())
+            auto nextVariant = parser.next();
+            if (std::holds_alternative<std::string>(nextVariant))
             {
-                if (!kernelFunctionsDescription.empty())
-                {
-                    kernelFunctionsDescription += '\n';
-                }
-                util::trim(comment.value());
-                kernelFunctionsDescription.append(comment.value());
-            }
-            else
-            {
-                break;
+                widthFunction = std::get<std::string>(nextVariant);
             }
         }
-        if (streamPos)
-        {
-            m_istream.seekg(streamPos.value());
-        }
-        if (!kernelFunctionsDescription.empty())
-        {
-            return kernelFunctionsDescription;
-        }
-        return std::nullopt;
-    }
-    catch (...)
-    {
-        // TODO: duplicate code in Data2D
-        try
-        {
-            if (streamPos)
-            {
-                m_istream.seekg(streamPos.value());
-            }
-        }
-        catch (...)
-        {
-        }
-        throw;
-    }
+
+        return widthFunction;
+    };
+
+    return callAndResetStreamPos<std::optional<std::string>>(func);
 }
 
 std::vector<sciformats::jdx::PeakAssignment>
 sciformats::jdx::PeakAssignments::getData()
 {
-    // remember stream position
+    auto func = [&]() {
+        std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
+        m_istream.seekg(m_streamDataPos);
+        auto numVariables
+            = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
+        util::PeakAssignmentsParser parser{m_istream, numVariables};
+
+        while (parser.hasNext())
+        {
+            auto nextVariant = parser.next();
+            if (std::holds_alternative<std::string>(nextVariant))
+            {
+                // skip width function
+                continue;
+            }
+            peakAssignments.push_back(std::get<PeakAssignment>(nextVariant));
+        }
+
+        return peakAssignments;
+    };
+
+    return callAndResetStreamPos<std::vector<sciformats::jdx::PeakAssignment>>(
+        func);
+}
+
+template<typename R>
+R sciformats::jdx::PeakAssignments::callAndResetStreamPos(
+    const std::function<R()>& func)
+{
     auto streamPos = m_istream.eof()
                          ? std::nullopt
                          : std::optional<std::streampos>(m_istream.tellg());
     try
     {
-        std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
         m_istream.seekg(m_streamDataPos);
-        while (true)
-        {
-            auto assignmentString = readNextAssignmentString(m_istream);
-            if (!assignmentString)
-            {
-                break;
-            }
-            auto numComponents
-                = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
-            PeakAssignment assignment = util::createPeakAssignment(
-                assignmentString.value(), numComponents);
-            peakAssignments.push_back(assignment);
-        }
+        R returnValue = func();
+
         // reset stream
         if (streamPos)
         {
             m_istream.seekg(streamPos.value());
         }
-        return peakAssignments;
+
+        return returnValue;
     }
     catch (...)
     {
         // TODO: duplicate code in Data2D
         try
         {
-            // reset stream
             if (streamPos)
             {
                 m_istream.seekg(streamPos.value());
@@ -197,71 +181,12 @@ sciformats::jdx::PeakAssignments::getData()
     }
 }
 
-std::optional<std::string>
-sciformats::jdx::PeakAssignments::readNextAssignmentString(
-    std::istream& istream)
-{
-    std::string peakAssignmentString{};
-    // find start
-    while (!istream.eof())
-    {
-        std::streampos pos = istream.tellg();
-        auto line = util::readLine(istream);
-        auto [lineStart, comment] = util::stripLineComment(line);
-        util::trim(lineStart);
-        if (util::isPeakAssignmentStart(lineStart))
-        {
-            peakAssignmentString.append(lineStart);
-            break;
-        }
-        if (util::isLdrStart(lineStart))
-        {
-            // PEAKASSIGNMENT LDR ended, no peak assignments
-            istream.seekg(pos);
-            return std::nullopt;
-        }
-        if (!lineStart.empty())
-        {
-            throw std::runtime_error(
-                "Illegal string found in peak assignment: " + line);
-        }
-    }
-    if (util::isPeakAssignmentEnd(peakAssignmentString))
-    {
-        return peakAssignmentString;
-    }
-    // read to end of current peak assignment
-    while (!istream.eof())
-    {
-        std::streampos pos = istream.tellg();
-        auto line = util::readLine(istream);
-        auto [lineStart, comment] = util::stripLineComment(line);
-        util::trim(lineStart);
+template std::optional<std::string>
+sciformats::jdx::PeakAssignments::callAndResetStreamPos<
+    std::optional<std::string>>(
+    const std::function<std::optional<std::string>()>& func);
 
-        if (util::isLdrStart(lineStart))
-        {
-            // PEAKASSIGNMENT LDR ended before end of last peak assignment
-            istream.seekg(pos);
-            throw std::runtime_error(
-                "No closing parenthesis found for peak assignment: "
-                + peakAssignmentString);
-        }
-        peakAssignmentString.append(" ");
-        peakAssignmentString.append(lineStart);
-        if (util::isPeakAssignmentEnd(lineStart))
-        {
-            return peakAssignmentString;
-        }
-        if (istream.eof() || util::isLdrStart(lineStart))
-        {
-            // PEAKASSIGNMENT LDR ended before end of last peak assignment
-            istream.seekg(pos);
-            throw std::runtime_error(
-                "No closing parenthesis found for peak assignment: "
-                + peakAssignmentString);
-        }
-    }
-    throw std::runtime_error(
-        "File ended before closing parenthesis was found for peak assignment: "
-        + peakAssignmentString);
-}
+template std::vector<sciformats::jdx::PeakAssignment>
+sciformats::jdx::PeakAssignments::callAndResetStreamPos<
+    std::vector<sciformats::jdx::PeakAssignment>>(
+    const std::function<std::vector<sciformats::jdx::PeakAssignment>()>& func);

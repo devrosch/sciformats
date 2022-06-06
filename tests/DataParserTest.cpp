@@ -1,4 +1,4 @@
-#include "jdx/DataParser.hpp"
+#include "jdx/util/DataParser.hpp"
 
 #include "catch2/catch.hpp"
 

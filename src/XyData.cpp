@@ -1,7 +1,7 @@
 #include "jdx/XyData.hpp"
-#include "jdx/DataParser.hpp"
-#include "jdx/LdrUtils.hpp"
 #include "jdx/XyBase.hpp"
+#include "jdx/util/DataParser.hpp"
+#include "jdx/util/LdrUtils.hpp"
 
 sciformats::jdx::XyData::XyData(
     std::istream& iStream, const std::vector<Ldr>& ldrs)

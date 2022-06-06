@@ -1,5 +1,5 @@
-#include "jdx/DataParser.hpp"
-#include "jdx/LdrUtils.hpp"
+#include "jdx/util/DataParser.hpp"
+#include "jdx/util/LdrUtils.hpp"
 
 #include <cmath>
 #include <limits>

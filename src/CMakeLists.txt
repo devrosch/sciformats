@@ -1,9 +1,12 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
+    # util
+    "${PROJECT_SOURCE_DIR}/include/jdx/util/LdrUtils.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/util/DataParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakAssignmentsParser.hpp"
+    # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/LdrUtils.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Ldr.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/DataParser.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Data2D.hpp"
@@ -15,16 +18,18 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignments.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/PeakUtils.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(jdxparser
     JdxParser.cpp
+    # util
+    util/LdrUtils.cpp
+    util/DataParser.cpp
+    util/PeakAssignmentsParser.cpp
+    # ldr
     Block.cpp
-    LdrUtils.cpp
     Ldr.cpp
-    DataParser.cpp
     Data2D.cpp
     XyData.cpp
     RaData.cpp
@@ -34,7 +39,6 @@ add_library(jdxparser
     PeakTable.cpp
     PeakAssignment.cpp
     PeakAssignments.cpp
-    PeakUtils.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

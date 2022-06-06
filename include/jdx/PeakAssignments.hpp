@@ -3,6 +3,7 @@
 
 #include "jdx/PeakAssignment.hpp"
 
+#include <functional>
 #include <vector>
 
 namespace sciformats::jdx
@@ -44,8 +45,8 @@ private:
         const std::vector<std::string>& expectedVariableLists);
     static std::pair<std::string, std::string> readFirstLine(
         std::istream& istream);
-    static std::optional<std::string> readNextAssignmentString(
-        std::istream& iStream);
+    template<typename R>
+    R callAndResetStreamPos(const std::function<R()>& func);
 };
 } // namespace sciformats::jdx
 

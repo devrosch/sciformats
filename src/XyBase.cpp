@@ -1,6 +1,6 @@
 #include "jdx/XyBase.hpp"
-#include "jdx/DataParser.hpp"
-#include "jdx/LdrUtils.hpp"
+#include "jdx/util/DataParser.hpp"
+#include "jdx/util/LdrUtils.hpp"
 
 sciformats::jdx::XyBase::XyBase(std::istream& iStream,
     const std::vector<Ldr>& ldrs, std::string expectedLabel,

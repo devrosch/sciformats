@@ -1,5 +1,5 @@
 #include "jdx/Block.hpp"
-#include "jdx/LdrUtils.hpp"
+#include "jdx/util/LdrUtils.hpp"
 
 #include <algorithm>
 #include <array>

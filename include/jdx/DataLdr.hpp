@@ -13,15 +13,15 @@ namespace sciformats::jdx
 class DataLdr
 {
 public:
-protected:
-    std::istream& m_istream;
-    std::streampos m_streamDataPos;
-    std::string m_label;
-    std::string m_variableList;
+    [[nodiscard]] const std::string& getLabel() const;
+    [[nodiscard]] const std::string& getVariableList() const;
 
+protected:
     explicit DataLdr(std::istream& istream);
-    DataLdr(
-        std::string label, std::string variableList, std::istream& istream);
+    DataLdr(std::string label, std::string variableList, std::istream& istream);
+
+    std::istream& getStream();
+    std::streampos& getStreamPos();
 
     /**
      * @brief Moves the stream position to the start of the next LDR or to the
@@ -42,6 +42,14 @@ protected:
     static void validateInput(const std::string& label,
         const std::string& variableList, const std::string& expectedLabel,
         const std::vector<std::string>& expectedVariableLists);
+    template<typename R>
+    R callAndResetStreamPos(const std::function<R()>& func);
+
+private:
+    std::string m_label;
+    std::string m_variableList;
+    std::istream& m_istream;
+    std::streampos m_streamDataPos;
 };
 } // namespace sciformats::jdx
 

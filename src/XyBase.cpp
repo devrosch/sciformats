@@ -9,9 +9,8 @@ sciformats::jdx::XyBase::XyBase(std::istream& iStream,
     , m_expectedLabel{std::move(expectedLabel)}
     , m_expectedVariableList{std::move(expectedVariableList)}
 {
-    validateInput(
-        getLabel(), getVariableList(), m_expectedLabel,
-                std::vector<std::string>{m_expectedVariableList});
+    validateInput(getLabel(), getVariableList(), m_expectedLabel,
+        std::vector<std::string>{m_expectedVariableList});
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -24,8 +23,8 @@ sciformats::jdx::XyBase::XyBase(const std::string& label,
     , m_expectedLabel{std::move(expectedLabel)}
     , m_expectedVariableList{std::move(expectedVariableList)}
 {
-    validateInput(
-        getLabel(), getVariableList(), m_expectedLabel, std::vector<std::string>{m_expectedVariableList});
+    validateInput(getLabel(), getVariableList(), m_expectedLabel,
+        std::vector<std::string>{m_expectedVariableList});
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }

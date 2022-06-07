@@ -11,8 +11,8 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=" and "##XYDATA=" LDRs.
- * LDRs.
+ * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=" and "##XYDATA="
+ * LDRs. LDRs.
  */
 class XyBase : protected Data2D
 {

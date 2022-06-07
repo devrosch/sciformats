@@ -5,13 +5,13 @@
 #include <tuple>
 
 sciformats::jdx::Data2D::Data2D(std::istream& iStream)
-    : DataLdr (iStream)
+    : DataLdr(iStream)
 {
 }
 
 sciformats::jdx::Data2D::Data2D(
     std::string label, std::string variableList, std::istream& iStream)
-    : DataLdr (std::move(label), std::move(variableList), iStream)
+    : DataLdr(std::move(label), std::move(variableList), iStream)
 {
 }
 
@@ -74,23 +74,23 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
     double firstX, double lastX, double xFactor, double yFactor,
     uint64_t nPoints, DataEncoding dataEncoding)
 {
-    auto pos = m_istream.eof()
-                   ? std::nullopt
-                   : std::optional<std::streampos>(m_istream.tellg());
-    auto startPos = m_streamDataPos;
+    auto& stream = getStream();
+    auto pos = stream.eof() ? std::nullopt
+                            : std::optional<std::streampos>(stream.tellg());
+    auto startPos = getStreamPos();
     try
     {
-        m_istream.seekg(startPos);
+        stream.seekg(startPos);
         std::vector<std::pair<double, double>> data{};
+        const auto& label = getLabel();
         if (dataEncoding == DataEncoding::XppYY)
         {
             data = parseXppYYInput(
-                m_label, m_istream, firstX, lastX, yFactor, nPoints);
+                label, stream, firstX, lastX, yFactor, nPoints);
         }
         else if (dataEncoding == DataEncoding::XyXy)
         {
-            data
-                = parseXyXyInput(m_label, m_istream, xFactor, yFactor, nPoints);
+            data = parseXyXyInput(label, stream, xFactor, yFactor, nPoints);
             // TODO: check if parsed data matches firstX, lastX
         }
         else
@@ -100,7 +100,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
         }
         if (pos)
         {
-            m_istream.seekg(pos.value());
+            stream.seekg(pos.value());
         }
         return data;
     }
@@ -110,7 +110,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
         {
             if (pos)
             {
-                m_istream.seekg(pos.value());
+                stream.seekg(pos.value());
             }
         }
         catch (...)
@@ -118,30 +118,4 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
         }
         throw;
     }
-}
-
-//void sciformats::jdx::Data2D::validateInput(const std::string& label,
-//    const std::string& variableList, const std::string& expectedLabel,
-//    const std::string& expectedVariableList)
-//{
-//    if (label != expectedLabel)
-//    {
-//        throw std::runtime_error("Illegal label at " + expectedLabel
-//                                 + " start encountered: " + label);
-//    }
-//    if (variableList != expectedVariableList)
-//    {
-//        throw std::runtime_error("Illegal variable list for " + label
-//                                 + " encountered: " + variableList);
-//    }
-//}
-
-const std::string& sciformats::jdx::Data2D::getLabel()
-{
-    return m_label;
-}
-
-const std::string& sciformats::jdx::Data2D::getVariableList()
-{
-    return m_variableList;
 }

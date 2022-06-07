@@ -19,8 +19,6 @@ protected:
     explicit TabularData(std::istream& istream);
     TabularData(
         std::string label, std::string variableList, std::istream& istream);
-    template<typename R>
-    R callAndResetStreamPos(const std::function<R()>& func);
 };
 } // namespace sciformats::jdx
 

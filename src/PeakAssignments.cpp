@@ -8,9 +8,9 @@
 
 // TODO: duplicate of constructor in PeakTable
 sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
-    :TabularData (istream)
+    : TabularData(istream)
 {
-    validateInput(m_label, m_variableList, s_peakAssignentsLabel,
+    validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
             s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
@@ -19,9 +19,9 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
 // TODO: duplicate of constructor in PeakTable
 sciformats::jdx::PeakAssignments::PeakAssignments(
     std::string label, std::string variableList, std::istream& istream)
-    : TabularData (std::move(label), std::move(variableList), istream)
+    : TabularData(std::move(label), std::move(variableList), istream)
 {
-    validateInput(m_label, m_variableList, s_peakAssignentsLabel,
+    validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
             s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
     skipToNextLdr(istream);
@@ -32,11 +32,13 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
 {
     // comment $$ in line(s) following LDR start may contain width function
     auto func = [&]() {
+        auto& stream = getStream();
+        auto& streamPos = getStreamPos();
         std::optional<std::string> widthFunction{std::nullopt};
-        m_istream.seekg(m_streamDataPos);
+        stream.seekg(streamPos);
         auto numVariables
-            = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
-        util::PeakAssignmentsParser parser{m_istream, numVariables};
+            = getVariableList() == s_peakAssignentsXyaVariableList ? 3U : 4U;
+        util::PeakAssignmentsParser parser{stream, numVariables};
 
         if (parser.hasNext())
         {
@@ -57,11 +59,13 @@ std::vector<sciformats::jdx::PeakAssignment>
 sciformats::jdx::PeakAssignments::getData()
 {
     auto func = [&]() {
+        auto& stream = getStream();
+        auto& streamPos = getStreamPos();
         std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
-        m_istream.seekg(m_streamDataPos);
+        stream.seekg(streamPos);
         auto numVariables
-            = m_variableList == s_peakAssignentsXyaVariableList ? 3U : 4U;
-        util::PeakAssignmentsParser parser{m_istream, numVariables};
+            = getVariableList() == s_peakAssignentsXyaVariableList ? 3U : 4U;
+        util::PeakAssignmentsParser parser{stream, numVariables};
 
         while (parser.hasNext())
         {

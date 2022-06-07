@@ -9,7 +9,8 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=", "##XYDATA=" and "##RADATA=" LDRs.
+ * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=", "##XYDATA=" and
+ * "##RADATA=" LDRs.
  */
 class Data2D : public DataLdr
 {
@@ -44,8 +45,6 @@ protected:
     std::vector<std::pair<double, double>> getData(double firstX, double lastX,
         double xFactor, double yFactor, uint64_t nPoints,
         DataEncoding dataEncoding);
-    const std::string& getLabel();
-    const std::string& getVariableList();
 
 private:
     /**

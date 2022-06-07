@@ -74,13 +74,8 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
     double firstX, double lastX, double xFactor, double yFactor,
     uint64_t nPoints, DataEncoding dataEncoding)
 {
-    auto& stream = getStream();
-    auto pos = stream.eof() ? std::nullopt
-                            : std::optional<std::streampos>(stream.tellg());
-    auto startPos = getStreamPos();
-    try
-    {
-        stream.seekg(startPos);
+    auto func = [&]() {
+        auto& stream = getStream();
         std::vector<std::pair<double, double>> data{};
         const auto& label = getLabel();
         if (dataEncoding == DataEncoding::XppYY)
@@ -98,24 +93,8 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
             throw std::runtime_error(
                 "Cannot parse xy data. Unsupported encoding.");
         }
-        if (pos)
-        {
-            stream.seekg(pos.value());
-        }
         return data;
-    }
-    catch (...)
-    {
-        try
-        {
-            if (pos)
-            {
-                stream.seekg(pos.value());
-            }
-        }
-        catch (...)
-        {
-        }
-        throw;
-    }
+    };
+
+    return callAndResetStreamPos<std::vector<std::pair<double, double>>>(func);
 }

@@ -6,7 +6,6 @@
 #include <istream>
 #include <tuple>
 
-// TODO: duplicate of constructor in PeakTable
 sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
     : TabularData(istream)
 {
@@ -16,7 +15,6 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
     skipToNextLdr(istream);
 }
 
-// TODO: duplicate of constructor in PeakTable
 sciformats::jdx::PeakAssignments::PeakAssignments(
     std::string label, std::string variableList, std::istream& istream)
     : TabularData(std::move(label), std::move(variableList), istream)
@@ -33,9 +31,7 @@ std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
     // comment $$ in line(s) following LDR start may contain width function
     auto func = [&]() {
         auto& stream = getStream();
-        auto& streamPos = getStreamPos();
         std::optional<std::string> widthFunction{std::nullopt};
-        stream.seekg(streamPos);
         auto numVariables
             = getVariableList() == s_peakAssignentsXyaVariableList ? 3U : 4U;
         util::PeakAssignmentsParser parser{stream, numVariables};
@@ -60,9 +56,7 @@ sciformats::jdx::PeakAssignments::getData()
 {
     auto func = [&]() {
         auto& stream = getStream();
-        auto& streamPos = getStreamPos();
         std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
-        stream.seekg(streamPos);
         auto numVariables
             = getVariableList() == s_peakAssignentsXyaVariableList ? 3U : 4U;
         util::PeakAssignmentsParser parser{stream, numVariables};

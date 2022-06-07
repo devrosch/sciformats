@@ -48,6 +48,7 @@ bool sciformats::jdx::util::PeakTableParser::hasNext()
     auto currentLine = m_currentLine;
     auto currentPos = m_currentPos;
 
+    // TODO: does not account for leading comments as next value
     std::optional<Peak> peak = nextPeak();
 
     // TODO: optimize

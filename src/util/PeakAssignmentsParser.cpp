@@ -42,6 +42,7 @@ bool sciformats::jdx::util::PeakAssignmentsParser::hasNext()
         return false;
     }
     auto streamPos = m_istream.tellg();
+    // TODO: does not account for leading comments as next value
     auto nextAssignmentString = readNextAssignmentString();
     // TODO: optimize
     m_istream.seekg(streamPos);

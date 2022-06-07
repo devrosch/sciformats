@@ -51,6 +51,43 @@ private:
     std::istream& m_istream;
     std::streampos m_streamDataPos;
 };
+
+template<typename R>
+R sciformats::jdx::DataLdr::callAndResetStreamPos(
+    const std::function<R()>& func)
+{
+    auto streamPos = m_istream.eof()
+                         ? std::nullopt
+                         : std::optional<std::streampos>(m_istream.tellg());
+    try
+    {
+        m_istream.seekg(m_streamDataPos);
+        R returnValue = func();
+
+        // reset stream
+        if (streamPos)
+        {
+            m_istream.seekg(streamPos.value());
+        }
+
+        return returnValue;
+    }
+    catch (...)
+    {
+        try
+        {
+            if (streamPos)
+            {
+                m_istream.seekg(streamPos.value());
+            }
+        }
+        catch (...)
+        {
+        }
+        throw;
+    }
+}
+
 } // namespace sciformats::jdx
 
 #endif // LIBJDX_DATALDR_HPP

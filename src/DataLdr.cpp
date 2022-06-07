@@ -1,6 +1,4 @@
 #include "jdx/DataLdr.hpp"
-#include "jdx/Peak.hpp"
-#include "jdx/PeakAssignment.hpp"
 #include "jdx/util/LdrUtils.hpp"
 
 sciformats::jdx::DataLdr::DataLdr(std::istream& istream)
@@ -92,59 +90,3 @@ void sciformats::jdx::DataLdr::validateInput(const std::string& label,
                                  + " encountered: " + variableList);
     }
 }
-
-template<typename R>
-R sciformats::jdx::DataLdr::callAndResetStreamPos(
-    const std::function<R()>& func)
-{
-    auto streamPos = m_istream.eof()
-                         ? std::nullopt
-                         : std::optional<std::streampos>(m_istream.tellg());
-    try
-    {
-        m_istream.seekg(m_streamDataPos);
-        R returnValue = func();
-
-        // reset stream
-        if (streamPos)
-        {
-            m_istream.seekg(streamPos.value());
-        }
-
-        return returnValue;
-    }
-    catch (...)
-    {
-        // TODO: duplicate code in Data2D
-        try
-        {
-            if (streamPos)
-            {
-                m_istream.seekg(streamPos.value());
-            }
-        }
-        catch (...)
-        {
-        }
-        throw;
-    }
-}
-
-template std::optional<std::string>
-sciformats::jdx::DataLdr::callAndResetStreamPos<std::optional<std::string>>(
-    const std::function<std::optional<std::string>()>& func);
-
-template std::vector<sciformats::jdx::Peak>
-sciformats::jdx::DataLdr::callAndResetStreamPos<
-    std::vector<sciformats::jdx::Peak>>(
-    const std::function<std::vector<sciformats::jdx::Peak>()>& func);
-
-template std::vector<sciformats::jdx::PeakAssignment>
-sciformats::jdx::DataLdr::callAndResetStreamPos<
-    std::vector<sciformats::jdx::PeakAssignment>>(
-    const std::function<std::vector<sciformats::jdx::PeakAssignment>()>& func);
-
-template std::vector<std::pair<double, double>>
-sciformats::jdx::DataLdr::callAndResetStreamPos<
-    std::vector<std::pair<double, double>>>(
-    const std::function<std::vector<std::pair<double, double>>()>& func);

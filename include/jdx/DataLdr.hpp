@@ -31,6 +31,17 @@ protected:
     static void skipToNextLdr(std::istream& iStream);
     static std::pair<std::string, std::string> readFirstLine(
         std::istream& istream);
+    /**
+     * @brief Validates if input is a valid data LDR.
+     * @param label LDR label.
+     * @param variableList First line LDR value. Must represent a variable list.
+     * @param expectedLabel The expected LDR label.
+     * @param expectedVariableList The expected variable list.
+     * @throws If label or variable list don't match expectations.
+     */
+    static void validateInput(const std::string& label,
+        const std::string& variableList, const std::string& expectedLabel,
+        const std::vector<std::string>& expectedVariableLists);
 };
 } // namespace sciformats::jdx
 

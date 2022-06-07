@@ -5,19 +5,13 @@
 #include <tuple>
 
 sciformats::jdx::Data2D::Data2D(std::istream& iStream)
-    : m_istream{iStream}
-    , m_streamDataPos{iStream.tellg()}
+    : DataLdr (iStream)
 {
-    std::tie(m_label, m_variableList) = readFirstLine(iStream);
-    m_streamDataPos = iStream.tellg();
 }
 
 sciformats::jdx::Data2D::Data2D(
     std::string label, std::string variableList, std::istream& iStream)
-    : m_istream{iStream}
-    , m_streamDataPos{iStream.tellg()}
-    , m_label{std::move(label)}
-    , m_variableList{std::move(variableList)}
+    : DataLdr (std::move(label), std::move(variableList), iStream)
 {
 }
 
@@ -76,40 +70,6 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyInput(
     return xyData;
 }
 
-void sciformats::jdx::Data2D::skipToNextLdr(std::istream& iStream)
-{
-    while (!iStream.eof())
-    {
-        std::istream::pos_type pos = iStream.tellg();
-        std::string line = util::readLine(iStream);
-        if (util::isLdrStart(line))
-        {
-            // move back to start of LDR
-            iStream.seekg(pos);
-            break;
-        }
-    }
-}
-
-std::pair<std::string, std::string> sciformats::jdx::Data2D::readFirstLine(
-    std::istream& iStream)
-{
-    auto pos = iStream.tellg();
-    auto line = util::readLine(iStream);
-    if (!util::isLdrStart(line))
-    {
-        // reset for consistent state
-        iStream.seekg(pos);
-        throw std::runtime_error(
-            "Cannot parse data. Stream position not at LDR start: " + line);
-    }
-    auto [label, variableList] = util::parseLdrStart(line);
-    util::stripLineComment(variableList);
-    util::trim(variableList);
-
-    return {label, variableList};
-}
-
 std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
     double firstX, double lastX, double xFactor, double yFactor,
     uint64_t nPoints, DataEncoding dataEncoding)
@@ -160,21 +120,21 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
     }
 }
 
-void sciformats::jdx::Data2D::validateInput(const std::string& label,
-    const std::string& variableList, const std::string& expectedLabel,
-    const std::string& expectedVariableList)
-{
-    if (label != expectedLabel)
-    {
-        throw std::runtime_error("Illegal label at " + expectedLabel
-                                 + " start encountered: " + label);
-    }
-    if (variableList != expectedVariableList)
-    {
-        throw std::runtime_error("Illegal variable list for " + label
-                                 + " encountered: " + variableList);
-    }
-}
+//void sciformats::jdx::Data2D::validateInput(const std::string& label,
+//    const std::string& variableList, const std::string& expectedLabel,
+//    const std::string& expectedVariableList)
+//{
+//    if (label != expectedLabel)
+//    {
+//        throw std::runtime_error("Illegal label at " + expectedLabel
+//                                 + " start encountered: " + label);
+//    }
+//    if (variableList != expectedVariableList)
+//    {
+//        throw std::runtime_error("Illegal variable list for " + label
+//                                 + " encountered: " + variableList);
+//    }
+//}
 
 const std::string& sciformats::jdx::Data2D::getLabel()
 {

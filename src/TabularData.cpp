@@ -3,37 +3,15 @@
 #include "jdx/Peak.hpp"
 #include "jdx/PeakAssignment.hpp"
 
-// TODO: duplicate of constructor in Data2D
 sciformats::jdx::TabularData::TabularData(std::istream& istream)
     : DataLdr (istream)
 {
 }
 
-// TODO: duplicate of constructor in Data2D
 sciformats::jdx::TabularData::TabularData(
     std::string label, std::string variableList, std::istream& istream)
     : DataLdr (std::move(label), std::move(variableList), istream)
 {
-}
-
-// TODO: similar to validateInput() in Data2D
-void sciformats::jdx::TabularData::validateInput(const std::string& label,
-    const std::string& variableList, const std::string& expectedLabel,
-    const std::vector<std::string>& expectedVariableLists)
-{
-    if (label != expectedLabel)
-    {
-        throw std::runtime_error("Illegal label at " + expectedLabel
-                                 + " start encountered: " + label);
-    }
-    if (std::none_of(expectedVariableLists.begin(), expectedVariableLists.end(),
-            [&variableList](const std::string& expectedVariableList) {
-                return variableList == expectedVariableList;
-            }))
-    {
-        throw std::runtime_error("Illegal variable list for " + label
-                                 + " encountered: " + variableList);
-    }
 }
 
 template<typename R>

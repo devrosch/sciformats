@@ -9,9 +9,9 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX 2D data record. Base for "##XYDATA=" and "##RADATA=" LDRs.
+ * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=", "##XYDATA=" and "##RADATA=" LDRs.
  */
-class Data2D
+class Data2D : public DataLdr
 {
 public:
 protected:
@@ -40,33 +40,14 @@ protected:
      * exist for the lifetime of this object.
      */
     Data2D(std::string label, std::string variableList, std::istream& iStream);
-    /**
-     * @brief Validates if input is a valid data LDR.
-     * @param label LDR label.
-     * @param variableList First line LDR value. Must represent a variable list.
-     * @param expectedLabel The expected LDR label.
-     * @param expectedVariableList The expected variable list.
-     * @throws If label or variable list don't match expectations.
-     */
-    static void validateInput(const std::string& label,
-        const std::string& variableList, const std::string& expectedLabel,
-        const std::string& expectedVariableList);
+
     std::vector<std::pair<double, double>> getData(double firstX, double lastX,
         double xFactor, double yFactor, uint64_t nPoints,
         DataEncoding dataEncoding);
     const std::string& getLabel();
     const std::string& getVariableList();
 
-    static void skipToNextLdr(std::istream& iStream);
-    static std::pair<std::string, std::string> readFirstLine(
-        std::istream& istream);
-
 private:
-    std::istream& m_istream;
-    std::streampos m_streamDataPos;
-    std::string m_label;
-    std::string m_variableList;
-
     /**
      * @brief Parses the equally x spaced xy data (i.e. "X++(Y..Y)" or
      * "R++(A..A)") from a "##XYDATA=" or "##RADATA=" block.

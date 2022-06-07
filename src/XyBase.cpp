@@ -9,8 +9,9 @@ sciformats::jdx::XyBase::XyBase(std::istream& iStream,
     , m_expectedLabel{std::move(expectedLabel)}
     , m_expectedVariableList{std::move(expectedVariableList)}
 {
-    Data2D::validateInput(
-        getLabel(), getVariableList(), m_expectedLabel, m_expectedVariableList);
+    validateInput(
+        getLabel(), getVariableList(), m_expectedLabel,
+                std::vector<std::string>{m_expectedVariableList});
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -23,8 +24,8 @@ sciformats::jdx::XyBase::XyBase(const std::string& label,
     , m_expectedLabel{std::move(expectedLabel)}
     , m_expectedVariableList{std::move(expectedVariableList)}
 {
-    Data2D::validateInput(
-        getLabel(), getVariableList(), m_expectedLabel, m_expectedVariableList);
+    validateInput(
+        getLabel(), getVariableList(), m_expectedLabel, std::vector<std::string>{m_expectedVariableList});
     m_parameters = parseParameters(ldrs);
     skipToNextLdr(iStream);
 }
@@ -38,8 +39,6 @@ sciformats::jdx::XyBase::getParameters() const
 std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
     Data2D::DataEncoding encoding)
 {
-    Data2D::validateInput(
-        getLabel(), getVariableList(), m_expectedLabel, m_expectedVariableList);
     return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
         m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
         encoding);

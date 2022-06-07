@@ -19,10 +19,6 @@ protected:
     explicit TabularData(std::istream& istream);
     TabularData(
         std::string label, std::string variableList, std::istream& istream);
-
-    static void validateInput(const std::string& label,
-        const std::string& variableList, const std::string& expectedLabel,
-        const std::vector<std::string>& expectedVariableLists);
     template<typename R>
     R callAndResetStreamPos(const std::function<R()>& func);
 };

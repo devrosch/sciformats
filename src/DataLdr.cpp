@@ -3,7 +3,6 @@
 #include "jdx/Peak.hpp"
 #include "jdx/PeakAssignment.hpp"
 
-// TODO: duplicate of constructor in Data2D
 sciformats::jdx::DataLdr::DataLdr(std::istream& istream)
     : m_istream{istream}
     , m_streamDataPos{istream.tellg()}
@@ -12,7 +11,6 @@ sciformats::jdx::DataLdr::DataLdr(std::istream& istream)
     m_streamDataPos = istream.tellg();
 }
 
-// TODO: duplicate of constructor in Data2D
 sciformats::jdx::DataLdr::DataLdr(
     std::string label, std::string variableList, std::istream& istream)
     : m_istream{istream}
@@ -22,7 +20,6 @@ sciformats::jdx::DataLdr::DataLdr(
 {
 }
 
-// TODO: duplicate of skipToNextLdr() in Data2D
 void sciformats::jdx::DataLdr::skipToNextLdr(std::istream& iStream)
 {
     while (!iStream.eof())
@@ -38,7 +35,6 @@ void sciformats::jdx::DataLdr::skipToNextLdr(std::istream& iStream)
     }
 }
 
-// TODO: duplicate of readFirstLine() in Data2D
 std::pair<std::string, std::string> sciformats::jdx::DataLdr::readFirstLine(
     std::istream& istream)
 {
@@ -57,4 +53,23 @@ std::pair<std::string, std::string> sciformats::jdx::DataLdr::readFirstLine(
     util::trim(variableList);
 
     return {label, variableList};
+}
+
+void sciformats::jdx::DataLdr::validateInput(const std::string& label,
+    const std::string& variableList, const std::string& expectedLabel,
+    const std::vector<std::string>& expectedVariableLists)
+{
+    if (label != expectedLabel)
+    {
+        throw std::runtime_error("Illegal label at " + expectedLabel
+                                 + " start encountered: " + label);
+    }
+    if (std::none_of(expectedVariableLists.begin(), expectedVariableLists.end(),
+            [&variableList](const std::string& expectedVariableList) {
+                return variableList == expectedVariableList;
+            }))
+    {
+        throw std::runtime_error("Illegal variable list for " + label
+                                 + " encountered: " + variableList);
+    }
 }

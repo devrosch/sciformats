@@ -3,7 +3,7 @@
 #include "jdx/util/LdrUtils.hpp"
 
 sciformats::jdx::XyBase::XyBase(std::istream& iStream,
-    const std::vector<Ldr>& ldrs, std::string expectedLabel,
+    const std::vector<StringLdr>& ldrs, std::string expectedLabel,
     std::string expectedVariableList)
     : Data2D{iStream}
     , m_expectedLabel{std::move(expectedLabel)}
@@ -17,7 +17,7 @@ sciformats::jdx::XyBase::XyBase(std::istream& iStream,
 
 sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::string& variableList, std::istream& iStream,
-    const std::vector<Ldr>& ldrs, std::string expectedLabel,
+    const std::vector<StringLdr>& ldrs, std::string expectedLabel,
     std::string expectedVariableList)
     : Data2D{label, variableList, iStream}
     , m_expectedLabel{std::move(expectedLabel)}
@@ -44,7 +44,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
 }
 
 sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(
-    const std::vector<Ldr>& ldrs)
+    const std::vector<StringLdr>& ldrs)
 {
     // required
     // string

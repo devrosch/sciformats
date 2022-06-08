@@ -1,5 +1,5 @@
-#ifndef LIBJDX_LDR_HPP
-#define LIBJDX_LDR_HPP
+#ifndef LIBJDX_STRINGLDR_HPP
+#define LIBJDX_STRINGLDR_HPP
 
 #include <string>
 
@@ -8,15 +8,15 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX labeled data record (LDR).
  */
-class Ldr
+class StringLdr
 {
 public:
     /**
-     * @brief Constructs a Ldr from label and value.
+     * @brief Constructs a Ldr from label and string value.
      * @param label The label of the LDR, e.g. "TITLE" for "##TITLE= abc".
      * @param value The value of the LDR, e.g. "abc" for "##TITLE= abc".
      */
-    Ldr(const std::string& label, const std::string& value);
+    StringLdr(const std::string& label, const std::string& value);
     /**
      * @brief The label of the LDR, e.g. "TITLE" for "##TITLE= abc".
      * @return The label of the LDR.
@@ -48,4 +48,4 @@ private:
 };
 } // namespace sciformats::jdx
 
-#endif // LIBJDX_LDR_HPP
+#endif // LIBJDX_STRINGLDR_HPP

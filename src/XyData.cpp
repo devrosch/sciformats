@@ -4,14 +4,14 @@
 #include "jdx/util/LdrUtils.hpp"
 
 sciformats::jdx::XyData::XyData(
-    std::istream& iStream, const std::vector<Ldr>& ldrs)
+    std::istream& iStream, const std::vector<StringLdr>& ldrs)
     : XyBase(iStream, ldrs, s_xyDataLabel, s_xyDataVariableList)
 {
 }
 
 sciformats::jdx::XyData::XyData(const std::string& label,
     const std::string& variableList, std::istream& iStream,
-    const std::vector<Ldr>& ldrs)
+    const std::vector<StringLdr>& ldrs)
     : XyBase(
         label, variableList, iStream, ldrs, s_xyDataLabel, s_xyDataVariableList)
 {

@@ -7,7 +7,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakAssignmentsParser.hpp"
     # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/Ldr.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/StringLdr.hpp"
     # data
     "${PROJECT_SOURCE_DIR}/include/jdx/DataLdr.hpp"
     # 2D data
@@ -35,7 +35,7 @@ add_library(jdxparser
     util/PeakAssignmentsParser.cpp
     # ldr
     Block.cpp
-    Ldr.cpp
+    StringLdr.cpp
     # data
     DataLdr.cpp
     # 2D data

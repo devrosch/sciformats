@@ -4,7 +4,7 @@
 #include "jdx/util/LdrUtils.hpp"
 
 sciformats::jdx::RaData::RaData(
-    std::istream& iStream, const std::vector<Ldr>& ldrs)
+    std::istream& iStream, const std::vector<StringLdr>& ldrs)
     : Data2D(iStream)
 {
     validateInput(getLabel(), getVariableList(), s_raDataLabel,
@@ -15,7 +15,7 @@ sciformats::jdx::RaData::RaData(
 
 sciformats::jdx::RaData::RaData(const std::string& label,
     const std::string& variableList, std::istream& iStream,
-    const std::vector<Ldr>& ldrs)
+    const std::vector<StringLdr>& ldrs)
     : Data2D(label, variableList, iStream)
 {
     validateInput(label, variableList, s_raDataLabel,
@@ -38,7 +38,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(
-    const std::vector<Ldr>& ldrs)
+    const std::vector<StringLdr>& ldrs)
 {
     // required
     // string

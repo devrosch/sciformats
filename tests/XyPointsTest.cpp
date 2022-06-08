@@ -1,5 +1,5 @@
 #include "jdx/XyPoints.hpp"
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 
 #include "catch2/catch.hpp"
 
@@ -14,7 +14,7 @@ TEST_CASE("parses unevenly spaced xy data", "[XyPoints]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
     ldrs.emplace_back("YUNITS", "ABSORBANCE");
     ldrs.emplace_back("FIRSTX", "900.0");
@@ -57,7 +57,7 @@ TEST_CASE("fails when x value undefined while parsing unevenly spaced xy data",
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
     ldrs.emplace_back("YUNITS", "ABSORBANCE");
     ldrs.emplace_back("FIRSTX", "900.0");
@@ -82,7 +82,7 @@ TEST_CASE(
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
     ldrs.emplace_back("YUNITS", "ABSORBANCE");
     ldrs.emplace_back("FIRSTX", "900.0");
@@ -105,7 +105,7 @@ TEST_CASE("fails for incomplete xy pair", "[XyPoints]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
     ldrs.emplace_back("YUNITS", "ABSORBANCE");
     ldrs.emplace_back("FIRSTX", "900.0");
@@ -130,7 +130,7 @@ TEST_CASE("fails parsing ? as X value", "[XyPoints]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
     ldrs.emplace_back("YUNITS", "ABSORBANCE");
     ldrs.emplace_back("FIRSTX", "450.0");

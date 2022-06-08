@@ -176,13 +176,13 @@ void sciformats::jdx::Block::parseInput(const std::string& title)
     }
 }
 
-std::optional<const sciformats::jdx::Ldr> sciformats::jdx::Block::getLdr(
+std::optional<const sciformats::jdx::StringLdr> sciformats::jdx::Block::getLdr(
     const std::string& label) const
 {
     return util::findLdr(m_ldrs, label);
 }
 
-const std::vector<sciformats::jdx::Ldr>& sciformats::jdx::Block::getLdrs() const
+const std::vector<sciformats::jdx::StringLdr>& sciformats::jdx::Block::getLdrs() const
 {
     return m_ldrs;
 }

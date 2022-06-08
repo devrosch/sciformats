@@ -1,7 +1,7 @@
 #ifndef LIBJDX_LDRUTILS_HPP
 #define LIBJDX_LDRUTILS_HPP
 
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 
 #include <istream>
 #include <optional>
@@ -22,10 +22,10 @@ std::string normalizeLdrLabel(const std::string& label);
 std::pair<std::string, std::string> parseLdrStart(const std::string& ldrStart);
 std::pair<std::string, std::optional<std::string>> stripLineComment(
     const std::string& line);
-std::optional<const Ldr> findLdr(
-    const std::vector<Ldr>& ldrs, const std::string& label);
+std::optional<const StringLdr> findLdr(
+    const std::vector<StringLdr>& ldrs, const std::string& label);
 std::optional<std::string> findLdrValue(
-    const std::vector<Ldr>& ldrs, const std::string& label);
+    const std::vector<StringLdr>& ldrs, const std::string& label);
 bool isSpace(char c);
 } // namespace sciformats::jdx::utils
 

@@ -2,7 +2,7 @@
 add_executable(jdxparser_test
     JdxParserTest.cpp
     LdrUtilsTest.cpp
-    LdrTest.cpp
+    StringLdrTest.cpp
     BlockTest.cpp
     DataParserTest.cpp
     XyDataTest.cpp

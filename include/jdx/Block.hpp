@@ -1,7 +1,7 @@
 #ifndef LIBJDX_BLOCK_HPP
 #define LIBJDX_BLOCK_HPP
 
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
@@ -45,7 +45,7 @@ public:
      * and the value is the content (without initial blank character if any).
      * E.g. the LDR "##TITLE= abc" has label "TITLE" and content "abc".
      */
-    [[nodiscard]] const std::vector<Ldr>& getLdrs() const;
+    [[nodiscard]] const std::vector<StringLdr>& getLdrs() const;
     /**
      * @brief Provides a labeled data record (LDR) from the block. The same
      * exclusions as for getLdrs() apply.
@@ -54,7 +54,7 @@ public:
      * @return The LDR for the given label if it exists in the block,
      * std::nullopt otherwise.
      */
-    [[nodiscard]] std::optional<const Ldr> getLdr(
+    [[nodiscard]] std::optional<const StringLdr> getLdr(
         const std::string& label) const;
     /**
      * @brief Provides the nested Blocks of the Block.
@@ -98,7 +98,7 @@ public:
 
 private:
     std::istream& m_istream;
-    std::vector<Ldr> m_ldrs;
+    std::vector<StringLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
     std::vector<Block> m_blocks;
     std::optional<XyData> m_xyData;

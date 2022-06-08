@@ -152,12 +152,12 @@ sciformats::jdx::util::stripLineComment(const std::string& line)
     return make_pair(content, comment);
 }
 
-std::optional<const sciformats::jdx::Ldr> sciformats::jdx::util::findLdr(
-    const std::vector<Ldr>& ldrs, const std::string& label)
+std::optional<const sciformats::jdx::StringLdr> sciformats::jdx::util::findLdr(
+    const std::vector<StringLdr>& ldrs, const std::string& label)
 {
     std::string normalizedLabel = normalizeLdrLabel(label);
     auto it = std::find_if(
-        ldrs.begin(), ldrs.end(), [&normalizedLabel](const Ldr& ldr) {
+        ldrs.begin(), ldrs.end(), [&normalizedLabel](const StringLdr& ldr) {
             return ldr.getLabel() == normalizedLabel;
         });
 
@@ -169,7 +169,7 @@ std::optional<const sciformats::jdx::Ldr> sciformats::jdx::util::findLdr(
 }
 
 std::optional<std::string> sciformats::jdx::util::findLdrValue(
-    const std::vector<Ldr>& ldrs, const std::string& label)
+    const std::vector<StringLdr>& ldrs, const std::string& label)
 {
     auto ldr = util::findLdr(ldrs, label);
     return ldr.has_value() ? std::optional<std::string>(ldr.value().getValue())

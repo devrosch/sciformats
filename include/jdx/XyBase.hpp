@@ -2,7 +2,7 @@
 #define LIBJDX_XYBASE_HPP
 
 #include "jdx/Data2D.hpp"
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 #include "jdx/XyParameters.hpp"
 
 #include <istream>
@@ -34,7 +34,7 @@ protected:
      * @param expectedLabel The expected label for this LDR.
      * @param expectedVariableList The expected variable list for this LDR.
      */
-    XyBase(std::istream& istream, const std::vector<Ldr>& ldrs,
+    XyBase(std::istream& istream, const std::vector<StringLdr>& ldrs,
         std::string expectedLabel, std::string expectedVariableList);
     /**
      * @brief Constructs XyBase from first line and istream.
@@ -50,7 +50,7 @@ protected:
      * @param expectedVariableList The expected variable list for this LDR.
      */
     XyBase(const std::string& label, const std::string& variableList,
-        std::istream& iStream, const std::vector<Ldr>& ldrs,
+        std::istream& iStream, const std::vector<StringLdr>& ldrs,
         std::string expectedLabel, std::string expectedVariableList);
     /**
      * @brief Provides the parsed xy data.
@@ -64,7 +64,7 @@ private:
     std::string m_expectedVariableList;
     XyParameters m_parameters;
 
-    static XyParameters parseParameters(const std::vector<Ldr>& ldrs);
+    static XyParameters parseParameters(const std::vector<StringLdr>& ldrs);
 };
 } // namespace sciformats::jdx
 

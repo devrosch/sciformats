@@ -2,7 +2,7 @@
 #define LIBJDX_RADATA_HPP
 
 #include "jdx/Data2D.hpp"
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 #include "jdx/RaParameters.hpp"
 
 #include <istream>
@@ -24,7 +24,7 @@ public:
      * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
-    RaData(std::istream& iStream, const std::vector<Ldr>& ldrs);
+    RaData(std::istream& iStream, const std::vector<StringLdr>& ldrs);
     /**
      * @brief Constructs RaData from first line value and istream.
      * @param label The label of the first line of the record, i.e. "RADATA".
@@ -37,7 +37,7 @@ public:
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
     RaData(const std::string& label, const std::string& variableList,
-        std::istream& iStream, const std::vector<Ldr>& ldrs);
+        std::istream& iStream, const std::vector<StringLdr>& ldrs);
     /**
      * @brief Provides parameters specific to RADATA.
      * @return The parameters.
@@ -56,7 +56,7 @@ private:
 
     RaParameters m_parameters;
 
-    static RaParameters parseParameters(const std::vector<Ldr>& ldrs);
+    static RaParameters parseParameters(const std::vector<StringLdr>& ldrs);
 };
 } // namespace sciformats::jdx
 

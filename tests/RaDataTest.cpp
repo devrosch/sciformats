@@ -1,5 +1,5 @@
 #include "jdx/RaData.hpp"
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 
 #include "catch2/catch.hpp"
 
@@ -15,7 +15,7 @@ TEST_CASE("parses AFFN RA data, stream at LDR start", "[RaData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("RUNITS", "MICROMETERS");
     ldrs.emplace_back("AUNITS", "ARBITRARY UNITS");
     ldrs.emplace_back("FIRSTR", "0");
@@ -58,7 +58,7 @@ TEST_CASE("parses AFFN RA data, stream at 2nd line start", "[RaData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("RUNITS", "MICROMETERS");
     ldrs.emplace_back("AUNITS", "ARBITRYRY UNITS");
     ldrs.emplace_back("FIRSTR", "0");
@@ -103,7 +103,7 @@ TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    std::vector<sciformats::jdx::Ldr> ldrs;
+    std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("FIRSTR", "0");
     ldrs.emplace_back("LASTR", "0");
     ldrs.emplace_back("AFACTOR", "1.0");

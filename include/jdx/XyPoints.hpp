@@ -1,7 +1,7 @@
 #ifndef LIBJDX_XYPOINTS_HPP
 #define LIBJDX_XYPOINTS_HPP
 
-#include "jdx/Ldr.hpp"
+#include "jdx/StringLdr.hpp"
 #include "jdx/XyBase.hpp"
 #include "jdx/XyParameters.hpp"
 
@@ -24,7 +24,7 @@ public:
      * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
-    XyPoints(std::istream& istream, const std::vector<Ldr>& ldrs);
+    XyPoints(std::istream& istream, const std::vector<StringLdr>& ldrs);
     /**
      * @brief Constructs XyPoints from first line and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA".
@@ -37,7 +37,7 @@ public:
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
     XyPoints(const std::string& label, const std::string& variableList,
-        std::istream& iStream, const std::vector<Ldr>& ldrs);
+        std::istream& iStream, const std::vector<StringLdr>& ldrs);
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by

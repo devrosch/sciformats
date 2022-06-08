@@ -4,6 +4,7 @@
 #include <functional>
 #include <istream>
 #include <string>
+#include <optional>
 
 namespace sciformats::jdx
 {

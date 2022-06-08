@@ -3,8 +3,8 @@
 
 #include <functional>
 #include <istream>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace sciformats::jdx
 {

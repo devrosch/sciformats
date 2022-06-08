@@ -7,7 +7,7 @@
 #include <tuple>
 
 sciformats::jdx::PeakTable::PeakTable(std::istream& istream)
-    : TabularData(istream)
+    : DataLdr(istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakTableLabel,
         std::vector<std::string>{
@@ -17,7 +17,7 @@ sciformats::jdx::PeakTable::PeakTable(std::istream& istream)
 
 sciformats::jdx::PeakTable::PeakTable(
     std::string label, std::string variableList, std::istream& istream)
-    : TabularData(std::move(label), std::move(variableList), istream)
+    : DataLdr(std::move(label), std::move(variableList), istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakTableLabel,
         std::vector<std::string>{

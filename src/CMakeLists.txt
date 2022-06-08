@@ -19,7 +19,6 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/XyPoints.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyBase.hpp"
     # tabular data
-    "${PROJECT_SOURCE_DIR}/include/jdx/TabularData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Peak.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
@@ -46,7 +45,6 @@ add_library(jdxparser
     XyPoints.cpp
     XyBase.cpp
     # tabular data
-    TabularData.cpp
     Peak.cpp
     PeakTable.cpp
     PeakAssignment.cpp

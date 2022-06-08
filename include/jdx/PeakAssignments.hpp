@@ -1,8 +1,8 @@
 #ifndef LIBJDX_PEAKASSIGNMENTS_HPP
 #define LIBJDX_PEAKASSIGNMENTS_HPP
 
+#include "jdx/DataLdr.hpp"
 #include "jdx/PeakAssignment.hpp"
-#include "jdx/TabularData.hpp"
 
 #include <functional>
 #include <vector>
@@ -12,7 +12,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX PEAK ASSIGNMENTS record.
  */
-class PeakAssignments : public TabularData
+class PeakAssignments : public DataLdr
 {
 public:
     explicit PeakAssignments(std::istream& iStream);

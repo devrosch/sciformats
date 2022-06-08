@@ -1,8 +1,8 @@
 #ifndef LIBJDX_PEAKTABLE_HPP
 #define LIBJDX_PEAKTABLE_HPP
 
+#include "jdx/DataLdr.hpp"
 #include "jdx/Peak.hpp"
-#include "jdx/TabularData.hpp"
 
 #include <functional>
 #include <istream>
@@ -14,7 +14,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX PEAK TABLE record.
  */
-class PeakTable : public TabularData
+class PeakTable : public DataLdr
 {
 public:
     explicit PeakTable(std::istream& istream);

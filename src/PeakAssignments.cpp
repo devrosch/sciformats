@@ -7,7 +7,7 @@
 #include <tuple>
 
 sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
-    : TabularData(istream)
+    : DataLdr(istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
@@ -17,7 +17,7 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
 
 sciformats::jdx::PeakAssignments::PeakAssignments(
     std::string label, std::string variableList, std::istream& istream)
-    : TabularData(std::move(label), std::move(variableList), istream)
+    : DataLdr(std::move(label), std::move(variableList), istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{

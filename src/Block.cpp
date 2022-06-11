@@ -182,7 +182,8 @@ std::optional<const sciformats::jdx::StringLdr> sciformats::jdx::Block::getLdr(
     return util::findLdr(m_ldrs, label);
 }
 
-const std::vector<sciformats::jdx::StringLdr>& sciformats::jdx::Block::getLdrs() const
+const std::vector<sciformats::jdx::StringLdr>&
+sciformats::jdx::Block::getLdrs() const
 {
     return m_ldrs;
 }

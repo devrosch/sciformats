@@ -1,6 +1,7 @@
 #include "jdx/StringLdr.hpp"
 
-sciformats::jdx::StringLdr::StringLdr(const std::string& label, const std::string& value)
+sciformats::jdx::StringLdr::StringLdr(
+    const std::string& label, const std::string& value)
 {
     m_label = label;
     m_value = value;

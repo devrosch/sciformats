@@ -2,8 +2,8 @@
 #define LIBJDX_RADATA_HPP
 
 #include "jdx/Data2D.hpp"
-#include "jdx/StringLdr.hpp"
 #include "jdx/RaParameters.hpp"
+#include "jdx/StringLdr.hpp"
 
 #include <istream>
 #include <vector>

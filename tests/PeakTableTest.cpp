@@ -173,3 +173,26 @@ TEST_CASE("fails when PEAK TABLE is missing a component", "[PeakTable]")
     auto table = sciformats::jdx::PeakTable(stream);
     REQUIRE_THROWS(table.getData());
 }
+
+TEST_CASE("parses PEAK TABLE peak width function even if zero peaks present",
+    "[PeakTable]")
+{
+    std::string input{"##PEAK TABLE= (XY..XY)\r\n"
+                      "$$ peak width kernel line 1\r\n"
+                      "$$ peak width kernel line 2\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto table = sciformats::jdx::PeakTable(stream);
+    auto kernel = table.getKernel();
+    auto xyData = table.getData();
+
+    REQUIRE(kernel.has_value());
+    REQUIRE(kernel.value()
+            == "peak width kernel line 1"
+               "\n"
+               "peak width kernel line 2");
+
+    REQUIRE(xyData.empty());
+}

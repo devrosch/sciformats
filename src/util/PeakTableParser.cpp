@@ -48,14 +48,25 @@ bool sciformats::jdx::util::PeakTableParser::hasNext()
     auto currentLine = m_currentLine;
     auto currentPos = m_currentPos;
 
-    // TODO: does not account for leading comments as next value
+    auto resetState = [&]() {
+        // TODO: optimize
+        m_istream.seekg(streamPos);
+        m_currentLine = currentLine;
+        m_currentPos = currentPos;
+    };
+
+    if (!m_isPastInitialComment)
+    {
+        auto kernelFunction = parseKernelFunctions();
+        resetState();
+        if (kernelFunction)
+        {
+            return true;
+        }
+    }
+
     std::optional<Peak> peak = nextPeak();
-
-    // TODO: optimize
-    m_istream.seekg(streamPos);
-    m_currentLine = currentLine;
-    m_currentPos = currentPos;
-
+    resetState();
     return peak.has_value();
 }
 

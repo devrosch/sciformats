@@ -1,10 +1,10 @@
 #ifndef LIBJDX_BLOCK_HPP
 #define LIBJDX_BLOCK_HPP
 
-#include "jdx/StringLdr.hpp"
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
+#include "jdx/StringLdr.hpp"
 #include "jdx/XyData.hpp"
 #include "jdx/XyPoints.hpp"
 

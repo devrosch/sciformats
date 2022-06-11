@@ -2,7 +2,7 @@
 
 #include "catch2/catch.hpp"
 
-TEST_CASE("LDR is initialized with two both arguments", "[Ldr]")
+TEST_CASE("LDR is initialized with two both arguments", "[StringLdr]")
 {
     std::string label{"LABEL"};
     std::string value{"value"};
@@ -13,7 +13,7 @@ TEST_CASE("LDR is initialized with two both arguments", "[Ldr]")
     REQUIRE(value == ldr.getValue());
 }
 
-TEST_CASE("user defined LDRs are recognized", "[Ldr]")
+TEST_CASE("user defined LDRs are recognized", "[StringLdr]")
 {
     auto standardLdr = sciformats::jdx::StringLdr{"TITLE", "value"};
     auto userDefinedLdr
@@ -26,7 +26,7 @@ TEST_CASE("user defined LDRs are recognized", "[Ldr]")
     REQUIRE(false == techniqueSpecificLdr.isUserDefined());
 }
 
-TEST_CASE("technique specific LDRs are recognized", "[Ldr]")
+TEST_CASE("technique specific LDRs are recognized", "[StringLdr]")
 {
     auto standardLdr = sciformats::jdx::StringLdr{"TITLE", "value"};
     auto userDefinedLdr

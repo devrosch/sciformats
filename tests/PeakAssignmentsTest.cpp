@@ -330,3 +330,23 @@ TEST_CASE("fails for malformed PEAK ASSIGNMENT in PEAK ASSIGNMENTS",
         Catch::Matchers::Contains(
             "no closing parenthesis", Catch::CaseSensitive::No));
 }
+
+TEST_CASE(
+    "parses PEAK ASSIGNMENTS peak width function even if zero peaks present",
+    "[PeakAssignments]")
+{
+    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
+                      "$$ peak width function\r\n"
+                      "##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto widthFunction = assignments.getWidthFunction();
+    auto data = assignments.getData();
+
+    REQUIRE(widthFunction.has_value());
+    REQUIRE(widthFunction.value() == "peak width function");
+
+    REQUIRE(data.empty());
+}

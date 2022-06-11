@@ -5,7 +5,7 @@
 #include <algorithm>
 
 sciformats::jdx::util::PeakTableParser::PeakTableParser(
-    std::istream& iStream, unsigned int numVariables)
+    std::istream& iStream, size_t numVariables)
     : m_istream{iStream}
     , m_numVariables{numVariables}
     , m_isPastInitialComment{false}

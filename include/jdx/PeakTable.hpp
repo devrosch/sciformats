@@ -3,6 +3,7 @@
 
 #include "jdx/DataLdr.hpp"
 #include "jdx/Peak.hpp"
+#include "jdx/TabularData.hpp"
 
 #include <functional>
 #include <istream>
@@ -14,7 +15,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX PEAK TABLE record.
  */
-class PeakTable : public DataLdr
+class PeakTable : public TabularData
 {
 public:
     explicit PeakTable(std::istream& istream);
@@ -39,6 +40,8 @@ private:
     static constexpr const char* s_peakTableLabel = "PEAKTABLE";
     static constexpr std::array<const char*, 2> s_peakTableVariableLists
         = {"(XY..XY)", "(XYW..XYW)"};
+
+    size_t getNumVariables();
 };
 } // namespace sciformats::jdx
 

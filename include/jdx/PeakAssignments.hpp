@@ -3,6 +3,7 @@
 
 #include "jdx/DataLdr.hpp"
 #include "jdx/PeakAssignment.hpp"
+#include "jdx/TabularData.hpp"
 
 #include <functional>
 #include <vector>
@@ -12,7 +13,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX PEAK ASSIGNMENTS record.
  */
-class PeakAssignments : public DataLdr
+class PeakAssignments : public TabularData
 {
 public:
     explicit PeakAssignments(std::istream& iStream);
@@ -37,6 +38,8 @@ private:
     static constexpr const char* s_peakAssignentsLabel = "PEAKASSIGNMENTS";
     static constexpr std::array<const char*, 2> s_peakAssignentsVariableLists
         = {"(XYA)", "(XYWA)"};
+
+    size_t getNumVariables();
 };
 } // namespace sciformats::jdx
 

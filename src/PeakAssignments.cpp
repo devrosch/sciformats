@@ -2,12 +2,10 @@
 #include "jdx/util/LdrUtils.hpp"
 #include "jdx/util/PeakAssignmentsParser.hpp"
 
-#include <algorithm>
 #include <istream>
-#include <tuple>
 
 sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
-    : DataLdr(istream)
+    : TabularData(istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
@@ -18,7 +16,7 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
 
 sciformats::jdx::PeakAssignments::PeakAssignments(
     std::string label, std::string variableList, std::istream& istream)
-    : DataLdr(std::move(label), std::move(variableList), istream)
+    : TabularData(std::move(label), std::move(variableList), istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
@@ -27,57 +25,21 @@ sciformats::jdx::PeakAssignments::PeakAssignments(
     skipToNextLdr(istream);
 }
 
-// TODO: duplicate of getWidthFunction() in PeakTable
 std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
 {
-    auto func = [&]() {
-        auto& stream = getStream();
-        std::optional<std::string> widthFunction{std::nullopt};
-        auto numVariables
-            = getVariableList() == s_peakAssignentsVariableLists.at(0) ? 3U
-                                                                       : 4U;
-        util::PeakAssignmentsParser parser{stream, numVariables};
-
-        if (parser.hasNext())
-        {
-            auto nextVariant = parser.next();
-            if (std::holds_alternative<std::string>(nextVariant))
-            {
-                widthFunction = std::get<std::string>(nextVariant);
-            }
-        }
-
-        return widthFunction;
-    };
-
-    return callAndResetStreamPos<std::optional<std::string>>(func);
+    util::PeakAssignmentsParser parser{getStream(), getNumVariables()};
+    return TabularData::getWidthFunction<util::PeakAssignmentsParser>(parser);
 }
 
 std::vector<sciformats::jdx::PeakAssignment>
 sciformats::jdx::PeakAssignments::getData()
 {
-    auto func = [&]() {
-        auto& stream = getStream();
-        std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
-        auto numVariables
-            = getVariableList() == s_peakAssignentsVariableLists.at(0) ? 3U
-                                                                       : 4U;
-        util::PeakAssignmentsParser parser{stream, numVariables};
+    util::PeakAssignmentsParser parser{getStream(), getNumVariables()};
+    return TabularData::getData<util::PeakAssignmentsParser, PeakAssignment>(
+        parser);
+}
 
-        while (parser.hasNext())
-        {
-            auto nextVariant = parser.next();
-            if (std::holds_alternative<std::string>(nextVariant))
-            {
-                // skip width function
-                continue;
-            }
-            peakAssignments.push_back(std::get<PeakAssignment>(nextVariant));
-        }
-
-        return peakAssignments;
-    };
-
-    return callAndResetStreamPos<std::vector<sciformats::jdx::PeakAssignment>>(
-        func);
+size_t sciformats::jdx::PeakAssignments::getNumVariables()
+{
+    return getVariableList() == s_peakAssignentsVariableLists.at(0) ? 3U : 4U;
 }

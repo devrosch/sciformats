@@ -10,8 +10,8 @@ sciformats::jdx::PeakTable::PeakTable(std::istream& istream)
     : DataLdr(istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakTableLabel,
-        std::vector<std::string>{
-            s_peakTableXyVariableList, s_peakTableXywVariableList});
+        std::vector<std::string>{std::begin(s_peakTableVariableLists),
+            std::end(s_peakTableVariableLists)});
     skipToNextLdr(istream);
 }
 
@@ -20,20 +20,18 @@ sciformats::jdx::PeakTable::PeakTable(
     : DataLdr(std::move(label), std::move(variableList), istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakTableLabel,
-        std::vector<std::string>{
-            s_peakTableXyVariableList, s_peakTableXywVariableList});
+        std::vector<std::string>{std::begin(s_peakTableVariableLists),
+            std::end(s_peakTableVariableLists)});
     skipToNextLdr(istream);
 }
 
-std::optional<std::string> sciformats::jdx::PeakTable::getKernel()
+std::optional<std::string> sciformats::jdx::PeakTable::getWidthFunction()
 {
-    // comment $$ in line(s) following LDR start may contain peak width and
-    // other peak kernel functions
     auto func = [&]() {
         auto& stream = getStream();
-        std::optional<std::string> kernelFunction{std::nullopt};
+        std::optional<std::string> widthFunction{std::nullopt};
         auto numVariables
-            = getVariableList() == s_peakTableXyVariableList ? 2U : 3U;
+            = getVariableList() == s_peakTableVariableLists.at(0) ? 2U : 3U;
         util::PeakTableParser parser{stream, numVariables};
 
         if (parser.hasNext())
@@ -41,11 +39,11 @@ std::optional<std::string> sciformats::jdx::PeakTable::getKernel()
             auto nextVariant = parser.next();
             if (std::holds_alternative<std::string>(nextVariant))
             {
-                kernelFunction = std::get<std::string>(nextVariant);
+                widthFunction = std::get<std::string>(nextVariant);
             }
         }
 
-        return kernelFunction;
+        return widthFunction;
     };
 
     return callAndResetStreamPos<std::optional<std::string>>(func);
@@ -57,7 +55,7 @@ std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
         auto& stream = getStream();
         std::vector<sciformats::jdx::Peak> peaks{};
         auto numVariables
-            = getVariableList() == s_peakTableXyVariableList ? 2U : 3U;
+            = getVariableList() == s_peakTableVariableLists.at(0) ? 2U : 3U;
         util::PeakTableParser parser{stream, numVariables};
 
         while (parser.hasNext())

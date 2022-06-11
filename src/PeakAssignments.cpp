@@ -11,7 +11,8 @@ sciformats::jdx::PeakAssignments::PeakAssignments(std::istream& istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
-            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
+            std::vector<std::string>{std::begin(s_peakAssignentsVariableLists),
+                std::end(s_peakAssignentsVariableLists)}});
     skipToNextLdr(istream);
 }
 
@@ -21,19 +22,20 @@ sciformats::jdx::PeakAssignments::PeakAssignments(
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
-            s_peakAssignentsXyaVariableList, s_peakAssignentsXywaVariableList});
+            std::vector<std::string>{std::begin(s_peakAssignentsVariableLists),
+                std::end(s_peakAssignentsVariableLists)}});
     skipToNextLdr(istream);
 }
 
-// TODO: duplicate of getKernel() in PeakTable
+// TODO: duplicate of getWidthFunction() in PeakTable
 std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
 {
-    // comment $$ in line(s) following LDR start may contain width function
     auto func = [&]() {
         auto& stream = getStream();
         std::optional<std::string> widthFunction{std::nullopt};
         auto numVariables
-            = getVariableList() == s_peakAssignentsXyaVariableList ? 3U : 4U;
+            = getVariableList() == s_peakAssignentsVariableLists.at(0) ? 3U
+                                                                       : 4U;
         util::PeakAssignmentsParser parser{stream, numVariables};
 
         if (parser.hasNext())
@@ -58,7 +60,8 @@ sciformats::jdx::PeakAssignments::getData()
         auto& stream = getStream();
         std::vector<sciformats::jdx::PeakAssignment> peakAssignments{};
         auto numVariables
-            = getVariableList() == s_peakAssignentsXyaVariableList ? 3U : 4U;
+            = getVariableList() == s_peakAssignentsVariableLists.at(0) ? 3U
+                                                                       : 4U;
         util::PeakAssignmentsParser parser{stream, numVariables};
 
         while (parser.hasNext())

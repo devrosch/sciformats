@@ -24,15 +24,19 @@ public:
      */
     std::vector<PeakAssignment> getData();
     /**
-     * @brief Definition of peak width function.
+     * @brief Definition of peak width (and other kernel) functions.
+     *
+     * Comment $$ in line(s) following LDR start may contain peak width and
+     * other peak kernel functions
+     *
      * @return Textual description of peak width function.
      */
     std::optional<std::string> getWidthFunction();
 
 private:
     static constexpr const char* s_peakAssignentsLabel = "PEAKASSIGNMENTS";
-    static constexpr const char* s_peakAssignentsXyaVariableList = "(XYA)";
-    static constexpr const char* s_peakAssignentsXywaVariableList = "(XYWA)";
+    static constexpr std::array<const char*, 2> s_peakAssignentsVariableLists
+        = {"(XYA)", "(XYWA)"};
 };
 } // namespace sciformats::jdx
 

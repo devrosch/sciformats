@@ -35,7 +35,7 @@ protected:
      * @param expectedVariableList The expected variable list for this LDR.
      */
     XyBase(std::istream& istream, const std::vector<StringLdr>& ldrs,
-        std::string expectedLabel, std::string expectedVariableList);
+        const std::string& expectedLabel, std::string expectedVariableList);
     /**
      * @brief Constructs XyBase from first line and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA".
@@ -51,7 +51,7 @@ protected:
      */
     XyBase(const std::string& label, const std::string& variableList,
         std::istream& iStream, const std::vector<StringLdr>& ldrs,
-        std::string expectedLabel, std::string expectedVariableList);
+        const std::string& expectedLabel, std::string expectedVariableList);
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by
@@ -60,8 +60,6 @@ protected:
     std::vector<std::pair<double, double>> getData(Data2D::DataEncoding);
 
 private:
-    std::string m_expectedLabel;
-    std::string m_expectedVariableList;
     XyParameters m_parameters;
 
     static XyParameters parseParameters(const std::vector<StringLdr>& ldrs);

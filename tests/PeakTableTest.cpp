@@ -18,7 +18,7 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
     stream.str(input);
 
     auto table = sciformats::jdx::PeakTable(stream);
-    auto kernel = table.getKernel();
+    auto kernel = table.getWidthFunction();
     auto xyData = table.getData();
 
     REQUIRE(kernel.has_value());
@@ -185,7 +185,7 @@ TEST_CASE("parses PEAK TABLE peak width function even if zero peaks present",
     stream.str(input);
 
     auto table = sciformats::jdx::PeakTable(stream);
-    auto kernel = table.getKernel();
+    auto kernel = table.getWidthFunction();
     auto xyData = table.getData();
 
     REQUIRE(kernel.has_value());

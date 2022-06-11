@@ -26,17 +26,19 @@ public:
      */
     std::vector<Peak> getData();
     /**
-     * @brief Definition of peak width and other peak kernel functions.
+     * @brief Definition of peak width (and other kernel) functions
+     *
+     * Comment $$ in line(s) following LDR start may contain peak width and
+     * other peak kernel functions
+     *
      * @return Textual description of kernel functions.
      */
-    std::optional<std::string> getKernel();
+    std::optional<std::string> getWidthFunction();
 
 private:
     static constexpr const char* s_peakTableLabel = "PEAKTABLE";
-    static constexpr const char* s_peakTableXyVariableList = "(XY..XY)";
-    static constexpr const char* s_peakTableXywVariableList = "(XYW..XYW)";
-    //    static const inline std::vector<std::string> expVarLists = {
-    //    "(XY..XY)", "(XYW..XYW)" };
+    static constexpr std::array<const char*, 2> s_peakTableVariableLists
+        = {"(XY..XY)", "(XYW..XYW)"};
 };
 } // namespace sciformats::jdx
 

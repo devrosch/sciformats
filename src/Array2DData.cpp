@@ -1,23 +1,24 @@
-#include "jdx/Data2D.hpp"
+#include "jdx/Array2DData.hpp"
 #include "jdx/util/DataParser.hpp"
 #include "jdx/util/LdrUtils.hpp"
 
 #include <tuple>
 
-sciformats::jdx::Data2D::Data2D(std::istream& iStream)
+sciformats::jdx::Array2DData::Array2DData(std::istream& iStream)
     : DataLdr(iStream)
 {
 }
 
-sciformats::jdx::Data2D::Data2D(
+sciformats::jdx::Array2DData::Array2DData(
     std::string label, std::string variableList, std::istream& iStream)
     : DataLdr(std::move(label), std::move(variableList), iStream)
 {
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXppYYInput(
-    const std::string& label, std::istream& iStream, double firstX,
-    double lastX, double yFactor, size_t nPoints)
+std::vector<std::pair<double, double>>
+sciformats::jdx::Array2DData::parseXppYYInput(const std::string& label,
+    std::istream& iStream, double firstX, double lastX, double yFactor,
+    size_t nPoints)
 {
     // parse
     auto yData = sciformats::jdx::DataParser::readXppYYData(iStream);
@@ -49,9 +50,9 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXppYYInput(
     return xyData;
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyInput(
-    const std::string& label, std::istream& iStream, double xFactor,
-    double yFactor, size_t nPoints)
+std::vector<std::pair<double, double>>
+sciformats::jdx::Array2DData::parseXyXyInput(const std::string& label,
+    std::istream& iStream, double xFactor, double yFactor, size_t nPoints)
 {
     // parse
     auto xyData = sciformats::jdx::DataParser::readXyXyData(iStream);
@@ -70,7 +71,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyInput(
     return xyData;
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::Data2D::getData(
+std::vector<std::pair<double, double>> sciformats::jdx::Array2DData::getData(
     double firstX, double lastX, double xFactor, double yFactor,
     uint64_t nPoints, DataEncoding dataEncoding)
 {

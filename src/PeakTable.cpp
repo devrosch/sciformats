@@ -1,6 +1,6 @@
 #include "jdx/PeakTable.hpp"
 #include "jdx/util/LdrUtils.hpp"
-#include "jdx/util/PeakTableParser.hpp"
+#include "util/PeakTableParser.hpp"
 
 #include <algorithm>
 #include <istream>

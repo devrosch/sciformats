@@ -3,8 +3,10 @@ set(HEADER_LIST
     # util
     "${PROJECT_SOURCE_DIR}/include/jdx/util/LdrUtils.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/util/DataParser.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakTableParser.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakAssignmentsParser.hpp"
+#    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakTableParser.hpp"
+#    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakAssignmentsParser.hpp"
+    "${PROJECT_SOURCE_DIR}/src/util/PeakTableParser.hpp"
+    "${PROJECT_SOURCE_DIR}/src/util/PeakAssignmentsParser.hpp"
     # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/StringLdr.hpp"
@@ -13,7 +15,7 @@ set(HEADER_LIST
     # 2D data
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/Data2D.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/Array2DData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyPoints.hpp"
@@ -40,16 +42,14 @@ add_library(jdxparser
     # data
     DataLdr.cpp
     # 2D data
-    Data2D.cpp
+    Array2DData.cpp
     XyData.cpp
     RaData.cpp
     XyPoints.cpp
     XyBase.cpp
     # tabular data
     TabularData.cpp
-    Peak.cpp
     PeakTable.cpp
-    PeakAssignment.cpp
     PeakAssignments.cpp
     ${HEADER_LIST})
 
@@ -58,3 +58,4 @@ target_compile_features(jdxparser PUBLIC cxx_std_17)
 
 # We need this directory, and users of our library will need it too
 target_include_directories(jdxparser PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(jdxparser PRIVATE ${PROJECT_SOURCE_DIR}/src)

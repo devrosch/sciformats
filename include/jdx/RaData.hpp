@@ -1,7 +1,7 @@
 #ifndef LIBJDX_RADATA_HPP
 #define LIBJDX_RADATA_HPP
 
-#include "jdx/Data2D.hpp"
+#include "jdx/Array2DData.hpp"
 #include "jdx/RaParameters.hpp"
 #include "jdx/StringLdr.hpp"
 
@@ -13,7 +13,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX RADATA record.
  */
-class RaData : Data2D
+class RaData : Array2DData
 {
 public:
     /**

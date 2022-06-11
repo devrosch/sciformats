@@ -1,7 +1,7 @@
 #ifndef LIBJDX_XYBASE_HPP
 #define LIBJDX_XYBASE_HPP
 
-#include "jdx/Data2D.hpp"
+#include "jdx/Array2DData.hpp"
 #include "jdx/StringLdr.hpp"
 #include "jdx/XyParameters.hpp"
 
@@ -14,7 +14,7 @@ namespace sciformats::jdx
  * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=" and "##XYDATA="
  * LDRs. LDRs.
  */
-class XyBase : protected Data2D
+class XyBase : protected Array2DData
 {
 public:
     /**
@@ -57,7 +57,7 @@ protected:
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getData(Data2D::DataEncoding);
+    std::vector<std::pair<double, double>> getData(Array2DData::DataEncoding);
 
 private:
     XyParameters m_parameters;

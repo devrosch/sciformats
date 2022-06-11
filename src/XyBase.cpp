@@ -5,7 +5,7 @@
 sciformats::jdx::XyBase::XyBase(std::istream& iStream,
     const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
     std::string expectedVariableList)
-    : Data2D{iStream}
+    : Array2DData{iStream}
 {
     validateInput(getLabel(), getVariableList(), expectedLabel,
         std::vector<std::string>{std::move(expectedVariableList)});
@@ -17,7 +17,7 @@ sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::string& variableList, std::istream& iStream,
     const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
     std::string expectedVariableList)
-    : Data2D{label, variableList, iStream}
+    : Array2DData{label, variableList, iStream}
 {
     validateInput(getLabel(), getVariableList(), expectedLabel,
         std::vector<std::string>{std::move(expectedVariableList)});
@@ -32,9 +32,9 @@ sciformats::jdx::XyBase::getParameters() const
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
-    Data2D::DataEncoding encoding)
+    Array2DData::DataEncoding encoding)
 {
-    return Data2D::getData(m_parameters.firstX, m_parameters.lastX,
+    return Array2DData::getData(m_parameters.firstX, m_parameters.lastX,
         m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
         encoding);
 }

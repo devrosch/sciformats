@@ -1,4 +1,4 @@
-#include "jdx/util/PeakTableParser.hpp"
+#include "util/PeakTableParser.hpp"
 #include "jdx/Peak.hpp"
 #include "jdx/util/LdrUtils.hpp"
 

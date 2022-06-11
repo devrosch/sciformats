@@ -1,5 +1,5 @@
 #include "jdx/TabularData.hpp"
-#include "jdx/util/PeakAssignmentsParser.hpp"
+#include "util/PeakAssignmentsParser.hpp"
 
 #include <variant>
 

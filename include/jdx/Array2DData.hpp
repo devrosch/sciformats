@@ -12,7 +12,7 @@ namespace sciformats::jdx
  * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=", "##XYDATA=" and
  * "##RADATA=" LDRs.
  */
-class Data2D : public DataLdr
+class Array2DData : public DataLdr
 {
 public:
 protected:
@@ -22,15 +22,15 @@ protected:
         XyXy
     };
     /**
-     * @brief Constructs Data2D from istream.
+     * @brief Constructs Array2DData from istream.
      * @param iStream Input stream with JCAMP-DX data. The stream position is
      * assumed to be at the start of the first line of the record (the line
      * containing "##XYDATA=" or "##RADATA="). The istream is expected to exist
      * for the lifetime of this object.
      */
-    explicit Data2D(std::istream& iStream);
+    explicit Array2DData(std::istream& iStream);
     /**
-     * @brief Constructs Data2D from first line value and istream.
+     * @brief Constructs Array2DData from first line value and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".
      * @param variableList The value of the first line of the record
@@ -40,7 +40,8 @@ protected:
      * "##XYDATA=" or "##RADATA=") of the record. The istream is expected to
      * exist for the lifetime of this object.
      */
-    Data2D(std::string label, std::string variableList, std::istream& iStream);
+    Array2DData(
+        std::string label, std::string variableList, std::istream& iStream);
 
     std::vector<std::pair<double, double>> getData(double firstX, double lastX,
         double xFactor, double yFactor, uint64_t nPoints,

@@ -19,5 +19,5 @@ sciformats::jdx::XyPoints::XyPoints(const std::string& label,
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyPoints::getData()
 {
-    return XyBase::getData(Data2D::DataEncoding::XyXy);
+    return XyBase::getData(Array2DData::DataEncoding::XyXy);
 }

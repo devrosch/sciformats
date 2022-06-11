@@ -5,7 +5,7 @@
 
 sciformats::jdx::RaData::RaData(
     std::istream& iStream, const std::vector<StringLdr>& ldrs)
-    : Data2D(iStream)
+    : Array2DData(iStream)
 {
     validateInput(getLabel(), getVariableList(), s_raDataLabel,
         std::vector<std::string>{s_raDataVariableList});
@@ -16,7 +16,7 @@ sciformats::jdx::RaData::RaData(
 sciformats::jdx::RaData::RaData(const std::string& label,
     const std::string& variableList, std::istream& iStream,
     const std::vector<StringLdr>& ldrs)
-    : Data2D(label, variableList, iStream)
+    : Array2DData(label, variableList, iStream)
 {
     validateInput(label, variableList, s_raDataLabel,
         std::vector<std::string>{s_raDataVariableList});
@@ -32,9 +32,9 @@ sciformats::jdx::RaData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
-    return Data2D::getData(m_parameters.firstR, m_parameters.lastR,
+    return Array2DData::getData(m_parameters.firstR, m_parameters.lastR,
         m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
-        Data2D::DataEncoding::XppYY);
+        Array2DData::DataEncoding::XppYY);
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(

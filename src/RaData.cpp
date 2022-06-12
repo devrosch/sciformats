@@ -1,7 +1,7 @@
 #include "jdx/RaData.hpp"
 #include "jdx/RaParameters.hpp"
-#include "jdx/util/DataParser.hpp"
-#include "jdx/util/LdrUtils.hpp"
+#include "util/DataParser.hpp"
+#include "util/LdrUtils.hpp"
 
 sciformats::jdx::RaData::RaData(
     std::istream& iStream, const std::vector<StringLdr>& ldrs)

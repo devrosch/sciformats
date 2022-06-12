@@ -1,5 +1,5 @@
 #include "jdx/DataLdr.hpp"
-#include "jdx/util/LdrUtils.hpp"
+#include "util/LdrUtils.hpp"
 
 sciformats::jdx::DataLdr::DataLdr(std::istream& istream)
     : m_istream{istream}

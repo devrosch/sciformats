@@ -1,6 +1,6 @@
 #include "jdx/Array2DData.hpp"
-#include "jdx/util/DataParser.hpp"
-#include "jdx/util/LdrUtils.hpp"
+#include "util/DataParser.hpp"
+#include "util/LdrUtils.hpp"
 
 #include <tuple>
 

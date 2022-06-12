@@ -1,10 +1,8 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
-    # util
-    "${PROJECT_SOURCE_DIR}/include/jdx/util/LdrUtils.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/util/DataParser.hpp"
-#    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakTableParser.hpp"
-#    "${PROJECT_SOURCE_DIR}/include/jdx/util/PeakAssignmentsParser.hpp"
+    # util (private headers)
+    "${PROJECT_SOURCE_DIR}/src/util/LdrUtils.hpp"
+    "${PROJECT_SOURCE_DIR}/src/util/DataParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakTableParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakAssignmentsParser.hpp"
     # ldr

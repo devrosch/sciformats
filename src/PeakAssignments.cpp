@@ -1,5 +1,5 @@
 #include "jdx/PeakAssignments.hpp"
-#include "jdx/util/LdrUtils.hpp"
+#include "util/LdrUtils.hpp"
 #include "util/PeakAssignmentsParser.hpp"
 
 #include <istream>

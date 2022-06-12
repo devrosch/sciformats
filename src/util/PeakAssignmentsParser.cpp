@@ -1,6 +1,6 @@
 #include "util/PeakAssignmentsParser.hpp"
 #include "jdx/PeakAssignment.hpp"
-#include "jdx/util/LdrUtils.hpp"
+#include "util/LdrUtils.hpp"
 
 #include <algorithm>
 

@@ -1,7 +1,7 @@
 #include "jdx/XyPoints.hpp"
 #include "jdx/XyBase.hpp"
-#include "jdx/util/DataParser.hpp"
-#include "jdx/util/LdrUtils.hpp"
+#include "util/DataParser.hpp"
+#include "util/LdrUtils.hpp"
 
 sciformats::jdx::XyPoints::XyPoints(
     std::istream& iStream, const std::vector<StringLdr>& ldrs)

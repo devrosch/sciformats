@@ -98,6 +98,9 @@ sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(
     parms.deltaR = deltaR.has_value()
                        ? std::optional<double>(std::stod(deltaR.value()))
                        : std::nullopt;
-
+    parms.zdp = zdp.has_value() ? std::optional<double>(std::stod(zdp.value()))
+                                : std::nullopt;
+    parms.alias = alias.has_value() ? std::optional<std::string>(alias.value())
+                                    : std::nullopt;
     return parms;
 }

@@ -5,8 +5,8 @@
 #include "jdx/Peak.hpp"
 #include "jdx/TabularData.hpp"
 
-#include <functional>
 #include <istream>
+#include <optional>
 #include <string>
 #include <vector>
 

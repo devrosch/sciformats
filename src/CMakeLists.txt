@@ -57,3 +57,12 @@ target_compile_features(jdxparser PUBLIC cxx_std_17)
 # We need this directory, and users of our library will need it too
 target_include_directories(jdxparser PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(jdxparser PRIVATE ${PROJECT_SOURCE_DIR}/src)
+
+# --------------------------------------------------------------
+# Use include-what-you-use if available => deactivated due to some iwyu issues
+# --------------------------------------------------------------
+#find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
+# if(NOT iwyu_path)
+#   message(FATAL_ERROR "Could not find the program include-what-you-use")
+# endif()
+#set_property(TARGET jdxparser PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})

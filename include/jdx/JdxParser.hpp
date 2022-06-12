@@ -3,12 +3,8 @@
 
 #include "jdx/Block.hpp"
 
-#include <cstdint>
-#include <fstream>
 #include <istream>
-#include <optional>
-#include <sstream>
-#include <vector>
+#include <string>
 
 namespace sciformats::jdx
 {

@@ -8,12 +8,9 @@
 #include "jdx/XyData.hpp"
 #include "jdx/XyPoints.hpp"
 
-#include <cstdint>
-#include <fstream>
 #include <istream>
-#include <map>
 #include <optional>
-#include <sstream>
+#include <string>
 #include <vector>
 
 namespace sciformats::jdx

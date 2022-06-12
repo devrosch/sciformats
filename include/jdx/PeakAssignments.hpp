@@ -5,7 +5,9 @@
 #include "jdx/PeakAssignment.hpp"
 #include "jdx/TabularData.hpp"
 
-#include <functional>
+#include <istream>
+#include <optional>
+#include <string>
 #include <vector>
 
 namespace sciformats::jdx

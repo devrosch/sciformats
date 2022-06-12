@@ -6,6 +6,7 @@
 #include "jdx/StringLdr.hpp"
 
 #include <istream>
+#include <string>
 #include <vector>
 
 namespace sciformats::jdx

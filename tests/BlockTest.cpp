@@ -2,6 +2,8 @@
 
 #include "catch2/catch.hpp"
 
+#include <sstream>
+
 TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
 {
     std::string input{"##TITLE= Test\r\n"

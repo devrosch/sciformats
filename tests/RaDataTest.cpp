@@ -53,18 +53,24 @@ TEST_CASE("parses AFFN RA data", "[RaData]")
 
 TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
 {
-    // "##RADATA= (X++(Y..Y))\r\n"
+    // "##RADATA= (R++(A..A))\r\n"
     const auto* label = "RADATA";
-    const auto* variables = "(X++(Y..Y))";
+    const auto* variables = "(R++(A..A))";
     std::string input{"0, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
+    ldrs.emplace_back("RUNITS", "MICROMETERS");
+    ldrs.emplace_back("AUNITS", "ARBITRARY UNITS");
     ldrs.emplace_back("FIRSTR", "0");
     ldrs.emplace_back("LASTR", "0");
+    ldrs.emplace_back("RFACTOR", "1.0");
     ldrs.emplace_back("AFACTOR", "1.0");
-    ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::RaData(label, variables, stream, ldrs));
+    // NPOINTS missing
+
+    REQUIRE_THROWS_WITH(sciformats::jdx::RaData(label, variables, stream, ldrs),
+        Catch::Matchers::Contains("missing", Catch::CaseSensitive::No)
+            && Catch::Matchers::Contains("NPOINTS", Catch::CaseSensitive::No));
 }

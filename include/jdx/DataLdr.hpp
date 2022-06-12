@@ -21,18 +21,13 @@ public:
 
 protected:
     DataLdr(std::string label, std::string variableList, std::istream& istream);
-
     std::istream& getStream();
-    std::streampos& getStreamPos();
-
     /**
      * @brief Moves the stream position to the start of the next LDR or to the
      * EOF if no LDR follows.
      * @param iStream The stream whose position will be changed.
      */
     static void skipToNextLdr(std::istream& iStream);
-    static std::pair<std::string, std::string> readFirstLine(
-        std::istream& istream);
     /**
      * @brief Validates if input is a valid data LDR.
      * @param label LDR label.

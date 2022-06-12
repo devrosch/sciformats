@@ -172,3 +172,27 @@ TEST_CASE(
     REQUIRE(data.at(6).second == Approx(22.0));
     REQUIRE(data.at(7).second == Approx(23.0));
 }
+
+TEST_CASE("parses zero data point record", "[XyData]")
+{
+    // "##XYDATA= (X++(Y..Y))\r\n"
+    const auto* label = "XYDATA";
+    const auto* variables = "(X++(Y..Y))";
+    std::string input{"##END="};
+    std::stringstream stream{std::ios_base::in};
+    stream.str(input);
+
+    std::vector<sciformats::jdx::StringLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "1.0");
+    ldrs.emplace_back("NPOINTS", "0");
+
+    auto xyDataRecord = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyData = xyDataRecord.getData();
+
+    REQUIRE(xyData.empty());
+}

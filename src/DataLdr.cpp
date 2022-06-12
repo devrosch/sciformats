@@ -20,11 +20,6 @@ std::istream& sciformats::jdx::DataLdr::getStream()
     return m_istream;
 }
 
-std::streampos& sciformats::jdx::DataLdr::getStreamPos()
-{
-    return m_streamDataPos;
-}
-
 void sciformats::jdx::DataLdr::skipToNextLdr(std::istream& iStream)
 {
     while (!iStream.eof())
@@ -38,25 +33,6 @@ void sciformats::jdx::DataLdr::skipToNextLdr(std::istream& iStream)
             break;
         }
     }
-}
-
-std::pair<std::string, std::string> sciformats::jdx::DataLdr::readFirstLine(
-    std::istream& istream)
-{
-    auto pos = istream.tellg();
-    auto line = util::readLine(istream);
-    if (!util::isLdrStart(line))
-    {
-        // reset for consistent state
-        istream.seekg(pos);
-        throw std::runtime_error(
-            "Cannot parse data. Stream position not at LDR start: " + line);
-    }
-    auto [label, variableList] = util::parseLdrStart(line);
-    util::stripLineComment(variableList);
-    util::trim(variableList);
-
-    return {label, variableList};
 }
 
 void sciformats::jdx::DataLdr::validateInput(const std::string& label,

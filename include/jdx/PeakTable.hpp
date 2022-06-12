@@ -18,7 +18,6 @@ namespace sciformats::jdx
 class PeakTable : public TabularData
 {
 public:
-    explicit PeakTable(std::istream& istream);
     PeakTable(
         std::string label, std::string variableList, std::istream& istream);
     /**

@@ -5,10 +5,12 @@
 
 #include <sstream>
 
-TEST_CASE("parses AFFN RA data, stream at LDR start", "[RaData]")
+TEST_CASE("parses AFFN RA data", "[RaData]")
 {
-    std::string input{"##RADATA= (R++(A..A))\r\n"
-                      "0, 10.0\r\n"
+    // "##RADATA= (R++(A..A))\r\n"
+    const auto* label = "RADATA";
+    const auto* variables = "(R++(A..A))";
+    std::string input{"0, 10.0\r\n"
                       "1, 11.0\r\n"
                       "2, 12.0\r\n"
                       "##END="};
@@ -23,7 +25,7 @@ TEST_CASE("parses AFFN RA data, stream at LDR start", "[RaData]")
     ldrs.emplace_back("RFACTOR", "1.0");
     ldrs.emplace_back("AFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
-    auto raDataRecord = sciformats::jdx::RaData(stream, ldrs);
+    auto raDataRecord = sciformats::jdx::RaData(label, variables, stream, ldrs);
 
     auto raData = raDataRecord.getData();
 
@@ -49,56 +51,12 @@ TEST_CASE("parses AFFN RA data, stream at LDR start", "[RaData]")
     REQUIRE_FALSE(params.zdp.has_value());
 }
 
-TEST_CASE("parses AFFN RA data, stream at 2nd line start", "[RaData]")
-{
-    std::string input{"0, 10.0\r\n"
-                      "1, 11.0\r\n"
-                      "2, 12.0\r\n"
-                      "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
-
-    std::vector<sciformats::jdx::StringLdr> ldrs;
-    ldrs.emplace_back("RUNITS", "MICROMETERS");
-    ldrs.emplace_back("AUNITS", "ARBITRYRY UNITS");
-    ldrs.emplace_back("FIRSTR", "0");
-    ldrs.emplace_back("LASTR", "2");
-    ldrs.emplace_back("RFACTOR", "1.0");
-    ldrs.emplace_back("AFACTOR", "1.0");
-    ldrs.emplace_back("NPOINTS", "3");
-    // optional
-    ldrs.emplace_back("FIRSTA", "10.0");
-    // no "LASTA" defined in standard
-    ldrs.emplace_back("MAXA", "12.0");
-    ldrs.emplace_back("MINA", "10.0");
-    ldrs.emplace_back("RESOLUTION", "1.0");
-    ldrs.emplace_back("DELTAR", "1.0");
-
-    auto raDataRecord
-        = sciformats::jdx::RaData("RADATA", "(R++(A..A))", stream, ldrs);
-    auto raData = raDataRecord.getData();
-
-    REQUIRE(3 == raData.size());
-    REQUIRE(0 == Approx(raData.at(0).first));
-    REQUIRE(10.0 == Approx(raData.at(0).second));
-    REQUIRE(1 == Approx(raData.at(1).first));
-    REQUIRE(11.0 == Approx(raData.at(1).second));
-    REQUIRE(2 == Approx(raData.at(2).first));
-    REQUIRE(12.0 == Approx(raData.at(2).second));
-
-    auto params = raDataRecord.getParameters();
-    // optional parameters
-    REQUIRE(10.0 == Approx(params.firstA.value()));
-    REQUIRE(12.0 == Approx(params.maxA.value()));
-    REQUIRE(10.0 == Approx(params.minA.value()));
-    REQUIRE(1.0 == Approx(params.resolution.value()));
-    REQUIRE(1.0 == Approx(params.deltaR.value()));
-}
-
 TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
 {
-    std::string input{"##RADATA= (X++(Y..Y))\r\n"
-                      "0, 10.0\r\n"
+    // "##RADATA= (X++(Y..Y))\r\n"
+    const auto* label = "RADATA";
+    const auto* variables = "(X++(Y..Y))";
+    std::string input{"0, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
@@ -108,5 +66,5 @@ TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
     ldrs.emplace_back("LASTR", "0");
     ldrs.emplace_back("AFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::RaData(stream, ldrs));
+    REQUIRE_THROWS(sciformats::jdx::RaData(label, variables, stream, ldrs));
 }

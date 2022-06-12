@@ -17,15 +17,6 @@ class XyPoints : public XyBase
 {
 public:
     /**
-     * @brief Constructs XyPoints from istream.
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
-     * assumed to be at the start of the first line of the record (the line
-     * containing "##XYDATA="). The istream is expected to exist for the
-     * lifetime of this object.
-     * @param parameters Parameters from the enclosing block specific to XYDATA.
-     */
-    XyPoints(std::istream& istream, const std::vector<StringLdr>& ldrs);
-    /**
      * @brief Constructs XyPoints from first line and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA".
      * @param variableList The value of the first line of the record

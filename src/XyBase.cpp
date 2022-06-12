@@ -2,17 +2,6 @@
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 
-sciformats::jdx::XyBase::XyBase(std::istream& iStream,
-    const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
-    std::string expectedVariableList)
-    : Array2DData{iStream}
-{
-    validateInput(getLabel(), getVariableList(), expectedLabel,
-        std::vector<std::string>{std::move(expectedVariableList)});
-    m_parameters = parseParameters(ldrs);
-    skipToNextLdr(iStream);
-}
-
 sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::string& variableList, std::istream& iStream,
     const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,

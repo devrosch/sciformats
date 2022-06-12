@@ -25,18 +25,6 @@ public:
 
 protected:
     /**
-     * @brief Constructs XyBase from istream.
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
-     * assumed to be at the start of the first line of the record (the line
-     * containing "##XYDATA="). The istream is expected to exist for the
-     * lifetime of this object.
-     * @param ldrs Parameters from the enclosing block specific to XYDATA.
-     * @param expectedLabel The expected label for this LDR.
-     * @param expectedVariableList The expected variable list for this LDR.
-     */
-    XyBase(std::istream& istream, const std::vector<StringLdr>& ldrs,
-        const std::string& expectedLabel, std::string expectedVariableList);
-    /**
      * @brief Constructs XyBase from first line and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA".
      * @param variableList The value of the first line of the record

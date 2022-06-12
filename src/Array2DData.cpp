@@ -4,11 +4,6 @@
 
 #include <tuple>
 
-sciformats::jdx::Array2DData::Array2DData(std::istream& iStream)
-    : DataLdr(iStream)
-{
-}
-
 sciformats::jdx::Array2DData::Array2DData(
     std::string label, std::string variableList, std::istream& iStream)
     : DataLdr(std::move(label), std::move(variableList), iStream)

@@ -3,16 +3,6 @@
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 
-sciformats::jdx::RaData::RaData(
-    std::istream& iStream, const std::vector<StringLdr>& ldrs)
-    : Array2DData(iStream)
-{
-    validateInput(getLabel(), getVariableList(), s_raDataLabel,
-        std::vector<std::string>{s_raDataVariableList});
-    m_parameters = parseParameters(ldrs);
-    skipToNextLdr(iStream);
-}
-
 sciformats::jdx::RaData::RaData(const std::string& label,
     const std::string& variableList, std::istream& iStream,
     const std::vector<StringLdr>& ldrs)

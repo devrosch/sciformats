@@ -6,8 +6,10 @@
 
 TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XY..XY)\r\n"
-                      "$$ peak width kernel line 1\r\n"
+    // "##PEAKTABLE= (XY..XY)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XY..XY)";
+    std::string input{"$$ peak width kernel line 1\r\n"
                       "$$ peak width kernel line 2\r\n"
                       "450.0,  10.0\r\n"
                       "460.0, 11.0 $$ test comment\r\n"
@@ -17,7 +19,7 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     auto kernel = table.getWidthFunction();
     auto xyData = table.getData();
 
@@ -50,6 +52,9 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
 
 TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
 {
+    // "##PEAKTABLE= (XYW..XYW)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XYW..XYW)";
     std::string input{"450.0, 10.0, 1.0\r\n"
                       "460.0,\t11.0,\t2.0\r\n"
                       "470.0, 12.0, 3.0 480.0, 13.0, 4.0\r\n"
@@ -58,7 +63,7 @@ TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable("PEAKTABLE", "(XYW..XYW)", stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     auto xyData = table.getData();
 
     REQUIRE(6 == xyData.size());
@@ -85,13 +90,15 @@ TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
 TEST_CASE("fails when excess component is encountered in two column PEAK TABLE",
     "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XY..XY)\r\n"
-                      "450.0, 10.0, 1.0\r\n"
+    // "##PEAKTABLE= (XY..XY)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XY..XY)";
+    std::string input{"450.0, 10.0, 1.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "excess peak component", Catch::CaseSensitive::No)
@@ -102,13 +109,15 @@ TEST_CASE(
     "fails when excess component is encountered in three column PEAK TABLE",
     "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XYW..XYW)\r\n"
-                      "450.0, 10.0, 1.0, -1.0\r\n"
+    // "##PEAKTABLE= (XY..XY)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XYW..XYW)";
+    std::string input{"450.0, 10.0, 1.0, -1.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "excess peak component", Catch::CaseSensitive::No)
@@ -118,14 +127,16 @@ TEST_CASE(
 TEST_CASE(
     "fails when incomplete group is encountered in PEAK TABLE", "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XY..XY)\r\n"
-                      "450.0, 10.0\r\n"
+    // "##PEAKTABLE= (XY..XY)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XY..XY)";
+    std::string input{"450.0, 10.0\r\n"
                       "460.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "missing peak component", Catch::CaseSensitive::No)
@@ -135,13 +146,15 @@ TEST_CASE(
 TEST_CASE(
     "fails when non existent value is encountered in PEAK TABLE", "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XYW..XYW)\r\n"
-                      "450.0,, 10.0\r\n"
+    // "##PEAKTABLE= (XYW..XYW)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XYW..XYW)";
+    std::string input{"450.0,, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "missing peak component", Catch::CaseSensitive::No)
@@ -151,40 +164,46 @@ TEST_CASE(
 TEST_CASE("fails when illegal variable list is encountered in PEAK TABLE",
     "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XYWABC..XYWABC)\r\n"
-                      "450.0,, 10.0\r\n"
+    // "##PEAKTABLE= (XYWABC..XYWABC)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XYWABC..XYWABC)";
+    std::string input{"450.0,, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::PeakTable(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::PeakTable(label, variables, stream),
         Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
             && Catch::Matchers::Contains("variable list"));
 }
 
 TEST_CASE("fails when PEAK TABLE is missing a component", "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XYW..XYW)\r\n"
-                      "450.0, 10.0\r\n"
+    // "##PEAKTABLE= (XYW..XYW)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XYW..XYW)";
+    std::string input{"450.0, 10.0\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     REQUIRE_THROWS(table.getData());
 }
 
 TEST_CASE("parses PEAK TABLE peak width function even if zero peaks present",
     "[PeakTable]")
 {
-    std::string input{"##PEAK TABLE= (XY..XY)\r\n"
-                      "$$ peak width kernel line 1\r\n"
+    // "##PEAKTABLE= (XY..XY)\r\n"
+    const auto* label = "PEAKTABLE";
+    const auto* variables = "(XY..XY)";
+    std::string input{"$$ peak width kernel line 1\r\n"
                       "$$ peak width kernel line 2\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto table = sciformats::jdx::PeakTable(stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, stream);
     auto kernel = table.getWidthFunction();
     auto xyData = table.getData();
 

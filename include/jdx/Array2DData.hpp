@@ -22,14 +22,6 @@ protected:
         XyXy
     };
     /**
-     * @brief Constructs Array2DData from istream.
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
-     * assumed to be at the start of the first line of the record (the line
-     * containing "##XYDATA=" or "##RADATA="). The istream is expected to exist
-     * for the lifetime of this object.
-     */
-    explicit Array2DData(std::istream& iStream);
-    /**
      * @brief Constructs Array2DData from first line value and istream.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".

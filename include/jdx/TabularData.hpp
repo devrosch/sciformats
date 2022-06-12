@@ -17,7 +17,6 @@ class TabularData : public DataLdr
 {
 public:
 protected:
-    explicit TabularData(std::istream& istream);
     TabularData(
         std::string label, std::string variableList, std::istream& istream);
 

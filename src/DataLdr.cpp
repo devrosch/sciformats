@@ -1,14 +1,6 @@
 #include "jdx/DataLdr.hpp"
 #include "util/LdrUtils.hpp"
 
-sciformats::jdx::DataLdr::DataLdr(std::istream& istream)
-    : m_istream{istream}
-    , m_streamDataPos{istream.tellg()}
-{
-    std::tie(m_label, m_variableList) = readFirstLine(istream);
-    m_streamDataPos = istream.tellg();
-}
-
 sciformats::jdx::DataLdr::DataLdr(
     std::string label, std::string variableList, std::istream& istream)
     : m_label{std::move(label)}

@@ -19,7 +19,6 @@ public:
     [[nodiscard]] const std::string& getVariableList() const;
 
 protected:
-    explicit DataLdr(std::istream& istream);
     DataLdr(std::string label, std::string variableList, std::istream& istream);
 
     std::istream& getStream();

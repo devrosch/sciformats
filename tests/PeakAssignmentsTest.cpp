@@ -10,8 +10,10 @@
 TEST_CASE(
     "parses well-formed three column PEAK ASSIGNMENTS", "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "$$ peak width function\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"$$ peak width function\r\n"
                       "(1.0, 10.0, <peak assignment 1>)\r\n"
                       "( 2.0,20.0,<peak assignment 2> )\r\n"
                       "(3.0, <peak assignment 3>)\r\n"
@@ -24,7 +26,8 @@ TEST_CASE(
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
     auto widthFunction = assignments.getWidthFunction();
     auto data = assignments.getData();
 
@@ -73,8 +76,10 @@ TEST_CASE(
 TEST_CASE(
     "parses well-formed four column PEAK ASSIGNMENTS", "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYWA)\r\n"
-                      "$$ peak width function\r\n"
+    // "##PEAKASSIGNMENTS= (XYWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYWA)";
+    std::string input{"$$ peak width function\r\n"
                       "(1.0, 10.0, 100.0, <peak assignment 1>)\r\n"
                       "( 2.0,20.0,200.0,<peak assignment 2> )\r\n"
                       "(3.0, <peak assignment 3>)\r\n"
@@ -89,7 +94,8 @@ TEST_CASE(
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
     auto widthFunction = assignments.getWidthFunction();
     auto data = assignments.getData();
 
@@ -151,14 +157,17 @@ TEST_CASE("fails when excess component is encountered in three column PEAK "
           "ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "(1.0, 10.0, 100.0, <peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"(1.0, 10.0, 100.0, <peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("illegal number", Catch::CaseSensitive::No));
@@ -168,14 +177,17 @@ TEST_CASE("fails when excess component is encountered in four column PEAK "
           "ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYWA)\r\n"
-                      "(1.0, 10.0, 100.0, 1000.0, <peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYWA)";
+    std::string input{"(1.0, 10.0, 100.0, 1000.0, <peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("illegal number", Catch::CaseSensitive::No));
@@ -185,15 +197,18 @@ TEST_CASE("fails when ambiguous component is encountered in four column PEAK "
           "ASSIGNMENTS",
     "[PeakAssignments]")
 {
+    // "##PEAKASSIGNMENTS= (XYWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYWA)";
     // 10.0 could be Y or W
-    std::string input{"##PEAK ASSIGNMENTS= (XYWA)\r\n"
-                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+    std::string input{"(1.0, 10.0, <peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("ambiguous", Catch::CaseSensitive::No));
@@ -202,14 +217,17 @@ TEST_CASE("fails when ambiguous component is encountered in four column PEAK "
 TEST_CASE("fails when opening parenthesis is missing in PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYWA)\r\n"
-                      "1.0, 10.0, 100.0, <peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYWA)";
+    std::string input{"1.0, 10.0, 100.0, <peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
@@ -218,14 +236,17 @@ TEST_CASE("fails when opening parenthesis is missing in PEAK ASSIGNMENTS",
 TEST_CASE("fails when closing parenthesis is missing in PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYWA)\r\n"
-                      "(1.0, 10.0, 100.0, <peak assignment 1>\r\n"
+    // "##PEAKASSIGNMENTS= (XYWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYWA)";
+    std::string input{"(1.0, 10.0, 100.0, <peak assignment 1>\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains(
@@ -236,14 +257,17 @@ TEST_CASE("fails when opening angle bracket is missing in assignment string in "
           "PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "(1.0, 10.0, peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"(1.0, 10.0, peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains(
@@ -254,14 +278,17 @@ TEST_CASE("fails when closing angle bracket is missing in assignment string in "
           "PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "(1.0, 10.0, <peak assignment 1)\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"(1.0, 10.0, <peak assignment 1)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("no delimiter", Catch::CaseSensitive::No));
@@ -270,14 +297,17 @@ TEST_CASE("fails when closing angle bracket is missing in assignment string in "
 TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "(1.0 10.0; <peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"(1.0 10.0; <peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains("non whitespace", Catch::CaseSensitive::No));
@@ -286,14 +316,17 @@ TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
 TEST_CASE("fails when illegal variable list is encountered in PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYAUVW)\r\n"
-                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYAUVW)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYAUVW)";
+    std::string input{"(1.0, 10.0, <peak assignment 1>)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::PeakAssignments(stream),
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::PeakAssignments(label, variables, stream),
         Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
             && Catch::Matchers::Contains("variable list"));
 }
@@ -301,14 +334,17 @@ TEST_CASE("fails when illegal variable list is encountered in PEAK ASSIGNMENTS",
 TEST_CASE(
     "fails when PEAK ASSIGNMENTS is missing a component", "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "(1.0)\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"(1.0)\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS(assignments.getData());
 }
@@ -316,15 +352,18 @@ TEST_CASE(
 TEST_CASE("fails for malformed PEAK ASSIGNMENT in PEAK ASSIGNMENTS",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "(1.0, 10.0, <peak assignment 1>)\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"(1.0, 10.0, <peak assignment 1>)\r\n"
                       "(1.0, 10.0, <peak assignment 1>\r\n"
                       "##END="};
 
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
         Catch::Matchers::Contains(
@@ -335,13 +374,16 @@ TEST_CASE(
     "parses PEAK ASSIGNMENTS peak width function even if zero peaks present",
     "[PeakAssignments]")
 {
-    std::string input{"##PEAK ASSIGNMENTS= (XYA)\r\n"
-                      "$$ peak width function\r\n"
+    // "##PEAKASSIGNMENTS= (XYA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYA)";
+    std::string input{"$$ peak width function\r\n"
                       "##END="};
     std::stringstream stream{std::ios_base::in};
     stream.str(input);
 
-    auto assignments = sciformats::jdx::PeakAssignments(stream);
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, stream);
     auto widthFunction = assignments.getWidthFunction();
     auto data = assignments.getData();
 

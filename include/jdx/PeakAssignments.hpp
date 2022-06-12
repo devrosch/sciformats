@@ -18,8 +18,8 @@ namespace sciformats::jdx
 class PeakAssignments : public TabularData
 {
 public:
-    PeakAssignments(
-        std::string label, std::string variableList, std::istream& iStream);
+    PeakAssignments(const std::string& label, std::string variableList,
+        std::istream& iStream);
     /**
      * @brief Provides the parsed peak assignments.
      * @return The list of peak assignments.

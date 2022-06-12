@@ -7,6 +7,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/src/util/PeakAssignmentsParser.hpp"
     # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/Ldr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/StringLdr.hpp"
     # data
     "${PROJECT_SOURCE_DIR}/include/jdx/DataLdr.hpp"
@@ -36,6 +37,7 @@ add_library(jdxparser
     util/PeakAssignmentsParser.cpp
     # ldr
     Block.cpp
+    Ldr.cpp
     StringLdr.cpp
     # data
     DataLdr.cpp
@@ -54,8 +56,9 @@ add_library(jdxparser
 # All users of this library will need at least C++17
 target_compile_features(jdxparser PUBLIC cxx_std_17)
 
-# We need this directory, and users of our library will need it too
+# public headers
 target_include_directories(jdxparser PUBLIC ${PROJECT_SOURCE_DIR}/include)
+# private headers
 target_include_directories(jdxparser PRIVATE ${PROJECT_SOURCE_DIR}/src)
 
 # --------------------------------------------------------------

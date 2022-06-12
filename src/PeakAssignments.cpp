@@ -5,8 +5,8 @@
 #include <istream>
 
 sciformats::jdx::PeakAssignments::PeakAssignments(
-    std::string label, std::string variableList, std::istream& istream)
-    : TabularData(std::move(label), std::move(variableList), istream)
+    const std::string& label, std::string variableList, std::istream& istream)
+    : TabularData(label, std::move(variableList), istream)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{

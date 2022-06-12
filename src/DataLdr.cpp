@@ -3,16 +3,11 @@
 
 sciformats::jdx::DataLdr::DataLdr(
     std::string label, std::string variableList, std::istream& istream)
-    : m_label{std::move(label)}
+    : Ldr{std::move(label)}
     , m_variableList{std::move(variableList)}
     , m_istream{istream}
     , m_streamDataPos{istream.tellg()}
 {
-}
-
-const std::string& sciformats::jdx::DataLdr::getLabel() const
-{
-    return m_label;
 }
 
 const std::string& sciformats::jdx::DataLdr::getVariableList() const

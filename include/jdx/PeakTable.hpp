@@ -18,8 +18,8 @@ namespace sciformats::jdx
 class PeakTable : public TabularData
 {
 public:
-    PeakTable(
-        std::string label, std::string variableList, std::istream& istream);
+    PeakTable(const std::string& label, std::string variableList,
+        std::istream& istream);
     /**
      * @brief Provides the parsed peak data.
      * @return The list of peaks.

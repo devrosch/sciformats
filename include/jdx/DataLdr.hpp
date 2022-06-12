@@ -1,6 +1,8 @@
 #ifndef LIBJDX_DATALDR_HPP
 #define LIBJDX_DATALDR_HPP
 
+#include "jdx/Ldr.hpp"
+
 #include <functional>
 #include <istream>
 #include <optional>
@@ -12,10 +14,9 @@ namespace sciformats::jdx
 /**
  * @brief Base class for JCAMP-DX PEAK TABLE and PEAK ASSIGNMENTS records.
  */
-class DataLdr
+class DataLdr : public Ldr
 {
 public:
-    [[nodiscard]] const std::string& getLabel() const;
     [[nodiscard]] const std::string& getVariableList() const;
 
 protected:
@@ -47,8 +48,7 @@ protected:
     R callAndResetStreamPos(const std::function<R()>& func);
 
 private:
-    std::string m_label;
-    std::string m_variableList;
+    const std::string m_variableList;
     std::istream& m_istream;
     std::streampos m_streamDataPos;
 };

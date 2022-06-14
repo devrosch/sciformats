@@ -35,8 +35,8 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
-    // DOES contain "##XYDATA=" with its variable list as value
-    REQUIRE(15 == ldrs.size());
+    // does NOT contain "##XYDATA=" as it's available through specialized member
+    REQUIRE(14 == ldrs.size());
     REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
     REQUIRE(
         "Dummy" == block.getLdr("SPECTROMETERDATASYSTEM").value().getValue());
@@ -106,8 +106,8 @@ TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
-    // DOES contain "##RADATA=" with its variable list as value
-    REQUIRE(14 == ldrs.size());
+    // does NOT contain "##RADATA=" as it's available through specialized member
+    REQUIRE(13 == ldrs.size());
     REQUIRE("Test" == block.getLdr("TITLE").value().getValue());
     REQUIRE(block.getRaData().has_value());
     auto data = block.getRaData().value();
@@ -209,8 +209,9 @@ TEST_CASE("parses block with PEAK TABLE", "[Block]")
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
-    // DOES contain "##PEAKTABLE=" with its variable list as value
-    REQUIRE(3 == ldrs.size());
+    // does NOT contain "##PEAKTABLE=" as it's available through specialized
+    // member
+    REQUIRE(2 == ldrs.size());
     REQUIRE(block.getPeakTable().has_value());
     auto peakTable = block.getPeakTable().value();
     REQUIRE(2 == peakTable.getData().size());
@@ -250,8 +251,9 @@ TEST_CASE("parses block with PEAK ASSIGNMENTS", "[Block]")
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
-    // DOES contain "##PEAKASSIGNMENTS=" with its variable list as value
-    REQUIRE(3 == ldrs.size());
+    // does NOT contain "##PEAKASSIGNMENTS=" as it's available through
+    // specialized member
+    REQUIRE(2 == ldrs.size());
     REQUIRE(block.getPeakAssignments().has_value());
     auto peakAssignments = block.getPeakAssignments().value();
     REQUIRE(2 == peakAssignments.getData().size());

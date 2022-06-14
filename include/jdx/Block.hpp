@@ -94,6 +94,10 @@ public:
     getPeakAssignments() const;
 
 private:
+    static constexpr std::array<const char*, 9> s_specialLdrs
+        = {"", "END", "TITLE", "XYDATA", "RADATA", "XYPOINTS", "PEAKTABLE",
+            "PEAKASSIGNMENTS", "NTUPLES"};
+
     std::istream& m_istream;
     std::vector<StringLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
@@ -114,7 +118,11 @@ private:
      * lifetime of this object.
      */
     Block(const std::string& title, std::istream& iStream);
+    static std::string validateInput(const std::string& firstLine);
     void parseInput(const std::string& title);
+    std::optional<const std::string> parseStringValue(std::string& value);
+    static bool isSpecialLabel(const std::string& label);
+    std::optional<const std::string> moveToNextLdr();
 };
 } // namespace sciformats::jdx
 

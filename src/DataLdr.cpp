@@ -1,4 +1,5 @@
 #include "jdx/DataLdr.hpp"
+#include "jdx/ParseException.hpp"
 #include "util/LdrUtils.hpp"
 
 sciformats::jdx::DataLdr::DataLdr(
@@ -41,15 +42,15 @@ void sciformats::jdx::DataLdr::validateInput(const std::string& label,
 {
     if (label != expectedLabel)
     {
-        throw std::runtime_error("Illegal label at " + expectedLabel
-                                 + " start encountered: " + label);
+        throw ParseException("Illegal label at " + expectedLabel
+                             + " start encountered: " + label);
     }
     if (std::none_of(expectedVariableLists.begin(), expectedVariableLists.end(),
             [&variableList](const std::string& expectedVariableList) {
                 return variableList == expectedVariableList;
             }))
     {
-        throw std::runtime_error("Illegal variable list for " + label
-                                 + " encountered: " + variableList);
+        throw ParseException("Illegal variable list for " + label
+                             + " encountered: " + variableList);
     }
 }

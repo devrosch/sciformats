@@ -1,4 +1,5 @@
 #include "jdx/RaData.hpp"
+#include "jdx/ParseException.hpp"
 #include "jdx/RaParameters.hpp"
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
@@ -64,7 +65,7 @@ sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(
 
     if (!missing.empty())
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Required LDR(s) missing for RADATA: {" + missing + " }");
     }
 

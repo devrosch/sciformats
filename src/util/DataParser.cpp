@@ -1,4 +1,5 @@
 #include "util/DataParser.hpp"
+#include "jdx/ParseException.hpp"
 #include "util/LdrUtils.hpp"
 
 #include <cmath>
@@ -87,7 +88,7 @@ sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
             // must be x value
             if (std::isnan(value))
             {
-                throw std::runtime_error(
+                throw ParseException(
                     "NaN value encountered as x value in line: " + line);
             }
             std::pair<double, double> xyValue{
@@ -102,9 +103,9 @@ sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
     if (lastValueIsXOnly)
     {
         // uneven number of single values
-        throw std::runtime_error("Uneven number of values for xy data "
-                                 "encountered. No y value for x value: "
-                                 + std::to_string(xyValues.back().first));
+        throw ParseException("Uneven number of values for xy data "
+                             "encountered. No y value for x value: "
+                             + std::to_string(xyValues.back().first));
     }
     return xyValues;
 }
@@ -131,7 +132,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readValues(
         if ((tokenType == TokenType::Dup || tokenType == TokenType::Dif)
             && !previousTokenValue.has_value())
         {
-            throw std::runtime_error(
+            throw ParseException(
                 tokenType == TokenType::Dup
                     ? std::string{"DUP"}
                     : std::string{"DIF"}
@@ -142,7 +143,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readValues(
         if ((tokenType == TokenType::Dup && previousTokenValue.has_value()
                 && previousTokenType == TokenType::Dup))
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "DUP token with preceding DUP token encountered in sequence: "
                 + encodedValues);
         }
@@ -180,9 +181,9 @@ std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readValues(
             {
                 if (previousTokenType == TokenType::Missing)
                 {
-                    throw std::runtime_error("DIF token with preceding ? token "
-                                             "encountered in sequence: "
-                                             + encodedValues);
+                    throw ParseException("DIF token with preceding ? token "
+                                         "encountered in sequence: "
+                                         + encodedValues);
                 }
                 auto lastValue = yValues.back();
                 auto nextValue = lastValue + value;
@@ -215,7 +216,7 @@ std::pair<std::vector<double>, bool> sciformats::jdx::DataParser::readXppYYLine(
         // first y value is a duplicate, check if roughly the same
         if (fabs(values.front() - yValueCheck.value()) >= 1)
         {
-            throw std::runtime_error("Y value check failed in line: " + line);
+            throw ParseException("Y value check failed in line: " + line);
         }
     }
     return {values, difEncoded};
@@ -235,9 +236,8 @@ std::optional<std::string> sciformats::jdx::DataParser::nextToken(
     }
     if (!isTokenStart(line, pos))
     {
-        throw std::runtime_error("illegal sequence encountered in line \""
-                                 + line
-                                 + "\" at position: " + std::to_string(pos));
+        throw ParseException("illegal sequence encountered in line \"" + line
+                             + "\" at position: " + std::to_string(pos));
     }
     std::string token{};
     do

@@ -1,4 +1,5 @@
 #include "jdx/XyBase.hpp"
+#include "jdx/ParseException.hpp"
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 
@@ -62,7 +63,7 @@ sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(
 
     if (!missing.empty())
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Required LDR(s) missing for XYDATA: {" + missing + " }");
     }
 

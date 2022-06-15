@@ -1,4 +1,5 @@
 #include "util/PeakAssignmentsParser.hpp"
+#include "jdx/ParseException.hpp"
 #include "jdx/PeakAssignment.hpp"
 #include "util/LdrUtils.hpp"
 
@@ -28,8 +29,8 @@ sciformats::jdx::util::PeakAssignmentsParser::next()
     auto nextAssignmentString = readNextAssignmentString();
     if (!nextAssignmentString)
     {
-        throw std::runtime_error("No next peak assignment found at: "
-                                 + std::to_string(m_istream.tellg()));
+        throw ParseException("No next peak assignment found at: "
+                             + std::to_string(m_istream.tellg()));
     }
     auto nextAssignment = createPeakAssignment(nextAssignmentString.value());
     return nextAssignment;
@@ -124,7 +125,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         }
         if (!lineStart.empty())
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Illegal string found in peak assignment: " + line);
         }
     }
@@ -144,7 +145,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         {
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
             m_istream.seekg(pos);
-            throw std::runtime_error(
+            throw ParseException(
                 "No closing parenthesis found for peak assignment: "
                 + peakAssignmentString);
         }
@@ -158,12 +159,12 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         {
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
             m_istream.seekg(pos);
-            throw std::runtime_error(
+            throw ParseException(
                 "No closing parenthesis found for peak assignment: "
                 + peakAssignmentString);
         }
     }
-    throw std::runtime_error(
+    throw ParseException(
         "File ended before closing parenthesis was found for peak assignment: "
         + peakAssignmentString);
 }
@@ -193,8 +194,7 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     if (!isPeakAssignmentStart(stringValue)
         || !isPeakAssignmentEnd(stringValue))
     {
-        throw std::runtime_error(
-            "Illegal peak assignment string: " + stringValue);
+        throw ParseException("Illegal peak assignment string: " + stringValue);
     }
     size_t pos = 1;
     auto token0 = parseNextPeakAssignmentToken(stringValue, pos);
@@ -204,7 +204,7 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
                       : std::nullopt;
     if (m_numVariables <= 3 && pos < stringValue.length())
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Illegal peak assignment string. Illegal number of tokens: "
             + stringValue);
     }
@@ -213,7 +213,7 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
                       : std::nullopt;
     if (m_numVariables <= 4 && pos < stringValue.length())
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Illegal peak assignment string. Illegal number of tokens: "
             + stringValue);
     }
@@ -261,9 +261,9 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
         else if (token2)
         {
             // 3 tokens
-            throw std::runtime_error("Ambiguous peak assignment (second "
-                                     "variable Y or W) for four variables: "
-                                     + lineStart);
+            throw ParseException("Ambiguous peak assignment (second "
+                                 "variable Y or W) for four variables: "
+                                 + lineStart);
         }
         else
         {
@@ -276,8 +276,8 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     }
     else
     {
-        throw std::runtime_error("Unsupported number of variables: "
-                                 + std::to_string(m_numVariables));
+        throw ParseException("Unsupported number of variables: "
+                             + std::to_string(m_numVariables));
     }
     return peakAssignment;
 }
@@ -304,7 +304,7 @@ sciformats::jdx::util::PeakAssignmentsParser::parseNextPeakAssignmentToken(
             // string token
             if (std::any_of(token.begin(), token.end(), isNonWhitespace))
             {
-                throw std::runtime_error(
+                throw ParseException(
                     "Non whitespace characters before string token at: "
                     + stringValue);
             }
@@ -316,7 +316,7 @@ sciformats::jdx::util::PeakAssignmentsParser::parseNextPeakAssignmentToken(
             {
                 if (isNonWhitespace(stringValue.at(position)))
                 {
-                    throw std::runtime_error(
+                    throw ParseException(
                         "Non whitespace character after string token at: "
                         + stringValue);
                 }
@@ -326,7 +326,7 @@ sciformats::jdx::util::PeakAssignmentsParser::parseNextPeakAssignmentToken(
         }
         if (stringValue.at(position) == '>')
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Missing opening angle bracket at: " + stringValue);
         }
         token += stringValue.at(position);
@@ -334,7 +334,7 @@ sciformats::jdx::util::PeakAssignmentsParser::parseNextPeakAssignmentToken(
     }
     if (position >= stringValue.length())
     {
-        throw std::runtime_error(
+        throw ParseException(
             "No delimiter encountered at end of peak assignment token: "
             + stringValue);
     }
@@ -355,7 +355,7 @@ sciformats::jdx::util::PeakAssignmentsParser::parsePeakAssignmentStringToken(
     }
     if (position >= stringValue.length())
     {
-        throw std::runtime_error(
+        throw ParseException(
             "No delimiter encountered at end of peak assignment string token: "
             + stringValue);
     }

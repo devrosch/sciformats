@@ -1,4 +1,5 @@
 #include "util/PeakTableParser.hpp"
+#include "jdx/ParseException.hpp"
 #include "jdx/Peak.hpp"
 #include "util/LdrUtils.hpp"
 
@@ -31,7 +32,7 @@ sciformats::jdx::util::PeakTableParser::next()
 
     if (!peak)
     {
-        throw std::runtime_error(
+        throw ParseException(
             "No next peak found at: " + std::to_string(m_istream.tellg()));
     }
 
@@ -159,13 +160,13 @@ sciformats::jdx::util::PeakTableParser::nextPeak(
         auto isNewGroup = skipToNextToken(line, pos);
         if (isNewGroup && i != 0U)
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Missing peak component encountered in line \"" + line
                 + "\" at position: " + std::to_string(prevPos));
         }
         if (!isNewGroup && i == 0U)
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Excess peak component encountered in line \"" + line
                 + "\" at position: " + std::to_string(prevPos));
         }
@@ -177,7 +178,7 @@ sciformats::jdx::util::PeakTableParser::nextPeak(
         auto token = nextToken(line, pos);
         if (!token.has_value())
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Missing peak component encountered in line \"" + line
                 + "\" at position: " + std::to_string(prevPos));
         }
@@ -188,7 +189,7 @@ sciformats::jdx::util::PeakTableParser::nextPeak(
         }
         catch (...)
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Cannot parse value in line \"" + line
                 + "\" at position: " + std::to_string(prevPos));
         }
@@ -202,7 +203,7 @@ sciformats::jdx::util::PeakTableParser::nextPeak(
     {
         return Peak{components[0], components[1], components[2]};
     }
-    throw std::runtime_error(
+    throw ParseException(
         "Unexpected number of peak components encountered in line \"" + line
         + "\": " + std::to_string(components.size()));
 }
@@ -223,7 +224,7 @@ bool sciformats::jdx::util::PeakTableParser::skipToNextToken(
             }
             if (nonWhitespaceDelimiterFound)
             {
-                throw std::runtime_error(
+                throw ParseException(
                     "Missing peak component encountered in line \"" + line
                     + "\" at position: " + std::to_string(pos));
             }

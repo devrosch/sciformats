@@ -1,4 +1,5 @@
 #include "util/LdrUtils.hpp"
+#include "jdx/ParseException.hpp"
 
 #include <algorithm>
 #include <regex>
@@ -17,7 +18,7 @@ std::string sciformats::jdx::util::readLine(std::istream& istream)
         }
         return out;
     }
-    throw std::runtime_error("Error reading line from istream.");
+    throw ParseException("Error reading line from istream.");
 }
 
 bool sciformats::jdx::util::isLdrStart(const std::string& line)
@@ -66,7 +67,7 @@ std::string sciformats::jdx::util::normalizeLdrStart(const std::string& ldr)
     {
         if (it == ldr.cend() || *it != '#')
         {
-            throw std::runtime_error(
+            throw ParseException(
                 "Malformed LDR start, missing double hashes: " + ldr);
         }
         output += *it++;
@@ -81,7 +82,7 @@ std::string sciformats::jdx::util::normalizeLdrStart(const std::string& ldr)
     // add remaining string content
     if (it == ldr.cend() || *it != '=')
     {
-        throw std::runtime_error("Malformed LDR start, missing equals: " + ldr);
+        throw ParseException("Malformed LDR start, missing equals: " + ldr);
     }
     output.append(it, ldr.end());
     return output;
@@ -111,7 +112,7 @@ std::pair<std::string, std::string> sciformats::jdx::util::parseLdrStart(
     size_t posEquals = ldrStart.find('=');
     if (std::string::npos == posEquals)
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Malformed LDR start, missing equals: " + ldrStart);
     }
     std::string label = ldrStart.substr(0, posEquals + 1);
@@ -120,7 +121,7 @@ std::pair<std::string, std::string> sciformats::jdx::util::parseLdrStart(
         || normalizedLabel.at(1) != '#'
         || normalizedLabel.at(normalizedLabel.size() - 1) != '=')
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Malformed LDR start, normalization yields illegal label: "
             + normalizedLabel);
     }

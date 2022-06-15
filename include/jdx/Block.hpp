@@ -1,6 +1,7 @@
 #ifndef LIBJDX_BLOCK_HPP
 #define LIBJDX_BLOCK_HPP
 
+#include "jdx/BlockParseException.hpp"
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
@@ -119,13 +120,11 @@ private:
      * lifetime of this object.
      */
     Block(const std::string& title, std::istream& iStream);
-    static std::string validateInput(const std::string& firstLine);
+    static std::string parseFirstLine(const std::string& firstLine);
     void parseInput(const std::string& title);
     std::optional<const std::string> parseStringValue(std::string& value);
     static bool isSpecialLabel(const std::string& label);
     std::optional<const std::string> moveToNextLdr();
-    static std::runtime_error buildError(const std::string& issueMsg,
-        const std::string& label, const std::string& blockTitle);
     template<typename T>
     std::optional<const std::string> addLdr(const std::string& title,
         const std::string& label, std::optional<T>& member,
@@ -140,7 +139,7 @@ std::optional<const std::string> sciformats::jdx::Block::addLdr(
     if (member)
     {
         // duplicate => error
-        throw buildError("Multiple", label, title);
+        throw BlockParseException("Multiple", label, title);
     }
     member.emplace(builderFunc());
     return moveToNextLdr();

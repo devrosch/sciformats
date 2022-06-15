@@ -25,6 +25,9 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignments.hpp"
+    # exception
+    "${PROJECT_SOURCE_DIR}/include/jdx/ParseException.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/BlockParseException.hpp"
     )
 
 # Make an automatic library - will be static or dynamic based on user setting
@@ -51,6 +54,9 @@ add_library(jdxparser
     TabularData.cpp
     PeakTable.cpp
     PeakAssignments.cpp
+    # exception
+    ParseException.cpp
+    BlockParseException.cpp
     ${HEADER_LIST})
 
 # All users of this library will need at least C++17

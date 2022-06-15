@@ -1,4 +1,5 @@
 #include "jdx/Array2DData.hpp"
+#include "jdx/ParseException.hpp"
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 
@@ -19,7 +20,7 @@ sciformats::jdx::Array2DData::parseXppYYInput(const std::string& label,
     auto yData = sciformats::jdx::DataParser::readXppYYData(iStream);
     if (yData.size() != nPoints)
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Mismatch betwee NPOINTS and actual number of points in \"" + label
             + "\". NPOINTS: " + std::to_string(nPoints)
             + ", actual: " + std::to_string(yData.size()));
@@ -53,7 +54,7 @@ sciformats::jdx::Array2DData::parseXyXyInput(const std::string& label,
     auto xyData = sciformats::jdx::DataParser::readXyXyData(iStream);
     if (xyData.size() != nPoints)
     {
-        throw std::runtime_error(
+        throw ParseException(
             "Mismatch between NPOINTS and actual number of points in \"" + label
             + "\". NPOINTS: " + std::to_string(nPoints)
             + ", actual: " + std::to_string(xyData.size()));
@@ -86,8 +87,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::Array2DData::getData(
         }
         else
         {
-            throw std::runtime_error(
-                "Cannot parse xy data. Unsupported encoding.");
+            throw ParseException("Cannot parse xy data. Unsupported encoding.");
         }
         return data;
     };

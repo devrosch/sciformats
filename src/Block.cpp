@@ -1,17 +1,11 @@
 #include "jdx/Block.hpp"
 #include "util/LdrUtils.hpp"
 
-#include <algorithm>
-#include <array>
-#include <climits>
-#include <cstring>
-#include <limits>
-
 sciformats::jdx::Block::Block(std::istream& iStream)
     : m_istream{iStream}
 {
     auto firstLine = util::readLine(m_istream);
-    auto titleFirstLine = validateInput(firstLine);
+    auto titleFirstLine = parseFirstLine(firstLine);
     parseInput(titleFirstLine);
 }
 
@@ -74,16 +68,16 @@ sciformats::jdx::Block::getPeakAssignments() const
     return m_peakAssignments;
 }
 
-std::string sciformats::jdx::Block::validateInput(const std::string& firstLine)
+std::string sciformats::jdx::Block::parseFirstLine(const std::string& firstLine)
 {
     if (!util::isLdrStart(firstLine))
     {
-        throw std::runtime_error("Malformed LDR start: " + firstLine);
+        throw BlockParseException("Malformed LDR start: " + firstLine);
     }
     auto [label, value] = util::parseLdrStart(firstLine);
     if (label != s_blockStartLabel)
     {
-        throw std::runtime_error(
+        throw BlockParseException(
             "Malformed Block start, wrong label: " + firstLine);
     }
     return value;
@@ -112,7 +106,7 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
                 // reference implementation seems to overwrite LDR with
                 // duplicate, but spec (JCAMP-DX IR 3.2) says
                 // a duplicate LDR is illegal in a block => throw
-                throw buildError("Multiple", label, title);
+                throw BlockParseException("Multiple", label, title);
             }
             nextLine = parseStringValue(value);
             m_ldrs.emplace_back(label, value);
@@ -165,16 +159,14 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
         {
             // TODO: add special treatment for data LDRs (e.g. NTUPLES, ...),
             // DONE: XYDATA, RADATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS
-            throw buildError("Unsupported", label, title);
+            throw BlockParseException("Unsupported", label, title);
         }
     }
 
     auto lastParsedLabel = util::parseLdrStart(nextLine.value()).first;
     if ("END" != lastParsedLabel)
     {
-        throw std::runtime_error(
-            "Unexpected end of block. No END label found for block: \""
-            + title);
+        throw BlockParseException("No", "END", title);
     }
 }
 
@@ -226,7 +218,7 @@ std::optional<const std::string> sciformats::jdx::Block::moveToNextLdr()
         // if not this special case, give up
         if (!preCommentValue.empty())
         {
-            throw std::runtime_error(
+            throw BlockParseException(
                 "Unexpected content found in block \""
                 + getLdr(s_blockStartLabel).value().getValue()
                 + std::string{"\": "}.append(line.value()));
@@ -234,17 +226,4 @@ std::optional<const std::string> sciformats::jdx::Block::moveToNextLdr()
     }
 
     return line;
-}
-
-std::runtime_error sciformats::jdx::Block::buildError(
-    const std::string& issueMsg, const std::string& label,
-    const std::string& blockTitle)
-{
-    //    std::string msg = "Duplicate ";
-    std::string msg = issueMsg; // "Duplicate", "Unsupported" ...
-    msg += " ";
-    msg += label;
-    msg += "LDRs encountered in block: \"";
-    msg += blockTitle;
-    return std::runtime_error(msg);
 }

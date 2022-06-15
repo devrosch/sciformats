@@ -81,7 +81,7 @@ std::string sciformats::jdx::Block::validateInput(const std::string& firstLine)
         throw std::runtime_error("Malformed LDR start: " + firstLine);
     }
     auto [label, value] = util::parseLdrStart(firstLine);
-    if (label != "TITLE")
+    if (label != s_blockStartLabel)
     {
         throw std::runtime_error(
             "Malformed Block start, wrong label: " + firstLine);
@@ -93,23 +93,28 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
 {
     std::string title = titleValue;
     std::optional<std::string> nextLine = parseStringValue(title);
-    m_ldrs.emplace_back("TITLE", title);
+    m_ldrs.emplace_back(s_blockStartLabel, title);
 
     while (nextLine.has_value())
     {
-        auto [label, value] = util::parseLdrStart(nextLine.value());
+        // "auto [label, value] = util::parseLdrStart(nextLine.value());" cannot
+        // be used as lambdas (below) cannot capture these variables
+        // see:
+        // https://stackoverflow.com/questions/46114214/lambda-implicit-capture-fails-with-variable-declared-from-structured-binding
+        std::string label;
+        std::string value;
+        std::tie(label, value) = util::parseLdrStart(nextLine.value());
         if (!isSpecialLabel(label))
         {
             // LDR is a regular LDR
-            nextLine = parseStringValue(value);
             if (getLdr(label))
             {
                 // reference implementation seems to overwrite LDR with
                 // duplicate, but spec (JCAMP-DX IR 3.2) says
                 // a duplicate LDR is illegal in a block => throw
-                throw std::runtime_error("Duplicate LDR in Block \"" + title
-                                         + std::string{"\": "}.append(label));
+                throw buildError("Multiple", label, title);
             }
+            nextLine = parseStringValue(value);
             m_ldrs.emplace_back(label, value);
         }
         else if (label.empty())
@@ -123,7 +128,7 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
             // end of block
             break;
         }
-        else if ("TITLE" == label)
+        else if (s_blockStartLabel == label)
         {
             // nested block
             auto block = Block(value, m_istream);
@@ -132,75 +137,35 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
         }
         else if ("XYDATA" == label)
         {
-            if (getXyData())
-            {
-                // duplicate
-                throw std::runtime_error(
-                    "Multiple XYDATA LDRs encountered in block: \"" + title);
-            }
-            auto xyData = XyData(label, value, m_istream, m_ldrs);
-            m_xyData.emplace(std::move(xyData));
-            nextLine = moveToNextLdr();
+            nextLine = addLdr<XyData>(title, "XYDATA", m_xyData,
+                [&]() { return XyData(label, value, m_istream, m_ldrs); });
         }
         else if ("RADATA" == label)
         {
-            if (getRaData())
-            {
-                // duplicate
-                throw std::runtime_error(
-                    "Multiple RADATA LDRs encountered in block: \"" + title);
-            }
-            auto raData = RaData(label, value, m_istream, m_ldrs);
-            m_raData.emplace(std::move(raData));
-            nextLine = moveToNextLdr();
+            nextLine = addLdr<RaData>(title, "RADATA", m_raData,
+                [&]() { return RaData(label, value, m_istream, m_ldrs); });
         }
         else if ("XYPOINTS" == label)
         {
-            if (getXyPoints())
-            {
-                // duplicate
-                throw std::runtime_error(
-                    "Multiple XYPOINTS LDRs encountered in block: \"" + title);
-            }
-            auto xyPoints = XyPoints(label, value, m_istream, m_ldrs);
-            m_xyPoints.emplace(std::move(xyPoints));
-            nextLine = moveToNextLdr();
+            nextLine = addLdr<XyPoints>(title, "XYPOINTS", m_xyPoints,
+                [&]() { return XyPoints(label, value, m_istream, m_ldrs); });
         }
         else if ("PEAKTABLE" == label)
         {
-            if (getPeakTable())
-            {
-                // duplicate
-                throw std::runtime_error(
-                    "Multiple PEAK TABLE LDRs encountered in block: \""
-                    + title);
-            }
-            auto peakTable = PeakTable(label, value, m_istream);
-            m_peakTable.emplace(std::move(peakTable));
-            nextLine = moveToNextLdr();
+            nextLine = addLdr<PeakTable>(title, "PEAKTABLE", m_peakTable,
+                [&]() { return PeakTable(label, value, m_istream); });
         }
         else if ("PEAKASSIGNMENTS" == label)
         {
-            if (getPeakAssignments())
-            {
-                // duplicate
-                throw std::runtime_error(
-                    "Multiple PEAK ASSIGNMENTS LDRs encountered in block: \""
-                    + title);
-            }
-            auto peakAssignments = PeakAssignments(label, value, m_istream);
-            m_peakAssignments.emplace(std::move(peakAssignments));
-            nextLine = moveToNextLdr();
+            nextLine = addLdr<PeakAssignments>(title, "PEAKASSIGNMENTS",
+                m_peakAssignments,
+                [&]() { return PeakAssignments(label, value, m_istream); });
         }
         else
         {
             // TODO: add special treatment for data LDRs (e.g. NTUPLES, ...),
             // DONE: XYDATA, RADATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS
-            std::string msg = "Unsupported LDR \"";
-            msg += label;
-            msg += "\"in block: \"";
-            msg += title;
-            throw std::runtime_error(msg);
+            throw buildError("Unsupported", label, title);
         }
     }
 
@@ -211,39 +176,6 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
             "Unexpected end of block. No END label found for block: \""
             + title);
     }
-}
-
-std::optional<const std::string> sciformats::jdx::Block::moveToNextLdr()
-{
-    std::optional<std::string> line{std::nullopt};
-    while (!m_istream.eof())
-    {
-        line = util::readLine(m_istream);
-        if (util::isLdrStart(line.value()))
-        {
-            break;
-        }
-        // account for special case that a $$ comment immediately
-        // follows a nested block
-        auto [preCommentValue, comment] = util::stripLineComment(line.value());
-        util::trim(preCommentValue);
-        // if not this special case, give up
-        if (!preCommentValue.empty())
-        {
-            throw std::runtime_error(
-                "Unexpected content found in block \""
-                + getLdr("TITLE").value().getLabel()
-                + std::string{"\": "}.append(line.value()));
-        }
-    }
-
-    return line;
-}
-
-bool sciformats::jdx::Block::isSpecialLabel(const std::string& label)
-{
-    return std::any_of(s_specialLdrs.cbegin(), s_specialLdrs.cend(),
-        [&label](const char* specialLabel) { return specialLabel == label; });
 }
 
 std::optional<const std::string> sciformats::jdx::Block::parseStringValue(
@@ -269,4 +201,50 @@ std::optional<const std::string> sciformats::jdx::Block::parseStringValue(
         }
     }
     return std::nullopt;
+}
+
+bool sciformats::jdx::Block::isSpecialLabel(const std::string& label)
+{
+    return std::any_of(s_specialLdrs.cbegin(), s_specialLdrs.cend(),
+        [&label](const char* specialLabel) { return specialLabel == label; });
+}
+
+std::optional<const std::string> sciformats::jdx::Block::moveToNextLdr()
+{
+    std::optional<std::string> line{std::nullopt};
+    while (!m_istream.eof())
+    {
+        line = util::readLine(m_istream);
+        if (util::isLdrStart(line.value()))
+        {
+            break;
+        }
+        // account for special case that a $$ comment immediately
+        // follows a nested block
+        auto [preCommentValue, comment] = util::stripLineComment(line.value());
+        util::trim(preCommentValue);
+        // if not this special case, give up
+        if (!preCommentValue.empty())
+        {
+            throw std::runtime_error(
+                "Unexpected content found in block \""
+                + getLdr(s_blockStartLabel).value().getValue()
+                + std::string{"\": "}.append(line.value()));
+        }
+    }
+
+    return line;
+}
+
+std::runtime_error sciformats::jdx::Block::buildError(
+    const std::string& issueMsg, const std::string& label,
+    const std::string& blockTitle)
+{
+    //    std::string msg = "Duplicate ";
+    std::string msg = issueMsg; // "Duplicate", "Unsupported" ...
+    msg += " ";
+    msg += label;
+    msg += "LDRs encountered in block: \"";
+    msg += blockTitle;
+    return std::runtime_error(msg);
 }

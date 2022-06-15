@@ -94,9 +94,10 @@ public:
     getPeakAssignments() const;
 
 private:
+    static constexpr const char* s_blockStartLabel = "TITLE";
     static constexpr std::array<const char*, 9> s_specialLdrs
-        = {"", "END", "TITLE", "XYDATA", "RADATA", "XYPOINTS", "PEAKTABLE",
-            "PEAKASSIGNMENTS", "NTUPLES"};
+        = {"", "END", s_blockStartLabel, "XYDATA", "RADATA", "XYPOINTS",
+            "PEAKTABLE", "PEAKASSIGNMENTS", "NTUPLES"};
 
     std::istream& m_istream;
     std::vector<StringLdr> m_ldrs;
@@ -123,7 +124,27 @@ private:
     std::optional<const std::string> parseStringValue(std::string& value);
     static bool isSpecialLabel(const std::string& label);
     std::optional<const std::string> moveToNextLdr();
+    static std::runtime_error buildError(const std::string& issueMsg,
+        const std::string& label, const std::string& blockTitle);
+    template<typename T>
+    std::optional<const std::string> addLdr(const std::string& title,
+        const std::string& label, std::optional<T>& member,
+        const std::function<T()>& builderFunc);
 };
+
+template<typename T>
+std::optional<const std::string> sciformats::jdx::Block::addLdr(
+    const std::string& title, const std::string& label,
+    std::optional<T>& member, const std::function<T()>& builderFunc)
+{
+    if (member)
+    {
+        // duplicate => error
+        throw buildError("Multiple", label, title);
+    }
+    member.emplace(builderFunc());
+    return moveToNextLdr();
+}
 } // namespace sciformats::jdx
 
 #endif // LIBJDX_BLOCK_HPP

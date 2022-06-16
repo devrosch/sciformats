@@ -1,33 +1,55 @@
-#include "jdx/JdxParser.hpp"
+// determine the availability of the filesystem header
+// inspired by:
+// https://stackoverflow.com/questions/53365538/how-to-determine-whether-to-use-filesystem-or-experimental-filesystem
+#ifndef LIBJDX_USE_EXPERIMENTAL_FILESYSTEM
+#if defined(__cpp_lib_filesystem)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LIBJDX_USE_EXPERIMENTAL_FILESYSTEM 0
+#elif defined(__cpp_lib_experimental_filesystem)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LIBJDX_USE_EXPERIMENTAL_FILESYSTEM 1
+#elif !defined(__has_include)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LIBJDX_USE_EXPERIMENTAL_FILESYSTEM 1
+#elif __has_include(<filesystem>)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LIBJDX_USE_EXPERIMENTAL_FILESYSTEM 0
+#elif __has_include(<experimental/filesystem>)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+#define LIBJDX_USE_EXPERIMENTAL_FILESYSTEM 1
+#endif
+#endif
 
+#ifndef LIBJDX_USE_EXPERIMENTAL_FILESYSTEM
+#error Required <filesystem> header not available.
+#endif
+
+#include "jdx/JdxParser.hpp"
+#include "util/LdrUtils.hpp"
+
+#include <algorithm>
 #include <array>
 #include <climits>
 #include <cstring>
 #include <limits>
-//#include <filesystem>
-#include <algorithm>
+// include and alias filesystem header
+#if LIBJDX_USE_EXPERIMENTAL_FILESYSTEM
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
 
 bool sciformats::jdx::JdxParser::canParse(
     const std::string& filePath, std::istream& iStream)
 {
     // check extension
-    // TODO: in the future use
-    // https://en.cppreference.com/w/cpp/filesystem/path/extension
-    // TODO: check more extensions
-    std::string extension{"jdx"};
-    std::string lowerCasePath{filePath};
-    // std::tolower has undefined behavior for signed chars
-    std::transform(lowerCasePath.begin(), lowerCasePath.end(),
-        lowerCasePath.begin(), [](unsigned char c) { return std::tolower(c); });
-    bool correctExtension = false;
-    if (lowerCasePath.length() >= extension.length())
-    {
-        correctExtension = (lowerCasePath.compare(
-                                lowerCasePath.length() - extension.length(),
-                                extension.length(), extension)
-                            == 0);
-    }
-    if (!correctExtension)
+    const std::string lowerCasePath = util::toLowerCopy(filePath);
+    const auto extension = fs::path(filePath).extension();
+    if (std::find(std::begin(s_acceptedExtensions),
+            std::end(s_acceptedExtensions), extension)
+        == std::end(s_acceptedExtensions))
     {
         return false;
     }

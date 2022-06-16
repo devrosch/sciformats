@@ -181,3 +181,17 @@ bool sciformats::jdx::util::isSpace(char c)
 {
     return static_cast<bool>(std::isspace(static_cast<unsigned char>(c)));
 }
+
+void sciformats::jdx::util::toLower(std::string& s)
+{
+    std::transform(s.begin(), s.end(), s.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+}
+
+std::string sciformats::jdx::util::toLowerCopy(const std::string& s)
+{
+    std::string retVal{s};
+    std::transform(retVal.begin(), retVal.end(), retVal.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+    return retVal;
+}

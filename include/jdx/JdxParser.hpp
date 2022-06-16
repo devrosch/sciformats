@@ -33,7 +33,8 @@ public:
     Block static parse(std::istream& iStream, bool activateExceptions = true);
 
 private:
-    std::vector<std::string> m_acceptedExtensions{"jdx", "dx", "jcm"};
+    static constexpr std::array<const char*, 3> s_acceptedExtensions
+        = {".jdx", ".dx", ".jcm"};
 };
 } // namespace sciformats::jdx
 

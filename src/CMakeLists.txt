@@ -62,6 +62,13 @@ add_library(jdxparser
 # All users of this library will need at least C++17
 target_compile_features(jdxparser PUBLIC cxx_std_17)
 
+if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+    # make filesystem available
+    # see: https://stackoverflow.com/questions/33149878/experimentalfilesystem-linker-error
+    message(STATUS "Linking stdc++fs to GNUCXX version: ${CMAKE_CXX_COMPILER_VERSION}")
+    target_link_libraries(jdxparser stdc++fs)
+endif()
+
 # public headers
 target_include_directories(jdxparser PUBLIC ${PROJECT_SOURCE_DIR}/include)
 # private headers

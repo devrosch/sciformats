@@ -45,8 +45,8 @@ bool sciformats::jdx::JdxParser::canParse(
     const std::string& filePath, std::istream& iStream)
 {
     // check extension
-    const std::string lowerCasePath = util::toLowerCopy(filePath);
-    const auto extension = fs::path(filePath).extension();
+    std::string extension = fs::path(filePath).extension();
+    util::toLower(extension);
     if (std::find(std::begin(s_acceptedExtensions),
             std::end(s_acceptedExtensions), extension)
         == std::end(s_acceptedExtensions))

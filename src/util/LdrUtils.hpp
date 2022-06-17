@@ -28,7 +28,6 @@ std::optional<std::string> findLdrValue(
     const std::vector<StringLdr>& ldrs, const std::string& label);
 bool isSpace(char c);
 void toLower(std::string& s);
-std::string toLowerCopy(const std::string& s);
 } // namespace sciformats::jdx::utils
 
 #endif // LIBJDX_LDRUTILS_HPP

@@ -25,7 +25,7 @@
 #endif
 
 #include "jdx/JdxParser.hpp"
-#include "util/LdrUtils.hpp"
+#include "util/StringUtils.hpp"
 
 #include <algorithm>
 #include <array>

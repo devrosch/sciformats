@@ -12,11 +12,7 @@
  */
 namespace sciformats::jdx::util
 {
-std::string readLine(std::istream& istream);
 bool isLdrStart(const std::string& line);
-void trim(std::string& s);
-void trimLeft(std::string& s);
-void trimRight(std::string& s);
 std::string normalizeLdrStart(const std::string& ldr);
 std::string normalizeLdrLabel(const std::string& label);
 std::pair<std::string, std::string> parseLdrStart(const std::string& ldrStart);
@@ -26,8 +22,6 @@ std::optional<const StringLdr> findLdr(
     const std::vector<StringLdr>& ldrs, const std::string& label);
 std::optional<std::string> findLdrValue(
     const std::vector<StringLdr>& ldrs, const std::string& label);
-bool isSpace(char c);
-void toLower(std::string& s);
 } // namespace sciformats::jdx::utils
 
 #endif // LIBJDX_LDRUTILS_HPP

@@ -1,5 +1,6 @@
 #include "jdx/Block.hpp"
 #include "util/LdrUtils.hpp"
+#include "util/StringUtils.hpp"
 
 sciformats::jdx::Block::Block(std::istream& iStream)
     : m_istream{iStream}

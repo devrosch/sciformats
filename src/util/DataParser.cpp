@@ -1,6 +1,7 @@
 #include "util/DataParser.hpp"
 #include "jdx/ParseException.hpp"
 #include "util/LdrUtils.hpp"
+#include "util/StringUtils.hpp"
 
 #include <cmath>
 #include <limits>

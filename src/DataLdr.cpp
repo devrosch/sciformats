@@ -1,6 +1,7 @@
 #include "jdx/DataLdr.hpp"
 #include "jdx/ParseException.hpp"
 #include "util/LdrUtils.hpp"
+#include "util/StringUtils.hpp"
 
 sciformats::jdx::DataLdr::DataLdr(
     std::string label, std::string variableList, std::istream& istream)

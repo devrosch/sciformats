@@ -1,6 +1,7 @@
 set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
     # util (private headers)
+    "${PROJECT_SOURCE_DIR}/src/util/StringUtils.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/LdrUtils.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/DataParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakTableParser.hpp"
@@ -34,6 +35,7 @@ set(HEADER_LIST
 add_library(jdxparser
     JdxParser.cpp
     # util
+    util/StringUtils.cpp
     util/LdrUtils.cpp
     util/DataParser.cpp
     util/PeakTableParser.cpp

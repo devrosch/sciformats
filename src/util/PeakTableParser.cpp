@@ -2,6 +2,7 @@
 #include "jdx/ParseException.hpp"
 #include "jdx/Peak.hpp"
 #include "util/LdrUtils.hpp"
+#include "util/StringUtils.hpp"
 
 #include <algorithm>
 

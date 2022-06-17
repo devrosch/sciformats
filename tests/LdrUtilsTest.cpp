@@ -6,55 +6,6 @@
 #include <sstream>
 #include <string>
 
-TEST_CASE("reads two lines with \\n endlines", "[util][readLine]")
-{
-    std::string input{"abc\ndef\n"};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
-
-    std::string line0 = sciformats::jdx::util::readLine(stream);
-    std::string line1 = sciformats::jdx::util::readLine(stream);
-
-    REQUIRE(std::string{"abc"} == line0);
-    REQUIRE(std::string{"def"} == line1);
-}
-
-TEST_CASE("reads two lines with \\r\\n endlines", "[util][readLine]")
-{
-    std::string input{"abc\r\ndef\r\n"};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
-
-    std::string line0 = sciformats::jdx::util::readLine(stream);
-    std::string line1 = sciformats::jdx::util::readLine(stream);
-
-    REQUIRE(std::string{"abc"} == line0);
-    REQUIRE(std::string{"def"} == line1);
-}
-
-TEST_CASE("reads line ending with EOF", "[util][readLine]")
-{
-    std::string input{"abc"};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
-    // the underlying getline() method sets failbit at end of file, so do not
-    // set std::ios::eofbit
-    stream.exceptions(std::ios::failbit | std::ios::badbit);
-
-    std::string line0 = sciformats::jdx::util::readLine(stream);
-
-    REQUIRE(std::string{"abc"} == line0);
-}
-
-TEST_CASE("throws when trying to read past end", "[util][readLine]")
-{
-    std::string input{};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
-
-    REQUIRE_THROWS(sciformats::jdx::util::readLine(stream));
-}
-
 TEST_CASE("recognizes regular LDR start", "[util][isLdrStart]")
 {
     std::string input{"##TITLE= abc"};
@@ -84,36 +35,6 @@ TEST_CASE("rejects non LDR start", "[util][isLdrStart]")
     std::string input{"#NAME= ##NOT_LDR=abc"};
 
     REQUIRE(false == sciformats::jdx::util::isLdrStart(input));
-}
-
-TEST_CASE("left trims white space", "[util][trimLeft]")
-{
-    std::string actual{"\t\n\v\f\r abc \t\n\v\f\r"};
-    std::string expect{"abc \t\n\v\f\r"};
-
-    sciformats::jdx::util::trimLeft(actual);
-
-    REQUIRE(expect == actual);
-}
-
-TEST_CASE("right trims white space", "[util][trimRight]")
-{
-    std::string actual{"\t\n\v\f\r abc \t\n\v\f\r"};
-    std::string expect{"\t\n\v\f\r abc"};
-
-    sciformats::jdx::util::trimRight(actual);
-
-    REQUIRE(expect == actual);
-}
-
-TEST_CASE("trims white space", "[util][trim]")
-{
-    std::string actual{"\t\n\v\f\r abc \t\n\v\f\r"};
-    std::string expect{"abc"};
-
-    sciformats::jdx::util::trim(actual);
-
-    REQUIRE(expect == actual);
 }
 
 TEST_CASE("normalize LDR start removes \" -/_\" from label",

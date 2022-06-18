@@ -4,8 +4,8 @@
 #include "jdx/Array2DData.hpp"
 #include "jdx/RaParameters.hpp"
 #include "jdx/StringLdr.hpp"
+#include "jdx/TextReader.hpp"
 
-#include <istream>
 #include <string>
 #include <vector>
 
@@ -18,18 +18,18 @@ class RaData : Array2DData
 {
 public:
     /**
-     * @brief Constructs RaData from first line value and istream.
+     * @brief Constructs RaData from first line value and reader.
      * @param label The label of the first line of the record, i.e. "RADATA".
      * @param variableList The value of the first line of the record
      * representing the structure of the data, e.g. "(R++(A..A))".
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
+     * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##RADATA=" line) of the record. The istream is expected to exist for the
+     * "##RADATA=" line) of the record. The reader is expected to exist for the
      * lifetime of this object.
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
     RaData(const std::string& label, const std::string& variableList,
-        std::istream& iStream, const std::vector<StringLdr>& ldrs);
+        TextReader& reader, const std::vector<StringLdr>& ldrs);
     /**
      * @brief Provides parameters specific to RADATA.
      * @return The parameters.

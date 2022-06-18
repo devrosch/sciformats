@@ -2,8 +2,8 @@
 #define LIBJDX_DATA2D_HPP
 
 #include "jdx/DataLdr.hpp"
+#include "jdx/TextReader.hpp"
 
-#include <istream>
 #include <vector>
 
 namespace sciformats::jdx
@@ -22,18 +22,18 @@ protected:
         XyXy
     };
     /**
-     * @brief Constructs Array2DData from first line value and istream.
+     * @brief Constructs Array2DData from first line value and reader.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".
      * @param variableList The value of the first line of the record
      * representing the structure of the data, e.g. "(X++(Y..Y))".
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
+     * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the first line (the line containing
-     * "##XYDATA=" or "##RADATA=") of the record. The istream is expected to
+     * "##XYDATA=" or "##RADATA=") of the record. The reader is expected to
      * exist for the lifetime of this object.
      */
     Array2DData(
-        std::string label, std::string variableList, std::istream& iStream);
+        std::string label, std::string variableList, TextReader& reader);
 
     std::vector<std::pair<double, double>> getData(double firstX, double lastX,
         double xFactor, double yFactor, uint64_t nPoints,
@@ -45,9 +45,9 @@ private:
      * "R++(A..A)") from a "##XYDATA=" or "##RADATA=" block.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
+     * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" or "##RADATA=" line) of the record. The istream is expected
+     * "##XYDATA=" or "##RADATA=" line) of the record. The reader is expected
      * to exist for the lifetime of this object.
      * @param firstX The first X value.
      * @param lastX The last X value.
@@ -61,16 +61,16 @@ private:
      * by FIRSTX, LASTX and NPOINTS.
      */
     static std::vector<std::pair<double, double>> parseXppYYInput(
-        const std::string& label, std::istream& iStream, double firstX,
+        const std::string& label, TextReader& reader, double firstX,
         double lastX, double yFactor, size_t nPoints);
     /**
      * @brief Parses the xy data pairs (i.e. "(XY..XY)" or "(RA..RA)") from a
      * "##XYDATA=" or "##RADATA=" block.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".
-     * @param iStream Input stream with JCAMP-DX data. The stream position is
+     * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" or "##RADATA=" line) of the record. The istream is expected
+     * "##XYDATA=" or "##RADATA=" line) of the record. The reader is expected
      * to exist for the lifetime of this object.
      * @param xFactor The factor by which to multiply raw x values to arrive at
      * the actual value.
@@ -81,7 +81,7 @@ private:
      * std::numeric_limits<T>::quiet_NaN.
      */
     static std::vector<std::pair<double, double>> parseXyXyInput(
-        const std::string& label, std::istream& iStream, double xFactor,
+        const std::string& label, TextReader& reader, double xFactor,
         double yFactor, size_t nPoints);
 };
 } // namespace sciformats::jdx

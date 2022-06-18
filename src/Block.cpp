@@ -2,26 +2,27 @@
 #include "util/LdrUtils.hpp"
 #include "util/StringUtils.hpp"
 
-sciformats::jdx::Block::Block(std::unique_ptr<std::istream> streamPtr)
-    : m_streamPtr{std::move(streamPtr)}
-    , m_istream{*m_streamPtr}
+sciformats::jdx::Block::Block(std::unique_ptr<TextReader> readerPtr)
+    : m_readerPtr{std::move(readerPtr)}
+    , m_reader{*m_readerPtr}
 {
-    auto firstLine = util::readLine(m_istream);
+    auto firstLine = m_reader.readLine();
     auto titleFirstLine = parseFirstLine(firstLine);
     parseInput(titleFirstLine);
 }
 
-sciformats::jdx::Block::Block(std::istream& iStream)
-    : m_streamPtr{nullptr}
-    , m_istream{iStream}
+sciformats::jdx::Block::Block(TextReader& reader)
+    : m_readerPtr{nullptr}
+    , m_reader{reader}
 {
-    auto firstLine = util::readLine(m_istream);
+    auto firstLine = reader.readLine();
     auto titleFirstLine = parseFirstLine(firstLine);
     parseInput(titleFirstLine);
 }
 
-sciformats::jdx::Block::Block(const std::string& title, std::istream& iStream)
-    : m_istream{iStream}
+sciformats::jdx::Block::Block(const std::string& title, TextReader& reader)
+    : m_readerPtr{nullptr}
+    , m_reader{reader}
 {
     parseInput(title);
 }
@@ -136,35 +137,35 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
         else if (s_blockStartLabel == label)
         {
             // nested block
-            auto block = Block(value, m_istream);
+            auto block = Block(value, m_reader);
             m_blocks.push_back(std::move(block));
             nextLine = moveToNextLdr();
         }
         else if ("XYDATA" == label)
         {
             nextLine = addLdr<XyData>(title, "XYDATA", m_xyData,
-                [&]() { return XyData(label, value, m_istream, m_ldrs); });
+                [&]() { return XyData(label, value, m_reader, m_ldrs); });
         }
         else if ("RADATA" == label)
         {
             nextLine = addLdr<RaData>(title, "RADATA", m_raData,
-                [&]() { return RaData(label, value, m_istream, m_ldrs); });
+                [&]() { return RaData(label, value, m_reader, m_ldrs); });
         }
         else if ("XYPOINTS" == label)
         {
             nextLine = addLdr<XyPoints>(title, "XYPOINTS", m_xyPoints,
-                [&]() { return XyPoints(label, value, m_istream, m_ldrs); });
+                [&]() { return XyPoints(label, value, m_reader, m_ldrs); });
         }
         else if ("PEAKTABLE" == label)
         {
             nextLine = addLdr<PeakTable>(title, "PEAKTABLE", m_peakTable,
-                [&]() { return PeakTable(label, value, m_istream); });
+                [&]() { return PeakTable(label, value, m_reader); });
         }
         else if ("PEAKASSIGNMENTS" == label)
         {
             nextLine = addLdr<PeakAssignments>(title, "PEAKASSIGNMENTS",
                 m_peakAssignments,
-                [&]() { return PeakAssignments(label, value, m_istream); });
+                [&]() { return PeakAssignments(label, value, m_reader); });
         }
         else
         {
@@ -184,9 +185,9 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
 std::optional<const std::string> sciformats::jdx::Block::parseStringValue(
     std::string& value)
 {
-    while (!m_istream.eof())
+    while (!m_reader.eof())
     {
-        const auto line = util::readLine(m_istream);
+        const auto line = m_reader.readLine();
         if (util::isLdrStart(line))
         {
             return line;
@@ -215,9 +216,9 @@ bool sciformats::jdx::Block::isSpecialLabel(const std::string& label)
 std::optional<const std::string> sciformats::jdx::Block::moveToNextLdr()
 {
     std::optional<std::string> line{std::nullopt};
-    while (!m_istream.eof())
+    while (!m_reader.eof())
     {
-        line = util::readLine(m_istream);
+        line = m_reader.readLine();
         if (util::isLdrStart(line.value()))
         {
             break;

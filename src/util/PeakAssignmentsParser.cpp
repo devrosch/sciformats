@@ -7,8 +7,8 @@
 #include <algorithm>
 
 sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
-    std::istream& iStream, size_t numVariables)
-    : m_istream{iStream}
+    TextReader& reader, size_t numVariables)
+    : m_reader{reader}
     , m_numVariables{numVariables}
     , m_isPastInitialComment{false}
 {
@@ -31,7 +31,7 @@ sciformats::jdx::util::PeakAssignmentsParser::next()
     if (!nextAssignmentString)
     {
         throw ParseException("No next peak assignment found at: "
-                             + std::to_string(m_istream.tellg()));
+                             + std::to_string(m_reader.tellg()));
     }
     auto nextAssignment = createPeakAssignment(nextAssignmentString.value());
     return nextAssignment;
@@ -39,15 +39,15 @@ sciformats::jdx::util::PeakAssignmentsParser::next()
 
 bool sciformats::jdx::util::PeakAssignmentsParser::hasNext()
 {
-    if (m_istream.eof())
+    if (m_reader.eof())
     {
         return false;
     }
-    auto streamPos = m_istream.tellg();
+    auto readerPos = m_reader.tellg();
     if (!m_isPastInitialComment)
     {
         auto widthFunction = parseWidthFunction();
-        m_istream.seekg(streamPos);
+        m_reader.seekg(readerPos);
         if (widthFunction)
         {
             return true;
@@ -55,7 +55,7 @@ bool sciformats::jdx::util::PeakAssignmentsParser::hasNext()
     }
     auto nextAssignmentString = readNextAssignmentString();
     // TODO: optimize
-    m_istream.seekg(streamPos);
+    m_reader.seekg(readerPos);
     return nextAssignmentString.has_value();
 }
 
@@ -64,19 +64,18 @@ std::optional<std::string>
 sciformats::jdx::util::PeakAssignmentsParser::parseWidthFunction()
 {
     // comment $$ in line(s) following LDR start may contain peak function
-    auto streamPos = m_istream.tellg();
+    auto readerPos = m_reader.tellg();
     std::string line{};
     std::string functionDescription{};
-    while (!m_istream.eof()
-           && !util::isLdrStart(line = util::readLine(m_istream))
+    while (!m_reader.eof() && !util::isLdrStart(line = m_reader.readLine())
            && isPureInlineComment(line))
     {
-        streamPos = m_istream.tellg();
+        readerPos = m_reader.tellg();
         auto [content, comment] = util::stripLineComment(line);
         appendToDescription(comment.value(), functionDescription);
     }
-    // reset stream position to start of first assignment or start of next LDR
-    m_istream.seekg(streamPos);
+    // reset reader position to start of first assignment or start of next LDR
+    m_reader.seekg(readerPos);
     // return
     return functionDescription.empty()
                ? std::nullopt
@@ -107,10 +106,10 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
 {
     std::string peakAssignmentString{};
     // find start
-    while (!m_istream.eof())
+    while (!m_reader.eof())
     {
-        std::streampos pos = m_istream.tellg();
-        auto line = util::readLine(m_istream);
+        std::streampos pos = m_reader.tellg();
+        auto line = m_reader.readLine();
         auto [lineStart, comment] = util::stripLineComment(line);
         util::trim(lineStart);
         if (isPeakAssignmentStart(lineStart))
@@ -121,7 +120,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         if (util::isLdrStart(lineStart))
         {
             // PEAKASSIGNMENT LDR ended, no peak assignments
-            m_istream.seekg(pos);
+            m_reader.seekg(pos);
             return std::nullopt;
         }
         if (!lineStart.empty())
@@ -135,17 +134,17 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         return peakAssignmentString;
     }
     // read to end of current peak assignment
-    while (!m_istream.eof())
+    while (!m_reader.eof())
     {
-        std::streampos pos = m_istream.tellg();
-        auto line = util::readLine(m_istream);
+        std::streampos pos = m_reader.tellg();
+        auto line = m_reader.readLine();
         auto [lineStart, comment] = util::stripLineComment(line);
         util::trim(lineStart);
 
         if (util::isLdrStart(lineStart))
         {
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
-            m_istream.seekg(pos);
+            m_reader.seekg(pos);
             throw ParseException(
                 "No closing parenthesis found for peak assignment: "
                 + peakAssignmentString);
@@ -156,10 +155,10 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         {
             return peakAssignmentString;
         }
-        if (m_istream.eof() || util::isLdrStart(lineStart))
+        if (m_reader.eof() || util::isLdrStart(lineStart))
         {
             // PEAKASSIGNMENT LDR ended before end of last peak assignment
-            m_istream.seekg(pos);
+            m_reader.seekg(pos);
             throw ParseException(
                 "No closing parenthesis found for peak assignment: "
                 + peakAssignmentString);

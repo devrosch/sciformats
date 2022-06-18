@@ -2,9 +2,9 @@
 #define LIBJDX_DATALDR_HPP
 
 #include "jdx/Ldr.hpp"
+#include "jdx/TextReader.hpp"
 
 #include <functional>
-#include <istream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -20,14 +20,14 @@ public:
     [[nodiscard]] const std::string& getVariableList() const;
 
 protected:
-    DataLdr(std::string label, std::string variableList, std::istream& istream);
-    std::istream& getStream();
+    DataLdr(std::string label, std::string variableList, TextReader& reader);
+    TextReader& getReader();
     /**
-     * @brief Moves the stream position to the start of the next LDR or to the
+     * @brief Moves the reader position to the start of the next LDR or to the
      * EOF if no LDR follows.
-     * @param iStream The stream whose position will be changed.
+     * @param reader The reader whose position will be changed.
      */
-    static void skipToNextLdr(std::istream& iStream);
+    static void skipToNextLdr(TextReader& reader);
     /**
      * @brief Validates if input is a valid data LDR.
      * @param label LDR label.
@@ -44,26 +44,25 @@ protected:
 
 private:
     const std::string m_variableList;
-    std::istream& m_istream;
-    std::streampos m_streamDataPos;
+    TextReader& m_reader;
+    std::streampos m_dataPos;
 };
 
 template<typename R>
 R sciformats::jdx::DataLdr::callAndResetStreamPos(
     const std::function<R()>& func)
 {
-    auto streamPos = m_istream.eof()
-                         ? std::nullopt
-                         : std::optional<std::streampos>(m_istream.tellg());
+    auto pos = m_reader.eof() ? std::nullopt
+                              : std::optional<std::streampos>(m_reader.tellg());
     try
     {
-        m_istream.seekg(m_streamDataPos);
+        m_reader.seekg(m_dataPos);
         R returnValue = func();
 
-        // reset stream
-        if (streamPos)
+        // reset reader
+        if (pos)
         {
-            m_istream.seekg(streamPos.value());
+            m_reader.seekg(pos.value());
         }
 
         return returnValue;
@@ -72,9 +71,9 @@ R sciformats::jdx::DataLdr::callAndResetStreamPos(
     {
         try
         {
-            if (streamPos)
+            if (pos)
             {
-                m_istream.seekg(streamPos.value());
+                m_reader.seekg(pos.value());
             }
         }
         catch (...)

@@ -2,6 +2,7 @@
 #define LIBJDX_PEAKASSIGNMENTSPARSER_HPP
 
 #include "jdx/PeakAssignment.hpp"
+#include "jdx/TextReader.hpp"
 
 #include <variant>
 
@@ -13,7 +14,7 @@ namespace sciformats::jdx::util
 class PeakAssignmentsParser
 {
 public:
-    explicit PeakAssignmentsParser(std::istream& iStream, size_t numVariables);
+    explicit PeakAssignmentsParser(TextReader& reader, size_t numVariables);
     /**
      * @brief Next assignment item.
      * @note Assumes that a peak assignment tuple always starts on a new line,
@@ -25,7 +26,7 @@ public:
     bool hasNext();
 
 private:
-    std::istream& m_istream;
+    TextReader& m_reader;
     size_t m_numVariables;
     bool m_isPastInitialComment;
 

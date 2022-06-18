@@ -4,22 +4,6 @@
 #include <algorithm>
 #include <string>
 
-std::string sciformats::jdx::util::readLine(std::istream& istream)
-{
-    std::string out{};
-    if (std::getline(istream, out))
-    {
-        if (!out.empty() && out.at(out.size() - 1) == '\r')
-        {
-            // remove trailing \r in case line ending is \r\n and has not been
-            // converted to \n by stream already
-            out.erase(out.size() - 1);
-        }
-        return out;
-    }
-    throw ParseException("Error reading line from istream.");
-}
-
 void sciformats::jdx::util::trimLeft(std::string& s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {

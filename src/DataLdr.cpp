@@ -4,11 +4,11 @@
 #include "util/StringUtils.hpp"
 
 sciformats::jdx::DataLdr::DataLdr(
-    std::string label, std::string variableList, std::istream& istream)
+    std::string label, std::string variableList, TextReader& reader)
     : Ldr{std::move(label)}
     , m_variableList{std::move(variableList)}
-    , m_istream{istream}
-    , m_streamDataPos{istream.tellg()}
+    , m_reader{reader}
+    , m_dataPos{reader.tellg()}
 {
 }
 
@@ -17,21 +17,21 @@ const std::string& sciformats::jdx::DataLdr::getVariableList() const
     return m_variableList;
 }
 
-std::istream& sciformats::jdx::DataLdr::getStream()
+sciformats::jdx::TextReader& sciformats::jdx::DataLdr::getReader()
 {
-    return m_istream;
+    return m_reader;
 }
 
-void sciformats::jdx::DataLdr::skipToNextLdr(std::istream& iStream)
+void sciformats::jdx::DataLdr::skipToNextLdr(TextReader& reader)
 {
-    while (!iStream.eof())
+    while (!reader.eof())
     {
-        std::istream::pos_type pos = iStream.tellg();
-        std::string line = util::readLine(iStream);
+        std::istream::pos_type pos = reader.tellg();
+        std::string line = reader.readLine();
         if (util::isLdrStart(line))
         {
             // move back to start of LDR
-            iStream.seekg(pos);
+            reader.seekg(pos);
             break;
         }
     }

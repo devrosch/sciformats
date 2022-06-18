@@ -1,6 +1,8 @@
 #ifndef LIBJDX_DATAPARSER_HPP
 #define LIBJDX_DATAPARSER_HPP
 
+#include "jdx/TextReader.hpp"
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -13,9 +15,9 @@ namespace sciformats::jdx
 class DataParser
 {
 public:
-    static std::vector<double> readXppYYData(std::istream& istream);
+    static std::vector<double> readXppYYData(TextReader& reader);
     static std::vector<std::pair<double, double>> readXyXyData(
-        std::istream& istream);
+        TextReader& reader);
     static std::pair<std::vector<double>, bool> readValues(
         std::string& encodedValues);
 

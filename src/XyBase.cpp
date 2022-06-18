@@ -4,15 +4,15 @@
 #include "util/LdrUtils.hpp"
 
 sciformats::jdx::XyBase::XyBase(const std::string& label,
-    const std::string& variableList, std::istream& iStream,
+    const std::string& variableList, TextReader& reader,
     const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
     std::string expectedVariableList)
-    : Array2DData{label, variableList, iStream}
+    : Array2DData{label, variableList, reader}
 {
     validateInput(getLabel(), getVariableList(), expectedLabel,
         std::vector<std::string>{std::move(expectedVariableList)});
     m_parameters = parseParameters(ldrs);
-    skipToNextLdr(iStream);
+    skipToNextLdr(reader);
 }
 
 const sciformats::jdx::XyParameters&

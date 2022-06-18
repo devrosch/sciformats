@@ -7,8 +7,8 @@
 #include <algorithm>
 
 sciformats::jdx::util::PeakTableParser::PeakTableParser(
-    std::istream& iStream, size_t numVariables)
-    : m_istream{iStream}
+    TextReader& reader, size_t numVariables)
+    : m_reader{reader}
     , m_numVariables{numVariables}
     , m_isPastInitialComment{false}
     , m_currentLine{""}
@@ -34,7 +34,7 @@ sciformats::jdx::util::PeakTableParser::next()
     if (!peak)
     {
         throw ParseException(
-            "No next peak found at: " + std::to_string(m_istream.tellg()));
+            "No next peak found at: " + std::to_string(m_reader.tellg()));
     }
 
     return peak.value();
@@ -42,17 +42,17 @@ sciformats::jdx::util::PeakTableParser::next()
 
 bool sciformats::jdx::util::PeakTableParser::hasNext()
 {
-    if (m_istream.eof())
+    if (m_reader.eof())
     {
         return false;
     }
-    auto streamPos = m_istream.tellg();
+    auto readerPos = m_reader.tellg();
     auto currentLine = m_currentLine;
     auto currentPos = m_currentPos;
 
     auto resetState = [&]() {
         // TODO: optimize
-        m_istream.seekg(streamPos);
+        m_reader.seekg(readerPos);
         m_currentLine = currentLine;
         m_currentPos = currentPos;
     };
@@ -77,19 +77,18 @@ std::optional<std::string>
 sciformats::jdx::util::PeakTableParser::parseKernelFunctions()
 {
     // comment $$ in line(s) following LDR start may contain peak function
-    auto streamPos = m_istream.tellg();
+    auto readerPos = m_reader.tellg();
     std::string line{};
     std::string functionDescription{};
-    while (!m_istream.eof()
-           && !util::isLdrStart(line = util::readLine(m_istream))
+    while (!m_reader.eof() && !util::isLdrStart(line = m_reader.readLine())
            && isPureInlineComment(line))
     {
-        streamPos = m_istream.tellg();
+        readerPos = m_reader.tellg();
         auto [content, comment] = util::stripLineComment(line);
         appendToDescription(comment.value(), functionDescription);
     }
-    // reset stream position to start of first assignment or start of next LDR
-    m_istream.seekg(streamPos);
+    // reset reader position to start of first assignment or start of next LDR
+    m_reader.seekg(readerPos);
     // return
     return functionDescription.empty()
                ? std::nullopt
@@ -127,21 +126,18 @@ sciformats::jdx::util::PeakTableParser::nextPeak()
         }
         else
         {
-            if (m_istream.eof())
+            if (m_reader.eof())
             {
                 break;
             }
-            auto streamPos = m_istream.tellg();
-            m_currentLine = util::readLine(m_istream);
+            auto readerPos = m_reader.tellg();
+            m_currentLine = m_reader.readLine();
             std::tie(m_currentLine, std::ignore)
                 = util::stripLineComment(m_currentLine);
-            //            auto [content, comment] =
-            //            util::stripLineComment(m_currentLine); m_currentLine =
-            //            content;
             m_currentPos = 0;
             if (util::isLdrStart(m_currentLine))
             {
-                m_istream.seekg(streamPos);
+                m_reader.seekg(readerPos);
                 break;
             }
         }

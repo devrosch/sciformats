@@ -4,8 +4,8 @@
 #include "jdx/DataLdr.hpp"
 #include "jdx/PeakAssignment.hpp"
 #include "jdx/TabularData.hpp"
+#include "jdx/TextReader.hpp"
 
-#include <istream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -18,8 +18,8 @@ namespace sciformats::jdx
 class PeakAssignments : public TabularData
 {
 public:
-    PeakAssignments(const std::string& label, std::string variableList,
-        std::istream& iStream);
+    PeakAssignments(
+        const std::string& label, std::string variableList, TextReader& reader);
     /**
      * @brief Provides the parsed peak assignments.
      * @return The list of peak assignments.

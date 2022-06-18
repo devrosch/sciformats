@@ -14,8 +14,9 @@ TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
                       "451.0, 11.0\r\n"
                       "452.0, 12.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
@@ -25,7 +26,7 @@ TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
     ldrs.emplace_back("XFACTOR", "1.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
 
     auto xyData = xyDataRecord.getData();
 
@@ -61,8 +62,9 @@ TEST_CASE("parses AFFN xy data with all optional parameters", "[XyData]")
                       "451.0, 11.0\r\n"
                       "452.0, 12.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
@@ -78,7 +80,7 @@ TEST_CASE("parses AFFN xy data with all optional parameters", "[XyData]")
     ldrs.emplace_back("MINY", "10.0");
     ldrs.emplace_back("DELTAX", "1.0");
     ldrs.emplace_back("RESOLUTION", "2.0");
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
 
     auto xyData = xyDataRecord.getData();
 
@@ -112,8 +114,9 @@ TEST_CASE("parses single data point record", "[XyData]")
     const auto* variables = "(X++(Y..Y))";
     std::string input{"450.0, 10.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
@@ -124,7 +127,7 @@ TEST_CASE("parses single data point record", "[XyData]")
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
 
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(1 == xyData.size());
@@ -141,8 +144,9 @@ TEST_CASE("detects mismatching NPOINTS", "[XyData]")
                       "451.0, 11.0\r\n"
                       "452.0, 12.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
@@ -152,7 +156,7 @@ TEST_CASE("detects mismatching NPOINTS", "[XyData]")
     ldrs.emplace_back("XFACTOR", "1.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
     REQUIRE_THROWS(xyDataRecord.getData());
 }
 
@@ -163,15 +167,16 @@ TEST_CASE("detects mismatching variables list for XYDATA", "[XyData]")
     const auto* variables = "(R++(A..A))";
     std::string input{"450.0, 10.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("FIRSTX", "450.0");
     ldrs.emplace_back("LASTX", "450.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::XyData(label, variables, stream, ldrs));
+    REQUIRE_THROWS(sciformats::jdx::XyData(label, variables, reader, ldrs));
 }
 
 TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
@@ -182,15 +187,16 @@ TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
     std::string input{"##XYDATA= (XY..XY)\r\n"
                       "450.0, 10.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("FIRSTX", "450.0");
     ldrs.emplace_back("LASTX", "450.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::XyData(label, variables, stream, ldrs));
+    REQUIRE_THROWS(sciformats::jdx::XyData(label, variables, reader, ldrs));
 }
 
 TEST_CASE(
@@ -204,8 +210,9 @@ TEST_CASE(
     std::string input{"1 A0JJA3\r\n"
                       "5 B0JJB3\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
@@ -216,7 +223,7 @@ TEST_CASE(
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "8");
 
-    auto xyData = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyData = sciformats::jdx::XyData(label, variables, reader, ldrs);
     auto data = xyData.getData();
 
     REQUIRE(data.size() == 8);
@@ -236,8 +243,9 @@ TEST_CASE("parses zero data point record", "[XyData]")
     const auto* label = "XYDATA";
     const auto* variables = "(X++(Y..Y))";
     std::string input{"##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
     std::vector<sciformats::jdx::StringLdr> ldrs;
     ldrs.emplace_back("XUNITS", "1/CM");
@@ -248,7 +256,7 @@ TEST_CASE("parses zero data point record", "[XyData]")
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "0");
 
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, stream, ldrs);
+    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(xyData.empty());

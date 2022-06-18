@@ -16,10 +16,11 @@ TEST_CASE("parses well-formed two column PEAK TABLE", "[PeakTable]")
                       " 470.0, 12.0E2 480.0, 13.0\r\n"
                       "490.0, 14.0;  500.0, 15.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     auto kernel = table.getWidthFunction();
     auto xyData = table.getData();
 
@@ -60,10 +61,11 @@ TEST_CASE("parses well-formed three column PEAK TABLE", "[PeakTable]")
                       "470.0, 12.0, 3.0 480.0, 13.0, 4.0\r\n"
                       "490.0, 14.0, 5.0; 500.0, 15.0, 6.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     auto xyData = table.getData();
 
     REQUIRE(6 == xyData.size());
@@ -95,10 +97,11 @@ TEST_CASE("fails when excess component is encountered in two column PEAK TABLE",
     const auto* variables = "(XY..XY)";
     std::string input{"450.0, 10.0, 1.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "excess peak component", Catch::CaseSensitive::No)
@@ -114,10 +117,11 @@ TEST_CASE(
     const auto* variables = "(XYW..XYW)";
     std::string input{"450.0, 10.0, 1.0, -1.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "excess peak component", Catch::CaseSensitive::No)
@@ -133,10 +137,11 @@ TEST_CASE(
     std::string input{"450.0, 10.0\r\n"
                       "460.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "missing peak component", Catch::CaseSensitive::No)
@@ -151,10 +156,11 @@ TEST_CASE(
     const auto* variables = "(XYW..XYW)";
     std::string input{"450.0,, 10.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     REQUIRE_THROWS_WITH(
         table.getData(), Catch::Matchers::Contains(
                              "missing peak component", Catch::CaseSensitive::No)
@@ -169,10 +175,11 @@ TEST_CASE("fails when illegal variable list is encountered in PEAK TABLE",
     const auto* variables = "(XYWABC..XYWABC)";
     std::string input{"450.0,, 10.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::PeakTable(label, variables, stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::PeakTable(label, variables, reader),
         Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
             && Catch::Matchers::Contains("variable list"));
 }
@@ -184,10 +191,11 @@ TEST_CASE("fails when PEAK TABLE is missing a component", "[PeakTable]")
     const auto* variables = "(XYW..XYW)";
     std::string input{"450.0, 10.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     REQUIRE_THROWS(table.getData());
 }
 
@@ -200,10 +208,11 @@ TEST_CASE("parses PEAK TABLE peak width function even if zero peaks present",
     std::string input{"$$ peak width kernel line 1\r\n"
                       "$$ peak width kernel line 2\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto table = sciformats::jdx::PeakTable(label, variables, stream);
+    auto table = sciformats::jdx::PeakTable(label, variables, reader);
     auto kernel = table.getWidthFunction();
     auto xyData = table.getData();
 

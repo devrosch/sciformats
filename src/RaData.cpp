@@ -5,14 +5,14 @@
 #include "util/LdrUtils.hpp"
 
 sciformats::jdx::RaData::RaData(const std::string& label,
-    const std::string& variableList, std::istream& iStream,
+    const std::string& variableList, TextReader& reader,
     const std::vector<StringLdr>& ldrs)
-    : Array2DData(label, variableList, iStream)
+    : Array2DData(label, variableList, reader)
 {
     validateInput(label, variableList, s_raDataLabel,
         std::vector<std::string>{s_raDataVariableList});
     m_parameters = parseParameters(ldrs);
-    skipToNextLdr(iStream);
+    skipToNextLdr(reader);
 }
 
 const sciformats::jdx::RaParameters&

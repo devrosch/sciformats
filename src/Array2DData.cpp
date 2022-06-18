@@ -6,18 +6,18 @@
 #include <tuple>
 
 sciformats::jdx::Array2DData::Array2DData(
-    std::string label, std::string variableList, std::istream& iStream)
-    : DataLdr(std::move(label), std::move(variableList), iStream)
+    std::string label, std::string variableList, TextReader& reader)
+    : DataLdr(std::move(label), std::move(variableList), reader)
 {
 }
 
 std::vector<std::pair<double, double>>
 sciformats::jdx::Array2DData::parseXppYYInput(const std::string& label,
-    std::istream& iStream, double firstX, double lastX, double yFactor,
+    TextReader& reader, double firstX, double lastX, double yFactor,
     size_t nPoints)
 {
     // parse
-    auto yData = sciformats::jdx::DataParser::readXppYYData(iStream);
+    auto yData = sciformats::jdx::DataParser::readXppYYData(reader);
     if (yData.size() != nPoints)
     {
         throw ParseException(
@@ -48,10 +48,10 @@ sciformats::jdx::Array2DData::parseXppYYInput(const std::string& label,
 
 std::vector<std::pair<double, double>>
 sciformats::jdx::Array2DData::parseXyXyInput(const std::string& label,
-    std::istream& iStream, double xFactor, double yFactor, size_t nPoints)
+    TextReader& reader, double xFactor, double yFactor, size_t nPoints)
 {
     // parse
-    auto xyData = sciformats::jdx::DataParser::readXyXyData(iStream);
+    auto xyData = sciformats::jdx::DataParser::readXyXyData(reader);
     if (xyData.size() != nPoints)
     {
         throw ParseException(
@@ -72,17 +72,17 @@ std::vector<std::pair<double, double>> sciformats::jdx::Array2DData::getData(
     uint64_t nPoints, DataEncoding dataEncoding)
 {
     auto func = [&]() {
-        auto& stream = getStream();
+        auto& reader = getReader();
         std::vector<std::pair<double, double>> data{};
         const auto& label = getLabel();
         if (dataEncoding == DataEncoding::XppYY)
         {
             data = parseXppYYInput(
-                label, stream, firstX, lastX, yFactor, nPoints);
+                label, reader, firstX, lastX, yFactor, nPoints);
         }
         else if (dataEncoding == DataEncoding::XyXy)
         {
-            data = parseXyXyInput(label, stream, xFactor, yFactor, nPoints);
+            data = parseXyXyInput(label, reader, xFactor, yFactor, nPoints);
             // TODO: check if parsed data matches firstX, lastX
         }
         else

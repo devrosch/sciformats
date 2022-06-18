@@ -9,7 +9,7 @@
 #include <string>
 
 std::vector<double> sciformats::jdx::DataParser::readXppYYData(
-    std::istream& istream)
+    TextReader& reader)
 {
     static_assert(
         std::numeric_limits<double>::has_quiet_NaN, "No quiet NaN available.");
@@ -17,12 +17,12 @@ std::vector<double> sciformats::jdx::DataParser::readXppYYData(
     // read (X++(Y..Y)) data
     std::vector<double> yValues;
     std::string line;
-    std::streamoff pos = istream.tellg();
+    std::streamoff pos = reader.tellg();
     std::optional<double> yValueCheck = std::nullopt;
-    while (!util::isLdrStart(line = util::readLine(istream)))
+    while (!util::isLdrStart(line = reader.readLine()))
     {
         // save position to move back if next readLine() encounters LDR start
-        pos = istream.tellg();
+        pos = reader.tellg();
         // pre-process line
         auto [data, comment] = util::stripLineComment(line);
         util::trim(data);
@@ -51,13 +51,13 @@ std::vector<double> sciformats::jdx::DataParser::readXppYYData(
         }
     }
     // next LDR encountered => all data read => move back to start of next LDR
-    istream.seekg(pos);
+    reader.seekg(pos);
 
     return yValues;
 }
 
 std::vector<std::pair<double, double>>
-sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
+sciformats::jdx::DataParser::readXyXyData(TextReader& reader)
 {
     static_assert(
         std::numeric_limits<double>::has_quiet_NaN, "No quiet NaN available.");
@@ -66,11 +66,11 @@ sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
     std::vector<std::pair<double, double>> xyValues;
     bool lastValueIsXOnly = false;
     std::string line;
-    std::streamoff pos = istream.tellg();
-    while (!util::isLdrStart(line = util::readLine(istream)))
+    std::streamoff pos = reader.tellg();
+    while (!util::isLdrStart(line = reader.readLine()))
     {
         // save position to move back if next readLine() encounters LDR start
-        pos = istream.tellg();
+        pos = reader.tellg();
         // pre-process line
         auto [data, comment] = util::stripLineComment(line);
         util::trim(data);
@@ -99,7 +99,7 @@ sciformats::jdx::DataParser::readXyXyData(std::istream& istream)
         }
     }
     // next LDR encountered => all data read => move back to start of next LDR
-    istream.seekg(pos);
+    reader.seekg(pos);
 
     if (lastValueIsXOnly)
     {

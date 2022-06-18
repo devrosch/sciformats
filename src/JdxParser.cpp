@@ -25,6 +25,7 @@
 #endif
 
 #include "jdx/JdxParser.hpp"
+#include "jdx/TextReader.hpp"
 #include "util/StringUtils.hpp"
 
 #include <algorithm>
@@ -74,9 +75,7 @@ bool sciformats::jdx::JdxParser::canParse(
 sciformats::jdx::Block sciformats::jdx::JdxParser::parse(
     std::unique_ptr<std::istream> streamPtr)
 {
-    // the underlying getline() method sets failbit at end of file, so do
-    // not set std::ios::eofbit
-    streamPtr->exceptions(std::ios::failbit | std::ios::badbit);
-    sciformats::jdx::Block block{std::move(streamPtr)};
+    auto textReaderPtr = std::make_unique<TextReader>(std::move(streamPtr));
+    sciformats::jdx::Block block{std::move(textReaderPtr)};
     return block;
 }

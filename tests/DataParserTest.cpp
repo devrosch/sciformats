@@ -125,16 +125,16 @@ TEST_CASE("parses mixed PAC/AFFN stream", "[DataParser]")
         "648.081 10 10 9 10 11 12 15 16 16 14 17 38 38 35 38 42 47 54\r\n"
         "682.799  59  66  75  78  88  96 104 110 121 128\r\n"
         "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto actual = sciformats::jdx::DataParser::readXppYYData(stream);
+    auto actual = sciformats::jdx::DataParser::readXppYYData(reader);
     auto expect = std::vector<double>{0, 0, 0, 0, 2, 4, 4, 4, 7, 5, 4, 4, 5, 5,
         7, 10, 11, 11, 6, 5, 7, 6, 9, 9, 7, 10, 10, 9, 10, 11, 12, 15, 16, 16,
         14, 17, 38, 38, 35, 38, 42, 47, 54, 59, 66, 75, 78, 88, 96, 104, 110,
         121, 128};
-    std::string lastLine;
-    getline(stream, lastLine);
+    std::string lastLine = reader.readLine();
 
     REQUIRE(expect.size() == actual.size());
     REQUIRE(std::string{"##END="} == lastLine);
@@ -150,10 +150,11 @@ TEST_CASE("detects failing Y check", "[DataParser]")
     std::string input{"599.000+1jj\r\n"
                       "600.000+4jj\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS(sciformats::jdx::DataParser::readXppYYData(stream));
+    REQUIRE_THROWS(sciformats::jdx::DataParser::readXppYYData(reader));
 }
 
 TEST_CASE("parses DIFDUP stream", "[DataParser]")
@@ -162,16 +163,16 @@ TEST_CASE("parses DIFDUP stream", "[DataParser]")
         "599.860@VKT%TLkj%J%KLJ%njKjL%kL%jJULJ%kLK1%lLMNPNPRLJ0QTOJ1P\r\n"
         "700.158A28\r\n"
         "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto actual = sciformats::jdx::DataParser::readXppYYData(stream);
+    auto actual = sciformats::jdx::DataParser::readXppYYData(reader);
     auto expect = std::vector<double>{0, 0, 0, 0, 2, 4, 4, 4, 7, 5, 4, 4, 5, 5,
         7, 10, 11, 11, 6, 5, 7, 6, 9, 9, 7, 10, 10, 9, 10, 11, 12, 15, 16, 16,
         14, 17, 38, 38, 35, 38, 42, 47, 54, 59, 66, 75, 78, 88, 96, 104, 110,
         121, 128};
-    std::string lastLine;
-    getline(stream, lastLine);
+    std::string lastLine = reader.readLine();
 
     REQUIRE(expect.size() == actual.size());
     REQUIRE(std::string{"##END="} == lastLine);

@@ -3,28 +3,27 @@
 #include "util/PeakTableParser.hpp"
 
 #include <algorithm>
-#include <istream>
 #include <tuple>
 
 sciformats::jdx::PeakTable::PeakTable(
-    const std::string& label, std::string variableList, std::istream& istream)
-    : TabularData(label, std::move(variableList), istream)
+    const std::string& label, std::string variableList, TextReader& reader)
+    : TabularData(label, std::move(variableList), reader)
 {
     validateInput(getLabel(), getVariableList(), s_peakTableLabel,
         std::vector<std::string>{std::begin(s_peakTableVariableLists),
             std::end(s_peakTableVariableLists)});
-    skipToNextLdr(istream);
+    skipToNextLdr(reader);
 }
 
 std::optional<std::string> sciformats::jdx::PeakTable::getWidthFunction()
 {
-    util::PeakTableParser parser{getStream(), getNumVariables()};
+    util::PeakTableParser parser{getReader(), getNumVariables()};
     return TabularData::getWidthFunction(parser);
 }
 
 std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
 {
-    util::PeakTableParser parser{getStream(), getNumVariables()};
+    util::PeakTableParser parser{getReader(), getNumVariables()};
     return TabularData::getData<util::PeakTableParser, Peak>(parser);
 }
 

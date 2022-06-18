@@ -28,10 +28,11 @@ TEST_CASE("parses all LDRs in block with XYDATA", "[Block]")
                       "$$ random comment #2\r\n"
                       "##END="
                       "$$ random comment #3\r\n"};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -73,10 +74,11 @@ TEST_CASE("fails to parse block with duplicate XYDATA", "[Block]")
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(reader),
         Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
@@ -99,10 +101,11 @@ TEST_CASE("parses all LDRs in block with RADATA", "[Block]")
                       "0, 10.0\r\n"
                       "1, 11.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -136,10 +139,11 @@ TEST_CASE("fails to parse block with duplicate RADATA", "[Block]")
                       "0, 10.0\r\n"
                       "1, 11.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(reader),
         Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
@@ -160,10 +164,11 @@ TEST_CASE("parses block with XYPOINTS", "[Block]")
                       "450.0, 10.0; 451.0, 11.0\r\n"
                       "460.0, ?; 461.0, 21.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     REQUIRE(block.getXyPoints().has_value());
 }
 
@@ -187,10 +192,11 @@ TEST_CASE("fails to parse block with duplicate XYPOINTS", "[Block]")
                       "450.0, 10.0; 451.0, 11.0\r\n"
                       "460.0, ?; 461.0, 21.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(reader),
         Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
@@ -202,10 +208,11 @@ TEST_CASE("parses block with PEAK TABLE", "[Block]")
                       "0, 10.0\r\n"
                       "1, 11.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -228,10 +235,11 @@ TEST_CASE("fails to parse block with duplicate PEAK TABLE", "[Block]")
                       "0, 10.0\r\n"
                       "1, 11.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(reader),
         Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
@@ -244,10 +252,11 @@ TEST_CASE("parses block with PEAK ASSIGNMENTS", "[Block]")
                       "(1.0, 10.0, <peak assignment 1>)\r\n"
                       "(2.0, 20.0, <peak assignment 2> )\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -272,10 +281,11 @@ TEST_CASE("fails to parse block with duplicate PEAK ASSIGNMENTS", "[Block]")
                       "(1.0, 10.0, <peak assignment 1>)\r\n"
                       "(2.0, 20.0, <peak assignment 2> )\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(reader),
         Catch::Matchers::Contains("multiple", Catch::CaseSensitive::No));
 }
 
@@ -317,10 +327,11 @@ TEST_CASE("parses LINK block", "[Block]")
                       "##END=\r\n"
                       "$$ potentially problematic comment\r\n"
                       "##END=\r\n"};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
 
     // does NOT contain "##END=" even though technically an LDR
@@ -353,10 +364,11 @@ TEST_CASE("throws if required LDRs for xy data are missing", "[Block]")
                       "450.0, 10.0\r\n"
                       "451.0, 11.0\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::Block(stream),
+    REQUIRE_THROWS_WITH(sciformats::jdx::Block(reader),
         Catch::Matchers::Contains("NPOINTS")
             && Catch::Matchers::Contains("FIRSTX"));
 }
@@ -387,10 +399,11 @@ TEST_CASE("parses nested blocks", "[Block]")
                       "##END=\r\n"
 
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
     const auto& innerBlocks = block.getBlocks();
 
@@ -413,10 +426,11 @@ TEST_CASE("treats block comments different from other LDRs", "[Block]")
                       "##= comment 2 line 1\r\n"
                       "comment 2 line 2\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto block = sciformats::jdx::Block(stream);
+    auto block = sciformats::jdx::Block(reader);
     const auto& ldrs = block.getLdrs();
     const auto& ldrComments = block.getLdrComments();
 
@@ -431,10 +445,11 @@ TEST_CASE("throws on illegal block start", "[Block]")
     std::string input{"##ILLEGAL_BLOCK_START= Test Block\r\n"
                       "##JCAMP-DX= 4.24\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS(sciformats::jdx::Block(stream));
+    REQUIRE_THROWS(sciformats::jdx::Block(reader));
 }
 
 TEST_CASE("throws on duplicate LDRs in block", "[Block]")
@@ -443,18 +458,20 @@ TEST_CASE("throws on duplicate LDRs in block", "[Block]")
                       "##JCAMP-DX= 4.24\r\n"
                       "##JCAMP-DX= 5.00\r\n"
                       "##END="};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS(sciformats::jdx::Block(stream));
+    REQUIRE_THROWS(sciformats::jdx::Block(reader));
 }
 
 TEST_CASE("throws on missing END LDR in block", "[Block]")
 {
     std::string input{"##TITLE= Test Block\r\n"
                       "##JCAMP-DX= 5.00\r\n"};
-    std::stringstream stream{std::ios_base::in};
-    stream.str(input);
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS(sciformats::jdx::Block(stream));
+    REQUIRE_THROWS(sciformats::jdx::Block(reader));
 }

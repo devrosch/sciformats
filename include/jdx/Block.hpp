@@ -6,10 +6,10 @@
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
 #include "jdx/StringLdr.hpp"
+#include "jdx/TextReader.hpp"
 #include "jdx/XyData.hpp"
 #include "jdx/XyPoints.hpp"
 
-#include <istream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -24,20 +24,20 @@ class Block
 {
 public:
     /**
-     * @brief Constructs a Block from istream.
-     * @param streamPtr Input stream with JCAMP-DX data. The stream position
+     * @brief Constructs a Block from text reader data.
+     * @param readerPtr Text reader with JCAMP-DX data. The reader position
      * is assumed to be at the start of the first line of the block (containing
      * the TITLE LDR).
      */
-    explicit Block(std::unique_ptr<std::istream> streamPtr);
+    explicit Block(std::unique_ptr<TextReader> readerPtr);
     /**
-     * @brief Constructs a Block from istream.
-     * @param iStream Input stream with JCAMP-DX data. The stream position
+     * @brief Constructs a Block from text reader data.
+     * @param reader Text reader with JCAMP-DX data. The reader position
      * is assumed to be at the start of the first line of the block (containing
-     * the TITLE LDR). The inputStream is expected to exist for the lifetime of
+     * the TITLE LDR). The reader is expected to exist for the lifetime of
      * this object.
      */
-    explicit Block(std::istream& iStream);
+    explicit Block(TextReader& reader);
     /**
      * @brief Provides the labeled data records (LDRs) of the Block.
      * This does \em not include the following LDRs:
@@ -108,8 +108,8 @@ private:
         = {"", "END", s_blockStartLabel, "XYDATA", "RADATA", "XYPOINTS",
             "PEAKTABLE", "PEAKASSIGNMENTS", "NTUPLES"};
 
-    std::unique_ptr<std::istream> m_streamPtr;
-    std::istream& m_istream;
+    std::unique_ptr<TextReader> m_readerPtr;
+    TextReader& m_reader;
     std::vector<StringLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;
     std::vector<Block> m_blocks;
@@ -120,15 +120,15 @@ private:
     std::optional<PeakAssignments> m_peakAssignments;
 
     /**
-     * @brief Constructs a Block from first line value and istream.
+     * @brief Constructs a Block from first line value and reader.
      * @param title The value of the first line of the block, i.e. the content
      * of the line following the "##TITLE=" label.
-     * @param iStream Input stream with JCAMP-DX data. The stream position
+     * @param reader Text reader with JCAMP-DX data. The reader position
      * is assumed to be at the start of the second line (the line following the
-     * TITLE line) of the block. The inputStream is expected to exist for the
+     * TITLE line) of the block. The reader is expected to exist for the
      * lifetime of this object.
      */
-    Block(const std::string& title, std::istream& iStream);
+    Block(const std::string& title, TextReader& reader);
     static std::string parseFirstLine(const std::string& firstLine);
     void parseInput(const std::string& title);
     std::optional<const std::string> parseStringValue(std::string& value);

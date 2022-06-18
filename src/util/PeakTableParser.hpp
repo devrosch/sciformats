@@ -2,6 +2,7 @@
 #define LIBJDX_PEAKTABLEPARSER_HPP
 
 #include "jdx/PeakTable.hpp"
+#include "jdx/TextReader.hpp"
 
 #include <variant>
 
@@ -13,7 +14,7 @@ namespace sciformats::jdx::util
 class PeakTableParser
 {
 public:
-    explicit PeakTableParser(std::istream& iStream, size_t numVariables);
+    explicit PeakTableParser(TextReader& reader, size_t numVariables);
     /**
      * @brief Next table item.
      * @note Assumes that a peak tuple does not span multiple lines, but one
@@ -25,7 +26,7 @@ public:
     bool hasNext();
 
 private:
-    std::istream& m_istream;
+    TextReader& m_reader;
     size_t m_numVariables;
     bool m_isPastInitialComment;
     std::string m_currentLine;

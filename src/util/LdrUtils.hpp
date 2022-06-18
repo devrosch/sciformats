@@ -3,7 +3,6 @@
 
 #include "jdx/StringLdr.hpp"
 
-#include <istream>
 #include <optional>
 #include <vector>
 

@@ -4,8 +4,8 @@
 #include "jdx/DataLdr.hpp"
 #include "jdx/Peak.hpp"
 #include "jdx/TabularData.hpp"
+#include "jdx/TextReader.hpp"
 
-#include <istream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -18,8 +18,8 @@ namespace sciformats::jdx
 class PeakTable : public TabularData
 {
 public:
-    PeakTable(const std::string& label, std::string variableList,
-        std::istream& istream);
+    PeakTable(
+        const std::string& label, std::string variableList, TextReader& reader);
     /**
      * @brief Provides the parsed peak data.
      * @return The list of peaks.

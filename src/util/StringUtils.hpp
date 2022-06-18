@@ -1,14 +1,13 @@
 #ifndef LIBJDX_STRINGUTILS_HPP
 #define LIBJDX_STRINGUTILS_HPP
 
-#include <istream>
+#include <string>
 
 /**
  * @brief Helper functions for processing strings.
  */
 namespace sciformats::jdx::util
 {
-std::string readLine(std::istream& istream);
 void trim(std::string& s);
 void trimLeft(std::string& s);
 void trimRight(std::string& s);

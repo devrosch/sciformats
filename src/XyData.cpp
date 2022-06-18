@@ -2,10 +2,10 @@
 #include "jdx/XyBase.hpp"
 
 sciformats::jdx::XyData::XyData(const std::string& label,
-    const std::string& variableList, std::istream& iStream,
+    const std::string& variableList, TextReader& reader,
     const std::vector<StringLdr>& ldrs)
     : XyBase(
-        label, variableList, iStream, ldrs, s_xyDataLabel, s_xyDataVariableList)
+        label, variableList, reader, ldrs, s_xyDataLabel, s_xyDataVariableList)
 {
 }
 

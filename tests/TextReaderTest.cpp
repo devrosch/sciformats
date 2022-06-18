@@ -49,3 +49,13 @@ TEST_CASE("reads data provided by an istream", "[TextReader]")
     reader.seekg(21);
     REQUIRE(21 == reader.tellg());
 }
+
+TEST_CASE("throws when trying to read past end", "[TextReader]")
+{
+    std::string input{};
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    REQUIRE_THROWS(reader.readLine());
+}

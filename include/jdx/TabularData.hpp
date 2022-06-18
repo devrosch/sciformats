@@ -2,9 +2,9 @@
 #define LIBJDX_TABULARDATA_HPP
 
 #include "jdx/DataLdr.hpp"
+#include "jdx/TextReader.hpp"
 
 #include <functional>
-#include <istream>
 #include <string>
 #include <variant>
 
@@ -18,7 +18,7 @@ class TabularData : public DataLdr
 public:
 protected:
     TabularData(
-        std::string label, std::string variableList, std::istream& istream);
+        std::string label, std::string variableList, TextReader& reader);
 
     /**
      * @brief Provides the parsed peak assignments.

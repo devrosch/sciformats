@@ -1,5 +1,7 @@
 set(HEADER_LIST
+    # public data providers
     "${PROJECT_SOURCE_DIR}/include/jdx/JdxParser.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/TextReader.hpp"
     # util (private headers)
     "${PROJECT_SOURCE_DIR}/src/util/StringUtils.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/LdrUtils.hpp"
@@ -33,7 +35,9 @@ set(HEADER_LIST
 
 # Make an automatic library - will be static or dynamic based on user setting
 add_library(jdxparser
+    # public data providers
     JdxParser.cpp
+    TextReader.cpp
     # util
     util/StringUtils.cpp
     util/LdrUtils.cpp

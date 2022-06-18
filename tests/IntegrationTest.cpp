@@ -9,13 +9,13 @@
 TEST_CASE("parses XyData from actual sample file", "[IntegrationTest][XyData]")
 {
     const std::string path{"resources/Claniline.jdx"};
-    std::ifstream istream{path};
+    auto istream = std::make_unique<std::ifstream>(path);
 
-    auto block = sciformats::jdx::JdxParser::parse(istream);
+    auto block = sciformats::jdx::JdxParser::parse(std::move(istream));
 
     REQUIRE(block.getBlocks().size() == 6);
 
-    auto nestedBlock0 = block.getBlocks().at(0);
+    const auto& nestedBlock0 = block.getBlocks().at(0);
     REQUIRE(nestedBlock0.getXyData());
 
     auto xyData = nestedBlock0.getXyData().value();

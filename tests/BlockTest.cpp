@@ -400,7 +400,7 @@ TEST_CASE("parses nested blocks", "[Block]")
     REQUIRE("LINK" == block.getLdr("DATATYPE").value().getValue());
 
     REQUIRE(1 == innerBlocks.size());
-    auto innerBlock = innerBlocks.at(0);
+    const auto& innerBlock = innerBlocks.at(0);
     REQUIRE(
         "Test Nested Block" == innerBlock.getLdr("TITLE").value().getValue());
 }

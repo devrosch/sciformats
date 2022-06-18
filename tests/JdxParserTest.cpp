@@ -37,15 +37,15 @@ TEST_CASE("rejects illegal file (wrong magic bytes)", "[JdxParser]")
 TEST_CASE("parse succeeds for legal file", "[JdxParser]")
 {
     const std::string path{"resources/Claniline.jdx"};
-    std::ifstream istream{path};
+    auto istream = std::make_unique<std::ifstream>(path);
 
-    REQUIRE_NOTHROW(sciformats::jdx::JdxParser::parse(istream));
+    REQUIRE_NOTHROW(sciformats::jdx::JdxParser::parse(std::move(istream)));
 }
 
 TEST_CASE("parse throws for illegal file", "[JdxParser]")
 {
     const std::string path{"resources/dummy.jdx"};
-    std::ifstream istream{path};
+    auto istream = std::make_unique<std::ifstream>(path);
 
-    REQUIRE_THROWS(sciformats::jdx::JdxParser::parse(istream));
+    REQUIRE_THROWS(sciformats::jdx::JdxParser::parse(std::move(istream)));
 }

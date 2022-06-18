@@ -10,6 +10,7 @@
 #include "jdx/XyPoints.hpp"
 
 #include <istream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -22,6 +23,13 @@ namespace sciformats::jdx
 class Block
 {
 public:
+    /**
+     * @brief Constructs a Block from istream.
+     * @param streamPtr Input stream with JCAMP-DX data. The stream position
+     * is assumed to be at the start of the first line of the block (containing
+     * the TITLE LDR).
+     */
+    explicit Block(std::unique_ptr<std::istream> streamPtr);
     /**
      * @brief Constructs a Block from istream.
      * @param iStream Input stream with JCAMP-DX data. The stream position
@@ -100,6 +108,7 @@ private:
         = {"", "END", s_blockStartLabel, "XYDATA", "RADATA", "XYPOINTS",
             "PEAKTABLE", "PEAKASSIGNMENTS", "NTUPLES"};
 
+    std::unique_ptr<std::istream> m_streamPtr;
     std::istream& m_istream;
     std::vector<StringLdr> m_ldrs;
     std::vector<std::string> m_ldrComments;

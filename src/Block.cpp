@@ -2,8 +2,18 @@
 #include "util/LdrUtils.hpp"
 #include "util/StringUtils.hpp"
 
+sciformats::jdx::Block::Block(std::unique_ptr<std::istream> streamPtr)
+    : m_streamPtr{std::move(streamPtr)}
+    , m_istream{*m_streamPtr}
+{
+    auto firstLine = util::readLine(m_istream);
+    auto titleFirstLine = parseFirstLine(firstLine);
+    parseInput(titleFirstLine);
+}
+
 sciformats::jdx::Block::Block(std::istream& iStream)
-    : m_istream{iStream}
+    : m_streamPtr{nullptr}
+    , m_istream{iStream}
 {
     auto firstLine = util::readLine(m_istream);
     auto titleFirstLine = parseFirstLine(firstLine);

@@ -72,14 +72,11 @@ bool sciformats::jdx::JdxParser::canParse(
 }
 
 sciformats::jdx::Block sciformats::jdx::JdxParser::parse(
-    std::istream& iStream, bool activateExceptions)
+    std::unique_ptr<std::istream> streamPtr)
 {
-    if (activateExceptions)
-    {
-        // the underlying getline() method sets failbit at end of file, so do
-        // not set std::ios::eofbit
-        iStream.exceptions(std::ios::failbit | std::ios::badbit);
-    }
-    sciformats::jdx::Block block{iStream};
+    // the underlying getline() method sets failbit at end of file, so do
+    // not set std::ios::eofbit
+    streamPtr->exceptions(std::ios::failbit | std::ios::badbit);
+    sciformats::jdx::Block block{std::move(streamPtr)};
     return block;
 }

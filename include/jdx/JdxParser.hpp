@@ -4,6 +4,7 @@
 #include "jdx/Block.hpp"
 
 #include <istream>
+#include <memory>
 #include <string>
 
 namespace sciformats::jdx
@@ -25,12 +26,10 @@ public:
 
     /**
      * @brief Parses the data.
-     * @param iStream Binary input stream.
-     * @param activateExceptions Activate exceptions for input_stream. Defaults
-     * to "true".
+     * @param stream Binary input stream for the data.
      * @return A Block representing the data.
      */
-    Block static parse(std::istream& iStream, bool activateExceptions = true);
+    Block static parse(std::unique_ptr<std::istream> streamPtr);
 
 private:
     static constexpr std::array<const char*, 3> s_acceptedExtensions

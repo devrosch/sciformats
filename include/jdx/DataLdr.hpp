@@ -12,7 +12,7 @@
 namespace sciformats::jdx
 {
 /**
- * @brief Base class for JCAMP-DX PEAK TABLE and PEAK ASSIGNMENTS records.
+ * @brief Base class for JCAMP-DX data records.
  */
 class DataLdr : public Ldr
 {

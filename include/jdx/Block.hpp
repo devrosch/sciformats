@@ -1,6 +1,6 @@
 #ifndef LIBJDX_BLOCK_HPP
 #define LIBJDX_BLOCK_HPP
-
+#include "jdx/LdrContainer.hpp"
 #include "jdx/BlockParseException.hpp"
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/PeakTable.hpp"
@@ -20,7 +20,7 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX block. Can be a link or data block.
  */
-class Block
+class Block : public LdrContainer
 {
 public:
     /**
@@ -131,7 +131,6 @@ private:
     Block(const std::string& title, TextReader& reader);
     static std::string parseFirstLine(const std::string& firstLine);
     void parseInput(const std::string& title);
-    std::optional<const std::string> parseStringValue(std::string& value);
     static bool isSpecialLabel(const std::string& label);
     std::optional<const std::string> moveToNextLdr();
     template<typename T>

@@ -98,7 +98,7 @@ std::string sciformats::jdx::Block::parseFirstLine(const std::string& firstLine)
 void sciformats::jdx::Block::parseInput(const std::string& titleValue)
 {
     std::string title = titleValue;
-    std::optional<std::string> nextLine = parseStringValue(title);
+    std::optional<std::string> nextLine = parseStringValue(title, m_reader);
     m_ldrs.emplace_back(s_blockStartLabel, title);
 
     while (nextLine.has_value())
@@ -120,13 +120,13 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
                 // a duplicate LDR is illegal in a block => throw
                 throw BlockParseException("Multiple", label, title);
             }
-            nextLine = parseStringValue(value);
+            nextLine = parseStringValue(value, m_reader);
             m_ldrs.emplace_back(label, value);
         }
         else if (label.empty())
         {
             // LDR start is an LDR comment "##="
-            nextLine = parseStringValue(value);
+            nextLine = parseStringValue(value, m_reader);
             m_ldrComments.push_back(value);
         }
         else if ("END" == label)
@@ -180,31 +180,6 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
     {
         throw BlockParseException("No", "END", title);
     }
-}
-
-std::optional<const std::string> sciformats::jdx::Block::parseStringValue(
-    std::string& value)
-{
-    while (!m_reader.eof())
-    {
-        const auto line = m_reader.readLine();
-        if (util::isLdrStart(line))
-        {
-            return line;
-        }
-        auto [content, comment] = util::stripLineComment(line);
-        if (!content.empty() && value.back() == '=')
-        {
-            // account for terminal "=" as non line breaking marker
-            value.pop_back();
-            value.append(line);
-        }
-        else
-        {
-            value.append('\n' + line);
-        }
-    }
-    return std::nullopt;
 }
 
 bool sciformats::jdx::Block::isSpecialLabel(const std::string& label)

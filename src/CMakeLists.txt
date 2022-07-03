@@ -9,11 +9,15 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/src/util/PeakTableParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakAssignmentsParser.hpp"
     # ldr
+    "${PROJECT_SOURCE_DIR}/include/jdx/LdrContainer.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Ldr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/StringLdr.hpp"
     # data
     "${PROJECT_SOURCE_DIR}/include/jdx/DataLdr.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/NTuples.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesVariables.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesPage.hpp"
     # 2D data
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
@@ -46,10 +50,13 @@ add_library(jdxparser
     util/PeakAssignmentsParser.cpp
     # ldr
     Block.cpp
+    LdrContainer.cpp
     Ldr.cpp
     StringLdr.cpp
     # data
     DataLdr.cpp
+    NTuples.cpp
+    NTuplesPage.cpp
     # 2D data
     Array2DData.cpp
     XyData.cpp

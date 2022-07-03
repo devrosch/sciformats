@@ -1,4 +1,5 @@
 #include "util/LdrUtils.hpp"
+#include "util/StringUtils.hpp"
 #include "jdx/ParseException.hpp"
 
 #include <algorithm>
@@ -136,4 +137,30 @@ std::optional<std::string> sciformats::jdx::util::findLdrValue(
     auto ldr = util::findLdr(ldrs, label);
     return ldr.has_value() ? std::optional<std::string>(ldr.value().getValue())
                            : std::optional<std::string>(std::nullopt);
+}
+
+std::optional<std::string>& sciformats::jdx::util::skipToNextLdr(TextReader& reader, std::optional<std::string>& nextLine, bool skipPureCommentsOnly)
+{
+    while (nextLine.has_value() && !util::isLdrStart(nextLine.value()))
+    {
+        if (reader.eof())
+        {
+            nextLine = std::nullopt;
+            continue;
+        }
+        nextLine = reader.readLine();
+        if (skipPureCommentsOnly && !util::isLdrStart(nextLine.value()))
+        {
+            // only allow skipping $$ comment lines
+            auto [preCommentValue, comment] = util::stripLineComment(nextLine.value());
+            util::trim(preCommentValue);
+            // if not this special case, give up
+            if (!preCommentValue.empty())
+            {
+                throw ParseException(
+                    "Unexpected content found instead of pure comment ($$): " + nextLine.value());
+            }
+        }
+    }
+    return nextLine;
 }

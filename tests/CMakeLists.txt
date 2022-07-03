@@ -12,6 +12,7 @@ add_executable(jdxparser_test
     XyPointsTest.cpp
     PeakTableTest.cpp
     PeakAssignmentsTest.cpp
+    NTuplesTest.cpp
     IntegrationTest.cpp
     )
 

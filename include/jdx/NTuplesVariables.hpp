@@ -1,0 +1,68 @@
+#ifndef LIBJDX_NTUPLESVARIABLES_HPP
+#define LIBJDX_NTUPLESVARIABLES_HPP
+
+#include "jdx/StringLdr.hpp"
+
+#include <optional>
+#include <vector>
+
+namespace sciformats::jdx
+{
+/**
+ * @brief A collection of variables describing NTUPLES data.
+ */
+struct NTuplesVariables
+{
+public:
+    /**
+     * @brief ##VAR_NAME.
+     */
+    std::string varName;
+    /**
+     * @brief ##SYMBOL.
+     */
+    std::string symbol;
+    /**
+     * @brief ##VAR_TYPE.
+     */
+    std::optional<std::string> varType; // TODO: optional?
+    /**
+     * @brief ##VAR_FORM.
+     */
+    std::optional<std::string> varForm; // TODO: optional?
+    /**
+     * @brief ##VAR_DIM.
+     */
+    std::optional<uint64_t> varDim; // optional, may be blank for mass spectra
+    /**
+     * @brief ##UNITS.
+     */
+    std::optional<std::string> units;
+    /**
+     * @brief ##FIRST.
+     */
+    std::optional<double> first;
+    /**
+     * @brief ##LAST.
+     */
+    std::optional<double> last;
+    /**
+     * @brief ##MIN.
+     */
+    std::optional<double> min;
+    /**
+     * @brief ##MAX.
+     */
+    std::optional<double> max;
+    /**
+     * @brief ##FACTOR.
+     */
+    std::optional<double> factor;
+    /**
+     * @brief Additional application-specific LDRs.
+     */
+    std::vector<StringLdr> applicationAttributes;
+};
+} // namespace sciformats::jdx
+
+#endif // LIBJDX_NTUPLESVARIABLES_HPP

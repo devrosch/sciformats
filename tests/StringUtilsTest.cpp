@@ -61,3 +61,21 @@ TEST_CASE("lower case letters for ASCII produced", "[util][toLower]")
 
     REQUIRE(expected == actual);
 }
+
+TEST_CASE("splits string without trimming", "[util][split]")
+{
+    const std::string fixture{"  this, is , a ,test   "};
+    const std::vector<std::string> expected{"  this", " is ", " a ", "test   "};
+    const auto output = sciformats::jdx::util::split(fixture, ",");
+
+    REQUIRE(expected == output);
+}
+
+TEST_CASE("splits string with trimming", "[util][split]")
+{
+    const std::string fixture{"  this, is , a ,test   "};
+    const std::vector<std::string> expected{"this", "is", "a", "test"};
+    const auto output = sciformats::jdx::util::split(fixture, ",", true);
+
+    REQUIRE(expected == output);
+}

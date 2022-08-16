@@ -38,6 +38,7 @@ public:
 
 private:
     static constexpr const char* s_xyDataLabel = "XYDATA";
+    // TODO: add NMR variableLists
     static constexpr const char* s_xyDataVariableList = "(X++(Y..Y))";
 };
 } // namespace sciformats::jdx

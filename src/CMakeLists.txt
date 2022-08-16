@@ -18,6 +18,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/NTuples.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesVariables.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesPage.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/DataTable.hpp"
     # 2D data
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
@@ -57,6 +58,7 @@ add_library(jdxparser
     DataLdr.cpp
     NTuples.cpp
     NTuplesPage.cpp
+    DataTable.cpp
     # 2D data
     Array2DData.cpp
     XyData.cpp

@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace sciformats::jdx
+namespace sciformats::jdx::util
 {
 /**
  * @brief Helper functions for parsing JCAMP-DX data.

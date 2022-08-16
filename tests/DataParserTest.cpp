@@ -9,7 +9,7 @@ TEST_CASE("parses AFFN data line", "[DataParser]")
 {
     std::string input{"1.23 4.5E23 4.5E2 7.89E-14 600"};
 
-    auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
+    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1.23, 4.5E23, 4.5E2, 7.89E-14, 600};
 
     REQUIRE(false == difEncoded);
@@ -24,7 +24,7 @@ TEST_CASE("parses FIX (I3) ASCII data line", "[DataParser]")
 {
     std::string input{"1  2  3  3  2  1  0 -1 -2 -3"};
 
-    auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
+    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded);
@@ -39,7 +39,7 @@ TEST_CASE("parses PAC data line", "[DataParser]")
 {
     std::string input{"1+2+3+3+2+1+0-1-2-3"};
 
-    auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
+    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded);
@@ -54,7 +54,7 @@ TEST_CASE("parses SQZ data line", "[DataParser]")
 {
     std::string input{"1BCCBA@abc"};
 
-    auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
+    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded);
@@ -69,7 +69,7 @@ TEST_CASE("parses DIF data line", "[DataParser]")
 {
     std::string input{"1JJ%jjjjjj"};
 
-    auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
+    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(true == difEncoded);
@@ -84,14 +84,14 @@ TEST_CASE("fails if sequence starts with DIF token", "[DataParser]")
 {
     std::string input{"jjj"};
 
-    REQUIRE_THROWS(sciformats::jdx::DataParser::readValues(input));
+    REQUIRE_THROWS(sciformats::jdx::util::DataParser::readValues(input));
 }
 
 TEST_CASE("parses DIFDUP data line", "[DataParser]")
 {
     std::string input{"1JT%jX"};
 
-    auto [actual, difEncoded] = sciformats::jdx::DataParser::readValues(input);
+    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded); // last ordinate is in DUP format , not DIF
@@ -107,7 +107,7 @@ TEST_CASE(
 {
     std::string input{"1VZ"};
 
-    REQUIRE_THROWS(sciformats::jdx::DataParser::readValues(input));
+    REQUIRE_THROWS(sciformats::jdx::util::DataParser::readValues(input));
 }
 
 TEST_CASE("fails for illegal token start character", "[DataParser]")
@@ -115,7 +115,7 @@ TEST_CASE("fails for illegal token start character", "[DataParser]")
     // "u" is an illegal character
     std::string input{"123 u45"};
 
-    REQUIRE_THROWS(sciformats::jdx::DataParser::readValues(input));
+    REQUIRE_THROWS(sciformats::jdx::util::DataParser::readValues(input));
 }
 
 TEST_CASE("parses mixed PAC/AFFN stream", "[DataParser]")
@@ -129,7 +129,7 @@ TEST_CASE("parses mixed PAC/AFFN stream", "[DataParser]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto actual = sciformats::jdx::DataParser::readXppYYData(reader);
+    auto actual = sciformats::jdx::util::DataParser::readXppYYData(reader);
     auto expect = std::vector<double>{0, 0, 0, 0, 2, 4, 4, 4, 7, 5, 4, 4, 5, 5,
         7, 10, 11, 11, 6, 5, 7, 6, 9, 9, 7, 10, 10, 9, 10, 11, 12, 15, 16, 16,
         14, 17, 38, 38, 35, 38, 42, 47, 54, 59, 66, 75, 78, 88, 96, 104, 110,
@@ -154,7 +154,7 @@ TEST_CASE("detects failing Y check", "[DataParser]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    REQUIRE_THROWS(sciformats::jdx::DataParser::readXppYYData(reader));
+    REQUIRE_THROWS(sciformats::jdx::util::DataParser::readXppYYData(reader));
 }
 
 TEST_CASE("parses DIFDUP stream", "[DataParser]")
@@ -167,7 +167,7 @@ TEST_CASE("parses DIFDUP stream", "[DataParser]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto actual = sciformats::jdx::DataParser::readXppYYData(reader);
+    auto actual = sciformats::jdx::util::DataParser::readXppYYData(reader);
     auto expect = std::vector<double>{0, 0, 0, 0, 2, 4, 4, 4, 7, 5, 4, 4, 5, 5,
         7, 10, 11, 11, 6, 5, 7, 6, 9, 9, 7, 10, 10, 9, 10, 11, 12, 15, 16, 16,
         14, 17, 38, 38, 35, 38, 42, 47, 54, 59, 66, 75, 78, 88, 96, 104, 110,

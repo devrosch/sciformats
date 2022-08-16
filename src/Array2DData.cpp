@@ -17,7 +17,7 @@ sciformats::jdx::Array2DData::parseXppYYInput(const std::string& label,
     size_t nPoints)
 {
     // parse
-    auto yData = sciformats::jdx::DataParser::readXppYYData(reader);
+    auto yData = sciformats::jdx::util::DataParser::readXppYYData(reader);
     if (yData.size() != nPoints)
     {
         throw ParseException(
@@ -51,7 +51,7 @@ sciformats::jdx::Array2DData::parseXyXyInput(const std::string& label,
     TextReader& reader, double xFactor, double yFactor, size_t nPoints)
 {
     // parse
-    auto xyData = sciformats::jdx::DataParser::readXyXyData(reader);
+    auto xyData = sciformats::jdx::util::DataParser::readXyXyData(reader);
     if (xyData.size() != nPoints)
     {
         throw ParseException(

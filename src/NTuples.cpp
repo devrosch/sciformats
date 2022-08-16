@@ -8,8 +8,11 @@ sciformats::jdx::NTuples::NTuples(const std::string& label, std::string dataForm
 {
     validateInput(label);
     parse(blockLdrs, reader);
-//    auto vars = parseVariables(ldrs, reader);
-//    parsePages(vars, ldrs, reader);
+}
+
+std::string sciformats::jdx::NTuples::getDataForm()
+{
+    return m_dataForm;
 }
 
 size_t sciformats::jdx::NTuples::getNumPages()

@@ -22,13 +22,27 @@ public:
     /**
      * @brief Constructs the record.
      * @param label The label of the LDR, "NTUPLES".
-     * @param dataForm The value of the first line of the record
+     * @param dataForm The value of the first line of the record.
      * @param reader Text reader with position assumed to be on the line following the NTUPLES label.
      * @param ldrs String LDRs of the surrounding block.
      * representing the data form, e.g. "NMR FID" or "MASS SPECTRUM".
      */
     NTuples(const std::string& label, std::string dataForm, TextReader& reader, const std::vector<StringLdr>& blockLdrs);
+    /**
+     * @brief getDataForm The data form of the NTUPLES record (value of the first line of the LDR), e.g., "NMR FID" or "MASS SPECTRUM".
+     * @return The data form.
+     */
+    std::string getDataForm();
+    /**
+     * @brief getNumPages Returns the number of pages in this record.
+     * @return The number of pages.
+     */
     size_t getNumPages();
+    /**
+     * @brief getPage Retrieves a page from the record.
+     * @param pageIndex The page index starting at zero.
+     * @return The page.
+     */
     NTuplesPage getPage(size_t pageIndex);
 
 private:

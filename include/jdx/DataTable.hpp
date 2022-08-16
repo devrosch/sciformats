@@ -4,9 +4,9 @@
 #include "jdx/NTuplesVariables.hpp"
 #include "jdx/TextReader.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 namespace sciformats::jdx
 {
@@ -16,9 +16,12 @@ namespace sciformats::jdx
 class DataTable
 {
 public:
-    DataTable(std::string& label, std::string variableList, const std::vector<NTuplesVariables>& nTuplesVars, const std::vector<StringLdr>& blockLdrs, TextReader& reader);
+    DataTable(std::string& label, std::string variableList,
+        const std::vector<NTuplesVariables>& nTuplesVars,
+        const std::vector<StringLdr>& blockLdrs, TextReader& reader);
 
     std::vector<std::pair<double, double>> getData();
+
 private:
     static constexpr const char* s_label = "DATATABLE";
 
@@ -27,7 +30,9 @@ private:
     TextReader& m_reader;
 
     void validateInput(const std::string& label);
-    void parseVariables(std::string variableList, const std::vector<NTuplesVariables>& nTuplesVars, const std::vector<StringLdr>& blockLdrs);
+    void parseVariables(std::string variableList,
+        const std::vector<NTuplesVariables>& nTuplesVars,
+        const std::vector<StringLdr>& blockLdrs);
 };
 } // namespace sciformats::jdx
 

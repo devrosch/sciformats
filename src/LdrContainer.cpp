@@ -2,7 +2,8 @@
 #include "util/LdrUtils.hpp"
 #include "util/StringUtils.hpp"
 
-std::optional<const std::string> sciformats::jdx::LdrContainer::parseStringValue(
+std::optional<const std::string>
+sciformats::jdx::LdrContainer::parseStringValue(
     std::string& value, TextReader& reader)
 {
     while (!reader.eof())

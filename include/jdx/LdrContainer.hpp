@@ -13,7 +13,8 @@ namespace sciformats::jdx
 class LdrContainer
 {
 protected:
-    static std::optional<const std::string> parseStringValue(std::string& value, TextReader& reader);
+    static std::optional<const std::string> parseStringValue(
+        std::string& value, TextReader& reader);
 };
 } // namespace sciformats::jdx
 

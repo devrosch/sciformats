@@ -2,13 +2,14 @@
 #define LIBJDX_NTUPLESPAGE_HPP
 
 #include "jdx/LdrContainer.hpp"
-#include "jdx/TextReader.hpp"
-#include "jdx/StringLdr.hpp"
 #include "jdx/NTuplesVariables.hpp"
+#include "jdx/StringLdr.hpp"
+#include "jdx/TextReader.hpp"
 
-#include <vector>
-#include <map>
+#include <array>
 #include <functional>
+#include <map>
+#include <vector>
 
 namespace sciformats::jdx
 {
@@ -48,52 +49,61 @@ public:
         NTuplesVariables yVariables;
     };
 
-    NTuplesPage(std::string& label, std::string pageVar, const std::vector<NTuplesVariables>& nTuplesVars, const std::vector<StringLdr>& blockLdrs, TextReader& reader, std::optional<std::string>& nextLine);
+    NTuplesPage(std::string& label, std::string pageVar,
+        const std::vector<NTuplesVariables>& nTuplesVars,
+        const std::vector<StringLdr>& blockLdrs, TextReader& reader,
+        std::optional<std::string>& nextLine);
     /**
-     * @brief getPageVariables The page variables of the PAGE record (value of the first line of the LDR), e.g., "N=1" or "X=2.2, Y=3.3".
+     * @brief getPageVariables The page variables of the PAGE record (value of
+     * the first line of the LDR), e.g., "N=1" or "X=2.2, Y=3.3".
      * @return The page variables.
      */
     std::string getPageVariables();
     /**
-     * @brief getPageVariableLdrs The LDRs contained by the PAGE, e.g. "NPOINTS", not including "DATA TABLE".
+     * @brief getPageVariableLdrs The LDRs contained by the PAGE, e.g.
+     * "NPOINTS", not including "DATA TABLE".
      * @return The page variable LDRs.
      */
     std::vector<StringLdr> getPageVariableLdrs();
     /**
-     * @brief getDataTableVariableList The variable list describing the data table, e.g., (X++(Y..Y)).
+     * @brief getDataTableVariableList The variable list describing the data
+     * table, e.g., (X++(Y..Y)).
      * @return The data table variable list.
      */
     VarType getDataTableVariableList();
     /**
-     * @brief getDataTablePlotDescriptor The variable list describing the data table, e.g., "XYDATA" for "(X++(R..R)), XYDATA".
+     * @brief getDataTablePlotDescriptor The variable list describing the data
+     * table, e.g., "XYDATA" for "(X++(R..R)), XYDATA".
      * @return The data table plot descriptor.
      */
     std::optional<PlotDescriptor> getDataTablePlotDescriptor();
     /**
-     * @brief getDataTableVariables The relevant variables merged from LDRs of BLOCK, NTUPLES, and PAGE for the DATA TABLE.
+     * @brief getDataTableVariables The relevant variables merged from LDRs of
+     * BLOCK, NTUPLES, and PAGE for the DATA TABLE.
      * @return The variables for the DATA TABLE.
      */
     Variables getDataTableVariables();
     /**
-     * @brief getDataTable The data (already scaled if applicable) from the data table.
+     * @brief getDataTable The data (already scaled if applicable) from the data
+     * table.
      * @return The data from the data table.
      */
     std::vector<std::pair<double, double>> getDataTable();
 
 private:
     static constexpr const char* s_label = "PAGE";
-    static constexpr std::array<std::pair<const char*, PlotDescriptor>, 4> s_plotDescriptorMapping = {
-        {
-            {"PROFILE", PlotDescriptor::Profile}, {"XYDATA", PlotDescriptor::XyData},
-            {"Peaks", PlotDescriptor::Peaks}, {"CONTOUR", PlotDescriptor::Contour}
-        }
-    };
-    static constexpr std::array<std::pair<const char*, VarType>, 4> s_varTypeMapping = {
-        {
-            {"(X++(Y..Y))", VarType::XppYY}, {"(X++(R..R))", VarType::XppRR}, {"(X++(I..I))", VarType::XppII},
+    static constexpr std::array<std::pair<const char*, PlotDescriptor>, 4>
+        s_plotDescriptorMapping = {{{"PROFILE", PlotDescriptor::Profile},
+            {"XYDATA", PlotDescriptor::XyData},
+            {"Peaks", PlotDescriptor::Peaks},
+            {"CONTOUR", PlotDescriptor::Contour}}};
+    static constexpr std::array<std::pair<const char*, VarType>, 4>
+        s_varTypeMapping = {{
+            {"(X++(Y..Y))", VarType::XppYY},
+            {"(X++(R..R))", VarType::XppRR},
+            {"(X++(I..I))", VarType::XppII},
             {"(XY..XY)", VarType::XYXY},
-        }
-    };
+        }};
 
     TextReader& m_reader;
     std::streampos m_dataPos;
@@ -107,12 +117,19 @@ private:
     std::streampos m_dataTablePos;
 
     static void validateInput(const std::string& label);
-    void parse(const std::vector<NTuplesVariables>& nTuplesVars, const std::vector<StringLdr>& blockLdrs, TextReader& reader, std::optional<std::string>& nextLine);
-    static std::vector<StringLdr> parsePageVarLdrs(TextReader& reader, std::optional<std::string>& nextLine);
-    static std::pair<VarType, std::optional<PlotDescriptor>> parseDataTableVars(const std::string& rawPageVar);
+    void parse(const std::vector<NTuplesVariables>& nTuplesVars,
+        const std::vector<StringLdr>& blockLdrs, TextReader& reader,
+        std::optional<std::string>& nextLine);
+    static std::vector<StringLdr> parsePageVarLdrs(
+        TextReader& reader, std::optional<std::string>& nextLine);
+    static std::pair<VarType, std::optional<PlotDescriptor>> parseDataTableVars(
+        const std::string& rawPageVar);
     static VarType determineVarType(const std::string& varList);
-    static PlotDescriptor determinePlotDescriptor(const std::string& plotDescriptor);
-    static NTuplesVariables mergeVars(const std::vector<StringLdr>& blockLdrs, const NTuplesVariables& nTuplesVars, const std::vector<StringLdr>& pageLdrs);
+    static PlotDescriptor determinePlotDescriptor(
+        const std::string& plotDescriptor);
+    static NTuplesVariables mergeVars(const std::vector<StringLdr>& blockLdrs,
+        const NTuplesVariables& nTuplesVars,
+        const std::vector<StringLdr>& pageLdrs);
     std::vector<std::pair<double, double>> readXppYyData();
     std::vector<std::pair<double, double>> readXyXyData();
     template<typename R>

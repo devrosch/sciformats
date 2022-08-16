@@ -1,7 +1,7 @@
 #ifndef LIBJDX_BLOCK_HPP
 #define LIBJDX_BLOCK_HPP
-#include "jdx/LdrContainer.hpp"
 #include "jdx/BlockParseException.hpp"
+#include "jdx/LdrContainer.hpp"
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"

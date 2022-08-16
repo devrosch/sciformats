@@ -9,7 +9,8 @@ TEST_CASE("parses AFFN data line", "[DataParser]")
 {
     std::string input{"1.23 4.5E23 4.5E2 7.89E-14 600"};
 
-    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
+    auto [actual, difEncoded]
+        = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1.23, 4.5E23, 4.5E2, 7.89E-14, 600};
 
     REQUIRE(false == difEncoded);
@@ -24,7 +25,8 @@ TEST_CASE("parses FIX (I3) ASCII data line", "[DataParser]")
 {
     std::string input{"1  2  3  3  2  1  0 -1 -2 -3"};
 
-    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
+    auto [actual, difEncoded]
+        = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded);
@@ -39,7 +41,8 @@ TEST_CASE("parses PAC data line", "[DataParser]")
 {
     std::string input{"1+2+3+3+2+1+0-1-2-3"};
 
-    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
+    auto [actual, difEncoded]
+        = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded);
@@ -54,7 +57,8 @@ TEST_CASE("parses SQZ data line", "[DataParser]")
 {
     std::string input{"1BCCBA@abc"};
 
-    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
+    auto [actual, difEncoded]
+        = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded);
@@ -69,7 +73,8 @@ TEST_CASE("parses DIF data line", "[DataParser]")
 {
     std::string input{"1JJ%jjjjjj"};
 
-    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
+    auto [actual, difEncoded]
+        = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(true == difEncoded);
@@ -91,7 +96,8 @@ TEST_CASE("parses DIFDUP data line", "[DataParser]")
 {
     std::string input{"1JT%jX"};
 
-    auto [actual, difEncoded] = sciformats::jdx::util::DataParser::readValues(input);
+    auto [actual, difEncoded]
+        = sciformats::jdx::util::DataParser::readValues(input);
     auto expect = std::vector<double>{1, 2, 3, 3, 2, 1, 0, -1, -2, -3};
 
     REQUIRE(false == difEncoded); // last ordinate is in DUP format , not DIF

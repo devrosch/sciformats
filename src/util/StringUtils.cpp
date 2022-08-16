@@ -2,8 +2,8 @@
 #include "jdx/ParseException.hpp"
 
 #include <algorithm>
-#include <string>
 #include <regex>
+#include <string>
 
 void sciformats::jdx::util::trimLeft(std::string& s)
 {
@@ -39,7 +39,8 @@ void sciformats::jdx::util::toLower(std::string& s)
         [](unsigned char c) { return std::tolower(c); });
 }
 
-std::vector<std::string> sciformats::jdx::util::split(const std::string& input, const std::string& delimeterRegEx, bool trimSegments)
+std::vector<std::string> sciformats::jdx::util::split(const std::string& input,
+    const std::string& delimeterRegEx, bool trimSegments)
 {
     // see:
     // https://en.cppreference.com/w/cpp/regex/regex_token_iterator

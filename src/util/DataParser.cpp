@@ -111,8 +111,8 @@ sciformats::jdx::util::DataParser::readXyXyData(TextReader& reader)
     return xyValues;
 }
 
-std::pair<std::vector<double>, bool> sciformats::jdx::util::DataParser::readValues(
-    std::string& encodedValues)
+std::pair<std::vector<double>, bool>
+sciformats::jdx::util::DataParser::readValues(std::string& encodedValues)
 {
     // output
     std::vector<double> yValues{};
@@ -201,7 +201,8 @@ std::pair<std::vector<double>, bool> sciformats::jdx::util::DataParser::readValu
     return {yValues, difEncoded};
 }
 
-std::pair<std::vector<double>, bool> sciformats::jdx::util::DataParser::readXppYYLine(
+std::pair<std::vector<double>, bool>
+sciformats::jdx::util::DataParser::readXppYYLine(
     std::string& line, const std::optional<double>& yValueCheck)
 {
     // read (X++(Y..Y)) data line
@@ -248,8 +249,8 @@ std::optional<std::string> sciformats::jdx::util::DataParser::nextToken(
     return token;
 }
 
-sciformats::jdx::util::DataParser::TokenType sciformats::jdx::util::DataParser::toAffn(
-    std::string& token)
+sciformats::jdx::util::DataParser::TokenType
+sciformats::jdx::util::DataParser::toAffn(std::string& token)
 {
     auto c = token.front();
     TokenType tokenType = TokenType::Affn;
@@ -343,7 +344,8 @@ bool sciformats::jdx::util::DataParser::isTokenStart(
     return false;
 }
 
-std::optional<char> sciformats::jdx::util::DataParser::getAsciiDigitValue(char c)
+std::optional<char> sciformats::jdx::util::DataParser::getAsciiDigitValue(
+    char c)
 {
     static const std::string asciiDigits = "0123456789";
     auto pos = asciiDigits.find(c);

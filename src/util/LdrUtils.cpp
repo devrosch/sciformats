@@ -1,6 +1,6 @@
 #include "util/LdrUtils.hpp"
-#include "util/StringUtils.hpp"
 #include "jdx/ParseException.hpp"
+#include "util/StringUtils.hpp"
 
 #include <algorithm>
 #include <regex>
@@ -139,7 +139,9 @@ std::optional<std::string> sciformats::jdx::util::findLdrValue(
                            : std::optional<std::string>(std::nullopt);
 }
 
-std::optional<std::string>& sciformats::jdx::util::skipToNextLdr(TextReader& reader, std::optional<std::string>& nextLine, bool skipPureCommentsOnly)
+std::optional<std::string>& sciformats::jdx::util::skipToNextLdr(
+    TextReader& reader, std::optional<std::string>& nextLine,
+    bool skipPureCommentsOnly)
 {
     while (nextLine.has_value() && !util::isLdrStart(nextLine.value()))
     {
@@ -152,13 +154,15 @@ std::optional<std::string>& sciformats::jdx::util::skipToNextLdr(TextReader& rea
         if (skipPureCommentsOnly && !util::isLdrStart(nextLine.value()))
         {
             // only allow skipping $$ comment lines
-            auto [preCommentValue, comment] = util::stripLineComment(nextLine.value());
+            auto [preCommentValue, comment]
+                = util::stripLineComment(nextLine.value());
             util::trim(preCommentValue);
             // if not this special case, give up
             if (!preCommentValue.empty())
             {
                 throw ParseException(
-                    "Unexpected content found instead of pure comment ($$): " + nextLine.value());
+                    "Unexpected content found instead of pure comment ($$): "
+                    + nextLine.value());
             }
         }
     }

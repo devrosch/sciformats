@@ -1,9 +1,11 @@
 #include "jdx/NTuples.hpp"
+#include "jdx/ParseException.hpp"
 #include "util/LdrUtils.hpp"
 #include "util/StringUtils.hpp"
-#include "jdx/ParseException.hpp"
 
-sciformats::jdx::NTuples::NTuples(const std::string& label, std::string dataForm, TextReader& reader, const std::vector<StringLdr>& blockLdrs)
+sciformats::jdx::NTuples::NTuples(const std::string& label,
+    std::string dataForm, TextReader& reader,
+    const std::vector<StringLdr>& blockLdrs)
     : m_dataForm{std::move(dataForm)}
 {
     validateInput(label);
@@ -34,28 +36,33 @@ void sciformats::jdx::NTuples::validateInput(const std::string& label)
     }
 }
 
-void sciformats::jdx::NTuples::parse(const std::vector<StringLdr>& blockLdrs, TextReader& reader)
+void sciformats::jdx::NTuples::parse(
+    const std::vector<StringLdr>& blockLdrs, TextReader& reader)
 {
     std::optional<std::string> nextLine = reader.readLine();
     // TODO: skip $$
     auto vars = parseVariables(reader, nextLine);
     // parse pages
-    while (nextLine.has_value() && util::isLdrStart(nextLine.value())) {
+    while (nextLine.has_value() && util::isLdrStart(nextLine.value()))
+    {
         auto [label, pageVar] = util::parseLdrStart(nextLine.value());
         if (label != "PAGE")
         {
             break;
         }
         nextLine = reader.readLine();
-        auto page = NTuplesPage(label, pageVar, vars, blockLdrs, reader, nextLine);
+        auto page
+            = NTuplesPage(label, pageVar, vars, blockLdrs, reader, nextLine);
         m_pages.push_back(std::move(page));
     }
-
 }
 
-std::vector<sciformats::jdx::NTuplesVariables> sciformats::jdx::NTuples::parseVariables(TextReader& reader, std::optional<std::string>& nextLine)
+std::vector<sciformats::jdx::NTuplesVariables>
+sciformats::jdx::NTuples::parseVariables(
+    TextReader& reader, std::optional<std::string>& nextLine)
 {
-    // skip potential pure comment lines, assumes that data form info is in one line only
+    // skip potential pure comment lines, assumes that data form info is in one
+    // line only
     nextLine = util::skipToNextLdr(reader, nextLine, true);
     auto varTable = readVariables(nextLine, reader);
     auto varMap = splitValues(varTable);
@@ -65,7 +72,8 @@ std::vector<sciformats::jdx::NTuplesVariables> sciformats::jdx::NTuples::parseVa
     if (!varNames)
     {
         // VARNAMEs are required by the spec
-        throw ParseException("No \"VAR_NAME\" LDR found in NTUPLES: " + m_dataForm);
+        throw ParseException(
+            "No \"VAR_NAME\" LDR found in NTUPLES: " + m_dataForm);
     }
     auto numVars = varNames.value().size();
 
@@ -78,7 +86,9 @@ std::vector<sciformats::jdx::NTuplesVariables> sciformats::jdx::NTuples::parseVa
     return output;
 }
 
-std::vector<sciformats::jdx::StringLdr> sciformats::jdx::NTuples::readVariables(std::optional<std::string>& firstVarStart, sciformats::jdx::TextReader& reader)
+std::vector<sciformats::jdx::StringLdr> sciformats::jdx::NTuples::readVariables(
+    std::optional<std::string>& firstVarStart,
+    sciformats::jdx::TextReader& reader)
 {
     std::optional<std::string>& nextLine = firstVarStart;
     std::vector<StringLdr> output;
@@ -96,7 +106,8 @@ std::vector<sciformats::jdx::StringLdr> sciformats::jdx::NTuples::readVariables(
     return output;
 }
 
-std::map<std::string, std::vector<std::string>> sciformats::jdx::NTuples::splitValues(const std::vector<StringLdr>& vars)
+std::map<std::string, std::vector<std::string>>
+sciformats::jdx::NTuples::splitValues(const std::vector<StringLdr>& vars)
 {
     std::map<std::string, std::vector<std::string>> output;
     for (const auto& var : vars)
@@ -105,22 +116,28 @@ std::map<std::string, std::vector<std::string>> sciformats::jdx::NTuples::splitV
         auto inserted = output.emplace(var.getLabel(), values).second;
         if (!inserted)
         {
-            throw ParseException("Duplicate variable found in NTUPLE: " + var.getLabel());
+            throw ParseException(
+                "Duplicate variable found in NTUPLE: " + var.getLabel());
         }
     }
     return output;
 }
 
-std::map<std::string, std::vector<std::string>> sciformats::jdx::NTuples::extractStandardVariables(std::map<std::string, std::vector<std::string>>& vars)
+std::map<std::string, std::vector<std::string>>
+sciformats::jdx::NTuples::extractStandardVariables(
+    std::map<std::string, std::vector<std::string>>& vars)
 {
-    // see: https://stackoverflow.com/questions/180516/how-to-filter-items-from-a-stdmap
+    // see:
+    // https://stackoverflow.com/questions/180516/how-to-filter-items-from-a-stdmap
     auto matches = [](const std::string& var) {
-        return std::find(std::begin(s_variables), std::end(s_variables), var) != std::end(s_variables);
+        return std::find(std::begin(s_variables), std::end(s_variables), var)
+               != std::end(s_variables);
     };
     std::map<std::string, std::vector<std::string>> standardVars;
-//    std::copy_if(vars.begin(), vars.end(), std::inserter(standardVars, standardVars.end()), matches);
+    //    std::copy_if(vars.begin(), vars.end(), std::inserter(standardVars,
+    //    standardVars.end()), matches);
     // remove standard vars
-    for(auto it = vars.begin(); it != vars.end();)
+    for (auto it = vars.begin(); it != vars.end();)
     {
         if (matches((*it).first))
         {
@@ -131,14 +148,18 @@ std::map<std::string, std::vector<std::string>> sciformats::jdx::NTuples::extrac
         {
             ++it;
         }
-//        matches((*it).first) ? vars.erase(it++) : ++it;
+        //        matches((*it).first) ? vars.erase(it++) : ++it;
     }
     return standardVars;
 }
 
-sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(const std::map<std::string, std::vector<std::string>>& standardVars, const std::map<std::string, std::vector<std::string>>& additionalVars, size_t valueColumnIndex)
+sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
+    const std::map<std::string, std::vector<std::string>>& standardVars,
+    const std::map<std::string, std::vector<std::string>>& additionalVars,
+    size_t valueColumnIndex)
 {
-    auto findColumnValue = [this, &standardVars = std::as_const(standardVars)](const std::string& key, size_t columnIndex) {
+    auto findColumnValue = [this, &standardVars = std::as_const(standardVars)](
+                               const std::string& key, size_t columnIndex) {
         auto values = findValue(key, standardVars);
         if (!values)
         {
@@ -146,7 +167,10 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(const std::map<s
         }
         if (values.value().size() <= columnIndex)
         {
-            throw ParseException("For variable \"" + key + "\" in NTUPLES \"" + m_dataForm + "\" value not available at column: " + std::to_string(columnIndex));
+            throw ParseException("For variable \"" + key + "\" in NTUPLES \""
+                                 + m_dataForm
+                                 + "\" value not available at column: "
+                                 + std::to_string(columnIndex));
         }
         return std::optional<std::string>{values.value().at(columnIndex)};
     };
@@ -155,7 +179,9 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(const std::map<s
     if (!varNameString)
     {
         // VARNAMEs are required by the spec
-        throw ParseException(R"(No "VAR_NAME" LDR found in NTUPLES ")" + m_dataForm + "\" column: " + std::to_string(valueColumnIndex));
+        throw ParseException(
+            R"(No "VAR_NAME" LDR found in NTUPLES ")" + m_dataForm
+            + "\" column: " + std::to_string(valueColumnIndex));
     }
     auto symbolString = findColumnValue("SYMBOL", valueColumnIndex);
     auto varTypeString = findColumnValue("VARTYPE", valueColumnIndex);
@@ -168,23 +194,36 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(const std::map<s
     auto maxString = findColumnValue("MAX", valueColumnIndex);
     auto factorString = findColumnValue("FACTOR", valueColumnIndex);
 
-    // TODO: make stol/stod more reliable (new util function) and use across project
+    // TODO: make stol/stod more reliable (new util function) and use across
+    // project
     auto varName = varNameString.value();
     auto symbol = symbolString.value();
     auto& varType = varTypeString;
     auto& varForm = varFormString;
-    auto varDim = varDimString ? std::optional<uint64_t>(std::stol(varDimString.value())) : std::nullopt;
+    auto varDim = varDimString
+                      ? std::optional<uint64_t>(std::stol(varDimString.value()))
+                      : std::nullopt;
     auto& units = unitsString;
-    auto first = firstString ? std::optional<double>(std::stod(firstString.value())) : std::nullopt;
-    auto last = lastString ? std::optional<double>(std::stod(lastString.value())) : std::nullopt;
-    auto min = minString ? std::optional<double>(std::stod(minString.value())) : std::nullopt;
-    auto max = maxString ? std::optional<double>(std::stod(maxString.value())) : std::nullopt;
-    auto factor = factorString ? std::optional<double>(std::stod(factorString.value())) : std::nullopt;
+    auto first = firstString
+                     ? std::optional<double>(std::stod(firstString.value()))
+                     : std::nullopt;
+    auto last = lastString
+                    ? std::optional<double>(std::stod(lastString.value()))
+                    : std::nullopt;
+    auto min = minString ? std::optional<double>(std::stod(minString.value()))
+                         : std::nullopt;
+    auto max = maxString ? std::optional<double>(std::stod(maxString.value()))
+                         : std::nullopt;
+    auto factor = factorString
+                      ? std::optional<double>(std::stod(factorString.value()))
+                      : std::nullopt;
     std::vector<StringLdr> additionalVariables;
-    std::transform(additionalVars.begin(), additionalVars.end(), std::back_inserter(additionalVariables),
-        [valueColumnIndex](std::pair<std::string, std::vector<std::string>> var) {
+    std::transform(additionalVars.begin(), additionalVars.end(),
+        std::back_inserter(additionalVariables),
+        [valueColumnIndex](
+            std::pair<std::string, std::vector<std::string>> var) {
             return StringLdr{var.first, var.second.at(valueColumnIndex)};
-    });
+        });
 
     NTuplesVariables nTupleVars{
         varName,
@@ -201,10 +240,12 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(const std::map<s
         additionalVariables,
     };
 
-    return  nTupleVars;
+    return nTupleVars;
 }
 
-std::optional<std::vector<std::string>> sciformats::jdx::NTuples::findValue(const std::string& key, const std::map<std::string, std::vector<std::string>>& map)
+std::optional<std::vector<std::string>> sciformats::jdx::NTuples::findValue(
+    const std::string& key,
+    const std::map<std::string, std::vector<std::string>>& map)
 {
     const auto it = map.find(key);
     if (it != map.end())

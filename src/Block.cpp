@@ -80,6 +80,12 @@ sciformats::jdx::Block::getPeakAssignments() const
     return m_peakAssignments;
 }
 
+const std::optional<sciformats::jdx::NTuples>&
+sciformats::jdx::Block::getNTuples() const
+{
+    return m_nTuples;
+}
+
 std::string sciformats::jdx::Block::parseFirstLine(const std::string& firstLine)
 {
     if (!util::isLdrStart(firstLine))
@@ -167,10 +173,13 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
                 m_peakAssignments,
                 [&]() { return PeakAssignments(label, value, m_reader); });
         }
+        else if ("NTUPLES" == label)
+        {
+            nextLine = addLdr<NTuples>(title, "NTUPLES", m_nTuples,
+                [&]() { return NTuples(label, value, m_reader, m_ldrs); });
+        }
         else
         {
-            // TODO: add special treatment for data LDRs (e.g. NTUPLES, ...),
-            // DONE: XYDATA, RADATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS
             throw BlockParseException("Unsupported", label, title);
         }
     }

@@ -79,3 +79,21 @@ TEST_CASE("splits string with trimming", "[util][split]")
 
     REQUIRE(expected == output);
 }
+
+TEST_CASE("split retains trailing empty segment", "[util][split]")
+{
+    const std::string fixture{", is, a,"};
+    const std::vector<std::string> expected{"", "is", "a", ""};
+    const auto output = sciformats::jdx::util::split(fixture, ",", true);
+
+    REQUIRE(expected == output);
+}
+
+TEST_CASE("split returns full string if no delimiter present", "[util][split]")
+{
+    const std::string fixture{" test "};
+    const std::vector<std::string> expected{" test "};
+    const auto output = sciformats::jdx::util::split(fixture, ",", false);
+
+    REQUIRE(expected == output);
+}

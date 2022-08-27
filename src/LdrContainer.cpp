@@ -6,6 +6,7 @@ std::optional<const std::string>
 sciformats::jdx::LdrContainer::parseStringValue(
     std::string& value, TextReader& reader)
 {
+    util::trim(value); // trim first line value only
     while (!reader.eof())
     {
         const auto line = reader.readLine();

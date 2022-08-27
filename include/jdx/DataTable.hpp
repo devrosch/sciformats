@@ -5,6 +5,7 @@
 #include "jdx/NTuplesVariables.hpp"
 #include "jdx/TextReader.hpp"
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>

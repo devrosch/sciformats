@@ -105,8 +105,9 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
         throw ParseException(
             "Unsupported variabe list in DATA TABLE: " + getVariableList());
     }
-    auto mergedVars = mergeVars(blockLdrs, yNTuplesVars.value(), pageLdrs);
-    m_mergedVariables = {xNTuplesVars, mergedVars};
+    auto mergedXVars = mergeVars(blockLdrs, xNTuplesVars, pageLdrs);
+    auto mergedYVars = mergeVars(blockLdrs, yNTuplesVars.value(), pageLdrs);
+    m_mergedVariables = {mergedXVars, mergedYVars};
 
     auto& reader = getReader();
     nextLine = reader.readLine();
@@ -140,7 +141,7 @@ sciformats::jdx::DataTable::determineVariableList(const std::string& varList)
         return (*it).second;
     }
     throw ParseException(
-        "Unsupported variable type in NTUPLES PAGE: " + varList);
+        "Unsupported variable list in NTUPLES PAGE: " + varList);
 }
 
 sciformats::jdx::DataTable::PlotDescriptor
@@ -236,6 +237,10 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
             {
                 outputVars.factor = std::stod(pageLdr.getValue());
             }
+            else if ("NPOINTS" == pageLdr.getLabel())
+            {
+                outputVars.varDim = std::stol(pageLdr.getValue());
+            }
             else
             {
                 outputVars.applicationAttributes.push_back(pageLdr);
@@ -247,14 +252,14 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
                      const std::string& s) { return s == nTuplesVars.symbol; }))
     {
         // use values from block relevant for abscissa
-        // UNITS <-> YUNITS or <symbol>UNITS
-        // FIRST <-> FIRSTY or FIRST<symbol>
-        // LAST <-> LASTY or LAST<symbol>
-        // MIN <-> MINY or MIN<symbol>
-        // MAX <-> MAXY or MAX<symbol>
+        // UNITS <-> YUNITS
+        // FIRST <-> FIRSTY
+        // LAST <-> LASTY
+        // MIN <-> MINY
+        // MAX <-> MAXY
         // FACTOR <-> YFACTOR
-        // TODO: also check for other symbols but Y? Does not seem relevant for
-        // NMR and MS.
+        // Also check for other symbols but Y? Does not seem relevant for NMR
+        // and MS.
         for (const auto& blockLdr : blockLdrs)
         {
             if ("YUNITS" == blockLdr.getLabel()
@@ -311,6 +316,10 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
             {
                 outputVars.factor = std::stod(pageLdr.getValue());
             }
+            else if ("NPOINTS" == pageLdr.getLabel())
+            {
+                outputVars.varDim = std::stol(pageLdr.getValue());
+            }
             else
             {
                 outputVars.applicationAttributes.push_back(pageLdr);
@@ -324,13 +333,13 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
     }
     // replacements independent of abscissa/ordinate
     // VAR_DIM <-> NPOINTS
-    if (!nTuplesVars.varDim)
+    if (!outputVars.varDim)
     {
         for (const auto& blockLdr : blockLdrs)
         {
             if ("NPOINTS" == blockLdr.getLabel())
             {
-                outputVars.varDim = std::stod(blockLdr.getValue());
+                outputVars.varDim = std::stol(blockLdr.getValue());
                 break;
             }
         }

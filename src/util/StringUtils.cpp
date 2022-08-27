@@ -40,15 +40,27 @@ void sciformats::jdx::util::toLower(std::string& s)
 }
 
 std::vector<std::string> sciformats::jdx::util::split(const std::string& input,
-    const std::string& delimeterRegEx, bool trimSegments)
+    const std::string& delimiterRegEx, bool trimSegments)
 {
     // see:
     // https://en.cppreference.com/w/cpp/regex/regex_token_iterator
     // https://stackoverflow.com/questions/9435385/split-a-string-using-c11
-    std::regex delimiter{delimeterRegEx};
+    std::regex delimiter{delimiterRegEx};
     std::sregex_token_iterator first{input.begin(), input.end(), delimiter, -1};
     std::sregex_token_iterator last;
     std::vector<std::string> output{first, last};
+
+    // number of matches of delimiter
+    // see: https://stackoverflow.com/a/36320911
+    std::ptrdiff_t numMatches = std::distance(
+        std::sregex_iterator(input.begin(), input.end(), delimiter),
+        std::sregex_iterator());
+
+    if (numMatches >= 0 && output.size() == static_cast<size_t>(numMatches))
+    {
+        // if input ends on delimiter, include empty trailing segment
+        output.emplace_back("");
+    }
 
     if (trimSegments)
     {

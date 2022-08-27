@@ -46,6 +46,8 @@ void sciformats::jdx::NTuples::parse(
     while (nextLine.has_value() && util::isLdrStart(nextLine.value()))
     {
         auto [label, pageVar] = util::parseLdrStart(nextLine.value());
+        pageVar = util::stripLineComment(pageVar).first;
+        util::trim(pageVar);
         if (label != "PAGE")
         {
             break;
@@ -172,7 +174,11 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
                                  + "\" value not available at column: "
                                  + std::to_string(columnIndex));
         }
-        return std::optional<std::string>{values.value().at(columnIndex)};
+        auto value = values.value().at(columnIndex);
+        util::trim(value);
+        return value.empty()
+                   ? std::optional<std::string>{std::nullopt}
+                   : std::optional<std::string>{values.value().at(columnIndex)};
     };
 
     auto varNameString = findColumnValue("VARNAME", valueColumnIndex);

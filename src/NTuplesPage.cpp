@@ -114,7 +114,6 @@ sciformats::jdx::NTuplesPage::parseDataTableVars(const std::string& rawPageVar)
         throw ParseException(
             "Unexpected content found at DATA TABLE start: " + rawPageVar);
     }
-    segments.at(0).append(")"); // the regex removed the closing parenthesis
 
     if (segments.size() == 1)
     {
@@ -122,6 +121,8 @@ sciformats::jdx::NTuplesPage::parseDataTableVars(const std::string& rawPageVar)
         util::trim(varList);
         return {varList, std::nullopt};
     }
+    // the regex removed the closing parenthesis
+    segments.at(0).append(")");
     // plot descriptor is present
     auto varList = segments.at(0);
     util::trim(varList);

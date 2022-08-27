@@ -15,7 +15,7 @@ void trimRight(std::string& s);
 bool isSpace(char c);
 void toLower(std::string& s);
 std::vector<std::string> split(const std::string& input,
-    const std::string& delimeterRegEx, bool trimSegments = false);
+    const std::string& delimiterRegEx, bool trimSegments = false);
 } // namespace sciformats::jdx::utils
 
 #endif // LIBJDX_STRINGUTILS_HPP

@@ -34,8 +34,6 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
-
-    // TODO: populate
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
 
     sciformats::jdx::NTuples nTuples{
@@ -80,7 +78,7 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     REQUIRE(Approx(5.0) == pageN1YVariables.factor);
 
     auto pageN1Data = pageN1DataTable.getData();
-    REQUIRE(pageN1Data.size() == 4);
+    REQUIRE(4 == pageN1Data.size());
     REQUIRE(Approx(0.1) == pageN1Data.at(0).first);
     REQUIRE(Approx(50.0) == pageN1Data.at(0).second);
     REQUIRE(Approx(0.25) == pageN1Data.at(3).first);
@@ -96,11 +94,246 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     REQUIRE("XYDATA" == pageN2DataTable.getPlotDescriptor().value());
 
     auto pageN2Data = pageN2DataTable.getData();
-    REQUIRE(pageN2Data.size() == 4);
+    REQUIRE(4 == pageN2Data.size());
     REQUIRE(Approx(0.1) == pageN2Data.at(0).first);
     REQUIRE(Approx(300.0) == pageN2Data.at(0).second);
     REQUIRE(Approx(0.25) == pageN2Data.at(3).first);
     REQUIRE(Approx(410.0) == pageN2Data.at(3).second);
 }
 
-// TODO: test (XY..XY)
+TEST_CASE("parses NTUPLES MS record", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES=          MASS SPECTRUM"
+    std::string input{
+        "##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME\n"
+        "##SYMBOL=          X,             Y,                  T\n"
+        "##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n"
+        "##VAR_FORM=        AFFN,          AFFN,               AFFN\n"
+        "##VAR_DIM=         ,              ,                   3\n"
+        "##UNITS=           M/Z,           RELATIVE ABUNDANCE, SECONDS\n"
+        "##FIRST=           ,              ,                   5\n"
+        "##LAST=            ,              ,                   15\n"
+        "##PAGE=            T = 5\n"
+        "##DATA TABLE=      (XY..XY),      PEAKS\n"
+        "100,  50.0;  110,  60.0;  120,  70.0   \n"
+        "130,  80.0;  140,  90.0                \n"
+        "##PAGE=            T = 10              \n"
+        "##NPOINTS=         4                   \n"
+        "##DATA TABLE= (XY..XY), PEAKS          \n"
+        "200,  55.0;  220,  77.0                \n"
+        "230,  88.0;  240,  99.0                \n"
+        "##PAGE=            T = 15              \n"
+        "##DATA TABLE= (XY..XY), PEAKS          \n"
+        "300,  55.5;  310,  66.6;  320,  77.7   \n"
+        "330,  88.8;  340,  99.9                \n"
+        "##END NTUPLES= MASS SPECTRUM\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs};
+
+    REQUIRE(3 == nTuples.getNumPages());
+    REQUIRE("MASS SPECTRUM" == nTuples.getDataForm());
+
+    auto pageT5 = nTuples.getPage(0);
+    REQUIRE("T = 5" == pageT5.getPageVariables());
+    REQUIRE(pageT5.getPageVariableLdrs().empty());
+
+    REQUIRE(pageT5.getDataTable().has_value());
+    auto pageT5DataTable = pageT5.getDataTable().value();
+    REQUIRE("(XY..XY)" == pageT5DataTable.getVariableList());
+    REQUIRE("PEAKS" == pageT5DataTable.getPlotDescriptor().value());
+
+    auto pageT5XVariables = pageT5DataTable.getVariables().xVariables;
+    REQUIRE("MASS" == pageT5XVariables.varName);
+    REQUIRE("X" == pageT5XVariables.symbol);
+    REQUIRE("INDEPENDENT" == pageT5XVariables.varType);
+    REQUIRE("AFFN" == pageT5XVariables.varForm);
+    REQUIRE_FALSE(pageT5XVariables.varDim.has_value());
+    REQUIRE("M/Z" == pageT5XVariables.units);
+    REQUIRE_FALSE(pageT5XVariables.first.has_value());
+    REQUIRE_FALSE(pageT5XVariables.last.has_value());
+    REQUIRE_FALSE(pageT5XVariables.min.has_value());
+    REQUIRE_FALSE(pageT5XVariables.max.has_value());
+    REQUIRE_FALSE(pageT5XVariables.factor.has_value());
+
+    auto pageT5YVariables = pageT5DataTable.getVariables().yVariables;
+    REQUIRE("INTENSITY" == pageT5YVariables.varName);
+    REQUIRE("Y" == pageT5YVariables.symbol);
+    REQUIRE("DEPENDENT" == pageT5YVariables.varType);
+    REQUIRE("AFFN" == pageT5YVariables.varForm);
+    REQUIRE_FALSE(pageT5YVariables.varDim.has_value());
+    REQUIRE("RELATIVE ABUNDANCE" == pageT5YVariables.units);
+    REQUIRE_FALSE(pageT5YVariables.first.has_value());
+    REQUIRE_FALSE(pageT5YVariables.last.has_value());
+    REQUIRE_FALSE(pageT5YVariables.min.has_value());
+    REQUIRE_FALSE(pageT5YVariables.max.has_value());
+    REQUIRE_FALSE(pageT5YVariables.factor.has_value());
+
+    auto pageT5Data = pageT5DataTable.getData();
+    REQUIRE(5 == pageT5Data.size());
+    REQUIRE(Approx(100) == pageT5Data.at(0).first);
+    REQUIRE(Approx(50.0) == pageT5Data.at(0).second);
+    REQUIRE(Approx(140) == pageT5Data.at(4).first);
+    REQUIRE(Approx(90.0) == pageT5Data.at(4).second);
+
+    auto pageT10 = nTuples.getPage(1);
+    REQUIRE("T = 10" == pageT10.getPageVariables());
+    REQUIRE(1 == pageT10.getPageVariableLdrs().size());
+
+    auto pageT10Data = pageT10.getDataTable().value().getData();
+    REQUIRE(4 == pageT10Data.size());
+    REQUIRE(Approx(200) == pageT10Data.at(0).first);
+    REQUIRE(Approx(55.0) == pageT10Data.at(0).second);
+    REQUIRE(Approx(240) == pageT10Data.at(3).first);
+    REQUIRE(Approx(99.0) == pageT10Data.at(3).second);
+}
+
+TEST_CASE("uses block LDRs to fill missing NTUPLES variables", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES=          MASS SPECTRUM"
+    std::string input{
+        "##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME\n"
+        "##SYMBOL=          X,             Y,                  T\n"
+        "##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n"
+        "##VAR_FORM=        AFFN,          AFFN,               AFFN\n"
+        "##PAGE=            T = 5\n"
+        "##DATA TABLE=      (XY..XY)            \n"
+        "100,  50.0;  110,  60.0;  120,  70.0   \n"
+        "130,  80.0;  140,  90.0                \n"
+        "##END NTUPLES= MASS SPECTRUM\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    blockLdrs.emplace_back("XUNITS", "XUNITS-TEST");
+    blockLdrs.emplace_back("FIRSTX", "200.0");
+    blockLdrs.emplace_back("LASTX", "280.0");
+    blockLdrs.emplace_back("MINX", "200.0");
+    blockLdrs.emplace_back("MAXX", "280.0");
+    blockLdrs.emplace_back("XFACTOR", "2.0");
+    blockLdrs.emplace_back("YUNITS", "YUNITS-TEST");
+    blockLdrs.emplace_back("FIRSTY", "150.0");
+    blockLdrs.emplace_back("LASTY", "270.0");
+    blockLdrs.emplace_back("MINY", "150.0");
+    blockLdrs.emplace_back("MAXY", "270.0");
+    blockLdrs.emplace_back("YFACTOR", "3.0");
+    blockLdrs.emplace_back("NPOINTS", "5");
+
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs};
+
+    REQUIRE(1 == nTuples.getNumPages());
+    REQUIRE("MASS SPECTRUM" == nTuples.getDataForm());
+
+    auto pageT5 = nTuples.getPage(0);
+    REQUIRE(pageT5.getDataTable().has_value());
+    auto pageT5DataTable = pageT5.getDataTable().value();
+    REQUIRE("(XY..XY)" == pageT5DataTable.getVariableList());
+    REQUIRE_FALSE(pageT5DataTable.getPlotDescriptor().has_value());
+
+    auto pageT5XVariables = pageT5DataTable.getVariables().xVariables;
+    REQUIRE("MASS" == pageT5XVariables.varName);
+    REQUIRE("X" == pageT5XVariables.symbol);
+    REQUIRE("INDEPENDENT" == pageT5XVariables.varType.value());
+    REQUIRE("AFFN" == pageT5XVariables.varForm);
+    REQUIRE(5 == pageT5XVariables.varDim.value());
+    REQUIRE("XUNITS-TEST" == pageT5XVariables.units);
+    REQUIRE(Approx(200.0) == pageT5XVariables.first.value());
+    REQUIRE(Approx(280.0) == pageT5XVariables.last.value());
+    REQUIRE(Approx(200.0) == pageT5XVariables.min.value());
+    REQUIRE(Approx(280.0) == pageT5XVariables.max.value());
+    REQUIRE(Approx(2.0) == pageT5XVariables.factor.value());
+
+    auto pageT5YVariables = pageT5DataTable.getVariables().yVariables;
+    REQUIRE("INTENSITY" == pageT5YVariables.varName);
+    REQUIRE("Y" == pageT5YVariables.symbol);
+    REQUIRE("DEPENDENT" == pageT5YVariables.varType.value());
+    REQUIRE("AFFN" == pageT5YVariables.varForm);
+    REQUIRE(5 == pageT5YVariables.varDim.value());
+    REQUIRE("YUNITS-TEST" == pageT5YVariables.units);
+    REQUIRE(Approx(150.0) == pageT5YVariables.first.value());
+    REQUIRE(Approx(270.0) == pageT5YVariables.last.value());
+    REQUIRE(Approx(150.0) == pageT5YVariables.min.value());
+    REQUIRE(Approx(270.0) == pageT5YVariables.max.value());
+    REQUIRE(Approx(3.0) == pageT5YVariables.factor.value());
+}
+
+TEST_CASE(
+    "uses oage LDRs to fill missing or override NTUPLES variables", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES=          MASS SPECTRUM"
+    std::string input{
+        "##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME\n"
+        "##SYMBOL=          X,             Y,                  T\n"
+        "##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n"
+        "##VAR_FORM=        AFFN,          AFFN,               AFFN\n"
+        "##PAGE=            T = 5\n"
+        "##XUNITS=          XUNITS-TEST\n"
+        "##FIRSTX=          200.0\n"
+        "##LASTX=           280.0\n"
+        "##MINX=            200.0\n"
+        "##MAXX=            280.0\n"
+        "##XFACTOR=         2.0\n"
+        "##YUNITS=          YUNITS-TEST\n"
+        "##FIRSTY=          150.0\n"
+        "##LASTY=           270.0\n"
+        "##MINY=            150.0\n"
+        "##MAXY=            270.0\n"
+        "##YFACTOR=         3.0\n"
+        "##NPOINTS=         5\n"
+        "##DATA TABLE=      (XY..XY)            \n"
+        "100,  50.0;  110,  60.0;  120,  70.0   \n"
+        "130,  80.0;  140,  90.0                \n"
+        "##END NTUPLES= MASS SPECTRUM\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    blockLdrs.emplace_back("NPOINTS", "10"); // to be overridden by PAGE LDR
+
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs};
+
+    auto pageT5 = nTuples.getPage(0);
+    auto pageT5DataTable = pageT5.getDataTable().value();
+    auto pageT5XVariables = pageT5DataTable.getVariables().xVariables;
+    REQUIRE("MASS" == pageT5XVariables.varName);
+    REQUIRE("X" == pageT5XVariables.symbol);
+    REQUIRE("INDEPENDENT" == pageT5XVariables.varType.value());
+    REQUIRE("AFFN" == pageT5XVariables.varForm);
+    REQUIRE(5 == pageT5XVariables.varDim.value());
+    REQUIRE("XUNITS-TEST" == pageT5XVariables.units.value());
+    REQUIRE(Approx(200.0) == pageT5XVariables.first.value());
+    REQUIRE(Approx(280.0) == pageT5XVariables.last.value());
+    REQUIRE(Approx(200.0) == pageT5XVariables.min.value());
+    REQUIRE(Approx(280.0) == pageT5XVariables.max.value());
+    REQUIRE(Approx(2.0) == pageT5XVariables.factor.value());
+
+    auto pageT5YVariables = pageT5DataTable.getVariables().yVariables;
+    REQUIRE("INTENSITY" == pageT5YVariables.varName);
+    REQUIRE("Y" == pageT5YVariables.symbol);
+    REQUIRE("DEPENDENT" == pageT5YVariables.varType.value());
+    REQUIRE("AFFN" == pageT5YVariables.varForm);
+    REQUIRE(5 == pageT5YVariables.varDim.value());
+    REQUIRE("YUNITS-TEST" == pageT5YVariables.units.value());
+    REQUIRE(Approx(150.0) == pageT5YVariables.first.value());
+    REQUIRE(Approx(270.0) == pageT5YVariables.last.value());
+    REQUIRE(Approx(150.0) == pageT5YVariables.min.value());
+    REQUIRE(Approx(270.0) == pageT5YVariables.max.value());
+    REQUIRE(Approx(3.0) == pageT5YVariables.factor.value());
+}

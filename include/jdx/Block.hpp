@@ -2,6 +2,7 @@
 #define LIBJDX_BLOCK_HPP
 #include "jdx/BlockParseException.hpp"
 #include "jdx/LdrContainer.hpp"
+#include "jdx/NTuples.hpp"
 #include "jdx/PeakAssignments.hpp"
 #include "jdx/PeakTable.hpp"
 #include "jdx/RaData.hpp"
@@ -30,6 +31,7 @@ public:
      * the TITLE LDR).
      */
     explicit Block(std::unique_ptr<TextReader> readerPtr);
+
     /**
      * @brief Constructs a Block from text reader data.
      * @param reader Text reader with JCAMP-DX data. The reader position
@@ -38,6 +40,7 @@ public:
      * this object.
      */
     explicit Block(TextReader& reader);
+
     /**
      * @brief Provides the labeled data records (LDRs) of the Block.
      * This does \em not include the following LDRs:
@@ -52,6 +55,7 @@ public:
      * E.g. the LDR "##TITLE= abc" has label "TITLE" and content "abc".
      */
     [[nodiscard]] const std::vector<StringLdr>& getLdrs() const;
+
     /**
      * @brief Provides a labeled data record (LDR) from the block. The same
      * exclusions as for getLdrs() apply.
@@ -62,11 +66,13 @@ public:
      */
     [[nodiscard]] std::optional<const StringLdr> getLdr(
         const std::string& label) const;
+
     /**
      * @brief Provides the nested Blocks of the Block.
      * @return Blocks that are nested in this (LINK) block.
      */
     [[nodiscard]] const std::vector<Block>& getBlocks() const;
+
     /**
      * @brief Provides the labeled data records (LDRs) of the
      * Block that are comments (i.e. "##= <comment>").
@@ -75,32 +81,43 @@ public:
      * comment "##= abc" has content "abc".
      */
     [[nodiscard]] const std::vector<std::string>& getLdrComments() const;
+
     /**
      * @brief Provides the XYDATA record if available.
      * @return XYDATA record.
      */
     [[nodiscard]] const std::optional<XyData>& getXyData() const;
+
     /**
      * @brief Provides the RADATA record if available.
      * @return RADATA record.
      */
     [[nodiscard]] const std::optional<RaData>& getRaData() const;
+
     /**
      * @brief Provides the XYPOINTS record if available.
      * @return XYPOINTS record.
      */
     [[nodiscard]] const std::optional<XyPoints>& getXyPoints() const;
+
     /**
      * @brief Provides the PEAK TABLE record if available.
      * @return PEAK TABLE record.
      */
     [[nodiscard]] const std::optional<PeakTable>& getPeakTable() const;
+
     /**
      * @brief Provides the PEAK ASSIGNMENTS record if available.
      * @return PEAK ASSIGNMENTS record.
      */
     [[nodiscard]] const std::optional<PeakAssignments>&
     getPeakAssignments() const;
+
+    /**
+     * @brief Provides the NTUPLES record if available.
+     * @return NTUPLES record.
+     */
+    [[nodiscard]] const std::optional<NTuples>& getNTuples() const;
 
 private:
     static constexpr const char* s_blockStartLabel = "TITLE";
@@ -118,6 +135,7 @@ private:
     std::optional<XyPoints> m_xyPoints;
     std::optional<PeakTable> m_peakTable;
     std::optional<PeakAssignments> m_peakAssignments;
+    std::optional<NTuples> m_nTuples;
 
     /**
      * @brief Constructs a Block from first line value and reader.

@@ -25,7 +25,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
     return Array2DData::getData(m_parameters.firstR, m_parameters.lastR,
         m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
-        Array2DData::DataEncoding::XppYY);
+        Array2DData::VariableList::XppYY);
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(

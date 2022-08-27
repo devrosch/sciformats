@@ -16,11 +16,18 @@ class Array2DData : public DataLdr
 {
 public:
 protected:
-    enum class DataEncoding
+    enum class VariableList
     {
+        /** (X++(Y..Y)) */
         XppYY,
+        /** (X++(R..R)) */
+        XppRR,
+        /** (X++(I..I)) */
+        XppII,
+        /** (XY..XY) */
         XyXy
     };
+
     /**
      * @brief Constructs Array2DData from first line value and reader.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
@@ -37,7 +44,7 @@ protected:
 
     std::vector<std::pair<double, double>> getData(double firstX, double lastX,
         double xFactor, double yFactor, uint64_t nPoints,
-        DataEncoding dataEncoding);
+        VariableList dataEncoding);
 
 private:
     /**
@@ -63,6 +70,7 @@ private:
     static std::vector<std::pair<double, double>> parseXppYYInput(
         const std::string& label, TextReader& reader, double firstX,
         double lastX, double yFactor, size_t nPoints);
+
     /**
      * @brief Parses the xy data pairs (i.e. "(XY..XY)" or "(RA..RA)") from a
      * "##XYDATA=" or "##RADATA=" block.

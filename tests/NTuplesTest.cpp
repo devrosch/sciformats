@@ -54,15 +54,15 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     REQUIRE("NMR SPECTRUM" == nTuples.getDataForm());
 
     auto pageN1 = nTuples.getPage(0);
-
     REQUIRE("N=1" == pageN1.getPageVariables());
     REQUIRE(pageN1.getPageVariableLdrs().empty());
-    REQUIRE(sciformats::jdx::NTuplesPage::VarType::XppRR
-            == pageN1.getDataTableVariableList());
-    REQUIRE(sciformats::jdx::NTuplesPage::PlotDescriptor::XyData
-            == pageN1.getDataTablePlotDescriptor().value());
 
-    auto pageN1XVariables = pageN1.getDataTableVariables().xVariables;
+    REQUIRE(pageN1.getDataTable().has_value());
+    auto pageN1DataTable = pageN1.getDataTable().value();
+    REQUIRE("(X++(R..R))" == pageN1DataTable.getVariableList());
+    REQUIRE("XYDATA" == pageN1DataTable.getPlotDescriptor().value());
+
+    auto pageN1XVariables = pageN1DataTable.getVariables().xVariables;
     REQUIRE("FREQUENCY" == pageN1XVariables.varName);
     REQUIRE("X" == pageN1XVariables.symbol);
     REQUIRE("INDEPENDENT" == pageN1XVariables.varType);
@@ -75,12 +75,24 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     REQUIRE(Approx(0.25) == pageN1XVariables.max);
     REQUIRE(Approx(0.1) == pageN1XVariables.factor);
 
-    auto pageN1DataTable = pageN1.getDataTable();
-    REQUIRE(pageN1DataTable.size() == 4);
-    REQUIRE(Approx(0.1) == pageN1DataTable.at(0).first);
-    REQUIRE(Approx(50.0) == pageN1DataTable.at(0).second);
-    REQUIRE(Approx(0.25) == pageN1DataTable.at(3).first);
-    REQUIRE(Approx(105.0) == pageN1DataTable.at(3).second);
+    auto pageN1YVariables = pageN1DataTable.getVariables().yVariables;
+    REQUIRE("SPECTRUM/REAL" == pageN1YVariables.varName);
+    REQUIRE("R" == pageN1YVariables.symbol);
+    REQUIRE("DEPENDENT" == pageN1YVariables.varType);
+    REQUIRE("ASDF" == pageN1YVariables.varForm);
+    REQUIRE(4 == pageN1YVariables.varDim);
+    REQUIRE("ARBITRARY UNITS" == pageN1YVariables.units);
+    REQUIRE(Approx(50.0) == pageN1YVariables.first);
+    REQUIRE(Approx(105.0) == pageN1YVariables.last);
+    REQUIRE(Approx(50.0) == pageN1YVariables.min);
+    REQUIRE(Approx(105.0) == pageN1YVariables.max);
+    REQUIRE(Approx(5.0) == pageN1YVariables.factor);
 
+    auto pageN1Data = pageN1DataTable.getData();
+    REQUIRE(pageN1Data.size() == 4);
+    REQUIRE(Approx(0.1) == pageN1Data.at(0).first);
+    REQUIRE(Approx(50.0) == pageN1Data.at(0).second);
+    REQUIRE(Approx(0.25) == pageN1Data.at(3).first);
+    REQUIRE(Approx(105.0) == pageN1Data.at(3).second);
     // TODO: test more
 }

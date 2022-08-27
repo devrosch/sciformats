@@ -22,7 +22,7 @@ sciformats::jdx::XyBase::getParameters() const
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
-    Array2DData::DataEncoding encoding)
+    Array2DData::VariableList encoding)
 {
     return Array2DData::getData(m_parameters.firstX, m_parameters.lastX,
         m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,

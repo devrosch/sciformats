@@ -69,18 +69,18 @@ sciformats::jdx::Array2DData::parseXyXyInput(const std::string& label,
 
 std::vector<std::pair<double, double>> sciformats::jdx::Array2DData::getData(
     double firstX, double lastX, double xFactor, double yFactor,
-    uint64_t nPoints, DataEncoding dataEncoding)
+    uint64_t nPoints, VariableList dataEncoding)
 {
     auto func = [&]() {
         auto& reader = getReader();
         std::vector<std::pair<double, double>> data{};
         const auto& label = getLabel();
-        if (dataEncoding == DataEncoding::XppYY)
+        if (dataEncoding == VariableList::XppYY)
         {
             data = parseXppYYInput(
                 label, reader, firstX, lastX, yFactor, nPoints);
         }
-        else if (dataEncoding == DataEncoding::XyXy)
+        else if (dataEncoding == VariableList::XyXy)
         {
             data = parseXyXyInput(label, reader, xFactor, yFactor, nPoints);
             // TODO: check if parsed data matches firstX, lastX

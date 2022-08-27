@@ -45,7 +45,7 @@ protected:
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getData(Array2DData::DataEncoding);
+    std::vector<std::pair<double, double>> getData(Array2DData::VariableList);
 
 private:
     XyParameters m_parameters;

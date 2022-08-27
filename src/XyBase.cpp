@@ -22,11 +22,17 @@ sciformats::jdx::XyBase::getParameters() const
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
-    Array2DData::VariableList encoding)
+    Array2DData::VariableList varList)
 {
-    return Array2DData::getData(m_parameters.firstX, m_parameters.lastX,
-        m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
-        encoding);
+    if (varList == Array2DData::VariableList::XyXy)
+    {
+        return Array2DData::parseXyXyData(getLabel(), getReader(),
+            m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
+            varList);
+    }
+    return Array2DData::parseXppYYData(getLabel(), getReader(),
+        m_parameters.firstX, m_parameters.lastX, m_parameters.yFactor,
+        m_parameters.nPoints, varList);
 }
 
 sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(

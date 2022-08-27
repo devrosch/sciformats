@@ -45,26 +45,23 @@ sciformats::jdx::DataTable::Variables sciformats::jdx::DataTable::getVariables()
 std::vector<std::pair<double, double>> sciformats::jdx::DataTable::getData()
 {
     auto variableList = determineVariableList(getVariableList());
-    if (variableList == VariableList::XppYY
-        || variableList == VariableList::XppRR
-        || variableList == VariableList::XppII)
-    {
-        std::function<std::vector<std::pair<double, double>>()> readData
-            = [this]() { return readXppYyData(); };
-        // TODO: inline lambda?
-        auto xyData = callAndResetStreamPos(readData);
-        return xyData;
-    }
+    auto dataTableParams = m_mergedVariables;
+
     if (variableList == VariableList::XyXy)
     {
-        std::function<std::vector<std::pair<double, double>>()> readData
-            = [this]() { return readXyXyData(); };
-        // TODO: inline lambda?
-        auto xyData = callAndResetStreamPos(readData);
-        return xyData;
+        auto xFactor = dataTableParams.xVariables.factor.value_or(1.0);
+        auto yFactor = dataTableParams.yVariables.factor.value_or(1.0);
+        auto nPoints = dataTableParams.yVariables.varDim;
+        return Array2DData::parseXyXyData(
+            getLabel(), getReader(), xFactor, yFactor, nPoints, variableList);
     }
-    // should never happen
-    throw ParseException("Unsupported variable list in PAGE's DATA TABLE.");
+
+    auto firstX = dataTableParams.xVariables.first.value();
+    auto lastX = dataTableParams.xVariables.last.value();
+    auto nPoints = dataTableParams.yVariables.varDim.value();
+    auto yFactor = dataTableParams.yVariables.factor.value_or(1.0);
+    return Array2DData::parseXppYYData(
+        getLabel(), getReader(), firstX, lastX, yFactor, nPoints, variableList);
 }
 
 void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
@@ -340,73 +337,4 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
     }
 
     return outputVars;
-}
-
-std::vector<std::pair<double, double>>
-sciformats::jdx::DataTable::readXppYyData()
-{
-    auto dataTableParams = m_mergedVariables;
-    auto firstX = dataTableParams.xVariables.first.value();
-    auto lastX = dataTableParams.xVariables.last.value();
-    auto nPoints = dataTableParams.yVariables.varDim.value();
-    auto yFactor = dataTableParams.yVariables.factor.value_or(1.0);
-
-    // TODO: duplicate of code in Array2DData
-    // parse
-    auto yData = util::DataParser::readXppYYData(getReader());
-    if (yData.size() != nPoints)
-    {
-        throw ParseException("Mismatch betwee NPOINTS and actual number of "
-                             "points in PAGE. VAR_DIM: "
-                             + std::to_string(nPoints)
-                             + ", actual: " + std::to_string(yData.size()));
-    }
-    // prepare processing
-    std::vector<std::pair<double, double>> xyData{};
-    xyData.reserve(yData.size());
-    // cover special cases nPoints == 0 and nPoints == 1
-    if (nPoints == 0)
-    {
-        return xyData;
-    }
-    auto nominator = nPoints == 1 ? firstX : (lastX - firstX);
-    auto denominator = nPoints == 1 ? 1 : nPoints - 1;
-    // generate and return xy data
-    uint64_t count = 0;
-    for (auto yRaw : yData)
-    {
-        auto x = firstX + nominator / denominator * count++;
-        auto y = yFactor * yRaw;
-        xyData.emplace_back(x, y);
-    }
-    return xyData;
-}
-
-std::vector<std::pair<double, double>>
-sciformats::jdx::DataTable::readXyXyData()
-{
-    auto dataTableParams = m_mergedVariables;
-    auto xFactor = dataTableParams.xVariables.factor.value_or(1.0);
-    auto yFactor = dataTableParams.yVariables.factor.value_or(1.0);
-
-    auto parser = util::PeakTableParser{getReader(), 2};
-    std::vector<std::pair<double, double>> xyData{};
-    while (parser.hasNext())
-    {
-        auto next = parser.next();
-        if (!std::holds_alternative<Peak>(next))
-        {
-            auto peak = std::get<Peak>(next);
-            xyData.emplace_back(peak.x * xFactor, peak.y * yFactor);
-            continue;
-        }
-        if (!xyData.empty())
-        {
-            throw ParseException("Unexpected content in DATA TABLE: "
-                                 + std::get<std::string>(next));
-        }
-        // if neither previous condition is true, this is a pure comment at the
-        // start of DATA TABLE => continue
-    }
-    return xyData;
 }

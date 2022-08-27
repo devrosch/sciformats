@@ -6,30 +6,20 @@
 
 TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
 {
+    // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
     std::string input{
-        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE "
-        "NUMBER\n"
-        "##SYMBOL=             X,                R,                I,          "
-        " N\n"
-        "##VAR_TYPE= INDEPENDENT,        DEPENDENT,        DEPENDENT,        "
-        "PAGE\n"
-        "##VAR_FORM=        AFFN,             ASDF,             ASDF,        "
-        "AFFN\n"
-        "##VAR_DIM=            4,                4,                4,          "
-        " 2\n"
-        "##UNITS=             HZ,  ARBITRARY UNITS,  ARBITRARY UNITS,          "
-        "  \n"
-        "##FIRST=            0.1,             50.0,            300.0,          "
-        " 1\n"
-        "##LAST=            0.25,            105.0,            410.0,          "
-        " 2\n"
-        "##MIN=              0.1,             50.0,            300.0,          "
-        " 1\n"
-        "##MAX=             0.25,            105.0,            410.0,          "
-        " 2\n"
-        "##FACTOR=           0.1,              5.0,             10.0,          "
-        " 1\n"
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE NUMBER\n"
+        "##SYMBOL=             X,                R,                I,           N\n"
+        "##VAR_TYPE= INDEPENDENT,        DEPENDENT,        DEPENDENT,        PAGE\n"
+        "##VAR_FORM=        AFFN,             ASDF,             ASDF,        AFFN\n"
+        "##VAR_DIM=            4,                4,                4,           2\n"
+        "##UNITS=             HZ,  ARBITRARY UNITS,  ARBITRARY UNITS,            \n"
+        "##FIRST=            0.1,             50.0,            300.0,           1\n"
+        "##LAST=            0.25,            105.0,            410.0,           2\n"
+        "##MIN=              0.1,             50.0,            300.0,           1\n"
+        "##MAX=             0.25,            105.0,            410.0,           2\n"
+        "##FACTOR=           0.1,              5.0,             10.0,           1\n"
         "##PAGE= N=1\n"
         "##DATA TABLE= (X++(R..R)), XYDATA   $$ Real data points\n"
         "1.0 +10+11\n"
@@ -40,6 +30,7 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
         "2.0 +40+41\n"
         "##END NTUPLES= NMR SPECTRUM\n"
         "##END=\n"};
+    // clang-format on
     auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
@@ -94,5 +85,22 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     REQUIRE(Approx(50.0) == pageN1Data.at(0).second);
     REQUIRE(Approx(0.25) == pageN1Data.at(3).first);
     REQUIRE(Approx(105.0) == pageN1Data.at(3).second);
-    // TODO: test more
+
+    auto pageN2 = nTuples.getPage(1);
+    REQUIRE("N=2" == pageN2.getPageVariables());
+    REQUIRE(pageN2.getPageVariableLdrs().empty());
+
+    REQUIRE(pageN2.getDataTable().has_value());
+    auto pageN2DataTable = pageN2.getDataTable().value();
+    REQUIRE("(X++(I..I))" == pageN2DataTable.getVariableList());
+    REQUIRE("XYDATA" == pageN2DataTable.getPlotDescriptor().value());
+
+    auto pageN2Data = pageN2DataTable.getData();
+    REQUIRE(pageN2Data.size() == 4);
+    REQUIRE(Approx(0.1) == pageN2Data.at(0).first);
+    REQUIRE(Approx(300.0) == pageN2Data.at(0).second);
+    REQUIRE(Approx(0.25) == pageN2Data.at(3).first);
+    REQUIRE(Approx(410.0) == pageN2Data.at(3).second);
 }
+
+// TODO: test (XY..XY)

@@ -20,6 +20,8 @@ protected:
     {
         /** (X++(Y..Y)) */
         XppYY,
+        /** (R++(A..A)) */
+        RppAA,
         /** (X++(R..R)) */
         XppRR,
         /** (X++(I..I)) */
@@ -30,8 +32,8 @@ protected:
 
     /**
      * @brief Constructs Array2DData from first line value and reader.
-     * @param label The label of the first line of the record, i.e. "XYDATA" or
-     * "RADATA".
+     * @param label The label of the first line of the record, i.e. "XYDATA",
+     * "RADATA", or "DATATABLE".
      * @param variableList The value of the first line of the record
      * representing the structure of the data, e.g. "(X++(Y..Y))".
      * @param reader Text reader with JCAMP-DX data. The reader position is
@@ -42,14 +44,9 @@ protected:
     Array2DData(
         std::string label, std::string variableList, TextReader& reader);
 
-    std::vector<std::pair<double, double>> getData(double firstX, double lastX,
-        double xFactor, double yFactor, uint64_t nPoints,
-        VariableList dataEncoding);
-
-private:
     /**
-     * @brief Parses the equally x spaced xy data (i.e. "X++(Y..Y)" or
-     * "R++(A..A)") from a "##XYDATA=" or "##RADATA=" block.
+     * @brief Parses the equally x spaced xy data (i.e. "X++(Y..Y)", "R++(A..A)"
+     * "X++(R..R)", or "X++(I..I)") from a "##XYDATA=" or "##RADATA=" block.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".
      * @param reader Text reader with JCAMP-DX data. The reader position is
@@ -67,9 +64,10 @@ private:
      * Note: XFACTOR is not required for parsing as the x values are determined
      * by FIRSTX, LASTX and NPOINTS.
      */
-    static std::vector<std::pair<double, double>> parseXppYYInput(
+    std::vector<std::pair<double, double>> parseXppYYData(
         const std::string& label, TextReader& reader, double firstX,
-        double lastX, double yFactor, size_t nPoints);
+        double lastX, double yFactor, size_t nPoints,
+        VariableList variableList);
 
     /**
      * @brief Parses the xy data pairs (i.e. "(XY..XY)" or "(RA..RA)") from a
@@ -88,9 +86,10 @@ private:
      * @return Pairs of xy data. Invalid y values ("?") will be represented by
      * std::numeric_limits<T>::quiet_NaN.
      */
-    static std::vector<std::pair<double, double>> parseXyXyInput(
+    std::vector<std::pair<double, double>> parseXyXyData(
         const std::string& label, TextReader& reader, double xFactor,
-        double yFactor, size_t nPoints);
+        double yFactor, std::optional<size_t> nPoints,
+        VariableList variableList);
 };
 } // namespace sciformats::jdx
 

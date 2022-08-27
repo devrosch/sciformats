@@ -17,18 +17,6 @@ namespace sciformats::jdx
 class DataTable : public Array2DData
 {
 public:
-    enum class PlotDescriptor
-    {
-        /** PROFILE */
-        Profile,
-        /** XYDATA */
-        XyData,
-        /** PEAKS */
-        Peaks,
-        /** CONTOUR */
-        Contour,
-    };
-
     struct Variables
     {
         NTuplesVariables xVariables;
@@ -64,6 +52,18 @@ public:
     std::vector<std::pair<double, double>> getData();
 
 private:
+    enum class PlotDescriptor
+    {
+        /** PROFILE */
+        Profile,
+        /** XYDATA */
+        XyData,
+        /** PEAKS */
+        Peaks,
+        /** CONTOUR */
+        Contour,
+    };
+
     static constexpr const char* s_label = "DATATABLE";
     static constexpr std::array<std::pair<const char*, VariableList>, 4>
         s_varListMapping = {{
@@ -92,8 +92,6 @@ private:
     static NTuplesVariables mergeVars(const std::vector<StringLdr>& blockLdrs,
         const NTuplesVariables& nTuplesVars,
         const std::vector<StringLdr>& pageLdrs);
-    std::vector<std::pair<double, double>> readXppYyData(); // TODO: required?
-    std::vector<std::pair<double, double>> readXyXyData(); // TODO: required?
 };
 } // namespace sciformats::jdx
 

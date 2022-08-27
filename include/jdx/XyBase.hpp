@@ -40,12 +40,14 @@ protected:
     XyBase(const std::string& label, const std::string& variableList,
         TextReader& reader, const std::vector<StringLdr>& ldrs,
         const std::string& expectedLabel, std::string expectedVariableList);
+
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getData(Array2DData::VariableList);
+    std::vector<std::pair<double, double>> getData(
+        Array2DData::VariableList varList);
 
 private:
     XyParameters m_parameters;

@@ -20,6 +20,7 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
         "##MIN=              0.1,             50.0,            300.0,           1\n"
         "##MAX=             0.25,            105.0,            410.0,           2\n"
         "##FACTOR=           0.1,              5.0,             10.0,           1\n"
+        "##$CUSTOM_LDR=     VAL1,             VAL2,             VAL3,       VAL4,\n"
         "##PAGE= N=1\n"
         "##DATA TABLE= (X++(R..R)), XYDATA   $$ Real data points\n"
         "1.0 +10+11\n"
@@ -45,6 +46,11 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     auto pageN1 = nTuples.getPage(0);
     REQUIRE("N=1" == pageN1.getPageVariables());
     REQUIRE(pageN1.getPageVariableLdrs().empty());
+    REQUIRE(4 == nTuples.getVariables().size());
+    auto pageVars0 = nTuples.getVariables().at(0);
+    REQUIRE(1 == pageVars0.applicationAttributes.size());
+    REQUIRE("$CUSTOMLDR" == pageVars0.applicationAttributes.at(0).getLabel());
+    REQUIRE("VAL1" == pageVars0.applicationAttributes.at(0).getValue());
 
     REQUIRE(pageN1.getDataTable().has_value());
     auto pageN1DataTable = pageN1.getDataTable().value();

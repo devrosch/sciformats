@@ -17,6 +17,12 @@ std::string sciformats::jdx::NTuples::getDataForm()
     return m_dataForm;
 }
 
+std::vector<sciformats::jdx::NTuplesVariables>
+sciformats::jdx::NTuples::getVariables()
+{
+    return m_variables;
+}
+
 size_t sciformats::jdx::NTuples::getNumPages()
 {
     return m_pages.size();
@@ -41,7 +47,7 @@ void sciformats::jdx::NTuples::parse(
 {
     std::optional<std::string> nextLine = reader.readLine();
     // TODO: skip $$
-    auto vars = parseVariables(reader, nextLine);
+    m_variables = parseVariables(reader, nextLine);
     // parse pages
     while (nextLine.has_value() && util::isLdrStart(nextLine.value()))
     {
@@ -53,8 +59,8 @@ void sciformats::jdx::NTuples::parse(
             break;
         }
         nextLine = reader.readLine();
-        auto page
-            = NTuplesPage(label, pageVar, vars, blockLdrs, reader, nextLine);
+        auto page = NTuplesPage(
+            label, pageVar, m_variables, blockLdrs, reader, nextLine);
         m_pages.push_back(std::move(page));
     }
 }

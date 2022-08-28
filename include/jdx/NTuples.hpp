@@ -30,17 +30,26 @@ public:
      */
     NTuples(const std::string& label, std::string dataForm, TextReader& reader,
         const std::vector<StringLdr>& blockLdrs);
+
     /**
      * @brief The data form of the NTUPLES record (value of the
      * first line of the LDR), e.g., "NMR FID" or "MASS SPECTRUM".
      * @return The data form.
      */
     std::string getDataForm();
+
+    /**
+     * @brief Returns the page variables.
+     * @return The page variables.
+     */
+    std::vector<NTuplesVariables> getVariables();
+
     /**
      * @brief Returns the number of pages in this record.
      * @return The number of pages.
      */
     size_t getNumPages();
+
     /**
      * @brief Retrieves a page from the record.
      * @param pageIndex The page index starting at zero.
@@ -55,6 +64,7 @@ private:
             "FIRST", "LAST", "MIN", "MAX", "FACTOR"};
 
     const std::string m_dataForm;
+    std::vector<NTuplesVariables> m_variables;
     std::vector<NTuplesPage> m_pages;
 
     static void validateInput(const std::string& label);

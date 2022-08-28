@@ -79,6 +79,8 @@ private:
             {"XYDATA", PlotDescriptor::XyData},
             {"PEAKS", PlotDescriptor::Peaks},
             {"CONTOUR", PlotDescriptor::Contour}}};
+    static constexpr const char* s_xSymbol = "X";
+    static constexpr std::array<const char*, 3> s_ySymbols = {"Y", "R", "I"};
 
     const std::optional<std::string> m_plotDescriptor;
     Variables m_mergedVariables;
@@ -94,6 +96,11 @@ private:
     static NTuplesVariables mergeVars(const std::vector<StringLdr>& blockLdrs,
         const NTuplesVariables& nTuplesVars,
         const std::vector<StringLdr>& pageLdrs);
+    static void mergeLdrs(const std::vector<StringLdr>& ldrs,
+        std::map<std::string, std::optional<std::string>&> stringMapping,
+        std::map<std::string, std::optional<double>&> doubleMapping,
+        std::map<std::string, std::optional<uint64_t>&> uint64Mapping,
+        bool replace);
     template<typename R, size_t SIZE>
     static R findValue(
         std::array<std::pair<const char*, R>, SIZE> keyValuePairs,

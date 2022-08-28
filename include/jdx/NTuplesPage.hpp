@@ -26,21 +26,21 @@ public:
         std::optional<std::string>& nextLine);
 
     /**
-     * @brief getPageVariables The page variables of the PAGE record (value of
+     * @brief The page variables of the PAGE record (value of
      * the first line of the LDR), e.g., "N=1" or "X=2.2, Y=3.3".
      * @return The page variables.
      */
     std::string getPageVariables();
 
     /**
-     * @brief getPageVariableLdrs The LDRs contained by the PAGE, e.g.
+     * @brief The LDRs contained by the PAGE, e.g.
      * "NPOINTS", not including "DATA TABLE".
      * @return The page variable LDRs.
      */
     std::vector<StringLdr> getPageVariableLdrs();
 
     /**
-     * @brief getDataTable The DATA TABLE.
+     * @brief The DATA TABLE.
      * @return The DATA TABLE.
      */
     std::optional<DataTable> getDataTable();

@@ -31,18 +31,18 @@ public:
     NTuples(const std::string& label, std::string dataForm, TextReader& reader,
         const std::vector<StringLdr>& blockLdrs);
     /**
-     * @brief getDataForm The data form of the NTUPLES record (value of the
+     * @brief The data form of the NTUPLES record (value of the
      * first line of the LDR), e.g., "NMR FID" or "MASS SPECTRUM".
      * @return The data form.
      */
     std::string getDataForm();
     /**
-     * @brief getNumPages Returns the number of pages in this record.
+     * @brief Returns the number of pages in this record.
      * @return The number of pages.
      */
     size_t getNumPages();
     /**
-     * @brief getPage Retrieves a page from the record.
+     * @brief Retrieves a page from the record.
      * @param pageIndex The page index starting at zero.
      * @return The page.
      */

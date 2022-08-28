@@ -147,193 +147,100 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
     const std::vector<StringLdr>& blockLdrs,
     const NTuplesVariables& nTuplesVars, const std::vector<StringLdr>& pageLdrs)
 {
-    auto ySymbols = {"Y", "R", "I"};
     auto outputVars = nTuplesVars;
+    outputVars.applicationAttributes.clear();
 
-    // fill in block vars for missing NTUPLE vars
-    if (nTuplesVars.symbol == "X")
+    if (nTuplesVars.symbol == s_xSymbol)
     {
         // use values from block relevant for abscissa
-        // UNITS <-> XUNITS
-        // FIRST <-> FIRSTX
-        // LAST <-> LASTX
-        // MIN <-> MINX
-        // MAX <-> MAXX
-        // FACTOR <-> XFACTOR
-        //        std::map<std::string, std::optional<std::string>&>
-        //        stringMapping{
-        //            {"XUNITS", outputVars.units},
-        //        };
-        //        std::map<std::string, std::optional<double>&> doubleMapping{
-        //            {"FIRSTX", outputVars.first},
-        //            {"LASTX", outputVars.last},
-        //            {"MINX", outputVars.min},
-        //            {"MAXX", outputVars.max},
-        //            {"XFACTOR", outputVars.factor},
-        //        };
-        for (const auto& blockLdr : blockLdrs)
-        {
-            if ("XUNITS" == blockLdr.getLabel()
-                && (!outputVars.units || outputVars.units.value().empty()))
-            {
-                outputVars.units = blockLdr.getValue();
-            }
-            else if ("FIRSTX" == blockLdr.getLabel() && !outputVars.first)
-            {
-                outputVars.first = std::stod(blockLdr.getValue());
-            }
-            else if ("LASTX" == blockLdr.getLabel() && !outputVars.last)
-            {
-                outputVars.last = std::stod(blockLdr.getValue());
-            }
-            else if ("MINX" == blockLdr.getLabel() && !outputVars.min)
-            {
-                outputVars.min = std::stod(blockLdr.getValue());
-            }
-            else if ("MAXX" == blockLdr.getLabel() && !outputVars.max)
-            {
-                outputVars.max = std::stod(blockLdr.getValue());
-            }
-            else if ("XFACTOR" == blockLdr.getLabel() && !outputVars.factor)
-            {
-                outputVars.factor = std::stod(blockLdr.getValue());
-            }
-        }
+        std::map<std::string, std::optional<std::string>&> stringMapping{
+            {"XUNITS", outputVars.units},
+        };
+        std::map<std::string, std::optional<double>&> doubleMapping{
+            {"FIRSTX", outputVars.first},
+            {"LASTX", outputVars.last},
+            {"MINX", outputVars.min},
+            {"MAXX", outputVars.max},
+            {"XFACTOR", outputVars.factor},
+        };
+        std::map<std::string, std::optional<uint64_t>&> uint64Mapping{
+            {"NPOINTS", outputVars.varDim},
+        };
 
-        // replace with page LDRs if applicable
-        for (const auto& pageLdr : pageLdrs)
-        {
-            if ("XUNITS" == pageLdr.getLabel())
-            {
-                outputVars.units = pageLdr.getValue();
-            }
-            else if ("FIRSTX" == pageLdr.getLabel())
-            {
-                outputVars.first = std::stod(pageLdr.getValue());
-            }
-            else if ("LASTX" == pageLdr.getLabel())
-            {
-                outputVars.last = std::stod(pageLdr.getValue());
-            }
-            else if ("MINX" == pageLdr.getLabel())
-            {
-                outputVars.min = std::stod(pageLdr.getValue());
-            }
-            else if ("MAXX" == pageLdr.getLabel())
-            {
-                outputVars.max = std::stod(pageLdr.getValue());
-            }
-            else if ("XFACTOR" == pageLdr.getLabel())
-            {
-                outputVars.factor = std::stod(pageLdr.getValue());
-            }
-            else if ("NPOINTS" == pageLdr.getLabel())
-            {
-                outputVars.varDim = std::stol(pageLdr.getValue());
-            }
-            else
-            {
-                outputVars.applicationAttributes.push_back(pageLdr);
-            }
-        }
+        // fill in block vars for missing NTUPLE vars
+        mergeLdrs(
+            blockLdrs, stringMapping, doubleMapping, uint64Mapping, false);
+
+        // replace with page LDR values if available
+        mergeLdrs(pageLdrs, stringMapping, doubleMapping, uint64Mapping, true);
     }
-    else if (std::any_of(ySymbols.begin(), ySymbols.end(),
+    else if (std::any_of(s_ySymbols.begin(), s_ySymbols.end(),
                  [&nTuplesVars](
                      const std::string& s) { return s == nTuplesVars.symbol; }))
     {
-        // use values from block relevant for abscissa
-        // UNITS <-> YUNITS
-        // FIRST <-> FIRSTY
-        // LAST <-> LASTY
-        // MIN <-> MINY
-        // MAX <-> MAXY
-        // FACTOR <-> YFACTOR
+        // use values from block relevant for ordinate
+        std::map<std::string, std::optional<std::string>&> stringMapping{
+            {"YUNITS", outputVars.units},
+        };
+        std::map<std::string, std::optional<double>&> doubleMapping{
+            {"FIRSTY", outputVars.first},
+            {"LASTY", outputVars.last},
+            {"MINY", outputVars.min},
+            {"MAXY", outputVars.max},
+            {"YFACTOR", outputVars.factor},
+        };
+        std::map<std::string, std::optional<uint64_t>&> uint64Mapping{
+            {"NPOINTS", outputVars.varDim},
+        };
         // Also check for other symbols but Y? Does not seem relevant for NMR
         // and MS.
-        for (const auto& blockLdr : blockLdrs)
-        {
-            if ("YUNITS" == blockLdr.getLabel()
-                && (!outputVars.units || outputVars.units.value().empty()))
-            {
-                outputVars.units = blockLdr.getValue();
-            }
-            else if ("FIRSTY" == blockLdr.getLabel() && !outputVars.first)
-            {
-                outputVars.first = std::stod(blockLdr.getValue());
-            }
-            else if ("LASTY" == blockLdr.getLabel() && !outputVars.last)
-            {
-                outputVars.last = std::stod(blockLdr.getValue());
-            }
-            else if ("MINY" == blockLdr.getLabel() && !outputVars.min)
-            {
-                outputVars.min = std::stod(blockLdr.getValue());
-            }
-            else if ("MAXY" == blockLdr.getLabel() && !outputVars.max)
-            {
-                outputVars.max = std::stod(blockLdr.getValue());
-            }
-            else if ("YFACTOR" == blockLdr.getLabel() && !outputVars.factor)
-            {
-                outputVars.factor = std::stod(blockLdr.getValue());
-            }
-        }
 
-        // replace with page LDRs if applicable
-        for (const auto& pageLdr : pageLdrs)
-        {
-            if ("YUNITS" == pageLdr.getLabel())
-            {
-                outputVars.units = pageLdr.getValue();
-            }
-            else if ("FIRSTY" == pageLdr.getLabel())
-            {
-                outputVars.first = std::stod(pageLdr.getValue());
-            }
-            else if ("LASTY" == pageLdr.getLabel())
-            {
-                outputVars.last = std::stod(pageLdr.getValue());
-            }
-            else if ("MINY" == pageLdr.getLabel())
-            {
-                outputVars.min = std::stod(pageLdr.getValue());
-            }
-            else if ("MAXY" == pageLdr.getLabel())
-            {
-                outputVars.max = std::stod(pageLdr.getValue());
-            }
-            else if ("YFACTOR" == pageLdr.getLabel())
-            {
-                outputVars.factor = std::stod(pageLdr.getValue());
-            }
-            else if ("NPOINTS" == pageLdr.getLabel())
-            {
-                outputVars.varDim = std::stol(pageLdr.getValue());
-            }
-            else
-            {
-                outputVars.applicationAttributes.push_back(pageLdr);
-            }
-        }
+        // fill in block vars for missing NTUPLE vars
+        mergeLdrs(
+            blockLdrs, stringMapping, doubleMapping, uint64Mapping, false);
+
+        // replace with page LDR values if available
+        mergeLdrs(pageLdrs, stringMapping, doubleMapping, uint64Mapping, true);
     }
     else
     {
         throw ParseException("Unexpected symbol found during parsing of PAGE: "
                              + nTuplesVars.symbol);
     }
-    // replacements independent of abscissa/ordinate
-    // VAR_DIM <-> NPOINTS
-    if (!outputVars.varDim)
+
+    return outputVars;
+}
+
+void sciformats::jdx::DataTable::mergeLdrs(const std::vector<StringLdr>& ldrs,
+    std::map<std::string, std::optional<std::string>&> stringMapping,
+    std::map<std::string, std::optional<double>&> doubleMapping,
+    std::map<std::string, std::optional<uint64_t>&> uint64Mapping, bool replace)
+{
+    for (const auto& ldr : ldrs)
     {
-        for (const auto& blockLdr : blockLdrs)
+        if (stringMapping.count(ldr.getLabel()) > 0)
         {
-            if ("NPOINTS" == blockLdr.getLabel())
+            auto& field = stringMapping.at(ldr.getLabel());
+            if (replace || !field || field.value().empty())
             {
-                outputVars.varDim = std::stol(blockLdr.getValue());
-                break;
+                field = ldr.getValue();
+            }
+        }
+        else if (doubleMapping.count(ldr.getLabel()) > 0)
+        {
+            auto& field = doubleMapping.at(ldr.getLabel());
+            if (replace || !field)
+            {
+                field = std::stod(ldr.getValue());
+            }
+        }
+        else if (uint64Mapping.count(ldr.getLabel()) > 0)
+        {
+            auto& field = uint64Mapping.at(ldr.getLabel());
+            if (replace || !field)
+            {
+                field = std::stol(ldr.getValue());
             }
         }
     }
-
-    return outputVars;
 }

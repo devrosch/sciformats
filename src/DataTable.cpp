@@ -132,36 +132,15 @@ sciformats::jdx::DataTable::parseDataTableVars()
 sciformats::jdx::Array2DData::VariableList
 sciformats::jdx::DataTable::determineVariableList(const std::string& varList)
 {
-    const auto* it = std::find_if(s_varListMapping.begin(),
-        s_varListMapping.end(), [&varList](const auto& mappingItem) {
-            return mappingItem.first == varList;
-        });
-    if (it != s_varListMapping.end())
-    {
-        return (*it).second;
-    }
-    throw ParseException(
-        "Unsupported variable list in NTUPLES PAGE: " + varList);
+    return findValue(s_varListMapping, varList, "variable list");
 }
 
 sciformats::jdx::DataTable::PlotDescriptor
 sciformats::jdx::DataTable::determinePlotDescriptor(
     const std::string& plotDescriptor)
 {
-    auto noCommentPlotDescriptor = util::stripLineComment(plotDescriptor).first;
-    util::trim(noCommentPlotDescriptor);
-    // TODO: very similar to determineVariableList
-    const auto* it = std::find_if(s_plotDescriptorMapping.begin(),
-        s_plotDescriptorMapping.end(),
-        [&noCommentPlotDescriptor](const auto& mappingItem) {
-            return mappingItem.first == noCommentPlotDescriptor;
-        });
-    if (it != s_plotDescriptorMapping.end())
-    {
-        return (*it).second;
-    }
-    throw ParseException(
-        "Illegal plot descriptor in NTUPLES PAGE: " + noCommentPlotDescriptor);
+    return findValue(
+        s_plotDescriptorMapping, plotDescriptor, "plot descriptor");
 }
 
 sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
@@ -181,6 +160,17 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
         // MIN <-> MINX
         // MAX <-> MAXX
         // FACTOR <-> XFACTOR
+        //        std::map<std::string, std::optional<std::string>&>
+        //        stringMapping{
+        //            {"XUNITS", outputVars.units},
+        //        };
+        //        std::map<std::string, std::optional<double>&> doubleMapping{
+        //            {"FIRSTX", outputVars.first},
+        //            {"LASTX", outputVars.last},
+        //            {"MINX", outputVars.min},
+        //            {"MAXX", outputVars.max},
+        //            {"XFACTOR", outputVars.factor},
+        //        };
         for (const auto& blockLdr : blockLdrs)
         {
             if ("XUNITS" == blockLdr.getLabel()

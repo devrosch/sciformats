@@ -3,9 +3,11 @@
 
 #include "jdx/Array2DData.hpp"
 #include "jdx/NTuplesVariables.hpp"
+#include "jdx/ParseException.hpp"
 #include "jdx/TextReader.hpp"
 
 #include <array>
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -32,22 +34,21 @@ public:
         std::optional<std::string>& nextLine);
 
     /**
-     * @brief getPlotDescriptor The descriptor of the data table, e.g., "XYDATA"
-     * for "(X++(R..R)), XYDATA".
+     * @brief The descriptor of the data table, e.g., "XYDATA" for "(X++(R..R)),
+     * XYDATA".
      * @return The data table plot descriptor.
      */
     std::optional<std::string> getPlotDescriptor();
 
     /**
-     * @brief getVariables The relevant variables merged from LDRs of BLOCK,
+     * @brief The relevant variables merged from LDRs of BLOCK,
      * NTUPLES, and PAGE for the DATA TABLE.
      * @return The variables for the DATA TABLE.
      */
     Variables getVariables();
 
     /**
-     * @brief getData The (already scaled if applicable) data from the DATA
-     * TABLE.
+     * @brief The (already scaled if applicable) data from the DATA TABLE.
      * @return The data from the data table.
      */
     std::vector<std::pair<double, double>> getData();
@@ -93,7 +94,26 @@ private:
     static NTuplesVariables mergeVars(const std::vector<StringLdr>& blockLdrs,
         const NTuplesVariables& nTuplesVars,
         const std::vector<StringLdr>& pageLdrs);
+    template<typename R, size_t SIZE>
+    static R findValue(
+        std::array<std::pair<const char*, R>, SIZE> keyValuePairs,
+        const std::string& key, const std::string& type);
 };
+
+template<typename R, size_t SIZE>
+R sciformats::jdx::DataTable::findValue(
+    std::array<std::pair<const char*, R>, SIZE> keyValuePairs,
+    const std::string& key, const std::string& type)
+{
+    const auto* it = std::find_if(keyValuePairs.begin(), keyValuePairs.end(),
+        [&key](const auto& mappingItem) { return mappingItem.first == key; });
+    if (it != keyValuePairs.end())
+    {
+        return (*it).second;
+    }
+    throw ParseException("Illegal " + type + "in NTUPLES PAGE: " + key);
+}
+
 } // namespace sciformats::jdx
 
 #endif // LIBJDX_DATATABLE_HPP

@@ -142,8 +142,6 @@ sciformats::jdx::NTuples::extractStandardVariables(
                != std::end(s_variables);
     };
     std::map<std::string, std::vector<std::string>> standardVars;
-    //    std::copy_if(vars.begin(), vars.end(), std::inserter(standardVars,
-    //    standardVars.end()), matches);
     // remove standard vars
     for (auto it = vars.begin(); it != vars.end();)
     {
@@ -156,7 +154,6 @@ sciformats::jdx::NTuples::extractStandardVariables(
         {
             ++it;
         }
-        //        matches((*it).first) ? vars.erase(it++) : ++it;
     }
     return standardVars;
 }

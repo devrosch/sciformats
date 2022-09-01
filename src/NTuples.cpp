@@ -163,28 +163,36 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
     const std::map<std::string, std::vector<std::string>>& additionalVars,
     size_t valueColumnIndex)
 {
-    auto findColumnValue = [this, &standardVars = std::as_const(standardVars)](
-                               const std::string& key, size_t columnIndex) {
-        auto values = findValue(key, standardVars);
-        if (!values)
-        {
-            return std::optional<std::string>{std::nullopt};
-        }
-        if (values.value().size() <= columnIndex)
-        {
-            throw ParseException("For variable \"" + key + "\" in NTUPLES \""
-                                 + m_dataForm
-                                 + "\" value not available at column: "
-                                 + std::to_string(columnIndex));
-        }
-        auto value = values.value().at(columnIndex);
-        util::trim(value);
-        return value.empty()
-                   ? std::optional<std::string>{std::nullopt}
-                   : std::optional<std::string>{values.value().at(columnIndex)};
-    };
+    auto pickColumnValue
+        = [this, valueColumnIndex](
+              const std::optional<std::vector<std::string>>& values,
+              const std::string& key) {
+              if (values.value().size() <= valueColumnIndex)
+              {
+                  throw ParseException("For variable \"" + key
+                                       + "\" in NTUPLES \"" + m_dataForm
+                                       + "\" value not available at column: "
+                                       + std::to_string(valueColumnIndex));
+              }
+              auto value = values.value().at(valueColumnIndex);
+              util::trim(value);
+              return value.empty() ? std::optional<std::string>{std::nullopt}
+                                   : std::optional<std::string>{
+                                       values.value().at(valueColumnIndex)};
+          };
 
-    auto varNameString = findColumnValue("VARNAME", valueColumnIndex);
+    auto findColumnValue
+        = [&pickColumnValue, &standardVars = std::as_const(standardVars)](
+              const std::string& key) {
+              auto values = findValue(key, standardVars);
+              if (!values)
+              {
+                  return std::optional<std::string>{std::nullopt};
+              }
+              return pickColumnValue(values, key);
+          };
+
+    auto varNameString = findColumnValue("VARNAME");
     if (!varNameString)
     {
         // VARNAMEs are required by the spec
@@ -192,16 +200,16 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
             R"(No "VAR_NAME" LDR found in NTUPLES ")" + m_dataForm
             + "\" column: " + std::to_string(valueColumnIndex));
     }
-    auto symbolString = findColumnValue("SYMBOL", valueColumnIndex);
-    auto varTypeString = findColumnValue("VARTYPE", valueColumnIndex);
-    auto varFormString = findColumnValue("VARFORM", valueColumnIndex);
-    auto varDimString = findColumnValue("VARDIM", valueColumnIndex);
-    auto unitsString = findColumnValue("UNITS", valueColumnIndex);
-    auto firstString = findColumnValue("FIRST", valueColumnIndex);
-    auto lastString = findColumnValue("LAST", valueColumnIndex);
-    auto minString = findColumnValue("MIN", valueColumnIndex);
-    auto maxString = findColumnValue("MAX", valueColumnIndex);
-    auto factorString = findColumnValue("FACTOR", valueColumnIndex);
+    auto symbolString = findColumnValue("SYMBOL");
+    auto varTypeString = findColumnValue("VARTYPE");
+    auto varFormString = findColumnValue("VARFORM");
+    auto varDimString = findColumnValue("VARDIM");
+    auto unitsString = findColumnValue("UNITS");
+    auto firstString = findColumnValue("FIRST");
+    auto lastString = findColumnValue("LAST");
+    auto minString = findColumnValue("MIN");
+    auto maxString = findColumnValue("MAX");
+    auto factorString = findColumnValue("FACTOR");
 
     // TODO: make stol/stod more reliable (new util function) and use across
     // project
@@ -226,12 +234,14 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
     auto factor = factorString
                       ? std::optional<double>(std::stod(factorString.value()))
                       : std::nullopt;
+
     std::vector<StringLdr> additionalVariables;
     std::transform(additionalVars.begin(), additionalVars.end(),
         std::back_inserter(additionalVariables),
-        [valueColumnIndex](
-            std::pair<std::string, std::vector<std::string>> var) {
-            return StringLdr{var.first, var.second.at(valueColumnIndex)};
+        [&pickColumnValue](
+            const std::pair<std::string, std::vector<std::string>>& var) {
+            auto value = pickColumnValue(var.second, var.first);
+            return StringLdr{var.first, value.value_or("")};
         });
 
     NTuplesVariables nTupleVars{

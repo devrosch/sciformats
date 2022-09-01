@@ -374,11 +374,10 @@ TEST_CASE("fails when NTUPLES record is missing VAR_NAME LDR", "[NTuples]")
         Catch::Matchers::Contains("VAR_NAME", Catch::CaseSensitive::Yes));
 }
 
-TEST_CASE("fails when NTUPLES record is contains duplicate LDRs", "[NTuples]")
+TEST_CASE("fails when NTUPLES record contains duplicate LDRs", "[NTuples]")
 {
     // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
-    // missing:
     std::string input{
         "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
@@ -404,4 +403,65 @@ TEST_CASE("fails when NTUPLES record is contains duplicate LDRs", "[NTuples]")
         sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
         Catch::Matchers::Contains("Duplicate", Catch::CaseSensitive::No)
             || Catch::Matchers::Contains("Multipe", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails when NTUPLES standard variable LDR lacks columns", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES= NMR SPECTRUM"
+    std::string input{
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##SYMBOL=             X,                Y,             N\n"
+        "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
+        "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
+        "##VAR_DIM=            4,                4,             1\n"
+        "##UNITS=             HZ\n" // only one column
+        "##PAGE= N=1\n"
+        "##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n"
+        "1.0 +10+11\n"
+        "2.0 +20+21\n"
+        "##PAGE= N=2\n"
+        "##END NTUPLES= NMR SPECTRUM\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+        Catch::Matchers::Contains("UNITS", Catch::CaseSensitive::Yes)
+            || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES= NMR SPECTRUM"
+    std::string input{
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##SYMBOL=             X,                Y,             N\n"
+        "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
+        "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
+        "##VAR_DIM=            4,                4,             1\n"
+        "##UNITS=             HZ,  ARBITRARY UNITS,              \n"
+        "##$CUSTOM_LDR=     VAL1\n"
+        "##PAGE= N=1\n"
+        "##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n"
+        "1.0 +10+11\n"
+        "2.0 +20+21\n"
+        "##PAGE= N=2\n"
+        "##END NTUPLES= NMR SPECTRUM\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+        Catch::Matchers::Contains("CUSTOM_LDR", Catch::CaseSensitive::Yes)
+            || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
 }

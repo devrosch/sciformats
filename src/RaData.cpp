@@ -23,13 +23,9 @@ sciformats::jdx::RaData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
-    // TODO: introduce R++AA
     return Array2DData::parseXppYYData(getLabel(), getReader(),
         m_parameters.firstR, m_parameters.lastR, m_parameters.rFactor,
-        m_parameters.nPoints, VariableList::XppYY);
-    //    return Array2DData::getData(m_parameters.firstR, m_parameters.lastR,
-    //        m_parameters.rFactor, m_parameters.aFactor, m_parameters.nPoints,
-    //        Array2DData::VariableList::XppYY);
+        m_parameters.nPoints, VariableList::RppAA);
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(

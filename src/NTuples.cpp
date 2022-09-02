@@ -46,7 +46,9 @@ void sciformats::jdx::NTuples::parse(
     const std::vector<StringLdr>& blockLdrs, TextReader& reader)
 {
     std::optional<std::string> nextLine = reader.readLine();
-    // TODO: skip $$
+    // skip potential comment lines
+    util::skipToNextLdr(reader, nextLine, true);
+    // parse PAGE parameters
     m_variables = parseVariables(reader, nextLine);
     // parse pages
     while (nextLine.has_value() && util::isLdrStart(nextLine.value()))
@@ -54,14 +56,26 @@ void sciformats::jdx::NTuples::parse(
         auto [label, pageVar] = util::parseLdrStart(nextLine.value());
         pageVar = util::stripLineComment(pageVar).first;
         util::trim(pageVar);
-        if (label != "PAGE")
+        if (label == "ENDNTUPLES")
         {
+            // ##END NTUPLES is described as optional in JCAMP6_2b Draft
+            // but is required for indicating the NTUPLES end
             break;
         }
-        nextLine = reader.readLine();
+        if (label != "PAGE")
+        {
+            throw ParseException("Unexpected content found in NTUPLES record: "
+                                 + nextLine.value());
+        }
+        nextLine = reader.eof() ? std::nullopt
+                                : std::optional<std::string>{reader.readLine()};
         auto page = NTuplesPage(
             label, pageVar, m_variables, blockLdrs, reader, nextLine);
         m_pages.push_back(std::move(page));
+    }
+    if (!nextLine.has_value())
+    {
+        throw ParseException("Unexpected end of NTUPLES record: " + m_dataForm);
     }
 }
 

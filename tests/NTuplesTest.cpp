@@ -276,7 +276,7 @@ TEST_CASE("uses block LDRs to fill missing NTUPLES variables", "[NTuples]")
 }
 
 TEST_CASE(
-    "uses oage LDRs to fill missing or override NTUPLES variables", "[NTuples]")
+    "uses page LDRs to fill missing or override NTUPLES variables", "[NTuples]")
 {
     // clang-format off
     // "##NTUPLES=          MASS SPECTRUM"
@@ -464,4 +464,51 @@ TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
         sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
         Catch::Matchers::Contains("CUSTOM_LDR", Catch::CaseSensitive::Yes)
             || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails when NTUPLES record ends prematurely", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES= NMR SPECTRUM"
+    std::string input{
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##SYMBOL=             X,                Y,             N\n"
+        "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
+        "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
+        "##VAR_DIM=            4,                4,             1\n"
+        "##UNITS=             HZ,  ARBITRARY UNITS,              \n"
+    };
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+        Catch::Matchers::Contains("unexpected end", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails when NTUPLES PAGE record ends prematurely", "[NTuples]")
+{
+    // clang-format off
+    // "##NTUPLES= NMR SPECTRUM"
+    std::string input{
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##SYMBOL=             X,                Y,             N\n"
+        "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
+        "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
+        "##VAR_DIM=            4,                4,             1\n"
+        "##UNITS=             HZ,  ARBITRARY UNITS,              \n"
+        "##PAGE= N=1\n"
+    };
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+        Catch::Matchers::Contains("unexpected", Catch::CaseSensitive::No));
 }

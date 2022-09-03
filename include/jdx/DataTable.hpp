@@ -26,7 +26,7 @@ public:
         NTuplesVariables yVariables;
     };
 
-    DataTable(std::string& label, std::string variableList,
+    DataTable(std::string label, std::string variableList,
         std::optional<std::string> plotDescriptor,
         const std::vector<StringLdr>& blockLdrs,
         const std::vector<NTuplesVariables>& nTuplesVars,

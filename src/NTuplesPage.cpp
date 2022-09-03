@@ -100,7 +100,7 @@ sciformats::jdx::NTuplesPage::parsePageVarLdrs(
 std::pair<std::string, std::optional<std::string>>
 sciformats::jdx::NTuplesPage::parseDataTableVars(const std::string& rawPageVar)
 {
-    auto rawPageVarsTrimmed = rawPageVar;
+    auto rawPageVarsTrimmed = util::stripLineComment(rawPageVar).first;
     util::trim(rawPageVarsTrimmed);
     if (rawPageVarsTrimmed.empty())
     {

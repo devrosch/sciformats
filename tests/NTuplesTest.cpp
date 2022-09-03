@@ -1,4 +1,5 @@
 #include "jdx/NTuples.hpp"
+#include "jdx/DataTable.hpp"
 
 #include "catch2/catch.hpp"
 
@@ -379,7 +380,7 @@ TEST_CASE("fails when NTUPLES record contains duplicate LDRs", "[NTuples]")
     // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
     std::string input{
-        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
         "##SYMBOL=             X,                Y,             N\n"
         "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
@@ -410,7 +411,7 @@ TEST_CASE("fails when NTUPLES standard variable LDR lacks columns", "[NTuples]")
     // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
     std::string input{
-        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
         "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
         "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
@@ -440,7 +441,7 @@ TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
     // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
     std::string input{
-        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
         "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
         "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
@@ -471,7 +472,7 @@ TEST_CASE("fails when NTUPLES record ends prematurely", "[NTuples]")
     // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
     std::string input{
-        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
         "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
         "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
@@ -494,7 +495,7 @@ TEST_CASE("fails when NTUPLES PAGE record ends prematurely", "[NTuples]")
     // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
     std::string input{
-        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
         "##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n"
         "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
@@ -511,4 +512,52 @@ TEST_CASE("fails when NTUPLES PAGE record ends prematurely", "[NTuples]")
     REQUIRE_THROWS_WITH(
         sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
         Catch::Matchers::Contains("unexpected", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails for missing NTUPLES DATA TABLE variable list",
+    "[NTuples][DataTable]")
+{
+    // clang-format off
+    // "##NTUPLES= NMR SPECTRUM"
+    std::string input{
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
+        "##SYMBOL=             X,                Y,             N\n"
+        "##PAGE= N=1\n"
+        "##DATA TABLE=                   $$ missing variable list\n"
+        "##END NTUPLES= NMR SPECTRUM\n"
+    };
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+        Catch::Matchers::Contains("missing", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails for illegal NTUPLES DATA TABLE variable list",
+    "[NTuples][DataTable]")
+{
+    // clang-format off
+    // "##NTUPLES= NMR SPECTRUM"
+    std::string input{
+        "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
+        "##SYMBOL=             X,                Y,             N\n"
+        "##PAGE= N=1\n"
+        "##DATA TABLE= a, b, c           $$ illegal variable list\n"
+        "##END NTUPLES= NMR SPECTRUM\n"
+    };
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
+            || Catch::Matchers::Contains(
+                "unexpected", Catch::CaseSensitive::No));
 }

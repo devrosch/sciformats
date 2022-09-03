@@ -25,11 +25,11 @@ public:
     /**
      * @brief ##VAR_TYPE.
      */
-    std::optional<std::string> varType; // TODO: optional?
+    std::optional<std::string> varType;
     /**
      * @brief ##VAR_FORM.
      */
-    std::optional<std::string> varForm; // TODO: optional?
+    std::optional<std::string> varForm;
     /**
      * @brief ##VAR_DIM.
      */
@@ -59,7 +59,7 @@ public:
      */
     std::optional<double> factor;
     /**
-     * @brief Additional application-specific LDRs.
+     * @brief Additional application specific LDRs.
      */
     std::vector<StringLdr> applicationAttributes;
 };

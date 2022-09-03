@@ -1,5 +1,5 @@
-#ifndef LIBJDX_NTUPLESVARIABLES_HPP
-#define LIBJDX_NTUPLESVARIABLES_HPP
+#ifndef LIBJDX_NTUPLESATTRIBUTES_HPP
+#define LIBJDX_NTUPLESATTRIBUTES_HPP
 
 #include "jdx/StringLdr.hpp"
 
@@ -9,9 +9,9 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A collection of variables describing NTUPLES data.
+ * @brief A collection of attributes describing NTUPLES data.
  */
-struct NTuplesVariables
+struct NTuplesAttributes
 {
 public:
     /**
@@ -65,4 +65,4 @@ public:
 };
 } // namespace sciformats::jdx
 
-#endif // LIBJDX_NTUPLESVARIABLES_HPP
+#endif // LIBJDX_NTUPLESATTRIBUTES_HPP

@@ -28,6 +28,8 @@ TEST_CASE("parses unevenly spaced xy data", "[XyPoints]")
     auto xyPointsRecord
         = sciformats::jdx::XyPoints(label, variables, reader, ldrs);
 
+    REQUIRE("(XY..XY)" == xyPointsRecord.getVariableList());
+
     auto xyData = xyPointsRecord.getData();
 
     REQUIRE(4 == xyData.size());

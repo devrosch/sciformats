@@ -46,43 +46,43 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
 
     auto pageN1 = nTuples.getPage(0);
     REQUIRE("N=1" == pageN1.getPageVariables());
-    REQUIRE(pageN1.getPageVariableLdrs().empty());
-    REQUIRE(4 == nTuples.getVariables().size());
-    auto pageVars0 = nTuples.getVariables().at(0);
-    REQUIRE(1 == pageVars0.applicationAttributes.size());
-    REQUIRE("$CUSTOMLDR" == pageVars0.applicationAttributes.at(0).getLabel());
-    REQUIRE("VAL1" == pageVars0.applicationAttributes.at(0).getValue());
+    REQUIRE(pageN1.getPageLdrs().empty());
+    REQUIRE(4 == nTuples.getAttributes().size());
+    auto pageAttrs0 = nTuples.getAttributes().at(0);
+    REQUIRE(1 == pageAttrs0.applicationAttributes.size());
+    REQUIRE("$CUSTOMLDR" == pageAttrs0.applicationAttributes.at(0).getLabel());
+    REQUIRE("VAL1" == pageAttrs0.applicationAttributes.at(0).getValue());
 
     REQUIRE(pageN1.getDataTable().has_value());
     auto pageN1DataTable = pageN1.getDataTable().value();
     REQUIRE("(X++(R..R))" == pageN1DataTable.getVariableList());
     REQUIRE("XYDATA" == pageN1DataTable.getPlotDescriptor().value());
 
-    auto pageN1XVariables = pageN1DataTable.getVariables().xVariables;
-    REQUIRE("FREQUENCY" == pageN1XVariables.varName);
-    REQUIRE("X" == pageN1XVariables.symbol);
-    REQUIRE("INDEPENDENT" == pageN1XVariables.varType);
-    REQUIRE("AFFN" == pageN1XVariables.varForm);
-    REQUIRE(4 == pageN1XVariables.varDim);
-    REQUIRE("HZ" == pageN1XVariables.units);
-    REQUIRE(Approx(0.1) == pageN1XVariables.first);
-    REQUIRE(Approx(0.25) == pageN1XVariables.last);
-    REQUIRE(Approx(0.1) == pageN1XVariables.min);
-    REQUIRE(Approx(0.25) == pageN1XVariables.max);
-    REQUIRE(Approx(0.1) == pageN1XVariables.factor);
+    auto pageN1XAttributes = pageN1DataTable.getAttributes().xAttributes;
+    REQUIRE("FREQUENCY" == pageN1XAttributes.varName);
+    REQUIRE("X" == pageN1XAttributes.symbol);
+    REQUIRE("INDEPENDENT" == pageN1XAttributes.varType);
+    REQUIRE("AFFN" == pageN1XAttributes.varForm);
+    REQUIRE(4 == pageN1XAttributes.varDim);
+    REQUIRE("HZ" == pageN1XAttributes.units);
+    REQUIRE(Approx(0.1) == pageN1XAttributes.first);
+    REQUIRE(Approx(0.25) == pageN1XAttributes.last);
+    REQUIRE(Approx(0.1) == pageN1XAttributes.min);
+    REQUIRE(Approx(0.25) == pageN1XAttributes.max);
+    REQUIRE(Approx(0.1) == pageN1XAttributes.factor);
 
-    auto pageN1YVariables = pageN1DataTable.getVariables().yVariables;
-    REQUIRE("SPECTRUM/REAL" == pageN1YVariables.varName);
-    REQUIRE("R" == pageN1YVariables.symbol);
-    REQUIRE("DEPENDENT" == pageN1YVariables.varType);
-    REQUIRE("ASDF" == pageN1YVariables.varForm);
-    REQUIRE(4 == pageN1YVariables.varDim);
-    REQUIRE("ARBITRARY UNITS" == pageN1YVariables.units);
-    REQUIRE(Approx(50.0) == pageN1YVariables.first);
-    REQUIRE(Approx(105.0) == pageN1YVariables.last);
-    REQUIRE(Approx(50.0) == pageN1YVariables.min);
-    REQUIRE(Approx(105.0) == pageN1YVariables.max);
-    REQUIRE(Approx(5.0) == pageN1YVariables.factor);
+    auto pageN1YAttributes = pageN1DataTable.getAttributes().yAttributes;
+    REQUIRE("SPECTRUM/REAL" == pageN1YAttributes.varName);
+    REQUIRE("R" == pageN1YAttributes.symbol);
+    REQUIRE("DEPENDENT" == pageN1YAttributes.varType);
+    REQUIRE("ASDF" == pageN1YAttributes.varForm);
+    REQUIRE(4 == pageN1YAttributes.varDim);
+    REQUIRE("ARBITRARY UNITS" == pageN1YAttributes.units);
+    REQUIRE(Approx(50.0) == pageN1YAttributes.first);
+    REQUIRE(Approx(105.0) == pageN1YAttributes.last);
+    REQUIRE(Approx(50.0) == pageN1YAttributes.min);
+    REQUIRE(Approx(105.0) == pageN1YAttributes.max);
+    REQUIRE(Approx(5.0) == pageN1YAttributes.factor);
 
     auto pageN1Data = pageN1DataTable.getData();
     REQUIRE(4 == pageN1Data.size());
@@ -93,7 +93,7 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
 
     auto pageN2 = nTuples.getPage(1);
     REQUIRE("N=2" == pageN2.getPageVariables());
-    REQUIRE(pageN2.getPageVariableLdrs().empty());
+    REQUIRE(pageN2.getPageLdrs().empty());
 
     REQUIRE(pageN2.getDataTable().has_value());
     auto pageN2DataTable = pageN2.getDataTable().value();
@@ -150,38 +150,38 @@ TEST_CASE("parses NTUPLES MS record", "[NTuples]")
 
     auto pageT5 = nTuples.getPage(0);
     REQUIRE("T = 5" == pageT5.getPageVariables());
-    REQUIRE(pageT5.getPageVariableLdrs().empty());
+    REQUIRE(pageT5.getPageLdrs().empty());
 
     REQUIRE(pageT5.getDataTable().has_value());
     auto pageT5DataTable = pageT5.getDataTable().value();
     REQUIRE("(XY..XY)" == pageT5DataTable.getVariableList());
     REQUIRE("PEAKS" == pageT5DataTable.getPlotDescriptor().value());
 
-    auto pageT5XVariables = pageT5DataTable.getVariables().xVariables;
-    REQUIRE("MASS" == pageT5XVariables.varName);
-    REQUIRE("X" == pageT5XVariables.symbol);
-    REQUIRE("INDEPENDENT" == pageT5XVariables.varType);
-    REQUIRE("AFFN" == pageT5XVariables.varForm);
-    REQUIRE_FALSE(pageT5XVariables.varDim.has_value());
-    REQUIRE("M/Z" == pageT5XVariables.units);
-    REQUIRE_FALSE(pageT5XVariables.first.has_value());
-    REQUIRE_FALSE(pageT5XVariables.last.has_value());
-    REQUIRE_FALSE(pageT5XVariables.min.has_value());
-    REQUIRE_FALSE(pageT5XVariables.max.has_value());
-    REQUIRE_FALSE(pageT5XVariables.factor.has_value());
+    auto pageT5XAttributes = pageT5DataTable.getAttributes().xAttributes;
+    REQUIRE("MASS" == pageT5XAttributes.varName);
+    REQUIRE("X" == pageT5XAttributes.symbol);
+    REQUIRE("INDEPENDENT" == pageT5XAttributes.varType);
+    REQUIRE("AFFN" == pageT5XAttributes.varForm);
+    REQUIRE_FALSE(pageT5XAttributes.varDim.has_value());
+    REQUIRE("M/Z" == pageT5XAttributes.units);
+    REQUIRE_FALSE(pageT5XAttributes.first.has_value());
+    REQUIRE_FALSE(pageT5XAttributes.last.has_value());
+    REQUIRE_FALSE(pageT5XAttributes.min.has_value());
+    REQUIRE_FALSE(pageT5XAttributes.max.has_value());
+    REQUIRE_FALSE(pageT5XAttributes.factor.has_value());
 
-    auto pageT5YVariables = pageT5DataTable.getVariables().yVariables;
-    REQUIRE("INTENSITY" == pageT5YVariables.varName);
-    REQUIRE("Y" == pageT5YVariables.symbol);
-    REQUIRE("DEPENDENT" == pageT5YVariables.varType);
-    REQUIRE("AFFN" == pageT5YVariables.varForm);
-    REQUIRE_FALSE(pageT5YVariables.varDim.has_value());
-    REQUIRE("RELATIVE ABUNDANCE" == pageT5YVariables.units);
-    REQUIRE_FALSE(pageT5YVariables.first.has_value());
-    REQUIRE_FALSE(pageT5YVariables.last.has_value());
-    REQUIRE_FALSE(pageT5YVariables.min.has_value());
-    REQUIRE_FALSE(pageT5YVariables.max.has_value());
-    REQUIRE_FALSE(pageT5YVariables.factor.has_value());
+    auto pageT5YAttributes = pageT5DataTable.getAttributes().yAttributes;
+    REQUIRE("INTENSITY" == pageT5YAttributes.varName);
+    REQUIRE("Y" == pageT5YAttributes.symbol);
+    REQUIRE("DEPENDENT" == pageT5YAttributes.varType);
+    REQUIRE("AFFN" == pageT5YAttributes.varForm);
+    REQUIRE_FALSE(pageT5YAttributes.varDim.has_value());
+    REQUIRE("RELATIVE ABUNDANCE" == pageT5YAttributes.units);
+    REQUIRE_FALSE(pageT5YAttributes.first.has_value());
+    REQUIRE_FALSE(pageT5YAttributes.last.has_value());
+    REQUIRE_FALSE(pageT5YAttributes.min.has_value());
+    REQUIRE_FALSE(pageT5YAttributes.max.has_value());
+    REQUIRE_FALSE(pageT5YAttributes.factor.has_value());
 
     auto pageT5Data = pageT5DataTable.getData();
     REQUIRE(5 == pageT5Data.size());
@@ -192,7 +192,7 @@ TEST_CASE("parses NTUPLES MS record", "[NTuples]")
 
     auto pageT10 = nTuples.getPage(1);
     REQUIRE("T = 10" == pageT10.getPageVariables());
-    REQUIRE(1 == pageT10.getPageVariableLdrs().size());
+    REQUIRE(1 == pageT10.getPageLdrs().size());
 
     auto pageT10Data = pageT10.getDataTable().value().getData();
     REQUIRE(4 == pageT10Data.size());
@@ -202,7 +202,7 @@ TEST_CASE("parses NTUPLES MS record", "[NTuples]")
     REQUIRE(Approx(99.0) == pageT10Data.at(3).second);
 }
 
-TEST_CASE("uses block LDRs to fill missing NTUPLES variables", "[NTuples]")
+TEST_CASE("uses block LDRs to fill missing NTUPLES attributes", "[NTuples]")
 {
     // clang-format off
     // "##NTUPLES=          MASS SPECTRUM"
@@ -249,31 +249,31 @@ TEST_CASE("uses block LDRs to fill missing NTUPLES variables", "[NTuples]")
     REQUIRE("(XY..XY)" == pageT5DataTable.getVariableList());
     REQUIRE_FALSE(pageT5DataTable.getPlotDescriptor().has_value());
 
-    auto pageT5XVariables = pageT5DataTable.getVariables().xVariables;
-    REQUIRE("MASS" == pageT5XVariables.varName);
-    REQUIRE("X" == pageT5XVariables.symbol);
-    REQUIRE("INDEPENDENT" == pageT5XVariables.varType.value());
-    REQUIRE("AFFN" == pageT5XVariables.varForm);
-    REQUIRE(5 == pageT5XVariables.varDim.value());
-    REQUIRE("XUNITS-TEST" == pageT5XVariables.units);
-    REQUIRE(Approx(200.0) == pageT5XVariables.first.value());
-    REQUIRE(Approx(280.0) == pageT5XVariables.last.value());
-    REQUIRE(Approx(200.0) == pageT5XVariables.min.value());
-    REQUIRE(Approx(280.0) == pageT5XVariables.max.value());
-    REQUIRE(Approx(2.0) == pageT5XVariables.factor.value());
+    auto pageT5XAttributes = pageT5DataTable.getAttributes().xAttributes;
+    REQUIRE("MASS" == pageT5XAttributes.varName);
+    REQUIRE("X" == pageT5XAttributes.symbol);
+    REQUIRE("INDEPENDENT" == pageT5XAttributes.varType.value());
+    REQUIRE("AFFN" == pageT5XAttributes.varForm);
+    REQUIRE(5 == pageT5XAttributes.varDim.value());
+    REQUIRE("XUNITS-TEST" == pageT5XAttributes.units);
+    REQUIRE(Approx(200.0) == pageT5XAttributes.first.value());
+    REQUIRE(Approx(280.0) == pageT5XAttributes.last.value());
+    REQUIRE(Approx(200.0) == pageT5XAttributes.min.value());
+    REQUIRE(Approx(280.0) == pageT5XAttributes.max.value());
+    REQUIRE(Approx(2.0) == pageT5XAttributes.factor.value());
 
-    auto pageT5YVariables = pageT5DataTable.getVariables().yVariables;
-    REQUIRE("INTENSITY" == pageT5YVariables.varName);
-    REQUIRE("Y" == pageT5YVariables.symbol);
-    REQUIRE("DEPENDENT" == pageT5YVariables.varType.value());
-    REQUIRE("AFFN" == pageT5YVariables.varForm);
-    REQUIRE(5 == pageT5YVariables.varDim.value());
-    REQUIRE("YUNITS-TEST" == pageT5YVariables.units);
-    REQUIRE(Approx(150.0) == pageT5YVariables.first.value());
-    REQUIRE(Approx(270.0) == pageT5YVariables.last.value());
-    REQUIRE(Approx(150.0) == pageT5YVariables.min.value());
-    REQUIRE(Approx(270.0) == pageT5YVariables.max.value());
-    REQUIRE(Approx(3.0) == pageT5YVariables.factor.value());
+    auto pageT5YAttributes = pageT5DataTable.getAttributes().yAttributes;
+    REQUIRE("INTENSITY" == pageT5YAttributes.varName);
+    REQUIRE("Y" == pageT5YAttributes.symbol);
+    REQUIRE("DEPENDENT" == pageT5YAttributes.varType.value());
+    REQUIRE("AFFN" == pageT5YAttributes.varForm);
+    REQUIRE(5 == pageT5YAttributes.varDim.value());
+    REQUIRE("YUNITS-TEST" == pageT5YAttributes.units);
+    REQUIRE(Approx(150.0) == pageT5YAttributes.first.value());
+    REQUIRE(Approx(270.0) == pageT5YAttributes.last.value());
+    REQUIRE(Approx(150.0) == pageT5YAttributes.min.value());
+    REQUIRE(Approx(270.0) == pageT5YAttributes.max.value());
+    REQUIRE(Approx(3.0) == pageT5YAttributes.factor.value());
 }
 
 TEST_CASE(
@@ -318,31 +318,31 @@ TEST_CASE(
 
     auto pageT5 = nTuples.getPage(0);
     auto pageT5DataTable = pageT5.getDataTable().value();
-    auto pageT5XVariables = pageT5DataTable.getVariables().xVariables;
-    REQUIRE("MASS" == pageT5XVariables.varName);
-    REQUIRE("X" == pageT5XVariables.symbol);
-    REQUIRE("INDEPENDENT" == pageT5XVariables.varType.value());
-    REQUIRE("AFFN" == pageT5XVariables.varForm);
-    REQUIRE(5 == pageT5XVariables.varDim.value());
-    REQUIRE("XUNITS-TEST" == pageT5XVariables.units.value());
-    REQUIRE(Approx(200.0) == pageT5XVariables.first.value());
-    REQUIRE(Approx(280.0) == pageT5XVariables.last.value());
-    REQUIRE(Approx(200.0) == pageT5XVariables.min.value());
-    REQUIRE(Approx(280.0) == pageT5XVariables.max.value());
-    REQUIRE(Approx(2.0) == pageT5XVariables.factor.value());
+    auto pageT5XAttributes = pageT5DataTable.getAttributes().xAttributes;
+    REQUIRE("MASS" == pageT5XAttributes.varName);
+    REQUIRE("X" == pageT5XAttributes.symbol);
+    REQUIRE("INDEPENDENT" == pageT5XAttributes.varType.value());
+    REQUIRE("AFFN" == pageT5XAttributes.varForm);
+    REQUIRE(5 == pageT5XAttributes.varDim.value());
+    REQUIRE("XUNITS-TEST" == pageT5XAttributes.units.value());
+    REQUIRE(Approx(200.0) == pageT5XAttributes.first.value());
+    REQUIRE(Approx(280.0) == pageT5XAttributes.last.value());
+    REQUIRE(Approx(200.0) == pageT5XAttributes.min.value());
+    REQUIRE(Approx(280.0) == pageT5XAttributes.max.value());
+    REQUIRE(Approx(2.0) == pageT5XAttributes.factor.value());
 
-    auto pageT5YVariables = pageT5DataTable.getVariables().yVariables;
-    REQUIRE("INTENSITY" == pageT5YVariables.varName);
-    REQUIRE("Y" == pageT5YVariables.symbol);
-    REQUIRE("DEPENDENT" == pageT5YVariables.varType.value());
-    REQUIRE("AFFN" == pageT5YVariables.varForm);
-    REQUIRE(5 == pageT5YVariables.varDim.value());
-    REQUIRE("YUNITS-TEST" == pageT5YVariables.units.value());
-    REQUIRE(Approx(150.0) == pageT5YVariables.first.value());
-    REQUIRE(Approx(270.0) == pageT5YVariables.last.value());
-    REQUIRE(Approx(150.0) == pageT5YVariables.min.value());
-    REQUIRE(Approx(270.0) == pageT5YVariables.max.value());
-    REQUIRE(Approx(3.0) == pageT5YVariables.factor.value());
+    auto pageT5YAttributes = pageT5DataTable.getAttributes().yAttributes;
+    REQUIRE("INTENSITY" == pageT5YAttributes.varName);
+    REQUIRE("Y" == pageT5YAttributes.symbol);
+    REQUIRE("DEPENDENT" == pageT5YAttributes.varType.value());
+    REQUIRE("AFFN" == pageT5YAttributes.varForm);
+    REQUIRE(5 == pageT5YAttributes.varDim.value());
+    REQUIRE("YUNITS-TEST" == pageT5YAttributes.units.value());
+    REQUIRE(Approx(150.0) == pageT5YAttributes.first.value());
+    REQUIRE(Approx(270.0) == pageT5YAttributes.last.value());
+    REQUIRE(Approx(150.0) == pageT5YAttributes.min.value());
+    REQUIRE(Approx(270.0) == pageT5YAttributes.max.value());
+    REQUIRE(Approx(3.0) == pageT5YAttributes.factor.value());
 }
 
 TEST_CASE("fails when NTUPLES record is missing VAR_NAME LDR", "[NTuples]")

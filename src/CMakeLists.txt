@@ -16,13 +16,13 @@ set(HEADER_LIST
     # data
     "${PROJECT_SOURCE_DIR}/include/jdx/DataLdr.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/NTuples.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesVariables.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesPage.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/NTuplesAttributes.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/Page.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/DataTable.hpp"
     # 2D data
     "${PROJECT_SOURCE_DIR}/include/jdx/XyParameters.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaParameters.hpp"
-    "${PROJECT_SOURCE_DIR}/include/jdx/Array2DData.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/Data2D.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/RaData.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/XyPoints.hpp"
@@ -57,10 +57,10 @@ add_library(jdxparser
     # data
     DataLdr.cpp
     NTuples.cpp
-    NTuplesPage.cpp
+    Page.cpp
     DataTable.cpp
     # 2D data
-    Array2DData.cpp
+    Data2D.cpp
     XyData.cpp
     RaData.cpp
     XyPoints.cpp

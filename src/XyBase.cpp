@@ -7,7 +7,7 @@ sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::string& variableList, TextReader& reader,
     const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
     std::string expectedVariableList)
-    : Array2DData{label, variableList, reader}
+    : Data2D{label, variableList, reader}
 {
     validateInput(getLabel(), getVariableList(), expectedLabel,
         std::vector<std::string>{std::move(expectedVariableList)});
@@ -22,17 +22,17 @@ sciformats::jdx::XyBase::getParameters() const
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getData(
-    Array2DData::VariableList varList)
+    Data2D::VariableList varList)
 {
-    if (varList == Array2DData::VariableList::XyXy)
+    if (varList == Data2D::VariableList::XyXy)
     {
-        return Array2DData::parseXyXyData(getLabel(), getReader(),
+        return Data2D::parseXyXyData(getLabel(), getReader(),
             m_parameters.xFactor, m_parameters.yFactor, m_parameters.nPoints,
             varList);
     }
-    return Array2DData::parseXppYYData(getLabel(), getReader(),
-        m_parameters.firstX, m_parameters.lastX, m_parameters.yFactor,
-        m_parameters.nPoints, varList);
+    return Data2D::parseXppYYData(getLabel(), getReader(), m_parameters.firstX,
+        m_parameters.lastX, m_parameters.yFactor, m_parameters.nPoints,
+        varList);
 }
 
 sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(

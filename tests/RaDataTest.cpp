@@ -28,8 +28,9 @@ TEST_CASE("parses AFFN RA data with minimum required parameters", "[RaData]")
     ldrs.emplace_back("NPOINTS", "3");
     auto raDataRecord = sciformats::jdx::RaData(label, variables, reader, ldrs);
 
-    auto raData = raDataRecord.getData();
+    REQUIRE("(R++(A..A))" == raDataRecord.getVariableList());
 
+    auto raData = raDataRecord.getData();
     REQUIRE(3 == raData.size());
     REQUIRE(0 == Approx(raData.at(0).first));
     REQUIRE(10.0 == Approx(raData.at(0).second));

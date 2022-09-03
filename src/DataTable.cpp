@@ -8,10 +8,10 @@
 sciformats::jdx::DataTable::DataTable(std::string label,
     std::string variableList, std::optional<std::string> plotDescriptor,
     const std::vector<StringLdr>& blockLdrs,
-    const std::vector<NTuplesVariables>& nTuplesVars,
+    const std::vector<NTuplesAttributes>& nTuplesAttributes,
     const std::vector<StringLdr>& pageLdrs, TextReader& reader,
     std::optional<std::string>& nextLine)
-    : Array2DData(std::move(label), std::move(variableList), reader)
+    : Data2D(std::move(label), std::move(variableList), reader)
     , m_plotDescriptor{std::move(plotDescriptor)}
 {
     // extract permitted variable lists from mapping keys
@@ -29,7 +29,7 @@ sciformats::jdx::DataTable::DataTable(std::string label,
         determinePlotDescriptor(m_plotDescriptor.value());
     }
     // parse
-    parse(blockLdrs, nTuplesVars, pageLdrs, nextLine);
+    parse(blockLdrs, nTuplesAttributes, pageLdrs, nextLine);
 }
 
 std::optional<std::string> sciformats::jdx::DataTable::getPlotDescriptor()
@@ -37,43 +37,44 @@ std::optional<std::string> sciformats::jdx::DataTable::getPlotDescriptor()
     return m_plotDescriptor;
 }
 
-sciformats::jdx::DataTable::Variables sciformats::jdx::DataTable::getVariables()
+sciformats::jdx::DataTable::Attributes
+sciformats::jdx::DataTable::getAttributes()
 {
-    return m_mergedVariables;
+    return m_mergedAttributes;
 }
 
 std::vector<std::pair<double, double>> sciformats::jdx::DataTable::getData()
 {
     auto variableList = determineVariableList(getVariableList());
-    auto dataTableParams = m_mergedVariables;
+    auto dataTableParams = m_mergedAttributes;
 
     if (variableList == VariableList::XyXy)
     {
-        auto xFactor = dataTableParams.xVariables.factor.value_or(1.0);
-        auto yFactor = dataTableParams.yVariables.factor.value_or(1.0);
-        auto nPoints = dataTableParams.yVariables.varDim;
-        return Array2DData::parseXyXyData(
+        auto xFactor = dataTableParams.xAttributes.factor.value_or(1.0);
+        auto yFactor = dataTableParams.yAttributes.factor.value_or(1.0);
+        auto nPoints = dataTableParams.yAttributes.varDim;
+        return Data2D::parseXyXyData(
             getLabel(), getReader(), xFactor, yFactor, nPoints, variableList);
     }
 
-    auto firstX = dataTableParams.xVariables.first.value();
-    auto lastX = dataTableParams.xVariables.last.value();
-    auto nPoints = dataTableParams.yVariables.varDim.value();
-    auto yFactor = dataTableParams.yVariables.factor.value_or(1.0);
-    return Array2DData::parseXppYYData(
+    auto firstX = dataTableParams.xAttributes.first.value();
+    auto lastX = dataTableParams.xAttributes.last.value();
+    auto nPoints = dataTableParams.yAttributes.varDim.value();
+    auto yFactor = dataTableParams.yAttributes.factor.value_or(1.0);
+    return Data2D::parseXppYYData(
         getLabel(), getReader(), firstX, lastX, yFactor, nPoints, variableList);
 }
 
 void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
-    const std::vector<NTuplesVariables>& nTuplesVars,
+    const std::vector<NTuplesAttributes>& nTuplesVars,
     const std::vector<StringLdr>& pageLdrs,
     std::optional<std::string>& nextLine)
 {
     auto [variableList, plotDescriptor] = parseDataTableVars();
 
-    auto findNTuplesVars = [&nTuplesVars](const std::string& symbol) {
+    auto findNTuplesAttrs = [&nTuplesVars](const std::string& symbol) {
         auto it = std::find_if(std::begin(nTuplesVars), std::end(nTuplesVars),
-            [&symbol](const NTuplesVariables& vars) {
+            [&symbol](const NTuplesAttributes& vars) {
                 return vars.symbol == symbol;
             });
         if (it != std::end(nTuplesVars))
@@ -84,20 +85,20 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
             "Could not find NTUPLES parameters for SYMBOL: " + symbol);
     };
 
-    auto xNTuplesVars = findNTuplesVars("X");
-    std::optional<NTuplesVariables> yNTuplesVars;
+    auto xNTuplesAttrs = findNTuplesAttrs("X");
+    std::optional<NTuplesAttributes> yNTuplesAttrs;
     if (variableList == VariableList::XppYY
         || variableList == VariableList::XyXy)
     {
-        yNTuplesVars = findNTuplesVars("Y");
+        yNTuplesAttrs = findNTuplesAttrs("Y");
     }
     else if (variableList == VariableList::XppRR)
     {
-        yNTuplesVars = findNTuplesVars("R");
+        yNTuplesAttrs = findNTuplesAttrs("R");
     }
     else if (variableList == VariableList::XppII)
     {
-        yNTuplesVars = findNTuplesVars("I");
+        yNTuplesAttrs = findNTuplesAttrs("I");
     }
     else
     {
@@ -105,16 +106,16 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
         throw ParseException(
             "Unsupported variabe list in DATA TABLE: " + getVariableList());
     }
-    auto mergedXVars = mergeVars(blockLdrs, xNTuplesVars, pageLdrs);
-    auto mergedYVars = mergeVars(blockLdrs, yNTuplesVars.value(), pageLdrs);
-    m_mergedVariables = {mergedXVars, mergedYVars};
+    auto mergedXVars = mergeVars(blockLdrs, xNTuplesAttrs, pageLdrs);
+    auto mergedYVars = mergeVars(blockLdrs, yNTuplesAttrs.value(), pageLdrs);
+    m_mergedAttributes = {mergedXVars, mergedYVars};
 
     auto& reader = getReader();
     nextLine = reader.readLine();
     util::skipToNextLdr(reader, nextLine);
 }
 
-std::pair<sciformats::jdx::Array2DData::VariableList,
+std::pair<sciformats::jdx::Data2D::VariableList,
     std::optional<sciformats::jdx::DataTable::PlotDescriptor>>
 sciformats::jdx::DataTable::parseDataTableVars()
 {
@@ -129,7 +130,7 @@ sciformats::jdx::DataTable::parseDataTableVars()
         varType, std::optional<PlotDescriptor>{plotDesc}};
 }
 
-sciformats::jdx::Array2DData::VariableList
+sciformats::jdx::Data2D::VariableList
 sciformats::jdx::DataTable::determineVariableList(const std::string& varList)
 {
     return findValue(s_varListMapping, varList, "variable list");
@@ -143,9 +144,10 @@ sciformats::jdx::DataTable::determinePlotDescriptor(
         s_plotDescriptorMapping, plotDescriptor, "plot descriptor");
 }
 
-sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
+sciformats::jdx::NTuplesAttributes sciformats::jdx::DataTable::mergeVars(
     const std::vector<StringLdr>& blockLdrs,
-    const NTuplesVariables& nTuplesVars, const std::vector<StringLdr>& pageLdrs)
+    const NTuplesAttributes& nTuplesVars,
+    const std::vector<StringLdr>& pageLdrs)
 {
     auto outputVars = nTuplesVars;
     outputVars.applicationAttributes.clear();
@@ -167,7 +169,7 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
             {"NPOINTS", outputVars.varDim},
         };
 
-        // fill in block vars for missing NTUPLE vars
+        // fill in block params for missing NTUPLE attributes
         mergeLdrs(
             blockLdrs, stringMapping, doubleMapping, uint64Mapping, false);
 
@@ -195,7 +197,7 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::DataTable::mergeVars(
         // Also check for other symbols but Y? Does not seem relevant for NMR
         // and MS.
 
-        // fill in block vars for missing NTUPLE vars
+        // fill in block params for missing NTUPLE attributes
         mergeLdrs(
             blockLdrs, stringMapping, doubleMapping, uint64Mapping, false);
 

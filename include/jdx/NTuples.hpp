@@ -2,8 +2,8 @@
 #define LIBJDX_NTUPLES_HPP
 
 #include "jdx/LdrContainer.hpp"
-#include "jdx/NTuplesPage.hpp"
-#include "jdx/NTuplesVariables.hpp"
+#include "jdx/NTuplesAttributes.hpp"
+#include "jdx/Page.hpp"
 #include "jdx/StringLdr.hpp"
 #include "jdx/TextReader.hpp"
 
@@ -39,10 +39,10 @@ public:
     std::string getDataForm();
 
     /**
-     * @brief Returns the page variables.
-     * @return The page variables.
+     * @brief Returns the page attributes.
+     * @return The page attributes.
      */
-    std::vector<NTuplesVariables> getVariables();
+    std::vector<NTuplesAttributes> getAttributes();
 
     /**
      * @brief Returns the number of pages in this record.
@@ -55,32 +55,33 @@ public:
      * @param pageIndex The page index starting at zero.
      * @return The page.
      */
-    NTuplesPage getPage(size_t pageIndex);
+    Page getPage(size_t pageIndex);
 
 private:
     static constexpr const char* s_label = "NTUPLES";
-    static constexpr std::array<const char*, 11> s_variables
+    static constexpr std::array<const char*, 11> s_standardAttrNames
         = {"VARNAME", "SYMBOL", "VARTYPE", "VARFORM", "VARDIM", "UNITS",
             "FIRST", "LAST", "MIN", "MAX", "FACTOR"};
 
     const std::string m_dataForm;
-    std::vector<NTuplesVariables> m_variables;
-    std::vector<NTuplesPage> m_pages;
+    std::vector<NTuplesAttributes> m_attributes;
+    std::vector<Page> m_pages;
 
     static void validateInput(const std::string& label);
     void parse(const std::vector<StringLdr>& blockLdrs, TextReader& reader);
-    std::vector<NTuplesVariables> parseVariables(
+    std::vector<NTuplesAttributes> parseAttributes(
         TextReader& reader, std::optional<std::string>& nextLine);
-    static std::vector<StringLdr> readVariables(
-        std::optional<std::string>& firstVarStart, TextReader& reader);
+    static std::vector<StringLdr> readLdrs(
+        std::optional<std::string>& firstLdrStart, TextReader& reader);
     static std::map<std::string, std::vector<std::string>> splitValues(
-        const std::vector<StringLdr>& vars);
+        const std::vector<StringLdr>& ldr);
     static std::map<std::string, std::vector<std::string>>
-    extractStandardVariables(
-        std::map<std::string, std::vector<std::string>>& vars);
-    NTuplesVariables map(
-        const std::map<std::string, std::vector<std::string>>& standardVars,
-        const std::map<std::string, std::vector<std::string>>& additionalVars,
+    extractStandardAttributes(
+        std::map<std::string, std::vector<std::string>>& attributes);
+    NTuplesAttributes map(const std::map<std::string, std::vector<std::string>>&
+                              standardAttributes,
+        const std::map<std::string, std::vector<std::string>>&
+            additionalAttributes,
         size_t valueColumnIndex);
     static std::optional<std::vector<std::string>> findValue(
         const std::string& key,

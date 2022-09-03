@@ -7,7 +7,7 @@
 sciformats::jdx::RaData::RaData(const std::string& label,
     const std::string& variableList, TextReader& reader,
     const std::vector<StringLdr>& ldrs)
-    : Array2DData(label, variableList, reader)
+    : Data2D(label, variableList, reader)
 {
     validateInput(label, variableList, s_raDataLabel,
         std::vector<std::string>{s_raDataVariableList});
@@ -23,9 +23,9 @@ sciformats::jdx::RaData::getParameters() const
 
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
-    return Array2DData::parseXppYYData(getLabel(), getReader(),
-        m_parameters.firstR, m_parameters.lastR, m_parameters.rFactor,
-        m_parameters.nPoints, VariableList::RppAA);
+    return Data2D::parseXppYYData(getLabel(), getReader(), m_parameters.firstR,
+        m_parameters.lastR, m_parameters.rFactor, m_parameters.nPoints,
+        VariableList::RppAA);
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(

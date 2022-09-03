@@ -9,10 +9,10 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=", "##XYDATA=" and
- * "##RADATA=" LDRs.
+ * @brief A JCAMP-DX 2D data record. Base for "XYPOINTS", XYDATA", "RADATA", and
+ * "DATA TABLE" LDRs.
  */
-class Array2DData : public DataLdr
+class Data2D : public DataLdr
 {
 public:
 protected:
@@ -41,8 +41,7 @@ protected:
      * "##XYDATA=" or "##RADATA=") of the record. The reader is expected to
      * exist for the lifetime of this object.
      */
-    Array2DData(
-        std::string label, std::string variableList, TextReader& reader);
+    Data2D(std::string label, std::string variableList, TextReader& reader);
 
     /**
      * @brief Parses the equally x spaced xy data (i.e. "X++(Y..Y)", "R++(A..A)"

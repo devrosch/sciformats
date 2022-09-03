@@ -1,9 +1,9 @@
-#ifndef LIBJDX_NTUPLESPAGE_HPP
-#define LIBJDX_NTUPLESPAGE_HPP
+#ifndef LIBJDX_PAGE_HPP
+#define LIBJDX_PAGE_HPP
 
 #include "jdx/DataTable.hpp"
 #include "jdx/LdrContainer.hpp"
-#include "jdx/NTuplesVariables.hpp"
+#include "jdx/NTuplesAttributes.hpp"
 #include "jdx/StringLdr.hpp"
 #include "jdx/TextReader.hpp"
 
@@ -17,11 +17,23 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX NTUPLES PAGE record.
  */
-class NTuplesPage : LdrContainer
+class Page : LdrContainer
 {
 public:
-    NTuplesPage(std::string& label, std::string pageVar,
-        const std::vector<NTuplesVariables>& nTuplesVars,
+    /**
+     * @brief Constructs the record.
+     * @param label he label of the LDR, "PAGE".
+     * @param pageVar The PAGE variables, e.g., "N=1".
+     * @param nTuplesAttributes The attributes of the surrounding NTUPLES
+     * record.
+     * @param blockLdrs The LDRs of the surrounding block.
+     * @param reader Text reader with position assumed to be on the line
+     * following the "PAGE" label.
+     * @param nextLine The line after the first line of the PAGE. Will return
+     * the line following the PAGE record.
+     */
+    Page(std::string& label, std::string pageVar,
+        const std::vector<NTuplesAttributes>& nTuplesAttributes,
         const std::vector<StringLdr>& blockLdrs, TextReader& reader,
         std::optional<std::string>& nextLine);
 
@@ -35,9 +47,9 @@ public:
     /**
      * @brief The LDRs contained by the PAGE, e.g.
      * "NPOINTS", not including "DATA TABLE".
-     * @return The page variable LDRs.
+     * @return The page LDRs.
      */
-    std::vector<StringLdr> getPageVariableLdrs();
+    std::vector<StringLdr> getPageLdrs();
 
     /**
      * @brief The DATA TABLE.
@@ -49,18 +61,18 @@ private:
     static constexpr const char* s_label = "PAGE";
 
     const std::string m_pageVariables;
-    std::vector<StringLdr> m_pageVariableLdrs;
+    std::vector<StringLdr> m_pageLdrs;
     std::optional<DataTable> m_dataTable;
 
     static void validateInput(const std::string& label);
-    void parse(const std::vector<NTuplesVariables>& nTuplesVars,
+    void parse(const std::vector<NTuplesAttributes>& nTuplesAttributes,
         const std::vector<StringLdr>& blockLdrs, TextReader& reader,
         std::optional<std::string>& nextLine);
-    static std::vector<StringLdr> parsePageVarLdrs(
+    static std::vector<StringLdr> parsePageLdrs(
         TextReader& reader, std::optional<std::string>& nextLine);
     static std::pair<std::string, std::optional<std::string>>
-    parseDataTableVars(const std::string& rawPageVar);
+    parseDataTableVars(const std::string& rawPageVars);
 };
 } // namespace sciformats::jdx
 
-#endif // LIBJDX_NTUPLESPAGE_HPP
+#endif // LIBJDX_PAGE_HPP

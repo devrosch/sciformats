@@ -28,6 +28,8 @@ TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
     ldrs.emplace_back("NPOINTS", "3");
     auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
 
+    REQUIRE("(X++(Y..Y))" == xyDataRecord.getVariableList());
+
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(3 == xyData.size());

@@ -1,21 +1,21 @@
-#include "jdx/NTuplesPage.hpp"
+#include "jdx/Page.hpp"
 #include "jdx/ParseException.hpp"
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 #include "util/PeakTableParser.hpp"
 #include "util/StringUtils.hpp"
 
-sciformats::jdx::NTuplesPage::NTuplesPage(std::string& label,
-    std::string pageVar, const std::vector<NTuplesVariables>& nTuplesVars,
+sciformats::jdx::Page::Page(std::string& label, std::string pageVar,
+    const std::vector<NTuplesAttributes>& nTuplesAttributes,
     const std::vector<StringLdr>& blockLdrs, TextReader& reader,
     std::optional<std::string>& nextLine)
     : m_pageVariables{std::move(pageVar)}
 {
     validateInput(label);
-    parse(nTuplesVars, blockLdrs, reader, nextLine);
+    parse(nTuplesAttributes, blockLdrs, reader, nextLine);
 }
 
-void sciformats::jdx::NTuplesPage::validateInput(const std::string& label)
+void sciformats::jdx::Page::validateInput(const std::string& label)
 {
     if (label != s_label)
     {
@@ -24,31 +24,29 @@ void sciformats::jdx::NTuplesPage::validateInput(const std::string& label)
     }
 }
 
-std::string sciformats::jdx::NTuplesPage::getPageVariables()
+std::string sciformats::jdx::Page::getPageVariables()
 {
     return m_pageVariables;
 }
 
-std::vector<sciformats::jdx::StringLdr>
-sciformats::jdx::NTuplesPage::getPageVariableLdrs()
+std::vector<sciformats::jdx::StringLdr> sciformats::jdx::Page::getPageLdrs()
 {
-    return m_pageVariableLdrs;
+    return m_pageLdrs;
 }
 
-std::optional<sciformats::jdx::DataTable>
-sciformats::jdx::NTuplesPage::getDataTable()
+std::optional<sciformats::jdx::DataTable> sciformats::jdx::Page::getDataTable()
 {
     return m_dataTable;
 }
 
-void sciformats::jdx::NTuplesPage::parse(
-    const std::vector<NTuplesVariables>& nTuplesVars,
+void sciformats::jdx::Page::parse(
+    const std::vector<NTuplesAttributes>& nTuplesAttributes,
     const std::vector<StringLdr>& blockLdrs, TextReader& reader,
     std::optional<std::string>& nextLine)
 {
     // skip potential comment lines
     util::skipToNextLdr(reader, nextLine, true);
-    m_pageVariableLdrs = parsePageVarLdrs(reader, nextLine);
+    m_pageLdrs = parsePageLdrs(reader, nextLine);
 
     if (!nextLine.has_value() || !util::isLdrStart(nextLine.value()))
     {
@@ -72,14 +70,13 @@ void sciformats::jdx::NTuplesPage::parse(
 
     auto [dataTableVarList, plotDesc] = parseDataTableVars(value);
     m_dataTable.emplace(DataTable(label, dataTableVarList, plotDesc, blockLdrs,
-        nTuplesVars, m_pageVariableLdrs, reader, nextLine));
+        nTuplesAttributes, m_pageLdrs, reader, nextLine));
 }
 
-std::vector<sciformats::jdx::StringLdr>
-sciformats::jdx::NTuplesPage::parsePageVarLdrs(
+std::vector<sciformats::jdx::StringLdr> sciformats::jdx::Page::parsePageLdrs(
     TextReader& reader, std::optional<std::string>& nextLine)
 {
-    std::vector<StringLdr> pageVars;
+    std::vector<StringLdr> pageLdrs;
     // TODO: similar to parsing logic in Block
     while (nextLine.has_value())
     {
@@ -92,27 +89,27 @@ sciformats::jdx::NTuplesPage::parsePageVarLdrs(
         }
         // LDR is a regular LDR
         nextLine = parseStringValue(value, reader);
-        pageVars.emplace_back(label, value);
+        pageLdrs.emplace_back(label, value);
     }
-    return pageVars;
+    return pageLdrs;
 }
 
 std::pair<std::string, std::optional<std::string>>
-sciformats::jdx::NTuplesPage::parseDataTableVars(const std::string& rawPageVar)
+sciformats::jdx::Page::parseDataTableVars(const std::string& rawPageVars)
 {
-    auto rawPageVarsTrimmed = util::stripLineComment(rawPageVar).first;
+    auto rawPageVarsTrimmed = util::stripLineComment(rawPageVars).first;
     util::trim(rawPageVarsTrimmed);
     if (rawPageVarsTrimmed.empty())
     {
         // empty
         throw ParseException(
-            "Missing variable list in DATA TABLE: " + rawPageVar);
+            "Missing variable list in DATA TABLE: " + rawPageVars);
     }
     auto segments = util::split(rawPageVarsTrimmed, R"(\)\s*,\s*)", true);
     if (segments.empty() || segments.size() > 2)
     {
         throw ParseException(
-            "Unexpected content found at DATA TABLE start: " + rawPageVar);
+            "Unexpected content found at DATA TABLE start: " + rawPageVars);
     }
 
     if (segments.size() == 1)

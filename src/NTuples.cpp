@@ -17,10 +17,10 @@ std::string sciformats::jdx::NTuples::getDataForm()
     return m_dataForm;
 }
 
-std::vector<sciformats::jdx::NTuplesVariables>
-sciformats::jdx::NTuples::getVariables()
+std::vector<sciformats::jdx::NTuplesAttributes>
+sciformats::jdx::NTuples::getAttributes()
 {
-    return m_variables;
+    return m_attributes;
 }
 
 size_t sciformats::jdx::NTuples::getNumPages()
@@ -28,7 +28,7 @@ size_t sciformats::jdx::NTuples::getNumPages()
     return m_pages.size();
 }
 
-sciformats::jdx::NTuplesPage sciformats::jdx::NTuples::getPage(size_t pageIndex)
+sciformats::jdx::Page sciformats::jdx::NTuples::getPage(size_t pageIndex)
 {
     return m_pages.at(pageIndex);
 }
@@ -49,7 +49,7 @@ void sciformats::jdx::NTuples::parse(
     // skip potential comment lines
     util::skipToNextLdr(reader, nextLine, true);
     // parse PAGE parameters
-    m_variables = parseVariables(reader, nextLine);
+    m_attributes = parseAttributes(reader, nextLine);
     // parse pages
     while (nextLine.has_value() && util::isLdrStart(nextLine.value()))
     {
@@ -69,8 +69,8 @@ void sciformats::jdx::NTuples::parse(
         }
         nextLine = reader.eof() ? std::nullopt
                                 : std::optional<std::string>{reader.readLine()};
-        auto page = NTuplesPage(
-            label, pageVar, m_variables, blockLdrs, reader, nextLine);
+        auto page
+            = Page(label, pageVar, m_attributes, blockLdrs, reader, nextLine);
         m_pages.push_back(std::move(page));
     }
     if (!nextLine.has_value())
@@ -79,47 +79,47 @@ void sciformats::jdx::NTuples::parse(
     }
 }
 
-std::vector<sciformats::jdx::NTuplesVariables>
-sciformats::jdx::NTuples::parseVariables(
+std::vector<sciformats::jdx::NTuplesAttributes>
+sciformats::jdx::NTuples::parseAttributes(
     TextReader& reader, std::optional<std::string>& nextLine)
 {
     // skip potential pure comment lines, assumes that data form info is in one
     // line only
     nextLine = util::skipToNextLdr(reader, nextLine, true);
-    auto varTable = readVariables(nextLine, reader);
-    auto varMap = splitValues(varTable);
-    auto standardVarMap = extractStandardVariables(varMap);
+    auto attrTable = readLdrs(nextLine, reader);
+    auto attrMap = splitValues(attrTable);
+    auto standardAttrMap = extractStandardAttributes(attrMap);
 
-    auto varNames = findValue("VARNAME", standardVarMap);
-    if (!varNames)
+    auto attrNames = findValue("VARNAME", standardAttrMap);
+    if (!attrNames)
     {
         // VARNAMEs are required by the spec
         throw ParseException(
             "No \"VAR_NAME\" LDR found in NTUPLES: " + m_dataForm);
     }
-    auto numVars = varNames.value().size();
+    auto numAttrs = attrNames.value().size();
 
-    std::vector<NTuplesVariables> output;
-    for (size_t i = 0; i < numVars; ++i)
+    std::vector<NTuplesAttributes> output;
+    for (size_t i = 0; i < numAttrs; ++i)
     {
-        auto ntv = map(standardVarMap, varMap, i);
+        auto ntv = map(standardAttrMap, attrMap, i);
         output.push_back(ntv);
     }
     return output;
 }
 
-std::vector<sciformats::jdx::StringLdr> sciformats::jdx::NTuples::readVariables(
-    std::optional<std::string>& firstVarStart,
+std::vector<sciformats::jdx::StringLdr> sciformats::jdx::NTuples::readLdrs(
+    std::optional<std::string>& firstLdrStart,
     sciformats::jdx::TextReader& reader)
 {
-    std::optional<std::string>& nextLine = firstVarStart;
+    std::optional<std::string>& nextLine = firstLdrStart;
     std::vector<StringLdr> output;
     while (nextLine)
     {
         auto [title, value] = util::parseLdrStart(nextLine.value());
         if (title == "PAGE" || title == "ENDNTUPLES" || title == "END")
         {
-            // all NTUPLES variables read
+            // all NTUPLES LDRs read
             break;
         }
         nextLine = parseStringValue(value, reader);
@@ -129,52 +129,53 @@ std::vector<sciformats::jdx::StringLdr> sciformats::jdx::NTuples::readVariables(
 }
 
 std::map<std::string, std::vector<std::string>>
-sciformats::jdx::NTuples::splitValues(const std::vector<StringLdr>& vars)
+sciformats::jdx::NTuples::splitValues(const std::vector<StringLdr>& ldrs)
 {
     std::map<std::string, std::vector<std::string>> output;
-    for (const auto& var : vars)
+    for (const auto& ldr : ldrs)
     {
-        auto values = util::split(var.getValue(), ",", true);
-        auto inserted = output.emplace(var.getLabel(), values).second;
+        auto values = util::split(ldr.getValue(), ",", true);
+        auto inserted = output.emplace(ldr.getLabel(), values).second;
         if (!inserted)
         {
             throw ParseException(
-                "Duplicate variable found in NTUPLE: " + var.getLabel());
+                "Duplicate LDR found in NTUPLE: " + ldr.getLabel());
         }
     }
     return output;
 }
 
 std::map<std::string, std::vector<std::string>>
-sciformats::jdx::NTuples::extractStandardVariables(
-    std::map<std::string, std::vector<std::string>>& vars)
+sciformats::jdx::NTuples::extractStandardAttributes(
+    std::map<std::string, std::vector<std::string>>& attributes)
 {
     // see:
     // https://stackoverflow.com/questions/180516/how-to-filter-items-from-a-stdmap
-    auto matches = [](const std::string& var) {
-        return std::find(std::begin(s_variables), std::end(s_variables), var)
-               != std::end(s_variables);
+    auto matches = [](const std::string& attr) {
+        return std::find(std::begin(s_standardAttrNames),
+                   std::end(s_standardAttrNames), attr)
+               != std::end(s_standardAttrNames);
     };
-    std::map<std::string, std::vector<std::string>> standardVars;
-    // remove standard vars
-    for (auto it = vars.begin(); it != vars.end();)
+    std::map<std::string, std::vector<std::string>> standardAttrs;
+    // remove standard attributes
+    for (auto it = attributes.begin(); it != attributes.end();)
     {
         if (matches((*it).first))
         {
-            standardVars.insert(*it);
-            vars.erase(it++);
+            standardAttrs.insert(*it);
+            attributes.erase(it++);
         }
         else
         {
             ++it;
         }
     }
-    return standardVars;
+    return standardAttrs;
 }
 
-sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
-    const std::map<std::string, std::vector<std::string>>& standardVars,
-    const std::map<std::string, std::vector<std::string>>& additionalVars,
+sciformats::jdx::NTuplesAttributes sciformats::jdx::NTuples::map(
+    const std::map<std::string, std::vector<std::string>>& standardAttributes,
+    const std::map<std::string, std::vector<std::string>>& additionalAttributes,
     size_t valueColumnIndex)
 {
     auto pickColumnValue
@@ -183,8 +184,8 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
               const std::string& key) {
               if (values.value().size() <= valueColumnIndex)
               {
-                  throw ParseException("For variable \"" + key
-                                       + "\" in NTUPLES \"" + m_dataForm
+                  throw ParseException("For LDR \"" + key + "\" in NTUPLES \""
+                                       + m_dataForm
                                        + "\" value not available at column: "
                                        + std::to_string(valueColumnIndex));
               }
@@ -196,9 +197,9 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
           };
 
     auto findColumnValue
-        = [&pickColumnValue, &standardVars = std::as_const(standardVars)](
-              const std::string& key) {
-              auto values = findValue(key, standardVars);
+        = [&pickColumnValue, &standardAttributes = std::as_const(
+                                 standardAttributes)](const std::string& key) {
+              auto values = findValue(key, standardAttributes);
               if (!values)
               {
                   return std::optional<std::string>{std::nullopt};
@@ -249,16 +250,16 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
                       ? std::optional<double>(std::stod(factorString.value()))
                       : std::nullopt;
 
-    std::vector<StringLdr> additionalVariables;
-    std::transform(additionalVars.begin(), additionalVars.end(),
-        std::back_inserter(additionalVariables),
+    std::vector<StringLdr> additionalAttrsInColum;
+    std::transform(additionalAttributes.begin(), additionalAttributes.end(),
+        std::back_inserter(additionalAttrsInColum),
         [&pickColumnValue](
             const std::pair<std::string, std::vector<std::string>>& var) {
             auto value = pickColumnValue(var.second, var.first);
             return StringLdr{var.first, value.value_or("")};
         });
 
-    NTuplesVariables nTupleVars{
+    NTuplesAttributes nTupleAttrs{
         varName,
         symbol,
         varType,
@@ -270,10 +271,10 @@ sciformats::jdx::NTuplesVariables sciformats::jdx::NTuples::map(
         min,
         max,
         factor,
-        additionalVariables,
+        additionalAttrsInColum,
     };
 
-    return nTupleVars;
+    return nTupleAttrs;
 }
 
 std::optional<std::vector<std::string>> sciformats::jdx::NTuples::findValue(

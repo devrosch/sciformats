@@ -1,20 +1,19 @@
-#include "jdx/Array2DData.hpp"
+#include "jdx/Data2D.hpp"
 #include "jdx/ParseException.hpp"
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 
 #include <tuple>
 
-sciformats::jdx::Array2DData::Array2DData(
+sciformats::jdx::Data2D::Data2D(
     std::string label, std::string variableList, TextReader& reader)
     : DataLdr(std::move(label), std::move(variableList), reader)
 {
 }
 
-std::vector<std::pair<double, double>>
-sciformats::jdx::Array2DData::parseXppYYData(const std::string& label,
-    TextReader& reader, double firstX, double lastX, double yFactor,
-    size_t nPoints, VariableList variableList)
+std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXppYYData(
+    const std::string& label, TextReader& reader, double firstX, double lastX,
+    double yFactor, size_t nPoints, VariableList variableList)
 {
     if (variableList != VariableList::XppYY
         && variableList != VariableList::RppAA
@@ -60,10 +59,9 @@ sciformats::jdx::Array2DData::parseXppYYData(const std::string& label,
     return xyData;
 }
 
-std::vector<std::pair<double, double>>
-sciformats::jdx::Array2DData::parseXyXyData(const std::string& label,
-    TextReader& reader, double xFactor, double yFactor,
-    std::optional<size_t> nPoints, VariableList variableList)
+std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyData(
+    const std::string& label, TextReader& reader, double xFactor,
+    double yFactor, std::optional<size_t> nPoints, VariableList variableList)
 {
     if (variableList != VariableList::XyXy)
     {

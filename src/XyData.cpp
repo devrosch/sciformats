@@ -11,5 +11,5 @@ sciformats::jdx::XyData::XyData(const std::string& label,
 
 std::vector<std::pair<double, double>> sciformats::jdx::XyData::getData()
 {
-    return XyBase::getData(Array2DData::VariableList::XppYY);
+    return XyBase::getData(Data2D::VariableList::XppYY);
 }

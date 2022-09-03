@@ -1,8 +1,8 @@
 #ifndef LIBJDX_DATATABLE_HPP
 #define LIBJDX_DATATABLE_HPP
 
-#include "jdx/Array2DData.hpp"
-#include "jdx/NTuplesVariables.hpp"
+#include "jdx/Data2D.hpp"
+#include "jdx/NTuplesAttributes.hpp"
 #include "jdx/ParseException.hpp"
 #include "jdx/TextReader.hpp"
 
@@ -17,35 +17,48 @@ namespace sciformats::jdx
 /**
  * @brief A JCAMP-DX NTUPLES DATA TABLE record.
  */
-class DataTable : public Array2DData
+class DataTable : public Data2D
 {
 public:
-    struct Variables
+    struct Attributes
     {
-        NTuplesVariables xVariables;
-        NTuplesVariables yVariables;
+        NTuplesAttributes xAttributes;
+        NTuplesAttributes yAttributes;
     };
 
+    /**
+     * @brief Constructs the record.
+     * @param label he label of the LDR, "DATATABLE".
+     * @param variableList The variable list, e.g. "(X++(Y..Y))".
+     * @param plotDescriptor The plot descriptor, e.g. "XYDATA".
+     * @param blockLdrs The LDRs of the surrounding block.
+     * @param nTuplesAttributes The attributes of the surrounding NTUPLES
+     * record.
+     * @param pageLdrs The LDRs of the surroundling PAGE.
+     * @param reader Text reader with position assumed to be on the line
+     * following the "DATA TABLE" label.
+     * @param nextLine Will return the line following the DATA TABLE record.
+     */
     DataTable(std::string label, std::string variableList,
         std::optional<std::string> plotDescriptor,
         const std::vector<StringLdr>& blockLdrs,
-        const std::vector<NTuplesVariables>& nTuplesVars,
+        const std::vector<NTuplesAttributes>& nTuplesAttributes,
         const std::vector<StringLdr>& pageLdrs, TextReader& reader,
         std::optional<std::string>& nextLine);
 
     /**
-     * @brief The descriptor of the data table, e.g., "XYDATA" for "(X++(R..R)),
-     * XYDATA".
+     * @brief The plot descriptor of the data table, e.g., "XYDATA" for
+     * "(X++(R..R)), XYDATA".
      * @return The data table plot descriptor.
      */
     std::optional<std::string> getPlotDescriptor();
 
     /**
-     * @brief The relevant variables merged from LDRs of BLOCK,
+     * @brief The relevant parameters merged from LDRs of BLOCK,
      * NTUPLES, and PAGE for the DATA TABLE.
-     * @return The variables for the DATA TABLE.
+     * @return The attributes for the DATA TABLE.
      */
-    Variables getVariables();
+    Attributes getAttributes();
 
     /**
      * @brief The (already scaled if applicable) data from the DATA TABLE.
@@ -83,18 +96,18 @@ private:
     static constexpr std::array<const char*, 3> s_ySymbols = {"Y", "R", "I"};
 
     const std::optional<std::string> m_plotDescriptor;
-    Variables m_mergedVariables;
+    Attributes m_mergedAttributes;
 
     void parse(const std::vector<StringLdr>& blockLdrs,
-        const std::vector<NTuplesVariables>& nTuplesVars,
+        const std::vector<NTuplesAttributes>& nTuplesVars,
         const std::vector<StringLdr>& pageLdrs,
         std::optional<std::string>& nextLine);
     std::pair<VariableList, std::optional<PlotDescriptor>> parseDataTableVars();
     static VariableList determineVariableList(const std::string& varList);
     static PlotDescriptor determinePlotDescriptor(
         const std::string& plotDescriptor);
-    static NTuplesVariables mergeVars(const std::vector<StringLdr>& blockLdrs,
-        const NTuplesVariables& nTuplesVars,
+    static NTuplesAttributes mergeVars(const std::vector<StringLdr>& blockLdrs,
+        const NTuplesAttributes& nTuplesVars,
         const std::vector<StringLdr>& pageLdrs);
     static void mergeLdrs(const std::vector<StringLdr>& ldrs,
         std::map<std::string, std::optional<std::string>&> stringMapping,

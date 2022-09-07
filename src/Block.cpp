@@ -8,7 +8,8 @@ sciformats::jdx::Block::Block(std::unique_ptr<TextReader> readerPtr)
 {
     auto firstLine = m_reader.readLine();
     auto titleFirstLine = parseFirstLine(firstLine);
-    parseInput(titleFirstLine);
+    std::optional<std::string> nextLine;
+    parseInput(titleFirstLine, nextLine);
 }
 
 sciformats::jdx::Block::Block(TextReader& reader)
@@ -17,14 +18,16 @@ sciformats::jdx::Block::Block(TextReader& reader)
 {
     auto firstLine = reader.readLine();
     auto titleFirstLine = parseFirstLine(firstLine);
-    parseInput(titleFirstLine);
+    std::optional<std::string> nextLine;
+    parseInput(titleFirstLine, nextLine);
 }
 
-sciformats::jdx::Block::Block(const std::string& title, TextReader& reader)
+sciformats::jdx::Block::Block(const std::string& title, TextReader& reader,
+    std::optional<std::string>& nextLine)
     : m_readerPtr{nullptr}
     , m_reader{reader}
 {
-    parseInput(title);
+    parseInput(title, nextLine);
 }
 
 std::optional<const sciformats::jdx::StringLdr> sciformats::jdx::Block::getLdr(
@@ -101,14 +104,20 @@ std::string sciformats::jdx::Block::parseFirstLine(const std::string& firstLine)
     return value;
 }
 
-void sciformats::jdx::Block::parseInput(const std::string& titleValue)
+void sciformats::jdx::Block::parseInput(
+    const std::string& titleValue, std::optional<std::string>& nextLine)
 {
     std::string title = titleValue;
-    std::optional<std::string> nextLine = parseStringValue(title, m_reader);
+    nextLine = parseStringValue(title, m_reader);
     m_ldrs.emplace_back(s_blockStartLabel, title);
 
     while (nextLine.has_value())
     {
+        if (util::isPureComment(nextLine.value()))
+        {
+            util::skipPureComments(m_reader, nextLine, true);
+            continue;
+        }
         // "auto [label, value] = util::parseLdrStart(nextLine.value());" cannot
         // be used as lambdas (below) cannot capture these variables
         // see:
@@ -143,40 +152,44 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
         else if (s_blockStartLabel == label)
         {
             // nested block
-            auto block = Block(value, m_reader);
+            auto block = Block(value, m_reader, nextLine);
             m_blocks.push_back(std::move(block));
-            nextLine = moveToNextLdr();
         }
         else if ("XYDATA" == label)
         {
-            nextLine = addLdr<XyData>(title, "XYDATA", m_xyData,
-                [&]() { return XyData(label, value, m_reader, m_ldrs); });
+            addLdr<XyData>(title, "XYDATA", m_xyData, [&]() {
+                return XyData(label, value, m_reader, m_ldrs, nextLine);
+            });
         }
         else if ("RADATA" == label)
         {
-            nextLine = addLdr<RaData>(title, "RADATA", m_raData,
-                [&]() { return RaData(label, value, m_reader, m_ldrs); });
+            addLdr<RaData>(title, "RADATA", m_raData, [&]() {
+                return RaData(label, value, m_reader, m_ldrs, nextLine);
+            });
         }
         else if ("XYPOINTS" == label)
         {
-            nextLine = addLdr<XyPoints>(title, "XYPOINTS", m_xyPoints,
-                [&]() { return XyPoints(label, value, m_reader, m_ldrs); });
+            addLdr<XyPoints>(title, "XYPOINTS", m_xyPoints, [&]() {
+                return XyPoints(label, value, m_reader, m_ldrs, nextLine);
+            });
         }
         else if ("PEAKTABLE" == label)
         {
-            nextLine = addLdr<PeakTable>(title, "PEAKTABLE", m_peakTable,
-                [&]() { return PeakTable(label, value, m_reader); });
+            addLdr<PeakTable>(title, "PEAKTABLE", m_peakTable,
+                [&]() { return PeakTable(label, value, m_reader, nextLine); });
         }
         else if ("PEAKASSIGNMENTS" == label)
         {
-            nextLine = addLdr<PeakAssignments>(title, "PEAKASSIGNMENTS",
-                m_peakAssignments,
-                [&]() { return PeakAssignments(label, value, m_reader); });
+            addLdr<PeakAssignments>(
+                title, "PEAKASSIGNMENTS", m_peakAssignments, [&]() {
+                    return PeakAssignments(label, value, m_reader, nextLine);
+                });
         }
         else if ("NTUPLES" == label)
         {
-            nextLine = addLdr<NTuples>(title, "NTUPLES", m_nTuples,
-                [&]() { return NTuples(label, value, m_reader, m_ldrs); });
+            addLdr<NTuples>(title, "NTUPLES", m_nTuples, [&]() {
+                return NTuples(label, value, m_reader, m_ldrs, nextLine);
+            });
         }
         else
         {
@@ -189,37 +202,13 @@ void sciformats::jdx::Block::parseInput(const std::string& titleValue)
     {
         throw BlockParseException("No", "END", title);
     }
+    // make nextline the one following the ##END= LDR
+    nextLine = m_reader.eof() ? std::nullopt
+                              : std::optional<std::string>{m_reader.readLine()};
 }
 
 bool sciformats::jdx::Block::isSpecialLabel(const std::string& label)
 {
     return std::any_of(s_specialLdrs.cbegin(), s_specialLdrs.cend(),
         [&label](const char* specialLabel) { return specialLabel == label; });
-}
-
-std::optional<const std::string> sciformats::jdx::Block::moveToNextLdr()
-{
-    std::optional<std::string> line{std::nullopt};
-    while (!m_reader.eof())
-    {
-        line = m_reader.readLine();
-        if (util::isLdrStart(line.value()))
-        {
-            break;
-        }
-        // account for special case that a $$ comment immediately
-        // follows a nested block
-        auto [preCommentValue, comment] = util::stripLineComment(line.value());
-        util::trim(preCommentValue);
-        // if not this special case, give up
-        if (!preCommentValue.empty())
-        {
-            throw BlockParseException(
-                "Unexpected content found in block \""
-                + getLdr(s_blockStartLabel).value().getValue()
-                + std::string{"\": "}.append(line.value()));
-        }
-    }
-
-    return line;
 }

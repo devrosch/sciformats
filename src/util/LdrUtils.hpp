@@ -22,8 +22,11 @@ std::optional<const StringLdr> findLdr(
     const std::vector<StringLdr>& ldrs, const std::string& label);
 std::optional<std::string> findLdrValue(
     const std::vector<StringLdr>& ldrs, const std::string& label);
-std::optional<std::string>& skipToNextLdr(TextReader& reader,
-    std::optional<std::string>& nextLine, bool skipPureCommentsOnly = false);
+void skipToNextLdr(TextReader& reader, std::optional<std::string>& nextLine,
+    bool forceSkipFirstLine);
+void skipPureComments(TextReader& reader, std::optional<std::string>& nextLine,
+    bool mustPrecedeLdr);
+bool isPureComment(const std::string& line);
 } // namespace sciformats::jdx::utils
 
 #endif // LIBJDX_LDRUTILS_HPP

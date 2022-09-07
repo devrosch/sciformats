@@ -5,11 +5,12 @@
 
 sciformats::jdx::NTuples::NTuples(const std::string& label,
     std::string dataForm, TextReader& reader,
-    const std::vector<StringLdr>& blockLdrs)
+    const std::vector<StringLdr>& blockLdrs,
+    std::optional<std::string>& nextLine)
     : m_dataForm{std::move(dataForm)}
 {
     validateInput(label);
-    parse(blockLdrs, reader);
+    parse(blockLdrs, reader, nextLine);
 }
 
 std::string sciformats::jdx::NTuples::getDataForm()
@@ -42,12 +43,13 @@ void sciformats::jdx::NTuples::validateInput(const std::string& label)
     }
 }
 
-void sciformats::jdx::NTuples::parse(
-    const std::vector<StringLdr>& blockLdrs, TextReader& reader)
+void sciformats::jdx::NTuples::parse(const std::vector<StringLdr>& blockLdrs,
+    TextReader& reader, std::optional<std::string>& nextLine)
 {
-    std::optional<std::string> nextLine = reader.readLine();
     // skip potential comment lines
-    util::skipToNextLdr(reader, nextLine, true);
+    nextLine = reader.eof() ? std::nullopt
+                            : std::optional<std::string>{reader.readLine()};
+    util::skipPureComments(reader, nextLine, true);
     // parse PAGE parameters
     m_attributes = parseAttributes(reader, nextLine);
     // parse pages
@@ -83,9 +85,6 @@ std::vector<sciformats::jdx::NTuplesAttributes>
 sciformats::jdx::NTuples::parseAttributes(
     TextReader& reader, std::optional<std::string>& nextLine)
 {
-    // skip potential pure comment lines, assumes that data form info is in one
-    // line only
-    nextLine = util::skipToNextLdr(reader, nextLine, true);
     auto attrTable = readLdrs(nextLine, reader);
     auto attrMap = splitValues(attrTable);
     auto standardAttrMap = extractStandardAttributes(attrMap);

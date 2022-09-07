@@ -29,7 +29,8 @@ public:
      * representing the data form, e.g. "NMR FID" or "MASS SPECTRUM".
      */
     NTuples(const std::string& label, std::string dataForm, TextReader& reader,
-        const std::vector<StringLdr>& blockLdrs);
+        const std::vector<StringLdr>& blockLdrs,
+        std::optional<std::string>& nextLine);
 
     /**
      * @brief The data form of the NTUPLES record (value of the
@@ -68,7 +69,8 @@ private:
     std::vector<Page> m_pages;
 
     static void validateInput(const std::string& label);
-    void parse(const std::vector<StringLdr>& blockLdrs, TextReader& reader);
+    void parse(const std::vector<StringLdr>& blockLdrs, TextReader& reader,
+        std::optional<std::string>& nextLine);
     std::vector<NTuplesAttributes> parseAttributes(
         TextReader& reader, std::optional<std::string>& nextLine);
     static std::vector<StringLdr> readLdrs(

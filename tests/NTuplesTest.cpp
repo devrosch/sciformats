@@ -7,8 +7,9 @@
 
 TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
 {
-    // clang-format off
     // "##NTUPLES= NMR SPECTRUM"
+    auto nextLine = std::optional<std::string>{"##NTUPLES= NMR SPECTRUM"};
+    // clang-format off
     std::string input{
         "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE NUMBER\n"
         "##SYMBOL=             X,                R,                I,           N\n"
@@ -38,8 +39,9 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
 
+    //   auto nextLine = std::optional<std::string>{};
     sciformats::jdx::NTuples nTuples{
-        "NTUPLES", "NMR SPECTRUM", reader, blockLdrs};
+        "NTUPLES", "NMR SPECTRUM", reader, blockLdrs, nextLine};
 
     REQUIRE(2 == nTuples.getNumPages());
     REQUIRE("NMR SPECTRUM" == nTuples.getDataForm());
@@ -142,8 +144,9 @@ TEST_CASE("parses NTUPLES MS record", "[NTuples]")
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
 
+    auto nextLine = std::optional<std::string>{};
     sciformats::jdx::NTuples nTuples{
-        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs};
+        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs, nextLine};
 
     REQUIRE(3 == nTuples.getNumPages());
     REQUIRE("MASS SPECTRUM" == nTuples.getDataForm());
@@ -237,8 +240,9 @@ TEST_CASE("uses block LDRs to fill missing NTUPLES attributes", "[NTuples]")
     blockLdrs.emplace_back("YFACTOR", "3.0");
     blockLdrs.emplace_back("NPOINTS", "5");
 
+    auto nextLine = std::optional<std::string>{};
     sciformats::jdx::NTuples nTuples{
-        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs};
+        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs, nextLine};
 
     REQUIRE(1 == nTuples.getNumPages());
     REQUIRE("MASS SPECTRUM" == nTuples.getDataForm());
@@ -313,8 +317,9 @@ TEST_CASE(
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
     blockLdrs.emplace_back("NPOINTS", "10"); // to be overridden by PAGE LDR
 
+    auto nextLine = std::optional<std::string>{};
     sciformats::jdx::NTuples nTuples{
-        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs};
+        "NTUPLES", "MASS SPECTRUM", reader, blockLdrs, nextLine};
 
     auto pageT5 = nTuples.getPage(0);
     auto pageT5DataTable = pageT5.getDataTable().value();
@@ -369,9 +374,10 @@ TEST_CASE("fails when NTUPLES record is missing VAR_NAME LDR", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("VAR_NAME", Catch::CaseSensitive::Yes));
 }
 
@@ -399,9 +405,10 @@ TEST_CASE("fails when NTUPLES record contains duplicate LDRs", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("Duplicate", Catch::CaseSensitive::No)
             || Catch::Matchers::Contains("Multipe", Catch::CaseSensitive::No));
 }
@@ -429,9 +436,10 @@ TEST_CASE("fails when NTUPLES standard variable LDR lacks columns", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("UNITS", Catch::CaseSensitive::Yes)
             || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
 }
@@ -460,9 +468,10 @@ TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("CUSTOM_LDR", Catch::CaseSensitive::Yes)
             || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
 }
@@ -484,9 +493,10 @@ TEST_CASE("fails when NTUPLES record ends prematurely", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("unexpected end", Catch::CaseSensitive::No));
 }
 
@@ -508,9 +518,10 @@ TEST_CASE("fails when NTUPLES PAGE record ends prematurely", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("unexpected", Catch::CaseSensitive::No));
 }
 
@@ -531,9 +542,10 @@ TEST_CASE("fails for missing NTUPLES DATA TABLE variable list",
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("missing", Catch::CaseSensitive::No));
 }
 
@@ -554,9 +566,10 @@ TEST_CASE("fails for illegal NTUPLES DATA TABLE variable list",
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
+    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(
-        sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM", reader, blockLdrs),
+    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
+                            reader, blockLdrs, nextLine),
         Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No)
             || Catch::Matchers::Contains(
                 "unexpected", Catch::CaseSensitive::No));

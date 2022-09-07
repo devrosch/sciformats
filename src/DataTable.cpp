@@ -111,8 +111,7 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
     m_mergedAttributes = {mergedXVars, mergedYVars};
 
     auto& reader = getReader();
-    nextLine = reader.readLine();
-    util::skipToNextLdr(reader, nextLine);
+    util::skipToNextLdr(reader, nextLine, true);
 }
 
 std::pair<sciformats::jdx::Data2D::VariableList,

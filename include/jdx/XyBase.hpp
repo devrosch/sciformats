@@ -39,7 +39,8 @@ protected:
      */
     XyBase(const std::string& label, const std::string& variableList,
         TextReader& reader, const std::vector<StringLdr>& ldrs,
-        const std::string& expectedLabel, std::string expectedVariableList);
+        const std::string& expectedLabel, std::string expectedVariableList,
+        std::optional<std::string>& nextLine);
 
     /**
      * @brief Provides the parsed xy data.

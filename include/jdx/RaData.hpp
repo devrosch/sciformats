@@ -29,7 +29,8 @@ public:
      * @param parameters Parameters from the enclosing block specific to RADATA.
      */
     RaData(const std::string& label, const std::string& variableList,
-        TextReader& reader, const std::vector<StringLdr>& ldrs);
+        TextReader& reader, const std::vector<StringLdr>& ldrs,
+        std::optional<std::string>& nextLine);
     /**
      * @brief Provides parameters specific to RADATA.
      * @return The parameters.

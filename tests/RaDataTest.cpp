@@ -26,7 +26,9 @@ TEST_CASE("parses AFFN RA data with minimum required parameters", "[RaData]")
     ldrs.emplace_back("RFACTOR", "1.0");
     ldrs.emplace_back("AFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
-    auto raDataRecord = sciformats::jdx::RaData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto raDataRecord
+        = sciformats::jdx::RaData(label, variables, reader, ldrs, nextLine);
 
     REQUIRE("(R++(A..A))" == raDataRecord.getVariableList());
 
@@ -80,7 +82,9 @@ TEST_CASE("parses AFFN RA data with all parameters", "[RaData]")
     ldrs.emplace_back("DELTAR", "1.0");
     ldrs.emplace_back("ZDP", "1");
     ldrs.emplace_back("ALIAS", "1/2");
-    auto raDataRecord = sciformats::jdx::RaData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto raDataRecord
+        = sciformats::jdx::RaData(label, variables, reader, ldrs, nextLine);
 
     auto raData = raDataRecord.getData();
 
@@ -127,7 +131,10 @@ TEST_CASE("detects mismatching variables list for RADATA", "[RaData]")
     ldrs.emplace_back("AFACTOR", "1.0");
     // NPOINTS missing
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::RaData(label, variables, reader, ldrs),
+    auto nextLine = std::optional<std::string>{};
+
+    REQUIRE_THROWS_WITH(
+        sciformats::jdx::RaData(label, variables, reader, ldrs, nextLine),
         Catch::Matchers::Contains("missing", Catch::CaseSensitive::No)
             && Catch::Matchers::Contains("NPOINTS", Catch::CaseSensitive::No));
 }

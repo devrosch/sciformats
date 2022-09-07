@@ -28,7 +28,8 @@ public:
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      */
     XyData(const std::string& label, const std::string& variableList,
-        TextReader& reader, const std::vector<StringLdr>& ldrs);
+        TextReader& reader, const std::vector<StringLdr>& ldrs,
+        std::optional<std::string>& nextLine);
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by

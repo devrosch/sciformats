@@ -139,10 +139,17 @@ std::optional<std::string> sciformats::jdx::util::findLdrValue(
                            : std::optional<std::string>(std::nullopt);
 }
 
-std::optional<std::string>& sciformats::jdx::util::skipToNextLdr(
-    TextReader& reader, std::optional<std::string>& nextLine,
-    bool skipPureCommentsOnly)
+void sciformats::jdx::util::skipToNextLdr(TextReader& reader,
+    std::optional<std::string>& nextLine, bool forceSkipFirstLine)
 {
+    if (forceSkipFirstLine)
+    {
+        if (reader.eof())
+        {
+            nextLine = std::nullopt;
+        }
+        nextLine = reader.readLine();
+    }
     while (nextLine.has_value() && !util::isLdrStart(nextLine.value()))
     {
         if (reader.eof())
@@ -151,20 +158,37 @@ std::optional<std::string>& sciformats::jdx::util::skipToNextLdr(
             continue;
         }
         nextLine = reader.readLine();
-        if (skipPureCommentsOnly && !util::isLdrStart(nextLine.value()))
-        {
-            // only allow skipping $$ comment lines
-            auto [preCommentValue, comment]
-                = util::stripLineComment(nextLine.value());
-            util::trim(preCommentValue);
-            // if not this special case, give up
-            if (!preCommentValue.empty())
-            {
-                throw ParseException(
-                    "Unexpected content found instead of pure comment ($$): "
-                    + nextLine.value());
-            }
-        }
     }
-    return nextLine;
+}
+
+void sciformats::jdx::util::skipPureComments(TextReader& reader,
+    std::optional<std::string>& nextLine, bool mustPrecedeLdr)
+{
+    while (nextLine)
+    {
+        if (util::isPureComment(nextLine.value()))
+        {
+            nextLine = reader.eof()
+                           ? std::nullopt
+                           : std::optional<std::string>{reader.readLine()};
+            continue;
+        }
+        if (mustPrecedeLdr && !util::isLdrStart(nextLine.value()))
+        {
+            // pure $$ comment linesmust be followed by LDR start
+            // if not this special case, give up
+            throw ParseException(
+                "Unexpected content found instead of pure comment ($$): "
+                + nextLine.value());
+        }
+        break;
+    }
+}
+
+bool sciformats::jdx::util::isPureComment(const std::string& line)
+{
+    // only allow skipping $$ comment lines
+    auto [preCommentValue, _] = util::stripLineComment(line);
+    util::trim(preCommentValue);
+    return preCommentValue.empty();
 }

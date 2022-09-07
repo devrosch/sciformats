@@ -3,9 +3,9 @@
 
 sciformats::jdx::XyPoints::XyPoints(const std::string& label,
     const std::string& variableList, TextReader& reader,
-    const std::vector<StringLdr>& ldrs)
+    const std::vector<StringLdr>& ldrs, std::optional<std::string>& nextLine)
     : XyBase(label, variableList, reader, ldrs, s_xyPointsLabel,
-        s_xyPointsVariableList)
+        s_xyPointsVariableList, nextLine)
 {
 }
 

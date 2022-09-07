@@ -3,9 +3,9 @@
 
 sciformats::jdx::XyData::XyData(const std::string& label,
     const std::string& variableList, TextReader& reader,
-    const std::vector<StringLdr>& ldrs)
-    : XyBase(
-        label, variableList, reader, ldrs, s_xyDataLabel, s_xyDataVariableList)
+    const std::vector<StringLdr>& ldrs, std::optional<std::string>& nextLine)
+    : XyBase(label, variableList, reader, ldrs, s_xyDataLabel,
+        s_xyDataVariableList, nextLine)
 {
 }
 

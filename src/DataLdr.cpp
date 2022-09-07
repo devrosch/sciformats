@@ -22,21 +22,6 @@ sciformats::jdx::TextReader& sciformats::jdx::DataLdr::getReader()
     return m_reader;
 }
 
-void sciformats::jdx::DataLdr::skipToNextLdr(TextReader& reader)
-{
-    while (!reader.eof())
-    {
-        std::istream::pos_type pos = reader.tellg();
-        std::string line = reader.readLine();
-        if (util::isLdrStart(line))
-        {
-            // move back to start of LDR
-            reader.seekg(pos);
-            break;
-        }
-    }
-}
-
 void sciformats::jdx::DataLdr::validateInput(const std::string& label,
     const std::string& variableList, const std::string& expectedLabel,
     const std::vector<std::string>& expectedVariableLists)

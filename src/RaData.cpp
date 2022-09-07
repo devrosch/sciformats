@@ -6,13 +6,13 @@
 
 sciformats::jdx::RaData::RaData(const std::string& label,
     const std::string& variableList, TextReader& reader,
-    const std::vector<StringLdr>& ldrs)
+    const std::vector<StringLdr>& ldrs, std::optional<std::string>& nextLine)
     : Data2D(label, variableList, reader)
 {
     validateInput(label, variableList, s_raDataLabel,
         std::vector<std::string>{s_raDataVariableList});
     m_parameters = parseParameters(ldrs);
-    skipToNextLdr(reader);
+    util::skipToNextLdr(reader, nextLine, true);
 }
 
 const sciformats::jdx::RaParameters&

@@ -23,12 +23,6 @@ protected:
     DataLdr(std::string label, std::string variableList, TextReader& reader);
     TextReader& getReader();
     /**
-     * @brief Moves the reader position to the start of the next LDR or to the
-     * EOF if no LDR follows.
-     * @param reader The reader whose position will be changed.
-     */
-    static void skipToNextLdr(TextReader& reader);
-    /**
      * @brief Validates if input is a valid data LDR.
      * @param label LDR label.
      * @param variableList First line LDR value. Must represent a variable list.

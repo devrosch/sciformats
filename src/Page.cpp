@@ -45,9 +45,8 @@ void sciformats::jdx::Page::parse(
     std::optional<std::string>& nextLine)
 {
     // skip potential comment lines
-    util::skipToNextLdr(reader, nextLine, true);
+    util::skipPureComments(reader, nextLine, false);
     m_pageLdrs = parsePageLdrs(reader, nextLine);
-
     if (!nextLine.has_value() || !util::isLdrStart(nextLine.value()))
     {
         throw ParseException(

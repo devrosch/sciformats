@@ -146,21 +146,21 @@ private:
      * TITLE line) of the block. The reader is expected to exist for the
      * lifetime of this object.
      */
-    Block(const std::string& title, TextReader& reader);
+    Block(const std::string& title, TextReader& reader,
+        std::optional<std::string>& nextLine);
     static std::string parseFirstLine(const std::string& firstLine);
-    void parseInput(const std::string& title);
+    void parseInput(
+        const std::string& title, std::optional<std::string>& nextLine);
     static bool isSpecialLabel(const std::string& label);
-    std::optional<const std::string> moveToNextLdr();
     template<typename T>
-    std::optional<const std::string> addLdr(const std::string& title,
-        const std::string& label, std::optional<T>& member,
-        const std::function<T()>& builderFunc);
+    void addLdr(const std::string& title, const std::string& label,
+        std::optional<T>& member, const std::function<T()>& builderFunc);
 };
 
 template<typename T>
-std::optional<const std::string> sciformats::jdx::Block::addLdr(
-    const std::string& title, const std::string& label,
-    std::optional<T>& member, const std::function<T()>& builderFunc)
+void sciformats::jdx::Block::addLdr(const std::string& title,
+    const std::string& label, std::optional<T>& member,
+    const std::function<T()>& builderFunc)
 {
     if (member)
     {
@@ -168,7 +168,6 @@ std::optional<const std::string> sciformats::jdx::Block::addLdr(
         throw BlockParseException("Multiple", label, title);
     }
     member.emplace(builderFunc());
-    return moveToNextLdr();
 }
 } // namespace sciformats::jdx
 

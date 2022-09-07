@@ -26,7 +26,9 @@ TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
     ldrs.emplace_back("XFACTOR", "1.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "3");
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
 
     REQUIRE("(X++(Y..Y))" == xyDataRecord.getVariableList());
 
@@ -82,7 +84,9 @@ TEST_CASE("parses AFFN xy data with all optional parameters", "[XyData]")
     ldrs.emplace_back("MINY", "10.0");
     ldrs.emplace_back("DELTAX", "1.0");
     ldrs.emplace_back("RESOLUTION", "2.0");
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
 
     auto xyData = xyDataRecord.getData();
 
@@ -129,7 +133,9 @@ TEST_CASE("parses single data point record", "[XyData]")
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
 
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(1 == xyData.size());
@@ -158,7 +164,9 @@ TEST_CASE("detects mismatching NPOINTS", "[XyData]")
     ldrs.emplace_back("XFACTOR", "1.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
     REQUIRE_THROWS(xyDataRecord.getData());
 }
 
@@ -178,7 +186,9 @@ TEST_CASE("detects mismatching variables list for XYDATA", "[XyData]")
     ldrs.emplace_back("LASTX", "450.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::XyData(label, variables, reader, ldrs));
+    auto nextLine = std::optional<std::string>{};
+    REQUIRE_THROWS(
+        sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine));
 }
 
 TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
@@ -198,7 +208,9 @@ TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
     ldrs.emplace_back("LASTX", "450.0");
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "1");
-    REQUIRE_THROWS(sciformats::jdx::XyData(label, variables, reader, ldrs));
+    auto nextLine = std::optional<std::string>{};
+    REQUIRE_THROWS(
+        sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine));
 }
 
 TEST_CASE(
@@ -225,7 +237,9 @@ TEST_CASE(
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "8");
 
-    auto xyData = sciformats::jdx::XyData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto xyData
+        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
     auto data = xyData.getData();
 
     REQUIRE(data.size() == 8);
@@ -258,7 +272,9 @@ TEST_CASE("parses zero data point record", "[XyData]")
     ldrs.emplace_back("YFACTOR", "1.0");
     ldrs.emplace_back("NPOINTS", "0");
 
-    auto xyDataRecord = sciformats::jdx::XyData(label, variables, reader, ldrs);
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(xyData.empty());

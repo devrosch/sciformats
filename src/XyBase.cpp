@@ -6,13 +6,13 @@
 sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::string& variableList, TextReader& reader,
     const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
-    std::string expectedVariableList)
+    std::string expectedVariableList, std::optional<std::string>& nextLine)
     : Data2D{label, variableList, reader}
 {
     validateInput(getLabel(), getVariableList(), expectedLabel,
         std::vector<std::string>{std::move(expectedVariableList)});
     m_parameters = parseParameters(ldrs);
-    skipToNextLdr(reader);
+    util::skipToNextLdr(reader, nextLine, true);
 }
 
 const sciformats::jdx::XyParameters&

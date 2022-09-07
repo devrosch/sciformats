@@ -2,15 +2,17 @@
 #include "util/LdrUtils.hpp"
 #include "util/PeakAssignmentsParser.hpp"
 
-sciformats::jdx::PeakAssignments::PeakAssignments(
-    const std::string& label, std::string variableList, TextReader& reader)
+sciformats::jdx::PeakAssignments::PeakAssignments(const std::string& label,
+    std::string variableList, TextReader& reader,
+    std::optional<std::string>& nextLine)
     : TabularData(label, std::move(variableList), reader)
 {
     validateInput(getLabel(), getVariableList(), s_peakAssignentsLabel,
         std::vector<std::string>{
             std::vector<std::string>{std::begin(s_peakAssignentsVariableLists),
                 std::end(s_peakAssignentsVariableLists)}});
-    skipToNextLdr(reader);
+    //    util::skipToNextLdr(reader, nextLine);
+    util::skipToNextLdr(reader, nextLine, true);
 }
 
 std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()

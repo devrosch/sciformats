@@ -9,7 +9,7 @@ sciformats::jdx::BlockParseException::BlockParseException(
 sciformats::jdx::BlockParseException::BlockParseException(
     const std::string& issueMsg, const std::string& label,
     const std::string& blockTitle)
-    : ParseException{
-        issueMsg + " " + label + "LDR(s) encountered in block: \"" + blockTitle}
+    : ParseException{issueMsg + " " + label + " LDR(s) encountered in block: \""
+                     + blockTitle}
 {
 }

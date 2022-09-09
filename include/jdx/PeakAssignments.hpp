@@ -34,20 +34,12 @@ public:
      */
     PeakAssignments(const std::string& label, std::string variableList,
         TextReader& reader, std::optional<std::string>& nextLine);
+
     /**
      * @brief Provides the parsed peak assignments.
      * @return The list of peak assignments.
      */
     std::vector<PeakAssignment> getData();
-    /**
-     * @brief Definition of peak width (and other kernel) functions.
-     *
-     * Comment $$ in line(s) following LDR start may contain peak width and
-     * other peak kernel functions
-     *
-     * @return Textual description of peak width function.
-     */
-    std::optional<std::string> getWidthFunction();
 
 private:
     static constexpr const char* s_peakAssignentsLabel = "PEAKASSIGNMENTS";

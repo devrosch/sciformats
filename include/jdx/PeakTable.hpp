@@ -33,20 +33,12 @@ public:
      */
     PeakTable(const std::string& label, std::string variableList,
         TextReader& reader, std::optional<std::string>& nextLine);
+
     /**
      * @brief Provides the parsed peak data.
      * @return The list of peaks.
      */
     std::vector<Peak> getData();
-    /**
-     * @brief Definition of peak width (and other kernel) functions
-     *
-     * Comment $$ in line(s) following LDR start may contain peak width and
-     * other peak kernel functions
-     *
-     * @return Textual description of kernel functions.
-     */
-    std::optional<std::string> getWidthFunction();
 
 private:
     static constexpr const char* s_peakTableLabel = "PEAKTABLE";

@@ -11,14 +11,7 @@ sciformats::jdx::PeakAssignments::PeakAssignments(const std::string& label,
         std::vector<std::string>{
             std::vector<std::string>{std::begin(s_peakAssignentsVariableLists),
                 std::end(s_peakAssignentsVariableLists)}});
-    //    util::skipToNextLdr(reader, nextLine);
     util::skipToNextLdr(reader, nextLine, true);
-}
-
-std::optional<std::string> sciformats::jdx::PeakAssignments::getWidthFunction()
-{
-    util::PeakAssignmentsParser parser{getReader(), getNumVariables()};
-    return TabularData::getWidthFunction<util::PeakAssignmentsParser>(parser);
 }
 
 std::vector<sciformats::jdx::PeakAssignment>

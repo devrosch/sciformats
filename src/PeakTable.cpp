@@ -16,12 +16,6 @@ sciformats::jdx::PeakTable::PeakTable(const std::string& label,
     util::skipToNextLdr(reader, nextLine, true);
 }
 
-std::optional<std::string> sciformats::jdx::PeakTable::getWidthFunction()
-{
-    util::PeakTableParser parser{getReader(), getNumVariables()};
-    return TabularData::getWidthFunction(parser);
-}
-
 std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
 {
     util::PeakTableParser parser{getReader(), getNumVariables()};

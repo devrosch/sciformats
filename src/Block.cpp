@@ -158,19 +158,19 @@ void sciformats::jdx::Block::parseInput(
         else if ("XYDATA" == label)
         {
             addLdr<XyData>(title, "XYDATA", m_xyData, [&]() {
-                return XyData(label, value, m_reader, m_ldrs, nextLine);
+                return XyData(label, value, m_ldrs, m_reader, nextLine);
             });
         }
         else if ("RADATA" == label)
         {
             addLdr<RaData>(title, "RADATA", m_raData, [&]() {
-                return RaData(label, value, m_reader, m_ldrs, nextLine);
+                return RaData(label, value, m_ldrs, m_reader, nextLine);
             });
         }
         else if ("XYPOINTS" == label)
         {
             addLdr<XyPoints>(title, "XYPOINTS", m_xyPoints, [&]() {
-                return XyPoints(label, value, m_reader, m_ldrs, nextLine);
+                return XyPoints(label, value, m_ldrs, m_reader, nextLine);
             });
         }
         else if ("PEAKTABLE" == label)
@@ -188,7 +188,7 @@ void sciformats::jdx::Block::parseInput(
         else if ("NTUPLES" == label)
         {
             addLdr<NTuples>(title, "NTUPLES", m_nTuples, [&]() {
-                return NTuples(label, value, m_reader, m_ldrs, nextLine);
+                return NTuples(label, value, m_ldrs, m_reader, nextLine);
             });
         }
         else

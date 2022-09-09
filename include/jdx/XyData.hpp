@@ -20,15 +20,18 @@ public:
      * @brief Constructs XyData from first line and reader.
      * @param label The label of the first line of the record, i.e. "XYDATA".
      * @param variableList The value of the first line of the record
-     * representing the structure of the data, e.g. "(X++(Y..Y))".
+     * representing the structure of the data, e.g., "(X++(Y..Y))".
+     * @param parameters Parameters from the enclosing block specific to XYDATA.
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
      * "##XYDATA=" line) of the record. The reader is expected to exist for the
      * lifetime of this object.
-     * @param parameters Parameters from the enclosing block specific to XYDATA.
+     * @param nextLine The first line of the LDR, i.e., the one containing the
+     * label. Will contain the line following the record or nullopt if the end
+     * of the reader has been reached.
      */
     XyData(const std::string& label, const std::string& variableList,
-        TextReader& reader, const std::vector<StringLdr>& ldrs,
+        const std::vector<StringLdr>& ldrs, TextReader& reader,
         std::optional<std::string>& nextLine);
     /**
      * @brief Provides the parsed xy data.

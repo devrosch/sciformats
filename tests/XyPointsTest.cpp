@@ -27,7 +27,7 @@ TEST_CASE("parses unevenly spaced xy data", "[XyPoints]")
     ldrs.emplace_back("NPOINTS", "4");
     auto nextLine = std::optional<std::string>{};
     auto xyPointsRecord
-        = sciformats::jdx::XyPoints(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyPoints(label, variables, ldrs, reader, nextLine);
 
     REQUIRE("(XY..XY)" == xyPointsRecord.getVariableList());
 
@@ -77,7 +77,7 @@ TEST_CASE("fails when x value undefined while parsing unevenly spaced xy data",
     ldrs.emplace_back("NPOINTS", "4");
     auto nextLine = std::optional<std::string>{};
     auto xyPointsRecord
-        = sciformats::jdx::XyPoints(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyPoints(label, variables, ldrs, reader, nextLine);
 
     REQUIRE_THROWS_WITH(
         xyPointsRecord.getData(), Catch::Matchers::Contains("NaN")
@@ -107,7 +107,7 @@ TEST_CASE(
     ldrs.emplace_back("NPOINTS", "3");
     auto nextLine = std::optional<std::string>{};
     auto xyPointsRecord
-        = sciformats::jdx::XyPoints(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyPoints(label, variables, ldrs, reader, nextLine);
 
     REQUIRE_THROWS_WITH(xyPointsRecord.getData(),
         Catch::Matchers::Contains("NPOINTS")
@@ -137,7 +137,7 @@ TEST_CASE("fails for incomplete xy pair", "[XyPoints]")
     // use other constructor for better coverage
     auto nextLine = std::optional<std::string>{};
     auto xyPointsRecord
-        = sciformats::jdx::XyPoints(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyPoints(label, variables, ldrs, reader, nextLine);
 
     REQUIRE_THROWS_WITH(xyPointsRecord.getData(),
         Catch::Matchers::Contains("uneven", Catch::CaseSensitive::No));
@@ -165,7 +165,7 @@ TEST_CASE("fails parsing ? as X value", "[XyPoints]")
     ldrs.emplace_back("NPOINTS", "4");
     auto nextLine = std::optional<std::string>{};
     auto xyPointsRecord
-        = sciformats::jdx::XyPoints(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyPoints(label, variables, ldrs, reader, nextLine);
 
     REQUIRE_THROWS_WITH(xyPointsRecord.getData(),
         Catch::Matchers::Contains("NaN", Catch::CaseSensitive::No)

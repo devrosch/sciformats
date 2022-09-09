@@ -29,17 +29,20 @@ protected:
      * @param label The label of the first line of the record, i.e. "XYDATA".
      * @param variableList The value of the first line of the record
      * representing the structure of the data, e.g. "(X++(Y..Y))".
+     * @param ldrs Parameters from the enclosing block specific to XYDATA.
+     * @param expectedLabel The expected label for this LDR.
+     * @param expectedVariableList The expected variable list for this LDR.
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
      * "##XYDATA=" line) of the record. The reader is expected to exist for the
      * lifetime of this object.
-     * @param ldrs Parameters from the enclosing block specific to XYDATA.
-     * @param expectedLabel The expected label for this LDR.
-     * @param expectedVariableList The expected variable list for this LDR.
+     * @param nextLine The first line of the LDR, i.e., the one containing the
+     * label. Will contain the line following the record or nullopt if the end
+     * of the reader has been reached.
      */
     XyBase(const std::string& label, const std::string& variableList,
-        TextReader& reader, const std::vector<StringLdr>& ldrs,
-        const std::string& expectedLabel, std::string expectedVariableList,
+        const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
+        std::string expectedVariableList, TextReader& reader,
         std::optional<std::string>& nextLine);
 
     /**

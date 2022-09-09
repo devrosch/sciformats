@@ -29,8 +29,9 @@ public:
      * @param blockLdrs The LDRs of the surrounding block.
      * @param reader Text reader with position assumed to be on the line
      * following the "PAGE" label.
-     * @param nextLine The line after the first line of the PAGE. Will return
-     * the line following the PAGE record.
+     * @param nextLine The first line of the LDR, i.e. the one containing the
+     * label. Will contain the line following the record or nullopt if the end
+     * of the reader has been reached.
      */
     Page(std::string& label, std::string pageVar,
         const std::vector<NTuplesAttributes>& nTuplesAttributes,

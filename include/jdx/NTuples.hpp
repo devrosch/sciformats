@@ -23,13 +23,16 @@ public:
      * @brief Constructs the record.
      * @param label The label of the LDR, "NTUPLES".
      * @param dataForm The value of the first line of the record.
-     * @param reader Text reader with position assumed to be on the line
-     * following the NTUPLES label.
      * @param ldrs String LDRs of the surrounding block.
      * representing the data form, e.g. "NMR FID" or "MASS SPECTRUM".
+     * @param reader Text reader with position assumed to be on the line
+     * following the NTUPLES label.
+     * @param nextLine The first line of the LDR, i.e. the one containing the
+     * label. Will contain the line following the record or nullopt if the end
+     * of the reader has been reached.
      */
-    NTuples(const std::string& label, std::string dataForm, TextReader& reader,
-        const std::vector<StringLdr>& blockLdrs,
+    NTuples(const std::string& label, std::string dataForm,
+        const std::vector<StringLdr>& blockLdrs, TextReader& reader,
         std::optional<std::string>& nextLine);
 
     /**

@@ -28,7 +28,7 @@ TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
     ldrs.emplace_back("NPOINTS", "3");
     auto nextLine = std::optional<std::string>{};
     auto xyDataRecord
-        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
 
     REQUIRE("(X++(Y..Y))" == xyDataRecord.getVariableList());
 
@@ -86,7 +86,7 @@ TEST_CASE("parses AFFN xy data with all optional parameters", "[XyData]")
     ldrs.emplace_back("RESOLUTION", "2.0");
     auto nextLine = std::optional<std::string>{};
     auto xyDataRecord
-        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
 
     auto xyData = xyDataRecord.getData();
 
@@ -135,7 +135,7 @@ TEST_CASE("parses single data point record", "[XyData]")
 
     auto nextLine = std::optional<std::string>{};
     auto xyDataRecord
-        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(1 == xyData.size());
@@ -166,7 +166,7 @@ TEST_CASE("detects mismatching NPOINTS", "[XyData]")
     ldrs.emplace_back("NPOINTS", "1");
     auto nextLine = std::optional<std::string>{};
     auto xyDataRecord
-        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
     REQUIRE_THROWS(xyDataRecord.getData());
 }
 
@@ -188,7 +188,7 @@ TEST_CASE("detects mismatching variables list for XYDATA", "[XyData]")
     ldrs.emplace_back("NPOINTS", "1");
     auto nextLine = std::optional<std::string>{};
     REQUIRE_THROWS(
-        sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine));
+        sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine));
 }
 
 TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
@@ -210,7 +210,7 @@ TEST_CASE("detects illegal stream position (wrong label)", "[XyData]")
     ldrs.emplace_back("NPOINTS", "1");
     auto nextLine = std::optional<std::string>{};
     REQUIRE_THROWS(
-        sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine));
+        sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine));
 }
 
 TEST_CASE(
@@ -239,7 +239,7 @@ TEST_CASE(
 
     auto nextLine = std::optional<std::string>{};
     auto xyData
-        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
     auto data = xyData.getData();
 
     REQUIRE(data.size() == 8);
@@ -274,7 +274,7 @@ TEST_CASE("parses zero data point record", "[XyData]")
 
     auto nextLine = std::optional<std::string>{};
     auto xyDataRecord
-        = sciformats::jdx::XyData(label, variables, reader, ldrs, nextLine);
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
     auto xyData = xyDataRecord.getData();
 
     REQUIRE(xyData.empty());

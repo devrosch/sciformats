@@ -2,10 +2,10 @@
 #include "jdx/XyBase.hpp"
 
 sciformats::jdx::XyPoints::XyPoints(const std::string& label,
-    const std::string& variableList, TextReader& reader,
-    const std::vector<StringLdr>& ldrs, std::optional<std::string>& nextLine)
-    : XyBase(label, variableList, reader, ldrs, s_xyPointsLabel,
-        s_xyPointsVariableList, nextLine)
+    const std::string& variableList, const std::vector<StringLdr>& ldrs,
+    TextReader& reader, std::optional<std::string>& nextLine)
+    : XyBase(label, variableList, ldrs, s_xyPointsLabel, s_xyPointsVariableList,
+        reader, nextLine)
 {
 }
 

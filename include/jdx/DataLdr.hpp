@@ -17,6 +17,10 @@ namespace sciformats::jdx
 class DataLdr : public Ldr
 {
 public:
+    /**
+     * @brief The record's variable list.
+     * @return The record's variable list.
+     */
     [[nodiscard]] const std::string& getVariableList() const;
 
 protected:
@@ -48,27 +52,29 @@ R sciformats::jdx::DataLdr::callAndResetStreamPos(
 {
     auto pos = m_reader.eof() ? std::nullopt
                               : std::optional<std::streampos>(m_reader.tellg());
-    try
-    {
-        m_reader.seekg(m_dataPos);
-        R returnValue = func();
-
-        // reset reader
+    auto resetPosition = [pos, this] {
         if (pos)
         {
             m_reader.seekg(pos.value());
         }
+        else
+        {
+            m_reader.seekg(0, std::ios_base::end);
+        }
+    };
 
+    try
+    {
+        m_reader.seekg(m_dataPos);
+        R returnValue = func();
+        resetPosition();
         return returnValue;
     }
     catch (...)
     {
         try
         {
-            if (pos)
-            {
-                m_reader.seekg(pos.value());
-            }
+            resetPosition();
         }
         catch (...)
         {

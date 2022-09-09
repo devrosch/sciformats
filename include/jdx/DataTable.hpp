@@ -37,7 +37,9 @@ public:
      * @param pageLdrs The LDRs of the surroundling PAGE.
      * @param reader Text reader with position assumed to be on the line
      * following the "DATA TABLE" label.
-     * @param nextLine Will return the line following the DATA TABLE record.
+     * @param nextLine The first line of the LDR, i.e. the one containing the
+     * label. Will contain the line following the record or nullopt if the end
+     * of the reader has been reached.
      */
     DataTable(std::string label, std::string variableList,
         std::optional<std::string> plotDescriptor,

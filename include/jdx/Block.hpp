@@ -145,6 +145,9 @@ private:
      * is assumed to be at the start of the second line (the line following the
      * TITLE line) of the block. The reader is expected to exist for the
      * lifetime of this object.
+     * @param nextLine The first line of the LDR, i.e. the one containing the
+     * label. Will contain the line following the record or nullopt if the end
+     * of the reader has been reached.
      */
     Block(const std::string& title, TextReader& reader,
         std::optional<std::string>& nextLine);

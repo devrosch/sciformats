@@ -4,9 +4,9 @@
 #include "util/LdrUtils.hpp"
 
 sciformats::jdx::XyBase::XyBase(const std::string& label,
-    const std::string& variableList, TextReader& reader,
-    const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
-    std::string expectedVariableList, std::optional<std::string>& nextLine)
+    const std::string& variableList, const std::vector<StringLdr>& ldrs,
+    const std::string& expectedLabel, std::string expectedVariableList,
+    TextReader& reader, std::optional<std::string>& nextLine)
     : Data2D{label, variableList, reader}
 {
     validateInput(getLabel(), getVariableList(), expectedLabel,

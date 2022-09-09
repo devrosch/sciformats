@@ -4,9 +4,8 @@
 #include "util/StringUtils.hpp"
 
 sciformats::jdx::NTuples::NTuples(const std::string& label,
-    std::string dataForm, TextReader& reader,
-    const std::vector<StringLdr>& blockLdrs,
-    std::optional<std::string>& nextLine)
+    std::string dataForm, const std::vector<StringLdr>& blockLdrs,
+    TextReader& reader, std::optional<std::string>& nextLine)
     : m_dataForm{std::move(dataForm)}
 {
     validateInput(label);

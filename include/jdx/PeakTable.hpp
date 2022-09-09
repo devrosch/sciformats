@@ -6,6 +6,7 @@
 #include "jdx/TabularData.hpp"
 #include "jdx/TextReader.hpp"
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>

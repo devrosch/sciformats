@@ -10,33 +10,19 @@ sciformats::jdx::util::PeakTableParser::PeakTableParser(
     TextReader& reader, size_t numVariables)
     : m_reader{reader}
     , m_numVariables{numVariables}
-    , m_isPastInitialComment{false}
     , m_currentLine{""}
     , m_currentPos{0}
 {
 }
 
-std::variant<std::string, sciformats::jdx::Peak>
-sciformats::jdx::util::PeakTableParser::next()
+sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::next()
 {
-    if (!m_isPastInitialComment)
-    {
-        auto kernelFunction = parseKernelFunctions();
-        m_isPastInitialComment = true;
-        if (kernelFunction)
-        {
-            return kernelFunction.value();
-        }
-    }
-
     std::optional<Peak> peak = nextPeak();
-
     if (!peak)
     {
         throw ParseException(
             "No next peak found at: " + std::to_string(m_reader.tellg()));
     }
-
     return peak.value();
 }
 
@@ -57,61 +43,9 @@ bool sciformats::jdx::util::PeakTableParser::hasNext()
         m_currentPos = currentPos;
     };
 
-    if (!m_isPastInitialComment)
-    {
-        auto kernelFunction = parseKernelFunctions();
-        resetState();
-        if (kernelFunction)
-        {
-            return true;
-        }
-    }
-
     std::optional<Peak> peak = nextPeak();
     resetState();
     return peak.has_value();
-}
-
-// TODO: similar to getKernel() in PeakTable
-std::optional<std::string>
-sciformats::jdx::util::PeakTableParser::parseKernelFunctions()
-{
-    // comment $$ in line(s) following LDR start may contain peak function
-    auto readerPos = m_reader.tellg();
-    std::string line{};
-    std::string functionDescription{};
-    while (!m_reader.eof() && !util::isLdrStart(line = m_reader.readLine())
-           && isPureInlineComment(line))
-    {
-        readerPos = m_reader.tellg();
-        auto [content, comment] = util::stripLineComment(line);
-        appendToDescription(comment.value(), functionDescription);
-    }
-    // reset reader position to start of first assignment or start of next LDR
-    m_reader.seekg(readerPos);
-    // return
-    return functionDescription.empty()
-               ? std::nullopt
-               : std::optional<std::string>{functionDescription};
-}
-
-bool sciformats::jdx::util::PeakTableParser::isPureInlineComment(
-    const std::string& line)
-{
-    auto [content, comment] = util::stripLineComment(line);
-    util::trim(content);
-    return content.empty() && comment.has_value();
-}
-
-void sciformats::jdx::util::PeakTableParser::appendToDescription(
-    std::string comment, std::string& description)
-{
-    if (!description.empty())
-    {
-        description += '\n';
-    }
-    util::trim(comment);
-    description.append(comment);
 }
 
 std::optional<sciformats::jdx::Peak>

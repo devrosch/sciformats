@@ -34,11 +34,13 @@ public:
     RaData(const std::string& label, const std::string& variableList,
         const std::vector<StringLdr>& ldrs, TextReader& reader,
         std::optional<std::string>& nextLine);
+
     /**
      * @brief Provides parameters specific to RADATA.
      * @return The parameters.
      */
     [[nodiscard]] const RaParameters& getParameters() const;
+
     /**
      * @brief Provides the parsed xy data.
      * @return Pairs of xy data. Invalid values ("?") will be represented by

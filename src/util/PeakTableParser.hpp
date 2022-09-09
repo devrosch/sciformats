@@ -4,8 +4,6 @@
 #include "jdx/PeakTable.hpp"
 #include "jdx/TextReader.hpp"
 
-#include <variant>
-
 namespace sciformats::jdx::util
 {
 /**
@@ -15,28 +13,23 @@ class PeakTableParser
 {
 public:
     explicit PeakTableParser(TextReader& reader, size_t numVariables);
+
     /**
      * @brief Next table item.
      * @note Assumes that a peak tuple does not span multiple lines, but one
      * line may contain multiple tuples.
-     * @return Either a textual description of peak kernel functions or next
-     * peak.
+     * @return Either The next peak.
      */
-    std::variant<std::string, Peak> next();
+    Peak next();
+
     bool hasNext();
 
 private:
     TextReader& m_reader;
     size_t m_numVariables;
-    bool m_isPastInitialComment;
     std::string m_currentLine;
     size_t m_currentPos;
 
-    // kernel function
-    std::optional<std::string> parseKernelFunctions();
-    static bool isPureInlineComment(const std::string& line);
-    static void appendToDescription(
-        std::string comment, std::string& description);
     // peak
     std::optional<Peak> nextPeak();
     static std::optional<Peak> nextPeak(

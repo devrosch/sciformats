@@ -25,6 +25,7 @@ public:
 
 protected:
     DataLdr(std::string label, std::string variableList, TextReader& reader);
+
     TextReader& getReader();
     /**
      * @brief Validates if input is a valid data LDR.
@@ -37,6 +38,7 @@ protected:
     static void validateInput(const std::string& label,
         const std::string& variableList, const std::string& expectedLabel,
         const std::vector<std::string>& expectedVariableLists);
+
     template<typename R>
     R callAndResetStreamPos(const std::function<R()>& func);
 

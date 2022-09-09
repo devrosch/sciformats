@@ -19,6 +19,7 @@ public:
      * @param value The value of the LDR, e.g. "abc" for "##TITLE= abc".
      */
     StringLdr(std::string label, std::string value);
+
     /**
      * @brief The value (without initial blank character if any) of the
      * LDR, e.g. "abc" for "##TITLE= abc".

@@ -14,6 +14,7 @@ class BlockParseException : public ParseException
 {
 public:
     explicit BlockParseException(const std::string& what);
+
     BlockParseException(const std::string& issueMsg, const std::string& label,
         const std::string& blockTitle);
 };

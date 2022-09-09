@@ -4,8 +4,6 @@
 #include "jdx/PeakAssignment.hpp"
 #include "jdx/TextReader.hpp"
 
-#include <variant>
-
 namespace sciformats::jdx::util
 {
 /**
@@ -15,26 +13,21 @@ class PeakAssignmentsParser
 {
 public:
     explicit PeakAssignmentsParser(TextReader& reader, size_t numVariables);
+
     /**
      * @brief Next assignment item.
      * @note Assumes that a peak assignment tuple always starts on a new line,
      * but may span multiple lines.
-     * @return Either a textual description of peak width function or next peak
-     * assignment.
+     * @return The next peak assignment.
      */
-    std::variant<std::string, PeakAssignment> next();
+    PeakAssignment next();
+
     bool hasNext();
 
 private:
     TextReader& m_reader;
     size_t m_numVariables;
-    bool m_isPastInitialComment;
 
-    // width function
-    std::optional<std::string> parseWidthFunction();
-    static bool isPureInlineComment(const std::string& line);
-    static void appendToDescription(
-        std::string comment, std::string& description);
     // assignment string
     std::optional<std::string> readNextAssignmentString();
     static bool isPeakAssignmentStart(const std::string& stringValue);

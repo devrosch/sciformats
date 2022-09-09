@@ -3,10 +3,10 @@
 
 #include "jdx/DataLdr.hpp"
 #include "jdx/TextReader.hpp"
+#include "util/LdrUtils.hpp"
 
 #include <functional>
 #include <string>
-#include <variant>
 
 namespace sciformats::jdx
 {
@@ -31,9 +31,9 @@ protected:
         std::string label, std::string variableList, TextReader& reader);
 
     /**
-     * @brief Provides the parsed peak assignments.
+     * @brief Provides the parsed peak assignments or peaks.
      * @param Parser for the data.
-     * @return The list of peak assignments.
+     * @return The list of peak assignments or peaks.
      */
     template<typename Parser, typename R> std::vector<R> getData(Parser parser);
 };
@@ -43,18 +43,33 @@ std::vector<R> sciformats::jdx::TabularData::getData(Parser parser)
 {
     auto func = [&]() {
         std::vector<R> data{};
+        auto& reader = getReader();
+
+        // TODO: use util::skipPureComments()
+        // skip possible initial comment lines
+        std::optional<std::streampos> pos;
+        while (!reader.eof())
+        {
+            pos = reader.tellg();
+            auto line = reader.readLine();
+            if (!util::isPureComment(line))
+            {
+                break;
+            }
+        }
+        if (pos)
+        {
+            reader.seekg(pos.value());
+        }
+
+        // read peaks
         while (parser.hasNext())
         {
-            auto nextVariant = parser.next();
-            if (std::holds_alternative<std::string>(nextVariant))
-            {
-                // skip width function
-                continue;
-            }
-            data.push_back(std::get<R>(nextVariant));
+            data.push_back(parser.next());
         }
         return data;
     };
+
     return callAndResetStreamPos<std::vector<R>>(func);
 }
 

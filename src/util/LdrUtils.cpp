@@ -19,7 +19,7 @@ std::string sciformats::jdx::util::normalizeLdrStart(const std::string& ldr)
     // skip leading white spaces
     for (; it != ldr.cend(); ++it)
     {
-        if (!static_cast<bool>(std::isspace(static_cast<unsigned char>(*it))))
+        if (!isSpace(*it))
         {
             break;
         }

@@ -290,9 +290,7 @@ bool sciformats::jdx::util::DataParser::isTokenDelimiter(
         return true;
     }
     char c = encodedValues.at(index);
-    auto static isspace
-        = [](unsigned char ch) { return static_cast<bool>(std::isspace(ch)); };
-    return isspace(static_cast<unsigned char>(c)) || c == ';' || c == ',';
+    return isSpace(c) || c == ';' || c == ',';
 }
 
 bool sciformats::jdx::util::DataParser::isTokenStart(

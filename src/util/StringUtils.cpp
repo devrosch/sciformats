@@ -2,23 +2,18 @@
 #include "jdx/ParseException.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <regex>
 #include <string>
 
 void sciformats::jdx::util::trimLeft(std::string& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !static_cast<bool>(std::isspace(ch));
-    }));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not_fn(isSpace)));
 }
 
 void sciformats::jdx::util::trimRight(std::string& s)
 {
-    s.erase(std::find_if(s.rbegin(), s.rend(),
-                [](unsigned char ch) {
-                    return !static_cast<bool>(std::isspace(ch));
-                })
-                .base(),
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not_fn(isSpace)).base(),
         s.end());
 }
 

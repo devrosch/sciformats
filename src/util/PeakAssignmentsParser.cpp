@@ -5,6 +5,7 @@
 #include "util/StringUtils.hpp"
 
 #include <algorithm>
+#include <regex>
 
 sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
     TextReader& reader, size_t numVariables)
@@ -16,7 +17,7 @@ sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
 sciformats::jdx::PeakAssignment
 sciformats::jdx::util::PeakAssignmentsParser::next()
 {
-    auto nextAssignmentString = readNextAssignmentString();
+    auto nextAssignmentString = nextTuple();
     if (!nextAssignmentString)
     {
         throw ParseException("No next peak assignment found at: "
@@ -33,14 +34,14 @@ bool sciformats::jdx::util::PeakAssignmentsParser::hasNext()
         return false;
     }
     auto readerPos = m_reader.tellg();
-    auto nextAssignmentString = readNextAssignmentString();
+    auto nextAssignmentString = nextTuple();
     // TODO: optimize
     m_reader.seekg(readerPos);
     return nextAssignmentString.has_value();
 }
 
 std::optional<std::string>
-sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
+sciformats::jdx::util::PeakAssignmentsParser::nextTuple()
 {
     std::string peakAssignmentString{};
     // find start
@@ -50,7 +51,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         auto line = m_reader.readLine();
         auto [lineStart, comment] = util::stripLineComment(line);
         util::trim(lineStart);
-        if (isPeakAssignmentStart(lineStart))
+        if (isTupleStart(lineStart))
         {
             peakAssignmentString.append(lineStart);
             break;
@@ -67,7 +68,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
                 "Illegal string found in peak assignment: " + line);
         }
     }
-    if (isPeakAssignmentEnd(peakAssignmentString))
+    if (isTupleEnd(peakAssignmentString))
     {
         return peakAssignmentString;
     }
@@ -89,7 +90,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         }
         peakAssignmentString.append(" ");
         peakAssignmentString.append(lineStart);
-        if (isPeakAssignmentEnd(lineStart))
+        if (isTupleEnd(lineStart))
         {
             return peakAssignmentString;
         }
@@ -107,7 +108,7 @@ sciformats::jdx::util::PeakAssignmentsParser::readNextAssignmentString()
         + peakAssignmentString);
 }
 
-bool sciformats::jdx::util::PeakAssignmentsParser::isPeakAssignmentStart(
+bool sciformats::jdx::util::PeakAssignmentsParser::isTupleStart(
     const std::string& stringValue)
 {
     std::string value{stringValue};
@@ -115,7 +116,7 @@ bool sciformats::jdx::util::PeakAssignmentsParser::isPeakAssignmentStart(
     return !value.empty() && value.at(0) == '(';
 }
 
-bool sciformats::jdx::util::PeakAssignmentsParser::isPeakAssignmentEnd(
+bool sciformats::jdx::util::PeakAssignmentsParser::isTupleEnd(
     const std::string& stringValue)
 {
     std::string value{stringValue};
@@ -127,56 +128,60 @@ sciformats::jdx::PeakAssignment
 sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     const std::string& stringValue) const
 {
+    // matches 2 - 5 peak assignments segments  as groups 1-5, corresponding to
+    // one of (X[, Y][, W], A), (X[, Y][, M], A), (X[, Y][, M][, W], A), with X
+    // as matches[1] and A as matches[5]
+    const auto* regexString = R"(^\s*\(\s*)"
+                              R"(([^,]*))"
+                              R"((?:\s*,\s*([^,]*))?)"
+                              R"((?:\s*,\s*([^,]*))?)"
+                              R"((?:\s*,\s*([^,]*))?)"
+                              R"(\s*,\s*(<.*>)\s*\))"
+                              R"(\s*$)";
+    std::regex regex{regexString};
+    std::smatch matches;
     auto [lineStart, comment] = util::stripLineComment(stringValue);
     util::trim(lineStart);
-    if (!isPeakAssignmentStart(stringValue)
-        || !isPeakAssignmentEnd(stringValue))
+    if (!std::regex_match(lineStart, matches, regex)
+        || (m_numVariables <= 3 && (matches[3].matched || matches[4].matched))
+        || (m_numVariables <= 4 && matches[4].matched) || !matches[5].matched)
     {
         throw ParseException("Illegal peak assignment string: " + stringValue);
     }
-    size_t pos = 1;
-    auto token0 = parseNextPeakAssignmentToken(stringValue, pos);
-    auto token1 = parseNextPeakAssignmentToken(stringValue, pos);
-    auto token2 = pos < stringValue.length()
-                      ? parseNextPeakAssignmentToken(stringValue, pos)
-                      : std::nullopt;
-    if (m_numVariables <= 3 && pos < stringValue.length())
-    {
-        throw ParseException(
-            "Illegal peak assignment string. Illegal number of tokens: "
-            + stringValue);
-    }
-    auto token3 = pos < stringValue.length()
-                      ? parseNextPeakAssignmentToken(stringValue, pos)
-                      : std::nullopt;
-    if (m_numVariables <= 4 && pos < stringValue.length())
-    {
-        throw ParseException(
-            "Illegal peak assignment string. Illegal number of tokens: "
-            + stringValue);
-    }
 
+    auto token1 = matches[1].matched
+                      ? std::optional<std::string>{matches[1].str()}
+                      : std::nullopt;
+    auto token2 = matches[2].matched
+                      ? std::optional<std::string>{matches[2].str()}
+                      : std::nullopt;
+    auto token3 = matches[3].matched
+                      ? std::optional<std::string>{matches[3].str()}
+                      : std::nullopt;
+    auto token4 = matches[4].matched
+                      ? std::optional<std::string>{matches[4].str()}
+                      : std::nullopt;
+    auto token5 = matches[5].matched
+                      ? std::optional<std::string>{matches[5].str()}
+                      : std::nullopt;
+    // remove enclosing < and >
+    token5 = token5.value().substr(1, token5.value().size() - 2);
+
+    auto parseDoubleToken = [](const std::optional<std::string>& token) {
+        return token.value().empty() ? std::numeric_limits<double>::quiet_NaN()
+                                     : strtod(token.value().data(), nullptr);
+    };
+
+    // map to peak assignment
     PeakAssignment peakAssignment{};
+    peakAssignment.x = parseDoubleToken(token1);
+    peakAssignment.a = token5.value();
     if (m_numVariables == 3)
     {
         if (token2)
         {
             // 3 tokens
-            peakAssignment.x = token0.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token0.value().data(), nullptr);
-            peakAssignment.y = token1.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token1.value().data(), nullptr);
-            peakAssignment.a = token2 ? token2.value() : "";
-        }
-        else
-        {
-            // 2 tokens
-            peakAssignment.x = token0.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token0.value().data(), nullptr);
-            peakAssignment.a = token1.value();
+            peakAssignment.y = parseDoubleToken(token2);
         }
     }
     else if (m_numVariables == 4)
@@ -184,17 +189,8 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
         // 2, 3 or 4 tokens
         if (token2 && token3)
         {
-            // 4 tokens
-            peakAssignment.x = token0.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token0.value().data(), nullptr);
-            peakAssignment.y = token1.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token1.value().data(), nullptr);
-            peakAssignment.w = token2.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token2.value().data(), nullptr);
-            peakAssignment.a = token3.value();
+            peakAssignment.y = parseDoubleToken(token2);
+            peakAssignment.w = parseDoubleToken(token3);
         }
         else if (token2)
         {
@@ -203,14 +199,6 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
                                  "variable Y or W) for four variables: "
                                  + lineStart);
         }
-        else
-        {
-            // 2 tokens
-            peakAssignment.x = token0.value().empty()
-                                   ? std::numeric_limits<double>::quiet_NaN()
-                                   : strtod(token0.value().data(), nullptr);
-            peakAssignment.a = token1.value();
-        }
     }
     else
     {
@@ -218,85 +206,4 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
                              + std::to_string(m_numVariables));
     }
     return peakAssignment;
-}
-
-std::optional<std::string>
-sciformats::jdx::util::PeakAssignmentsParser::parseNextPeakAssignmentToken(
-    const std::string& stringValue, size_t& position)
-{
-    auto isTokenDelimiter = [](const std::string& string, size_t pos) {
-        return string.at(pos) == ',' || string.at(pos) == ')';
-    };
-    auto isNonWhitespace = [](char c) { return !util::isSpace(c); };
-    std::string token{};
-    if (position == 0 && stringValue.at(0) == '(')
-    {
-        // skip leading '('
-        position++;
-    }
-    while (position < stringValue.length()
-           && !isTokenDelimiter(stringValue, position))
-    {
-        if (stringValue.at(position) == '<')
-        {
-            // string token
-            if (std::any_of(token.begin(), token.end(), isNonWhitespace))
-            {
-                throw ParseException(
-                    "Non whitespace characters before string token at: "
-                    + stringValue);
-            }
-            position++;
-            token = parsePeakAssignmentStringToken(stringValue, position);
-            // consume whitespace characters after string end delimiter
-            while (position < stringValue.length()
-                   && !isTokenDelimiter(stringValue, position))
-            {
-                if (isNonWhitespace(stringValue.at(position)))
-                {
-                    throw ParseException(
-                        "Non whitespace character after string token at: "
-                        + stringValue);
-                }
-                position++;
-            }
-            break;
-        }
-        if (stringValue.at(position) == '>')
-        {
-            throw ParseException(
-                "Missing opening angle bracket at: " + stringValue);
-        }
-        token += stringValue.at(position);
-        position++;
-    }
-    if (position >= stringValue.length())
-    {
-        throw ParseException(
-            "No delimiter encountered at end of peak assignment token: "
-            + stringValue);
-    }
-    position++;
-    util::trim(token);
-    return token;
-}
-
-std::string
-sciformats::jdx::util::PeakAssignmentsParser::parsePeakAssignmentStringToken(
-    const std::string& stringValue, size_t& position)
-{
-    std::string token{};
-    while (position < stringValue.length() && stringValue.at(position) != '>')
-    {
-        token += stringValue.at(position);
-        position++;
-    }
-    if (position >= stringValue.length())
-    {
-        throw ParseException(
-            "No delimiter encountered at end of peak assignment string token: "
-            + stringValue);
-    }
-    position++;
-    return token;
 }

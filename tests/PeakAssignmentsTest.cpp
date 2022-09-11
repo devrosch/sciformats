@@ -175,7 +175,7 @@ TEST_CASE("fails when excess component is encountered in three column PEAK "
         = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains("illegal number", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when excess component is encountered in four column PEAK "
@@ -196,7 +196,7 @@ TEST_CASE("fails when excess component is encountered in four column PEAK "
         = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains("illegal number", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when ambiguous component is encountered in four column PEAK "
@@ -280,8 +280,7 @@ TEST_CASE("fails when opening angle bracket is missing in assignment string in "
         = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains(
-            "missing opening angle bracket", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when closing angle bracket is missing in assignment string in "
@@ -302,7 +301,7 @@ TEST_CASE("fails when closing angle bracket is missing in assignment string in "
         = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains("no delimiter", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
@@ -322,7 +321,7 @@ TEST_CASE("fails when illegal separator is used in PEAK ASSIGNMENTS",
         = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(assignments.getData(),
-        Catch::Matchers::Contains("non whitespace", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when illegal variable list is encountered in PEAK ASSIGNMENTS",

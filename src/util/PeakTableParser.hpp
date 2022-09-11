@@ -15,13 +15,18 @@ public:
     explicit PeakTableParser(TextReader& reader, size_t numVariables);
 
     /**
-     * @brief Next table item.
+     * @brief Next peak.
      * @note Assumes that a peak tuple does not span multiple lines, but one
      * line may contain multiple tuples.
-     * @return Either The next peak.
+     * @return The next peak.
+     * @throws ParseException If there is no next peak.
      */
     Peak next();
 
+    /**
+     * @brief Whether there is another peak.
+     * @return True if there is another peak, false otherwise.
+     */
     bool hasNext();
 
 private:

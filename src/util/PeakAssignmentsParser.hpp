@@ -39,7 +39,7 @@ private:
     static bool isTupleEnd(const std::string& stringValue);
     // assignment
     [[nodiscard]] sciformats::jdx::PeakAssignment createPeakAssignment(
-        const std::string& stringValue) const;
+        const std::string& tuple) const;
 };
 }
 

@@ -4,6 +4,8 @@
 #include "jdx/PeakTable.hpp"
 #include "jdx/TextReader.hpp"
 
+#include <queue>
+
 namespace sciformats::jdx::util
 {
 /**
@@ -32,17 +34,13 @@ public:
 private:
     TextReader& m_reader;
     size_t m_numVariables;
-    std::string m_currentLine;
-    size_t m_currentPos;
+    std::queue<std::string> m_tuples;
 
+    // tuple
+    std::optional<std::string> nextTuple();
     // peak
-    std::optional<Peak> nextPeak();
-    static std::optional<Peak> nextPeak(
-        const std::string& line, size_t& pos, size_t numComponents);
-    static bool skipToNextToken(const std::string& line, size_t& pos);
-    static std::optional<std::string> nextToken(
-        const std::string& line, size_t& pos);
-    static bool isTokenDelimiter(const std::string& line, size_t& pos);
+    [[nodiscard]] sciformats::jdx::Peak createPeak(
+        const std::string& tuple) const;
 };
 }
 

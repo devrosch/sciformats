@@ -126,7 +126,7 @@ bool sciformats::jdx::util::PeakAssignmentsParser::isTupleEnd(
 
 sciformats::jdx::PeakAssignment
 sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
-    const std::string& stringValue) const
+    const std::string& tuple) const
 {
     // matches 2 - 5 peak assignments segments  as groups 1-5, corresponding to
     // one of (X[, Y][, W], A), (X[, Y][, M], A), (X[, Y][, M][, W], A), with X
@@ -140,13 +140,13 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
                               R"(\s*$)";
     std::regex regex{regexString};
     std::smatch matches;
-    auto [lineStart, comment] = util::stripLineComment(stringValue);
+    auto [lineStart, comment] = util::stripLineComment(tuple);
     util::trim(lineStart);
     if (!std::regex_match(lineStart, matches, regex)
         || (m_numVariables <= 3 && (matches[3].matched || matches[4].matched))
         || (m_numVariables <= 4 && matches[4].matched) || !matches[5].matched)
     {
-        throw ParseException("Illegal peak assignment string: " + stringValue);
+        throw ParseException("Illegal peak assignment string: " + tuple);
     }
 
     auto token1 = matches[1].matched

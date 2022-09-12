@@ -104,7 +104,9 @@ sciformats::jdx::Page::parseDataTableVars(const std::string& rawPageVars)
         throw ParseException(
             "Missing variable list in DATA TABLE: " + rawPageVars);
     }
-    auto segments = util::split(rawPageVarsTrimmed, R"(\)\s*,\s*)", true);
+    // regex cuts off ")" which could be avoided with R"((?<=\))\s*,\s*)", but
+    // C++ does not support lookbehind syntax
+    auto segments = util::split(rawPageVarsTrimmed, R"((?:\))(\s*,\s*))", true);
     if (segments.empty() || segments.size() > 2)
     {
         throw ParseException(

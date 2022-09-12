@@ -105,10 +105,8 @@ TEST_CASE("fails when excess component is encountered in two column PEAK TABLE",
 
     auto nextLine = std::optional<std::string>{};
     auto table = sciformats::jdx::PeakTable(label, variables, reader, nextLine);
-    REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains(
-                             "excess peak component", Catch::CaseSensitive::No)
-                             && Catch::Matchers::Contains("position: 11"));
+    REQUIRE_THROWS_WITH(table.getData(),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE(
@@ -126,10 +124,8 @@ TEST_CASE(
 
     auto nextLine = std::optional<std::string>{};
     auto table = sciformats::jdx::PeakTable(label, variables, reader, nextLine);
-    REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains(
-                             "excess peak component", Catch::CaseSensitive::No)
-                             && Catch::Matchers::Contains("position: 16"));
+    REQUIRE_THROWS_WITH(table.getData(),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
 TEST_CASE(
@@ -147,14 +143,11 @@ TEST_CASE(
 
     auto nextLine = std::optional<std::string>{};
     auto table = sciformats::jdx::PeakTable(label, variables, reader, nextLine);
-    REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains(
-                             "missing peak component", Catch::CaseSensitive::No)
-                             && Catch::Matchers::Contains("position: 5"));
+    REQUIRE_THROWS_WITH(table.getData(),
+        Catch::Matchers::Contains("illegal", Catch::CaseSensitive::No));
 }
 
-TEST_CASE(
-    "fails when non existent value is encountered in PEAK TABLE", "[PeakTable]")
+TEST_CASE("reports blank value as NaN in PEAK TABLE", "[PeakTable]")
 {
     // "##PEAKTABLE= (XYW..XYW)\r\n"
     const auto* label = "PEAKTABLE";
@@ -167,10 +160,13 @@ TEST_CASE(
 
     auto nextLine = std::optional<std::string>{};
     auto table = sciformats::jdx::PeakTable(label, variables, reader, nextLine);
-    REQUIRE_THROWS_WITH(
-        table.getData(), Catch::Matchers::Contains(
-                             "missing peak component", Catch::CaseSensitive::No)
-                             && Catch::Matchers::Contains("position: 6"));
+
+    auto xyData = table.getData();
+
+    REQUIRE(1 == xyData.size());
+    REQUIRE(450.0 == Approx(xyData.at(0).x));
+    REQUIRE(std::isnan(xyData.at(0).y));
+    REQUIRE(10.0 == Approx(xyData.at(0).w.value()));
 }
 
 TEST_CASE("fails when illegal variable list is encountered in PEAK TABLE",
@@ -179,7 +175,7 @@ TEST_CASE("fails when illegal variable list is encountered in PEAK TABLE",
     // "##PEAKTABLE= (XYWABC..XYWABC)\r\n"
     const auto* label = "PEAKTABLE";
     const auto* variables = "(XYWABC..XYWABC)";
-    std::string input{"450.0,, 10.0\r\n"
+    std::string input{"450.0, 3.0, 10.0\r\n"
                       "##END="};
     auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
     streamPtr->str(input);

@@ -35,31 +35,27 @@ void sciformats::jdx::util::toLower(std::string& s)
 }
 
 std::vector<std::string> sciformats::jdx::util::split(const std::string& input,
-    const std::string& delimiterRegEx, bool trimSegments)
+    const std::string& delimiterRegEx, bool trimSegments, size_t matchGroup)
 {
-    // see:
-    // https://en.cppreference.com/w/cpp/regex/regex_token_iterator
-    // https://stackoverflow.com/questions/9435385/split-a-string-using-c11
+    auto remainder = input;
     std::regex delimiter{delimiterRegEx};
-    std::sregex_token_iterator first{input.begin(), input.end(), delimiter, -1};
-    std::sregex_token_iterator last;
-    std::vector<std::string> output{first, last};
-
-    // number of matches of delimiter
-    // see: https://stackoverflow.com/a/36320911
-    std::ptrdiff_t numMatches = std::distance(
-        std::sregex_iterator(input.begin(), input.end(), delimiter),
-        std::sregex_iterator());
-
-    if (numMatches >= 0 && output.size() == static_cast<size_t>(numMatches))
+    std::smatch match;
+    std::vector<std::string> output;
+    while (std::regex_search(remainder, match, delimiter))
     {
-        // if input ends on delimiter, include empty trailing segment
-        output.emplace_back("");
+        auto matchPos = static_cast<size_t>(match.position(matchGroup));
+        std::string segment = remainder.substr(0, matchPos);
+        output.push_back(segment);
+        auto nextPos
+            = matchPos + static_cast<size_t>(match[matchGroup].length());
+        remainder = remainder.substr(nextPos);
     }
+    output.push_back(remainder);
 
     if (trimSegments)
     {
         std::for_each(output.begin(), output.end(), trim);
     }
+
     return output;
 }

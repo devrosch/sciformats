@@ -5,190 +5,144 @@
 #include "util/StringUtils.hpp"
 
 #include <algorithm>
+#include <regex>
 
 sciformats::jdx::util::PeakTableParser::PeakTableParser(
     TextReader& reader, size_t numVariables)
     : m_reader{reader}
     , m_numVariables{numVariables}
-    , m_currentLine{""}
-    , m_currentPos{0}
 {
 }
 
 sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::next()
 {
-    std::optional<Peak> peak = nextPeak();
-    if (!peak)
+    auto nextPeakString = nextTuple();
+
+    auto debug = nextPeakString.value_or("-");
+
+    if (!nextPeakString)
     {
         throw ParseException(
             "No next peak found at: " + std::to_string(m_reader.tellg()));
     }
-    return peak.value();
+    auto nextPeak = createPeak(nextPeakString.value());
+    return nextPeak;
 }
 
 bool sciformats::jdx::util::PeakTableParser::hasNext()
 {
-    if (m_reader.eof())
+    if (!m_tuples.empty())
     {
-        return false;
+        return true;
     }
     auto readerPos = m_reader.tellg();
-    auto currentLine = m_currentLine;
-    auto currentPos = m_currentPos;
 
     auto resetState = [&]() {
         // TODO: optimize
         m_reader.seekg(readerPos);
-        m_currentLine = currentLine;
-        m_currentPos = currentPos;
+        while (!m_tuples.empty())
+        {
+            m_tuples.pop();
+        }
     };
 
-    std::optional<Peak> peak = nextPeak();
+    auto tuple = nextTuple();
     resetState();
-    return peak.has_value();
+    return tuple.has_value();
 }
 
-std::optional<sciformats::jdx::Peak>
-sciformats::jdx::util::PeakTableParser::nextPeak()
+std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextTuple()
 {
-    std::optional<Peak> peak{std::nullopt};
-    while (!peak)
+    while (m_tuples.empty())
     {
-        if (m_currentPos < m_currentLine.size())
+        if (m_reader.eof())
         {
-            peak = nextPeak(m_currentLine, m_currentPos, m_numVariables);
-        }
-        else
-        {
-            if (m_reader.eof())
-            {
-                break;
-            }
-            auto readerPos = m_reader.tellg();
-            m_currentLine = m_reader.readLine();
-            std::tie(m_currentLine, std::ignore)
-                = util::stripLineComment(m_currentLine);
-            m_currentPos = 0;
-            if (util::isLdrStart(m_currentLine))
-            {
-                m_reader.seekg(readerPos);
-                break;
-            }
-        }
-    }
-
-    return peak;
-}
-
-std::optional<sciformats::jdx::Peak>
-sciformats::jdx::util::PeakTableParser::nextPeak(
-    const std::string& line, size_t& pos, size_t numComponents)
-{
-    std::vector<double> components{};
-    for (auto i = 0U; i < numComponents; ++i)
-    {
-        const auto prevPos = pos;
-        auto isNewGroup = skipToNextToken(line, pos);
-        if (isNewGroup && i != 0U)
-        {
-            throw ParseException(
-                "Missing peak component encountered in line \"" + line
-                + "\" at position: " + std::to_string(prevPos));
-        }
-        if (!isNewGroup && i == 0U)
-        {
-            throw ParseException(
-                "Excess peak component encountered in line \"" + line
-                + "\" at position: " + std::to_string(prevPos));
-        }
-        if (isNewGroup && i == 0U && pos >= line.size())
-        {
-            // no (more) peaks in line
             return std::nullopt;
         }
-        auto token = nextToken(line, pos);
-        if (!token.has_value())
+
+        auto pos = m_reader.tellg();
+        auto nextLine = m_reader.readLine();
+        if (util::isLdrStart(nextLine))
+        {
+            // next LDR => end of PEAK TABLE
+            m_reader.seekg(pos);
+            return std::nullopt;
+        }
+
+        auto [value, comment] = util::stripLineComment(nextLine);
+        util::trim(value);
+        if (value.empty())
+        {
+            // skipp pure comments
+            continue;
+        }
+        auto tuples
+            = util::split(value, R"([^,\s](\s*(?:\s|;)\s*)[^,\s])", true, 1);
+        if (tuples.empty())
         {
             throw ParseException(
-                "Missing peak component encountered in line \"" + line
-                + "\" at position: " + std::to_string(prevPos));
+                "Unexpected content found while parsing PEAK TABLE: "
+                + nextLine);
         }
-        try
+        // add to queue
+        for (auto& tuple : tuples)
         {
-            auto value = std::stod(token.value());
-            components.push_back(value);
-        }
-        catch (...)
-        {
-            throw ParseException(
-                "Cannot parse value in line \"" + line
-                + "\" at position: " + std::to_string(prevPos));
+            m_tuples.push(tuple);
         }
     }
 
-    if (numComponents == 2)
-    {
-        return Peak{components[0], components[1], std::nullopt};
-    }
-    if (numComponents == 3)
-    {
-        return Peak{components[0], components[1], components[2]};
-    }
-    throw ParseException(
-        "Unexpected number of peak components encountered in line \"" + line
-        + "\": " + std::to_string(components.size()));
+    auto tuple = m_tuples.front();
+    m_tuples.pop();
+    return tuple;
 }
 
-bool sciformats::jdx::util::PeakTableParser::skipToNextToken(
-    const std::string& line, size_t& pos)
+sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::createPeak(
+    const std::string& tuple) const
 {
-    bool componentSeparatorFound = false;
-    bool nonWhitespaceDelimiterFound = false;
-    while (pos < line.size() && isTokenDelimiter(line, pos))
+    if (m_numVariables < 2 || m_numVariables > 3)
     {
-        const char c = line.at(pos);
-        if (c == ',' || c == ';')
-        {
-            if (c == ',')
-            {
-                componentSeparatorFound = true;
-            }
-            if (nonWhitespaceDelimiterFound)
-            {
-                throw ParseException(
-                    "Missing peak component encountered in line \"" + line
-                    + "\" at position: " + std::to_string(pos));
-            }
-            nonWhitespaceDelimiterFound = true;
-        }
-        ++pos;
+        throw ParseException("Unsupported number of variables: "
+                             + std::to_string(m_numVariables));
     }
-    return !componentSeparatorFound;
-}
+    // matches 2-3 peak segments as groups 1-3, corresponding to
+    // (XY..XY) or (XYW..XYW), with X as matches[1] and W as matches[3]
+    const auto* regexString = R"(^\s*)"
+                              R"(([^,]*))"
+                              R"((?:\s*,\s*([^,]*)))"
+                              R"((?:\s*,\s*([^,]*))?)"
+                              R"($)";
+    std::regex regex{regexString};
+    std::smatch matches;
+    auto [lineStart, comment] = util::stripLineComment(tuple);
+    util::trim(lineStart);
+    if (!std::regex_match(lineStart, matches, regex)
+        || (m_numVariables <= 2 && (matches[3].matched)))
+    {
+        throw ParseException("Illegal peak string: " + tuple);
+    }
 
-std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextToken(
-    const std::string& line, size_t& pos)
-{
-    if (pos >= line.size())
-    {
-        return std::nullopt;
-    }
-    auto first = pos;
-    while (pos < line.size() && !isTokenDelimiter(line, pos))
-    {
-        ++pos;
-    }
-    auto token = line.substr(first, pos - first);
-    return token;
-}
+    auto token1 = matches[1].matched
+                      ? std::optional<std::string>{matches[1].str()}
+                      : std::nullopt;
+    auto token2 = matches[2].matched
+                      ? std::optional<std::string>{matches[2].str()}
+                      : std::nullopt;
+    auto token3 = matches[3].matched
+                      ? std::optional<std::string>{matches[3].str()}
+                      : std::nullopt;
 
-bool sciformats::jdx::util::PeakTableParser::isTokenDelimiter(
-    const std::string& line, size_t& pos)
-{
-    if (pos >= line.size())
+    auto parseDoubleToken = [](const std::optional<std::string>& token) {
+        return token.value().empty() ? std::numeric_limits<double>::quiet_NaN()
+                                     : strtod(token.value().data(), nullptr);
+    };
+
+    // map to peak
+    Peak peak{};
+    peak.x = parseDoubleToken(token1);
+    peak.y = parseDoubleToken(token2);
+    if (m_numVariables == 3)
     {
-        return true;
+        peak.w = parseDoubleToken(token3);
     }
-    const char c = line.at(pos);
-    return util::isSpace(c) || c == ';' || c == ',';
+    return peak;
 }

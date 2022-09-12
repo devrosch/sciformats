@@ -63,9 +63,9 @@ std::vector<R> sciformats::jdx::TabularData::getData(Parser parser)
         }
 
         // read peaks
-        while (parser.hasNext())
+        while (auto next = parser.next())
         {
-            data.push_back(parser.next());
+            data.push_back(std::move(next.value()));
         }
         return data;
     };

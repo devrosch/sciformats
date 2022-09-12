@@ -14,30 +14,16 @@ sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
 {
 }
 
-sciformats::jdx::PeakAssignment
+std::optional<sciformats::jdx::PeakAssignment>
 sciformats::jdx::util::PeakAssignmentsParser::next()
 {
-    auto nextAssignmentString = nextTuple();
-    if (!nextAssignmentString)
+    auto nextString = nextTuple();
+    if (!nextString)
     {
-        throw ParseException("No next peak assignment found at: "
-                             + std::to_string(m_reader.tellg()));
+        return std::nullopt;
     }
-    auto nextAssignment = createPeakAssignment(nextAssignmentString.value());
+    auto nextAssignment = createPeakAssignment(nextString.value());
     return nextAssignment;
-}
-
-bool sciformats::jdx::util::PeakAssignmentsParser::hasNext()
-{
-    if (m_reader.eof())
-    {
-        return false;
-    }
-    auto readerPos = m_reader.tellg();
-    auto nextAssignmentString = nextTuple();
-    // TODO: optimize
-    m_reader.seekg(readerPos);
-    return nextAssignmentString.has_value();
 }
 
 std::optional<std::string>

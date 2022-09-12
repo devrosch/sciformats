@@ -20,16 +20,10 @@ public:
      * @brief Next peak.
      * @note Assumes that a peak tuple does not span multiple lines, but one
      * line may contain multiple tuples.
-     * @return The next peak.
-     * @throws ParseException If there is no next peak.
+     * @return The next peak, nullopt if there is none.
+     * @throws ParseException If there the next peak is malformed.
      */
-    Peak next();
-
-    /**
-     * @brief Whether there is another peak.
-     * @return True if there is another peak, false otherwise.
-     */
-    bool hasNext();
+    std::optional<Peak> next();
 
 private:
     TextReader& m_reader;

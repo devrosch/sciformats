@@ -14,41 +14,16 @@ sciformats::jdx::util::PeakTableParser::PeakTableParser(
 {
 }
 
-sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::next()
+std::optional<sciformats::jdx::Peak>
+sciformats::jdx::util::PeakTableParser::next()
 {
-    auto nextPeakString = nextTuple();
-
-    auto debug = nextPeakString.value_or("-");
-
-    if (!nextPeakString)
+    auto nextString = nextTuple();
+    if (!nextString)
     {
-        throw ParseException(
-            "No next peak found at: " + std::to_string(m_reader.tellg()));
+        return std::nullopt;
     }
-    auto nextPeak = createPeak(nextPeakString.value());
+    auto nextPeak = createPeak(nextString.value());
     return nextPeak;
-}
-
-bool sciformats::jdx::util::PeakTableParser::hasNext()
-{
-    if (!m_tuples.empty())
-    {
-        return true;
-    }
-    auto readerPos = m_reader.tellg();
-
-    auto resetState = [&]() {
-        // TODO: optimize
-        m_reader.seekg(readerPos);
-        while (!m_tuples.empty())
-        {
-            m_tuples.pop();
-        }
-    };
-
-    auto tuple = nextTuple();
-    resetState();
-    return tuple.has_value();
 }
 
 std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextTuple()

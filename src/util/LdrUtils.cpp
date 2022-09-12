@@ -175,7 +175,7 @@ void sciformats::jdx::util::skipPureComments(TextReader& reader,
         }
         if (mustPrecedeLdr && !util::isLdrStart(nextLine.value()))
         {
-            // pure $$ comment linesmust be followed by LDR start
+            // pure $$ comment lines must be followed by LDR start
             // if not this special case, give up
             throw ParseException(
                 "Unexpected content found instead of pure comment ($$): "
@@ -187,7 +187,7 @@ void sciformats::jdx::util::skipPureComments(TextReader& reader,
 
 bool sciformats::jdx::util::isPureComment(const std::string& line)
 {
-    // only allow skipping $$ comment lines
+    // only $$ comment?
     auto [preCommentValue, _] = util::stripLineComment(line);
     util::trim(preCommentValue);
     return preCommentValue.empty();

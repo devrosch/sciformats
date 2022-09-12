@@ -18,16 +18,10 @@ public:
      * @brief Next peak assignment.
      * @note Assumes that a peak assignment tuple always starts on a new line,
      * but may span multiple lines.
-     * @return The next peak assignment.
-     * @throws ParseException If there is no next peak assignment.
+     * @return The next peak assignment, nullopt if there is none.
+     * @throws ParseException If next peak assignment is malformed.
      */
-    PeakAssignment next();
-
-    /**
-     * @brief Whether there is another peak assignment.
-     * @return True if there is another peak assignment, false otherwise.
-     */
-    bool hasNext();
+    std::optional<PeakAssignment> next();
 
 private:
     TextReader& m_reader;

@@ -8,9 +8,9 @@
 #include <regex>
 
 sciformats::jdx::util::PeakTableParser::PeakTableParser(
-    TextReader& reader, size_t numVariables)
+    TextReader& reader, std::string variableList)
     : m_reader{reader}
-    , m_numVariables{numVariables}
+    , m_variableList{std::move(variableList)}
 {
 }
 
@@ -48,7 +48,7 @@ std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextTuple()
         util::trim(value);
         if (value.empty())
         {
-            // skipp pure comments
+            // skip pure comments
             continue;
         }
         auto tuples
@@ -74,13 +74,10 @@ std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextTuple()
 sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::createPeak(
     const std::string& tuple) const
 {
-    if (m_numVariables < 2 || m_numVariables > 3)
-    {
-        throw ParseException("Unsupported number of variables: "
-                             + std::to_string(m_numVariables));
-    }
+    // tokenize
     // matches 2-3 peak segments as groups 1-3, corresponding to
-    // (XY..XY) or (XYW..XYW), with X as matches[1] and W as matches[3]
+    // (XY..XY), (XYW..XYW), or (XYM..XYM), with X as matches[1], Y as matche[2]
+    // and W or M as matches[3]
     const auto* regexString = R"(^\s*)"
                               R"(([^,]*))"
                               R"((?:\s*,\s*([^,]*)))"
@@ -90,8 +87,7 @@ sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::createPeak(
     std::smatch matches;
     auto [lineStart, comment] = util::stripLineComment(tuple);
     util::trim(lineStart);
-    if (!std::regex_match(lineStart, matches, regex)
-        || (m_numVariables <= 2 && (matches[3].matched)))
+    if (!std::regex_match(lineStart, matches, regex))
     {
         throw ParseException("Illegal peak string: " + tuple);
     }
@@ -115,9 +111,27 @@ sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::createPeak(
     Peak peak{};
     peak.x = parseDoubleToken(token1);
     peak.y = parseDoubleToken(token2);
-    if (m_numVariables == 3)
+    if ("(XY..XY)" == m_variableList)
+    {
+        if (token3)
+        {
+            throw ParseException(
+                "Illegal peak component for (XY..XY): " + lineStart);
+        }
+    }
+    else if ("(XYW..XYW)" == m_variableList)
     {
         peak.w = parseDoubleToken(token3);
     }
+    else if ("(XYM..XYM)" == m_variableList)
+    {
+        peak.m = token3;
+    }
+    else
+    {
+        throw ParseException(
+            "Unsupported variable list for peak table: " + m_variableList);
+    }
+
     return peak;
 }

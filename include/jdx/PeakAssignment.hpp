@@ -14,7 +14,7 @@ struct PeakAssignment
     /**
      * @brief Peak position.
      */
-    double x;
+    double x{};
 
     /**
      * @brief Intensity.

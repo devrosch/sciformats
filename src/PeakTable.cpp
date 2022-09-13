@@ -18,11 +18,6 @@ sciformats::jdx::PeakTable::PeakTable(const std::string& label,
 
 std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
 {
-    util::PeakTableParser parser{getReader(), getNumVariables()};
+    util::PeakTableParser parser{getReader(), getVariableList()};
     return TabularData::getData<util::PeakTableParser, Peak>(parser);
-}
-
-size_t sciformats::jdx::PeakTable::getNumVariables()
-{
-    return getVariableList() == s_peakTableVariableLists.at(0) ? 2U : 3U;
 }

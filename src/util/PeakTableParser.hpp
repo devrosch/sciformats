@@ -14,7 +14,7 @@ namespace sciformats::jdx::util
 class PeakTableParser
 {
 public:
-    explicit PeakTableParser(TextReader& reader, size_t numVariables);
+    explicit PeakTableParser(TextReader& reader, std::string variableList);
 
     /**
      * @brief Next peak.
@@ -27,7 +27,7 @@ public:
 
 private:
     TextReader& m_reader;
-    size_t m_numVariables;
+    std::string m_variableList;
     std::queue<std::string> m_tuples;
 
     // tuple

@@ -43,10 +43,8 @@ public:
 
 private:
     static constexpr const char* s_peakTableLabel = "PEAKTABLE";
-    static constexpr std::array<const char*, 2> s_peakTableVariableLists
-        = {"(XY..XY)", "(XYW..XYW)"};
-
-    size_t getNumVariables();
+    static constexpr std::array<const char*, 3> s_peakTableVariableLists
+        = {"(XY..XY)", "(XYW..XYW)", "(XYM..XYM)"};
 };
 } // namespace sciformats::jdx
 

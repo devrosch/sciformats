@@ -15,14 +15,23 @@ public:
      * @brief x Peak position.
      */
     double x{};
+
     /**
      * @brief y Intensity.
      */
     double y{};
+
+    /**
+     * @brief Multiplicity.
+     * @remark S, D, Т, Q for singlets, douЬlets, triplets, or quadruplets, М
+     * for multiple, and U for unassigned. Used only for NMR.
+     */
+    std::optional<std::string> m;
+
     /**
      * @brief w Width.
      */
-    std::optional<double> w{};
+    std::optional<double> w;
 };
 } // namespace sciformats::jdx
 

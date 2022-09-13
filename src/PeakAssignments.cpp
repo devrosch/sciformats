@@ -17,12 +17,7 @@ sciformats::jdx::PeakAssignments::PeakAssignments(const std::string& label,
 std::vector<sciformats::jdx::PeakAssignment>
 sciformats::jdx::PeakAssignments::getData()
 {
-    util::PeakAssignmentsParser parser{getReader(), getNumVariables()};
+    util::PeakAssignmentsParser parser{getReader(), getVariableList()};
     return TabularData::getData<util::PeakAssignmentsParser, PeakAssignment>(
         parser);
-}
-
-size_t sciformats::jdx::PeakAssignments::getNumVariables()
-{
-    return getVariableList() == s_peakAssignentsVariableLists.at(0) ? 3U : 4U;
 }

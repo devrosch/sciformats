@@ -8,9 +8,9 @@
 #include <regex>
 
 sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
-    TextReader& reader, size_t numVariables)
+    TextReader& reader, std::string variableList)
     : m_reader{reader}
-    , m_numVariables{numVariables}
+    , m_variableList{std::move(variableList)}
 {
 }
 
@@ -114,6 +114,7 @@ sciformats::jdx::PeakAssignment
 sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     const std::string& tuple) const
 {
+    // tokenize
     // matches 2 - 5 peak assignments segments  as groups 1-5, corresponding to
     // one of (X[, Y][, W], A), (X[, Y][, M], A), (X[, Y][, M][, W], A), with X
     // as matches[1] and A as matches[5]
@@ -128,9 +129,7 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     std::smatch matches;
     auto [lineStart, comment] = util::stripLineComment(tuple);
     util::trim(lineStart);
-    if (!std::regex_match(lineStart, matches, regex)
-        || (m_numVariables <= 3 && (matches[3].matched || matches[4].matched))
-        || (m_numVariables <= 4 && matches[4].matched) || !matches[5].matched)
+    if (!std::regex_match(lineStart, matches, regex))
     {
         throw ParseException("Illegal peak assignment string: " + tuple);
     }
@@ -162,34 +161,81 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     PeakAssignment peakAssignment{};
     peakAssignment.x = parseDoubleToken(token1);
     peakAssignment.a = token5.value();
-    if (m_numVariables == 3)
+    if ("(XYA)" == m_variableList)
     {
+        if (token3 || token4)
+        {
+            throw ParseException(
+                "Illegal peak assignment components for (XYA): " + lineStart);
+        }
         if (token2)
         {
             // 3 tokens
             peakAssignment.y = parseDoubleToken(token2);
         }
     }
-    else if (m_numVariables == 4)
+    else if ("(XYWA)" == m_variableList)
     {
+        if (token4)
+        {
+            throw ParseException(
+                "Illegal peak assignment component for (XYWA): " + lineStart);
+        }
         // 2, 3 or 4 tokens
         if (token2 && token3)
         {
+            // 4 tokens
             peakAssignment.y = parseDoubleToken(token2);
             peakAssignment.w = parseDoubleToken(token3);
         }
         else if (token2)
         {
             // 3 tokens
-            throw ParseException("Ambiguous peak assignment (second "
-                                 "variable Y or W) for four variables: "
-                                 + lineStart);
+            throw ParseException(
+                "Ambiguous peak assignment component for (XYWA): " + lineStart);
+        }
+    }
+    else if ("(XYMA)" == m_variableList)
+    {
+        if (token4)
+        {
+            throw ParseException(
+                "Illegal peak assignment component for (XYMA): " + lineStart);
+        }
+        // 2, 3 or 4 tokens
+        if (token2 && token3)
+        {
+            // 4 tokens
+            peakAssignment.y = parseDoubleToken(token2);
+            peakAssignment.m = token3;
+        }
+        else if (token2)
+        {
+            // 3 tokens
+            throw ParseException(
+                "Ambiguous peak assignment component for (XYMA): " + lineStart);
+        }
+    }
+    else if ("(XYMWA)" == m_variableList)
+    {
+        if (token2 && token3 && token4)
+        {
+            // 5 tokens
+            peakAssignment.y = parseDoubleToken(token2);
+            peakAssignment.m = token3;
+            peakAssignment.w = parseDoubleToken(token4);
+        }
+        else if (token2 || token3 || token4)
+        {
+            // 3 or 4 tokens
+            throw ParseException(
+                "Ambiguous peak assignment for (XYMWA): " + lineStart);
         }
     }
     else
     {
-        throw ParseException("Unsupported number of variables: "
-                             + std::to_string(m_numVariables));
+        throw ParseException(
+            "Unsupported variable list for peak assignment: " + m_variableList);
     }
     return peakAssignment;
 }

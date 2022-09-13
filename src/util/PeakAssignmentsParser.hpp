@@ -12,7 +12,8 @@ namespace sciformats::jdx::util
 class PeakAssignmentsParser
 {
 public:
-    explicit PeakAssignmentsParser(TextReader& reader, size_t numVariables);
+    explicit PeakAssignmentsParser(
+        TextReader& reader, std::string variableList);
 
     /**
      * @brief Next peak assignment.
@@ -25,7 +26,7 @@ public:
 
 private:
     TextReader& m_reader;
-    size_t m_numVariables;
+    const std::string m_variableList;
 
     // tuple
     std::optional<std::string> nextTuple();

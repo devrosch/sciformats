@@ -7,8 +7,7 @@
 
 // TODO: add more tests for NMR specific assignments (XYMA), (XYMWA)
 
-TEST_CASE(
-    "parses well-formed three column PEAK ASSIGNMENTS", "[PeakAssignments]")
+TEST_CASE("parses well-formed (XYA) PEAK ASSIGNMENTS", "[PeakAssignments]")
 {
     // "##PEAKASSIGNMENTS= (XYA)\r\n"
     const auto* label = "PEAKASSIGNMENTS";
@@ -75,8 +74,7 @@ TEST_CASE(
     REQUIRE("peak assignment 5" == data4.a);
 }
 
-TEST_CASE(
-    "parses well-formed four column PEAK ASSIGNMENTS", "[PeakAssignments]")
+TEST_CASE("parses well-formed (XYWA) PEAK ASSIGNMENTS", "[PeakAssignments]")
 {
     // "##PEAKASSIGNMENTS= (XYWA)\r\n"
     const auto* label = "PEAKASSIGNMENTS";
@@ -157,6 +155,68 @@ TEST_CASE(
     REQUIRE("peak assignment 6" == data5.a);
 }
 
+TEST_CASE("parses well-formed (XYMA) PEAK ASSIGNMENTS", "[PeakAssignments]")
+{
+    // "##PEAKASSIGNMENTS= (XYMA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYMA)";
+    std::string input{"(1.0, 10.0, D, <peak assignment 1>)\r\n"
+                      "##END="};
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    auto nextLine = std::optional<std::string>{};
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
+    auto widthFunction = assignments.getWidthFunction();
+    auto data = assignments.getData();
+
+    REQUIRE_FALSE(widthFunction.has_value());
+
+    REQUIRE(1 == data.size());
+
+    auto data0 = data.at(0);
+    REQUIRE(1.0 == Approx(data0.x));
+    REQUIRE(data0.y.has_value());
+    REQUIRE(10.0 == Approx(data0.y.value()));
+    REQUIRE(data0.m.has_value());
+    REQUIRE("D" == data0.m.value());
+    REQUIRE("peak assignment 1" == data0.a);
+}
+
+TEST_CASE("parses well-formed (XYMWA) PEAK ASSIGNMENTS", "[PeakAssignments]")
+{
+    // "##PEAKASSIGNMENTS= (XYMWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYMWA)";
+    std::string input{"(1.0, 10.0, D, 100.0, <peak assignment 1>)\r\n"
+                      "##END="};
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    auto nextLine = std::optional<std::string>{};
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
+    auto widthFunction = assignments.getWidthFunction();
+    auto data = assignments.getData();
+
+    REQUIRE_FALSE(widthFunction.has_value());
+
+    REQUIRE(1 == data.size());
+
+    auto data0 = data.at(0);
+    REQUIRE(1.0 == Approx(data0.x));
+    REQUIRE(data0.y.has_value());
+    REQUIRE(10.0 == Approx(data0.y.value()));
+    REQUIRE(data0.m.has_value());
+    REQUIRE("D" == data0.m.value());
+    REQUIRE(data0.w.has_value());
+    REQUIRE(100.0 == Approx(data0.w.value()));
+    REQUIRE("peak assignment 1" == data0.a);
+}
+
 TEST_CASE("fails when excess component is encountered in three column PEAK "
           "ASSIGNMENTS",
     "[PeakAssignments]")
@@ -208,6 +268,28 @@ TEST_CASE("fails when ambiguous component is encountered in four column PEAK "
     const auto* variables = "(XYWA)";
     // 10.0 could be Y or W
     std::string input{"(1.0, 10.0, <peak assignment 1>)\r\n"
+                      "##END="};
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    auto nextLine = std::optional<std::string>{};
+    auto assignments
+        = sciformats::jdx::PeakAssignments(label, variables, reader, nextLine);
+
+    REQUIRE_THROWS_WITH(assignments.getData(),
+        Catch::Matchers::Contains("ambiguous", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails when ambiguous component is encountered in five column PEAK "
+          "ASSIGNMENTS",
+    "[PeakAssignments]")
+{
+    // "##PEAKASSIGNMENTS= (XYMWA)\r\n"
+    const auto* label = "PEAKASSIGNMENTS";
+    const auto* variables = "(XYMWA)";
+    // 10.0 could be Y or W
+    std::string input{"(1.0, 10.0, 2.0, <peak assignment 1>)\r\n"
                       "##END="};
     auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
     streamPtr->str(input);

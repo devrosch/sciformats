@@ -44,10 +44,8 @@ public:
 
 private:
     static constexpr const char* s_peakAssignentsLabel = "PEAKASSIGNMENTS";
-    static constexpr std::array<const char*, 2> s_peakAssignentsVariableLists
-        = {"(XYA)", "(XYWA)"};
-
-    size_t getNumVariables();
+    static constexpr std::array<const char*, 4> s_peakAssignentsVariableLists
+        = {"(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"};
 };
 } // namespace sciformats::jdx
 

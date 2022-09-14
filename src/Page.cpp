@@ -76,7 +76,6 @@ std::vector<sciformats::jdx::StringLdr> sciformats::jdx::Page::parsePageLdrs(
     TextReader& reader, std::optional<std::string>& nextLine)
 {
     std::vector<StringLdr> pageLdrs;
-    // TODO: similar to parsing logic in Block
     while (nextLine.has_value())
     {
         auto [label, value] = util::parseLdrStart(nextLine.value());

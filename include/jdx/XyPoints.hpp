@@ -6,6 +6,7 @@
 #include "jdx/XyBase.hpp"
 #include "jdx/XyParameters.hpp"
 
+#include <array>
 #include <vector>
 
 namespace sciformats::jdx

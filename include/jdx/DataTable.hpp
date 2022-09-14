@@ -82,12 +82,14 @@ private:
     };
 
     static constexpr const char* s_label = "DATATABLE";
-    static constexpr std::array<std::pair<const char*, VariableList>, 4>
+    static constexpr std::array<std::pair<const char*, VariableList>, 6>
         s_varListMapping = {{
             {"(X++(Y..Y))", VariableList::XppYY},
             {"(X++(R..R))", VariableList::XppRR},
             {"(X++(I..I))", VariableList::XppII},
-            {"(XY..XY)", VariableList::XyXy},
+            {"(XY..XY)", VariableList::XYXY},
+            {"(XR..XR)", VariableList::XRXR},
+            {"(XI..XI)", VariableList::XIXI},
         }};
     static constexpr std::array<std::pair<const char*, PlotDescriptor>, 4>
         s_plotDescriptorMapping = {{{"PROFILE", PlotDescriptor::Profile},

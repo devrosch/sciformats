@@ -61,7 +61,7 @@ bool sciformats::jdx::JdxParser::canParse(
     bool match = true;
     for (size_t i{0}; i < magic.size(); i++)
     {
-        // TODO: label should be normalized before comparison
+        // technically, label should be normalized before comparison
         if (iStream.eof() || magic.at(i) != iStream.get())
         {
             match = false;

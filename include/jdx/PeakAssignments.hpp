@@ -27,8 +27,8 @@ public:
      * representing the structure of the data, e.g., "(XYA)".
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##PEAK ASSIGNMENTS=" line) of the record. The reader is expected to
-     * exist for the lifetime of this object.
+     * line containing the label) of the record. The reader is expected to exist
+     * for the lifetime of this object.
      * @param nextLine The first line of the LDR, i.e., the one containing the
      * label. Will contain the line following the record or nullopt if the end
      * of the reader has been reached.

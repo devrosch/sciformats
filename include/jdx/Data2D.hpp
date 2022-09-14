@@ -20,14 +20,24 @@ protected:
     {
         /** (X++(Y..Y)) */
         XppYY,
+
         /** (R++(A..A)) */
         RppAA,
+
         /** (X++(R..R)) */
         XppRR,
+
         /** (X++(I..I)) */
         XppII,
+
         /** (XY..XY) */
-        XyXy
+        XYXY,
+
+        /** (XR..XR) */
+        XRXR,
+
+        /** (XI..XI) */
+        XIXI,
     };
 
     /**
@@ -38,20 +48,20 @@ protected:
      * representing the structure of the data, e.g. "(X++(Y..Y))".
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the first line (the line containing
-     * "##XYDATA=" or "##RADATA=") of the record. The reader is expected to
-     * exist for the lifetime of this object.
+     * XYDATA or RADATA) of the record. The reader is expected to exist for the
+     * lifetime of this object.
      */
     Data2D(std::string label, std::string variableList, TextReader& reader);
 
     /**
      * @brief Parses the equally x spaced xy data (i.e. "X++(Y..Y)", "R++(A..A)"
-     * "X++(R..R)", or "X++(I..I)") from a "##XYDATA=" or "##RADATA=" block.
+     * "X++(R..R)", or "X++(I..I)") from an XYDATA or RADATA block.
      * @param label The label of the first line of the record, i.e. "XYDATA" or
      * "RADATA".
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" or "##RADATA=" line) of the record. The reader is expected
-     * to exist for the lifetime of this object.
+     * line containing the label) of the record. The reader is expected to exist
+     * for the lifetime of this object.
      * @param firstX The first X value.
      * @param lastX The last X value.
      * @param yFactor The factor by which to multiply raw y values to arrive at
@@ -75,8 +85,8 @@ protected:
      * "RADATA".
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" or "##RADATA=" line) of the record. The reader is expected
-     * to exist for the lifetime of this object.
+     * line containing the label) of the record. The reader is expected to exist
+     * for the lifetime of this object.
      * @param xFactor The factor by which to multiply raw x values to arrive at
      * the actual value.
      * @param yFactor The factor by which to multiply raw y values to arrive at

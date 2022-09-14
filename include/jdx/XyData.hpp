@@ -6,6 +6,7 @@
 #include "jdx/XyBase.hpp"
 #include "jdx/XyParameters.hpp"
 
+#include <array>
 #include <vector>
 
 namespace sciformats::jdx
@@ -24,8 +25,8 @@ public:
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" line) of the record. The reader is expected to exist for the
-     * lifetime of this object.
+     * line containing the label) of the record. The reader is expected to exist
+     * for the lifetime of this object.
      * @param nextLine The first line of the LDR, i.e., the one containing the
      * label. Will contain the line following the record or nullopt if the end
      * of the reader has been reached.
@@ -43,8 +44,8 @@ public:
 
 private:
     static constexpr const char* s_xyDataLabel = "XYDATA";
-    // TODO: add NMR variableLists
-    static constexpr const char* s_xyDataVariableList = "(X++(Y..Y))";
+    static constexpr std::array<const char*, 3> s_xyDataVariableLists
+        = {"(X++(Y..Y))", "(X++(R..R))", "(X++(I..I))"};
 };
 } // namespace sciformats::jdx
 

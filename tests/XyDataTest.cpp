@@ -5,7 +5,8 @@
 
 #include <sstream>
 
-TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
+TEST_CASE(
+    "parses AFFN (X++(Y..Y)) data with required parameters only", "[XyData]")
 {
     // "##XYDATA= (X++(Y..Y))\r\n"
     const auto* label = "XYDATA";
@@ -57,7 +58,8 @@ TEST_CASE("parses AFFN xy data with required parameters only", "[XyData]")
     REQUIRE_FALSE(params.resolution.has_value());
 }
 
-TEST_CASE("parses AFFN xy data with all optional parameters", "[XyData]")
+TEST_CASE(
+    "parses AFFN (X++(Y..Y)) data with all optional parameters", "[XyData]")
 {
     // "##XYDATA= (X++(Y..Y))\r\n"
     const auto* label = "XYDATA";
@@ -111,6 +113,70 @@ TEST_CASE("parses AFFN xy data with all optional parameters", "[XyData]")
     REQUIRE(10.0 == params.minY.value());
     REQUIRE(1.0 == params.deltaX.value());
     REQUIRE(2.0 == params.resolution.value());
+}
+
+TEST_CASE("parses (X++(R..R)) data", "[XyData]")
+{
+    // "##XYDATA= (X++(R..R))\r\n"
+    const auto* label = "XYDATA";
+    const auto* variables = "(X++(R..R))";
+    std::string input{"450.0, 10.0\r\n"
+                      "##END="};
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    std::vector<sciformats::jdx::StringLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "5.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
+
+    REQUIRE("(X++(R..R))" == xyDataRecord.getVariableList());
+
+    auto xyData = xyDataRecord.getData();
+
+    REQUIRE(1 == xyData.size());
+    REQUIRE(450.0 == Approx(xyData.at(0).first));
+    REQUIRE(50.0 == Approx(xyData.at(0).second));
+}
+
+TEST_CASE("parses (X++(I..I)) data", "[XyData]")
+{
+    // "##XYDATA= (X++(I..I))\r\n"
+    const auto* label = "XYDATA";
+    const auto* variables = "(X++(I..I))";
+    std::string input{"450.0, 10.0\r\n"
+                      "##END="};
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    std::vector<sciformats::jdx::StringLdr> ldrs;
+    ldrs.emplace_back("XUNITS", "1/CM");
+    ldrs.emplace_back("YUNITS", "ABSORBANCE");
+    ldrs.emplace_back("FIRSTX", "450.0");
+    ldrs.emplace_back("LASTX", "450.0");
+    ldrs.emplace_back("XFACTOR", "1.0");
+    ldrs.emplace_back("YFACTOR", "5.0");
+    ldrs.emplace_back("NPOINTS", "1");
+    auto nextLine = std::optional<std::string>{};
+    auto xyDataRecord
+        = sciformats::jdx::XyData(label, variables, ldrs, reader, nextLine);
+
+    REQUIRE("(X++(I..I))" == xyDataRecord.getVariableList());
+
+    auto xyData = xyDataRecord.getData();
+
+    REQUIRE(1 == xyData.size());
+    REQUIRE(450.0 == Approx(xyData.at(0).first));
+    REQUIRE(50.0 == Approx(xyData.at(0).second));
 }
 
 TEST_CASE("parses single data point record", "[XyData]")

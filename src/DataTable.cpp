@@ -48,7 +48,8 @@ std::vector<std::pair<double, double>> sciformats::jdx::DataTable::getData()
     auto variableList = determineVariableList(getVariableList());
     auto dataTableParams = m_mergedAttributes;
 
-    if (variableList == VariableList::XyXy)
+    if (variableList == VariableList::XYXY || variableList == VariableList::XRXR
+        || variableList == VariableList::XIXI)
     {
         auto xFactor = dataTableParams.xAttributes.factor.value_or(1.0);
         auto yFactor = dataTableParams.yAttributes.factor.value_or(1.0);
@@ -88,7 +89,7 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
     auto xNTuplesAttrs = findNTuplesAttrs("X");
     std::optional<NTuplesAttributes> yNTuplesAttrs;
     if (variableList == VariableList::XppYY
-        || variableList == VariableList::XyXy)
+        || variableList == VariableList::XYXY)
     {
         yNTuplesAttrs = findNTuplesAttrs("Y");
     }

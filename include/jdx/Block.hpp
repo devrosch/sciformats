@@ -45,8 +45,7 @@ public:
      * @brief Provides the labeled data records (LDRs) of the Block.
      * This does \em not include the following LDRs:
      * - comments ("##=")
-     * - data ("##XYDATA=", "##XYPOINTS=", "##PEAK TABLE=", "##PEAK
-     * ASSIGNMENTS=", "##RADATA=", "##NTUPLES=")
+     * - data (XYDATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS, RADATA, NTUPLES)
      *
      * Use the specialized member functions to retrieve the respective data.
      *

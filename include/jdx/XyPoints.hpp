@@ -24,8 +24,8 @@ public:
      * @param parameters Parameters from the enclosing block specific to XYDATA.
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" line) of the record. The reader is expected to exist for the
-     * lifetime of this object.
+     * line containing the label) of the record. The reader is expected to exist
+     * for the lifetime of this object.
      * @param nextLine The first line of the LDR, i.e., the one containing the
      * label. Will contain the line following the record or nullopt if the end
      * of the reader has been reached.
@@ -43,7 +43,8 @@ public:
 
 private:
     static constexpr const char* s_xyPointsLabel = "XYPOINTS";
-    static constexpr const char* s_xyPointsVariableList = "(XY..XY)";
+    static constexpr std::array<const char*, 3> s_xyPointsVariableLists
+        = {"(XY..XY)", "(XR..XR)", "(XI..XI)"};
 };
 } // namespace sciformats::jdx
 

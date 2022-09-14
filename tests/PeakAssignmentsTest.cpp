@@ -5,8 +5,6 @@
 #include <cmath>
 #include <sstream>
 
-// TODO: add more tests for NMR specific assignments (XYMA), (XYMWA)
-
 TEST_CASE("parses well-formed (XYA) PEAK ASSIGNMENTS", "[PeakAssignments]")
 {
     // "##PEAKASSIGNMENTS= (XYA)\r\n"

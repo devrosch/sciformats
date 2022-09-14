@@ -63,7 +63,8 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXyXyData(
     const std::string& label, TextReader& reader, double xFactor,
     double yFactor, std::optional<size_t> nPoints, VariableList variableList)
 {
-    if (variableList != VariableList::XyXy)
+    if (variableList != VariableList::XYXY && variableList != VariableList::XRXR
+        && variableList != VariableList::XIXI)
     {
         throw ParseException(
             "Cannot parse xy data. Unsupported variable list.");

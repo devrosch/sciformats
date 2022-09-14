@@ -11,8 +11,8 @@
 namespace sciformats::jdx
 {
 /**
- * @brief A JCAMP-DX 2D data record. Base for "##XYPOINTS=" and "##XYDATA="
- * LDRs. LDRs.
+ * @brief A JCAMP-DX 2D data record. Base for XYDATA, XYPOINTS, RADATA, and DATA
+ * TABLE LDRs.
  */
 class XyBase : public Data2D
 {
@@ -31,26 +31,34 @@ protected:
      * representing the structure of the data, e.g. "(X++(Y..Y))".
      * @param ldrs Parameters from the enclosing block specific to XYDATA.
      * @param expectedLabel The expected label for this LDR.
-     * @param expectedVariableList The expected variable list for this LDR.
+     * @param expectedVariableLists The expected variable lists for this LDR.
      * @param reader Text reader with JCAMP-DX data. The reader position is
      * assumed to be at the start of the second line (the line following the
-     * "##XYDATA=" line) of the record. The reader is expected to exist for the
-     * lifetime of this object.
+     * line containing the label) of the record. The reader is expected to exist
+     * for the lifetime of this object.
      * @param nextLine The first line of the LDR, i.e., the one containing the
      * label. Will contain the line following the record or nullopt if the end
      * of the reader has been reached.
      */
     XyBase(const std::string& label, const std::string& variableList,
         const std::vector<StringLdr>& ldrs, const std::string& expectedLabel,
-        std::string expectedVariableList, TextReader& reader,
-        std::optional<std::string>& nextLine);
+        const std::vector<std::string>& expectedVariableLists,
+        TextReader& reader, std::optional<std::string>& nextLine);
 
     /**
-     * @brief Provides the parsed xy data.
+     * @brief Provides the parsed xy data of type (X++(Y..Y)) and similar.
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getData(
+    std::vector<std::pair<double, double>> getXppYYData(
+        Data2D::VariableList varList);
+
+    /**
+     * @brief Provides the parsed xy data of type (XY..XY) and similar.
+     * @return Pairs of xy data. Invalid values ("?") will be represented by
+     * std::numeric_limits<double>::quiet_NaN.
+     */
+    std::vector<std::pair<double, double>> getXYXYData(
         Data2D::VariableList varList);
 
 private:

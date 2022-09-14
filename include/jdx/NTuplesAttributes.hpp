@@ -15,47 +15,47 @@ struct NTuplesAttributes
 {
 public:
     /**
-     * @brief ##VAR_NAME.
+     * @brief VAR_NAME.
      */
     std::string varName;
     /**
-     * @brief ##SYMBOL.
+     * @brief SYMBOL.
      */
     std::string symbol;
     /**
-     * @brief ##VAR_TYPE.
+     * @brief VAR_TYPE.
      */
     std::optional<std::string> varType;
     /**
-     * @brief ##VAR_FORM.
+     * @brief VAR_FORM.
      */
     std::optional<std::string> varForm;
     /**
-     * @brief ##VAR_DIM.
+     * @brief VAR_DIM.
      */
     std::optional<uint64_t> varDim; // optional, may be blank for mass spectra
     /**
-     * @brief ##UNITS.
+     * @brief UNITS.
      */
     std::optional<std::string> units;
     /**
-     * @brief ##FIRST.
+     * @brief FIRST.
      */
     std::optional<double> first;
     /**
-     * @brief ##LAST.
+     * @brief LAST.
      */
     std::optional<double> last;
     /**
-     * @brief ##MIN.
+     * @brief MIN.
      */
     std::optional<double> min;
     /**
-     * @brief ##MAX.
+     * @brief MAX.
      */
     std::optional<double> max;
     /**
-     * @brief ##FACTOR.
+     * @brief FACTOR.
      */
     std::optional<double> factor;
     /**

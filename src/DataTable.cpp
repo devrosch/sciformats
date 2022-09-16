@@ -122,12 +122,10 @@ sciformats::jdx::DataTable::parseDataTableVars()
     auto varType = determineVariableList(getVariableList());
     if (!m_plotDescriptor.has_value() || m_plotDescriptor.value().empty())
     {
-        return std::pair<VariableList, std::optional<PlotDescriptor>>{
-            varType, std::optional<PlotDescriptor>{std::nullopt}};
+        return {varType, std::nullopt};
     }
     auto plotDesc = determinePlotDescriptor(m_plotDescriptor.value());
-    return std::pair<VariableList, std::optional<PlotDescriptor>>{
-        varType, std::optional<PlotDescriptor>{plotDesc}};
+    return {varType, plotDesc};
 }
 
 sciformats::jdx::Data2D::VariableList

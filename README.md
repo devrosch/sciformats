@@ -11,6 +11,7 @@ This library provides meachnisms to read data in the JCAMP-DX format ([jcamp-dx.
 * [JCAMP-DX IR](http://www.jcamp-dx.org/protocols/dxir01.pdf)
 * [JCAMP-DX NMR](http://www.jcamp-dx.org/protocols/dxnmr01.pdf)
 * [JCAMP-DX MS](http://www.jcamp-dx.org/protocols/dxms01.pdf)
+
 Several other flavors, e.g., for IMS and hypenated techniques should also work.
 
 JCAMP-DX data is organized into so-called labeled data records (LDRs) that can hold data from simple strings to intricate multi-dimensional structures. Many special LDRs are fully supported, also see diagram below. If no special support is provided, the LDR value is treated as a string.
@@ -22,7 +23,7 @@ TIME, COUPLING CONSTANTS, or IONIZATION MODE). Their values are treated as strin
 * No X value check is performed for (X++(Y..Y)) type data (relevant for for XYDATA, RADATA, and DATA TABLE LDRs). Instead, the ascissa values are derived exclusively from LDRs such as FIRSTX, LASTX, XFACTOR, NPOINTS or equivalent ones.
 * No vendor specific extensions of the JCAMP-DX standard are supported.
 * [JCAMP-CS](http://www.jcamp-dx.org/protocols/dxcs01.pdf) is not supported.
-* T1 T2, F1, F2 is currently not supported as abscissa variables.
+* T1, T2, F1, F2 is currently not supported as abscissa variables.
 
 # Getting Started
 
@@ -80,7 +81,7 @@ Inheritance diagram of classes:
 
 ```cpp
 // open file
-const std::string path{"pat/to/data.jdx"};
+const std::string path{"path/to/data.jdx"};
 auto istream = std::make_unique<std::ifstream>(path);
 
 // Block is the root element in any JCAMP-DX data set
@@ -96,7 +97,7 @@ if (xyData)
     auto data = xyData.value().getData();
     for (const auto& xyPair : data)
     {
-        cout << "x: " << xyPair.first << ", y: " << xyPair.second << "\n";
+        std::cout << "x: " << xyPair.first << ", y: " << xyPair.second << "\n";
     }
 }
 
@@ -106,13 +107,15 @@ if (xyData)
 
 Public domain sample data taken from [JSpecView2](http://wwwchem.uwimona.edu.jm/spectra/JSpecView2/sample/).
 
-## Built With
+## 3rd party libraries
 
-For development:
+### Development
 
 * [Catch2](https://github.com/catchorg/Catch2/releases/download/v2.13.1/catch.hpp) (license: [Boost](https://github.com/catchorg/Catch2/blob/master/LICENSE.txt), source code: [GitHub](https://github.com/catchorg/Catch2))
 
-and their various dependencies.
+### Production
+
+None, other than standard OS features and the C++ STL.
 
 ## Authors
 
@@ -128,7 +131,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Scratchpad
+# Scratchpad (will be removed in the future)
 
 Build WebAssembly with Emscripten using the following commands:
 ```

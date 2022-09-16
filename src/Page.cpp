@@ -95,17 +95,17 @@ std::vector<sciformats::jdx::StringLdr> sciformats::jdx::Page::parsePageLdrs(
 std::pair<std::string, std::optional<std::string>>
 sciformats::jdx::Page::parseDataTableVars(const std::string& rawPageVars)
 {
-    auto rawPageVarsTrimmed = util::stripLineComment(rawPageVars).first;
-    util::trim(rawPageVarsTrimmed);
+    auto rawPageVarsTrimmed = util::stripLineComment(rawPageVars, true).first;
     if (rawPageVarsTrimmed.empty())
     {
         // empty
         throw ParseException(
             "Missing variable list in DATA TABLE: " + rawPageVars);
     }
-    // regex cuts off ")" which could be avoided with R"((?<=\))\s*,\s*)", but
-    // C++ does not support lookbehind syntax
-    auto segments = util::split(rawPageVarsTrimmed, R"((?:\))(\s*,\s*))", true);
+    // C++ does not support lookbehind syntax R"((?<=\))\s*,\s*)", so instead
+    // use non capturing group for ")" and split at capturing group
+    auto segments
+        = util::split(rawPageVarsTrimmed, R"((?:\))(\s*,\s*))", true, 1);
     if (segments.empty() || segments.size() > 2)
     {
         throw ParseException(
@@ -114,16 +114,12 @@ sciformats::jdx::Page::parseDataTableVars(const std::string& rawPageVars)
 
     if (segments.size() == 1)
     {
-        auto varList = util::stripLineComment(segments.at(0)).first;
-        util::trim(varList);
+        auto varList = util::stripLineComment(segments.at(0), true).first;
         return {varList, std::nullopt};
     }
-    // the regex removed the closing parenthesis
-    segments.at(0).append(")");
     // plot descriptor is present
     auto varList = segments.at(0);
     util::trim(varList);
-    auto plotDesc = util::stripLineComment(segments.at(1)).first;
-    util::trim(plotDesc);
+    auto plotDesc = util::stripLineComment(segments.at(1), true).first;
     return {varList, plotDesc};
 }

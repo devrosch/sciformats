@@ -17,7 +17,8 @@ std::string normalizeLdrStart(const std::string& ldr);
 std::string normalizeLdrLabel(const std::string& label);
 std::pair<std::string, std::string> parseLdrStart(const std::string& ldrStart);
 std::pair<std::string, std::optional<std::string>> stripLineComment(
-    const std::string& line);
+    const std::string& line, bool trimContent = false,
+    bool trimComment = false);
 std::optional<const StringLdr> findLdr(
     const std::vector<StringLdr>& ldrs, const std::string& label);
 std::optional<std::string> findLdrValue(

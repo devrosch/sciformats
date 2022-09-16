@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <regex>
 #include <string>
+#include <utility>
 
 bool sciformats::jdx::util::isLdrStart(const std::string& line)
 {
@@ -102,17 +103,34 @@ std::pair<std::string, std::string> sciformats::jdx::util::parseLdrStart(
 }
 
 std::pair<std::string, std::optional<std::string>>
-sciformats::jdx::util::stripLineComment(const std::string& line)
+sciformats::jdx::util::stripLineComment(
+    const std::string& line, bool trimContent, bool trimComment)
 {
     const auto pos = line.find("$$");
     if (pos == std::string::npos)
     {
         // no comment
-        return make_pair(line, std::nullopt);
+        if (!trimContent)
+        {
+            return make_pair(line, std::nullopt);
+        }
+        auto trimmedLine{line};
+        util::trim(trimmedLine);
+        return make_pair(trimmedLine, std::nullopt);
     }
+
+    // separate comment
     auto content = line.substr(0, pos);
     auto comment = line.substr(pos + 2);
-    return make_pair(content, comment);
+    if (trimContent)
+    {
+        util::trim(content);
+    }
+    if (trimComment)
+    {
+        util::trim(comment);
+    }
+    return std::make_pair(content, comment);
 }
 
 std::optional<const sciformats::jdx::StringLdr> sciformats::jdx::util::findLdr(
@@ -188,7 +206,6 @@ void sciformats::jdx::util::skipPureComments(TextReader& reader,
 bool sciformats::jdx::util::isPureComment(const std::string& line)
 {
     // only $$ comment?
-    auto [preCommentValue, _] = util::stripLineComment(line);
-    util::trim(preCommentValue);
+    auto [preCommentValue, _] = util::stripLineComment(line, true);
     return preCommentValue.empty();
 }

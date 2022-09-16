@@ -44,8 +44,7 @@ std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextTuple()
             return std::nullopt;
         }
 
-        auto [value, comment] = util::stripLineComment(nextLine);
-        util::trim(value);
+        auto [value, _] = util::stripLineComment(nextLine, true);
         if (value.empty())
         {
             // skip pure comments
@@ -85,8 +84,7 @@ sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::createPeak(
                               R"($)";
     std::regex regex{regexString};
     std::smatch matches;
-    auto [lineStart, comment] = util::stripLineComment(tuple);
-    util::trim(lineStart);
+    auto [lineStart, _] = util::stripLineComment(tuple, true);
     if (!std::regex_match(lineStart, matches, regex))
     {
         throw ParseException("Illegal peak string: " + tuple);

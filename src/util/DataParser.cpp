@@ -24,8 +24,7 @@ std::vector<double> sciformats::jdx::util::DataParser::readXppYYData(
         // save position to move back if next readLine() encounters LDR start
         pos = reader.tellg();
         // pre-process line
-        auto [data, comment] = util::stripLineComment(line);
-        util::trim(data);
+        auto [data, _] = util::stripLineComment(line, true);
         // read Y values from line
         auto [lineYValues, isDifEncoded] = readXppYYLine(data, yValueCheck);
         if (yValueCheck.has_value())
@@ -72,8 +71,7 @@ sciformats::jdx::util::DataParser::readXyXyData(TextReader& reader)
         // save position to move back if next readLine() encounters LDR start
         pos = reader.tellg();
         // pre-process line
-        auto [data, comment] = util::stripLineComment(line);
-        util::trim(data);
+        auto [data, _] = util::stripLineComment(line, true);
         // read xy values from line
         auto [lineValues, isDifEncoded] = readValues(data);
         // turn line values into pairs and append line values to xyValues

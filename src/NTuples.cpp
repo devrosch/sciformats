@@ -55,8 +55,7 @@ void sciformats::jdx::NTuples::parse(const std::vector<StringLdr>& blockLdrs,
     while (nextLine.has_value() && util::isLdrStart(nextLine.value()))
     {
         auto [label, pageVar] = util::parseLdrStart(nextLine.value());
-        pageVar = util::stripLineComment(pageVar).first;
-        util::trim(pageVar);
+        pageVar = util::stripLineComment(pageVar, true).first;
         if (label == "ENDNTUPLES")
         {
             // ##END NTUPLES is described as optional in JCAMP6_2b Draft

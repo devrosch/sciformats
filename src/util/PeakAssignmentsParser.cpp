@@ -35,8 +35,7 @@ sciformats::jdx::util::PeakAssignmentsParser::nextTuple()
     {
         std::streampos pos = m_reader.tellg();
         auto line = m_reader.readLine();
-        auto [lineStart, comment] = util::stripLineComment(line);
-        util::trim(lineStart);
+        auto [lineStart, _] = util::stripLineComment(line, true);
         if (isTupleStart(lineStart))
         {
             peakAssignmentString.append(lineStart);
@@ -63,8 +62,7 @@ sciformats::jdx::util::PeakAssignmentsParser::nextTuple()
     {
         std::streampos pos = m_reader.tellg();
         auto line = m_reader.readLine();
-        auto [lineStart, comment] = util::stripLineComment(line);
-        util::trim(lineStart);
+        auto [lineStart, _] = util::stripLineComment(line, true);
 
         if (util::isLdrStart(lineStart))
         {
@@ -127,8 +125,7 @@ sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
                               R"(\s*$)";
     std::regex regex{regexString};
     std::smatch matches;
-    auto [lineStart, comment] = util::stripLineComment(tuple);
-    util::trim(lineStart);
+    auto [lineStart, _] = util::stripLineComment(tuple, true);
     if (!std::regex_match(lineStart, matches, regex))
     {
         throw ParseException("Illegal peak assignment string: " + tuple);

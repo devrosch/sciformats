@@ -193,3 +193,25 @@ TEST_CASE(
     REQUIRE(comment.has_value());
     REQUIRE(comment.value().empty());
 }
+
+TEST_CASE("trims content and comment if indicated", "[util][stripLineComment]")
+{
+    std::string input{" content $$ comment "};
+    auto [contentFull0, commentFull0]
+        = sciformats::jdx::util::stripLineComment(input, false, false);
+    auto [contentFull1, commentTrimmed1]
+        = sciformats::jdx::util::stripLineComment(input, false, true);
+    auto [contentTrimmed2, commentFull2]
+        = sciformats::jdx::util::stripLineComment(input, true, false);
+    auto [contentTrimmed3, commentTrimmed3]
+        = sciformats::jdx::util::stripLineComment(input, true, true);
+
+    REQUIRE(" content " == contentFull0);
+    REQUIRE(" comment " == commentFull0.value());
+    REQUIRE(" content " == contentFull1);
+    REQUIRE("comment" == commentTrimmed1.value());
+    REQUIRE("content" == contentTrimmed2);
+    REQUIRE(" comment " == commentFull2.value());
+    REQUIRE("content" == contentTrimmed3);
+    REQUIRE("comment" == commentTrimmed3.value());
+}

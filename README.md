@@ -23,7 +23,6 @@ TIME, COUPLING CONSTANTS, or IONIZATION MODE). Their values are treated as strin
 * No X value check is performed for (X++(Y..Y)) type data (relevant for for XYDATA, RADATA, and DATA TABLE LDRs). Instead, the ascissa values are derived exclusively from LDRs such as FIRSTX, LASTX, XFACTOR, NPOINTS or equivalent ones.
 * No vendor specific extensions of the JCAMP-DX standard are supported.
 * [JCAMP-CS](http://www.jcamp-dx.org/protocols/dxcs01.pdf) is not supported.
-* T1, T2, F1, F2 is currently not supported as abscissa variables.
 
 # Getting Started
 

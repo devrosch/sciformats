@@ -22,19 +22,16 @@ sciformats::jdx::XyBase::getParameters() const
     return m_parameters;
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getXppYYData(
-    Data2D::VariableList varList)
+std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getXppYYData()
 {
     return Data2D::parseXppYYData(getLabel(), getReader(), m_parameters.firstX,
-        m_parameters.lastX, m_parameters.yFactor, m_parameters.nPoints,
-        varList);
+        m_parameters.lastX, m_parameters.yFactor, m_parameters.nPoints);
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getXYXYData(
-    Data2D::VariableList varList)
+std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getXYXYData()
 {
     return Data2D::parseXyXyData(getLabel(), getReader(), m_parameters.xFactor,
-        m_parameters.yFactor, m_parameters.nPoints, varList);
+        m_parameters.yFactor, m_parameters.nPoints);
 }
 
 sciformats::jdx::XyParameters sciformats::jdx::XyBase::parseParameters(

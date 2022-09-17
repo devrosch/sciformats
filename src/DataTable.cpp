@@ -55,7 +55,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::DataTable::getData()
         auto yFactor = dataTableParams.yAttributes.factor.value_or(1.0);
         auto nPoints = dataTableParams.yAttributes.varDim;
         return Data2D::parseXyXyData(
-            getLabel(), getReader(), xFactor, yFactor, nPoints, variableList);
+            getLabel(), getReader(), xFactor, yFactor, nPoints);
     }
 
     auto firstX = dataTableParams.xAttributes.first.value();
@@ -63,7 +63,7 @@ std::vector<std::pair<double, double>> sciformats::jdx::DataTable::getData()
     auto nPoints = dataTableParams.yAttributes.varDim.value();
     auto yFactor = dataTableParams.yAttributes.factor.value_or(1.0);
     return Data2D::parseXppYYData(
-        getLabel(), getReader(), firstX, lastX, yFactor, nPoints, variableList);
+        getLabel(), getReader(), firstX, lastX, yFactor, nPoints);
 }
 
 void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
@@ -73,33 +73,50 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
 {
     auto [variableList, plotDescriptor] = parseDataTableVars();
 
-    auto findNTuplesAttrs = [&nTuplesVars](const std::string& symbol) {
-        auto it = std::find_if(std::begin(nTuplesVars), std::end(nTuplesVars),
-            [&symbol](const NTuplesAttributes& vars) {
-                return vars.symbol == symbol;
-            });
-        if (it != std::end(nTuplesVars))
+    auto findNTuplesIndex = [&nTuplesVars](const std::string& symbol) {
+        for (size_t i = 0; i < nTuplesVars.size(); ++i)
         {
-            return *it;
+            if (nTuplesVars.at(i).symbol == symbol)
+            {
+                return i;
+            }
         }
         throw ParseException(
             "Could not find NTUPLES parameters for SYMBOL: " + symbol);
     };
 
-    auto xNTuplesAttrs = findNTuplesAttrs("X");
-    std::optional<NTuplesAttributes> yNTuplesAttrs;
+    auto xColumnIndex = std::numeric_limits<size_t>::max();
+    auto yColumnIndex = std::numeric_limits<size_t>::max();
     if (variableList == VariableList::XppYY
         || variableList == VariableList::XYXY)
     {
-        yNTuplesAttrs = findNTuplesAttrs("Y");
+        xColumnIndex = findNTuplesIndex("X");
+        yColumnIndex = findNTuplesIndex("Y");
     }
     else if (variableList == VariableList::XppRR)
     {
-        yNTuplesAttrs = findNTuplesAttrs("R");
+        xColumnIndex = findNTuplesIndex("X");
+        yColumnIndex = findNTuplesIndex("R");
     }
     else if (variableList == VariableList::XppII)
     {
-        yNTuplesAttrs = findNTuplesAttrs("I");
+        xColumnIndex = findNTuplesIndex("X");
+        yColumnIndex = findNTuplesIndex("I");
+    }
+    else if (variableList == VariableList::T2ppRR)
+    {
+        xColumnIndex = findNTuplesIndex("T2");
+        yColumnIndex = findNTuplesIndex("R");
+    }
+    else if (variableList == VariableList::T2ppII)
+    {
+        xColumnIndex = findNTuplesIndex("T2");
+        yColumnIndex = findNTuplesIndex("I");
+    }
+    else if (variableList == VariableList::F2ppYY)
+    {
+        xColumnIndex = findNTuplesIndex("F2");
+        yColumnIndex = findNTuplesIndex("Y");
     }
     else
     {
@@ -107,8 +124,19 @@ void sciformats::jdx::DataTable::parse(const std::vector<StringLdr>& blockLdrs,
         throw ParseException(
             "Unsupported variabe list in DATA TABLE: " + getVariableList());
     }
+
+    auto xNTuplesAttrs = nTuplesVars.at(xColumnIndex);
+    auto yNTuplesAttrs = nTuplesVars.at(yColumnIndex);
+
     auto mergedXVars = mergeVars(blockLdrs, xNTuplesAttrs, pageLdrs);
-    auto mergedYVars = mergeVars(blockLdrs, yNTuplesAttrs.value(), pageLdrs);
+    auto mergedYVars = mergeVars(blockLdrs, yNTuplesAttrs, pageLdrs);
+
+    // special treatment for "FIRST" page LDR if present
+    // this is described in the README for the JCAMP-DX nD-NMR test file round
+    // robin
+    mergePageFirstLdr(mergedXVars, pageLdrs, xColumnIndex);
+    mergePageFirstLdr(mergedYVars, pageLdrs, yColumnIndex);
+
     m_mergedAttributes = {mergedXVars, mergedYVars};
 
     auto& reader = getReader();
@@ -150,7 +178,9 @@ sciformats::jdx::NTuplesAttributes sciformats::jdx::DataTable::mergeVars(
     auto outputVars = nTuplesVars;
     outputVars.applicationAttributes.clear();
 
-    if (nTuplesVars.symbol == s_xSymbol)
+    if (std::any_of(s_xSymbols.begin(), s_xSymbols.end(),
+            [&nTuplesVars](
+                const std::string& s) { return s == nTuplesVars.symbol; }))
     {
         // use values from block relevant for abscissa
         std::map<std::string, std::optional<std::string>&> stringMapping{
@@ -241,6 +271,25 @@ void sciformats::jdx::DataTable::mergeLdrs(const std::vector<StringLdr>& ldrs,
             {
                 field = std::stol(ldr.getValue());
             }
+        }
+    }
+}
+
+void sciformats::jdx::DataTable::mergePageFirstLdr(
+    sciformats::jdx::NTuplesAttributes& mergedVars,
+    const std::vector<StringLdr>& pageLdrs, size_t columnIndex)
+{
+    for (const auto& ldr : pageLdrs)
+    {
+        if ("FIRST" == ldr.getLabel())
+        {
+            auto segments = util::split(ldr.getValue(), ",", true);
+            if (segments.size() > columnIndex)
+            {
+                auto value = std::stod(segments.at(columnIndex));
+                mergedVars.first = value;
+            }
+            break;
         }
     }
 }

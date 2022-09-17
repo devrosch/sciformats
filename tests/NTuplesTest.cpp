@@ -110,6 +110,168 @@ TEST_CASE("parses NTUPLES NMR record", "[NTuples]")
     REQUIRE(Approx(410.0) == pageN2Data.at(3).second);
 }
 
+TEST_CASE("parses NTUPLES NMR FID record (round robin format)", "[NTuples]")
+{
+    auto nextLine = std::optional<std::string>{"##NTUPLES= nD NMR FID"};
+    // clang-format off
+    std::string input{
+        "##VAR NAME= TIME1,         TIME2,           FID/REAL,        FID/IMAG\n"
+        "##SYMBOL=   T1,            T2,              R,               I\n"
+        "##.NUCLEUS=     1H, 1H\n"
+        "##VAR TYPE= INDEPENDENT,   INDEPENDENT,     DEPENDENT,       DEPENDENT\n"
+        "##VAR FORM= AFFN,          ASDF,            ASDF,            ASDF\n"
+        "##VAR DIM=  2, 4, 4, 4\n"
+        "##UNITS=    SECONDS,       SECONDS,         ARBITRARY UNITS, ARBITRARY UNITS\n"
+        "##FIRST=    0.0, 1.0, , $$FIRST for R and I are in PAGEs\n"
+        // TODO: alternative:
+        // "##FIRST=    0.0, 1.0 $$FIRST for R and I are in PAGEs\n"
+        "##LAST=     0.1, 2.5, ,\n"
+        "##FACTOR=   1.0, 1.0, 1.0, 1.0\n"
+        "##PAGE= T1=0.0\n"
+        "##FIRST=    0, 1.0, 10.0, 30.0\n"
+        "##DATA TABLE= (T2++(R..R)), PROFILE   $$ Real data points\n"
+        "1.0 +10+11\n"
+        "2.0 +20+21\n"
+        "##PAGE= T1=0.1\n"
+        "##FIRST=    0, 1.0, 10.0, 30.0\n"
+        "##DATA TABLE= (T2++(I..I)), PROFILE   $$ Imaginary data points\n"
+        "1.0 +30+31\n"
+        "2.0 +40+41\n"
+        "##END NTUPLES= nD NMR FID\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "nD NMR FID", blockLdrs, reader, nextLine};
+
+    REQUIRE(4 == nTuples.getAttributes().size());
+    auto nTuplesAttrsT1 = nTuples.getAttributes().at(0);
+    REQUIRE(1 == nTuplesAttrsT1.applicationAttributes.size());
+    REQUIRE(
+        ".NUCLEUS" == nTuplesAttrsT1.applicationAttributes.at(0).getLabel());
+    REQUIRE("1H" == nTuplesAttrsT1.applicationAttributes.at(0).getValue());
+    auto nTuplesAttrsR = nTuples.getAttributes().at(2);
+    REQUIRE(nTuplesAttrsR.applicationAttributes.empty());
+
+    REQUIRE(2 == nTuples.getNumPages());
+    REQUIRE("nD NMR FID" == nTuples.getDataForm());
+
+    auto pageT0 = nTuples.getPage(0);
+    REQUIRE("T1=0.0" == pageT0.getPageVariables());
+    auto pageLdrs0 = pageT0.getPageLdrs();
+    REQUIRE(1 == pageLdrs0.size());
+    REQUIRE("FIRST" == pageLdrs0.at(0).getLabel());
+    REQUIRE("0, 1.0, 10.0, 30.0" == pageLdrs0.at(0).getValue());
+
+    REQUIRE(pageT0.getDataTable().has_value());
+    auto pageT0DataTable = pageT0.getDataTable().value();
+    REQUIRE("(T2++(R..R))" == pageT0DataTable.getVariableList());
+    REQUIRE("PROFILE" == pageT0DataTable.getPlotDescriptor().value());
+
+    auto pageT0DataRAttributes = pageT0DataTable.getAttributes().yAttributes;
+    REQUIRE("FID/REAL" == pageT0DataRAttributes.varName);
+    REQUIRE("R" == pageT0DataRAttributes.symbol);
+    REQUIRE("DEPENDENT" == pageT0DataRAttributes.varType);
+    REQUIRE("ASDF" == pageT0DataRAttributes.varForm);
+    REQUIRE(4 == pageT0DataRAttributes.varDim);
+    REQUIRE("ARBITRARY UNITS" == pageT0DataRAttributes.units);
+    REQUIRE(Approx(10.0) == pageT0DataRAttributes.first);
+    REQUIRE_FALSE(pageT0DataRAttributes.last.has_value());
+    REQUIRE_FALSE(pageT0DataRAttributes.min.has_value());
+    REQUIRE_FALSE(pageT0DataRAttributes.max.has_value());
+    REQUIRE(Approx(1.0) == pageT0DataRAttributes.factor);
+
+    auto pageT0Data = pageT0DataTable.getData();
+    REQUIRE(4 == pageT0Data.size());
+    REQUIRE(Approx(1.0) == pageT0Data.at(0).first);
+    REQUIRE(Approx(10.0) == pageT0Data.at(0).second);
+    REQUIRE(Approx(2.5) == pageT0Data.at(3).first);
+    REQUIRE(Approx(21.0) == pageT0Data.at(3).second);
+}
+
+TEST_CASE(
+    "parses NTUPLES NMR SPECTRUM record (round robin format)", "[NTuples]")
+{
+    auto nextLine = std::optional<std::string>{"##NTUPLES= nD NMR SPECTRUM"};
+    // clang-format off
+    std::string input{
+        "##VAR NAME= FREQUENCY1,    FREQUENCY2,      SPECTRUM\n"
+        "##SYMBOL=   F1,            F2,              Y\n"
+        "##.NUCLEUS=     1H, 1H\n"
+        "##VAR TYPE= INDEPENDENT,   INDEPENDENT,     DEPENDENT\n"
+        "##VAR FORM= AFFN,          ASDF,            ASDF\n"
+        "##VAR DIM=  2, 4, 4\n"
+        "##UNITS=    SECONDS,       SECONDS,         ARBITRARY UNITS\n"
+        "##FIRST=    0.0, 1.0\n"
+        "##LAST=     0.0, 2.5\n"
+        "##FACTOR=   1.0, 1.0, 1.0\n"
+        "##PAGE= F1=0.0\n"
+        "##FIRST=    0, 1.0, 10.0\n"
+        "##DATA TABLE= (F2++(Y..Y)), PROFILE\n"
+        "1.0 +10+11\n"
+        "2.0 +20+21\n"
+        "##END NTUPLES= nD NMR SPECTRUM\n"
+        "##END=\n"};
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+    std::vector<sciformats::jdx::StringLdr> blockLdrs;
+
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "nD NMR SPECTRUM", blockLdrs, reader, nextLine};
+
+    REQUIRE(3 == nTuples.getAttributes().size());
+    auto nTuplesAttrsT1 = nTuples.getAttributes().at(0);
+    REQUIRE(1 == nTuplesAttrsT1.applicationAttributes.size());
+    REQUIRE(
+        ".NUCLEUS" == nTuplesAttrsT1.applicationAttributes.at(0).getLabel());
+    REQUIRE("1H" == nTuplesAttrsT1.applicationAttributes.at(0).getValue());
+    auto nTuplesAttrsR = nTuples.getAttributes().at(2);
+    REQUIRE(nTuplesAttrsR.applicationAttributes.empty());
+
+    REQUIRE(1 == nTuples.getNumPages());
+    REQUIRE("nD NMR SPECTRUM" == nTuples.getDataForm());
+
+    auto pageT0 = nTuples.getPage(0);
+    REQUIRE("F1=0.0" == pageT0.getPageVariables());
+    auto pageLdrs0 = pageT0.getPageLdrs();
+    REQUIRE(1 == pageLdrs0.size());
+    REQUIRE("FIRST" == pageLdrs0.at(0).getLabel());
+    REQUIRE("0, 1.0, 10.0" == pageLdrs0.at(0).getValue());
+
+    REQUIRE(pageT0.getDataTable().has_value());
+    auto pageF0DataTable = pageT0.getDataTable().value();
+    REQUIRE("(F2++(Y..Y))" == pageF0DataTable.getVariableList());
+    REQUIRE("PROFILE" == pageF0DataTable.getPlotDescriptor().value());
+
+    auto pageF0DataRAttributes = pageF0DataTable.getAttributes().yAttributes;
+    REQUIRE("SPECTRUM" == pageF0DataRAttributes.varName);
+    REQUIRE("Y" == pageF0DataRAttributes.symbol);
+    REQUIRE("DEPENDENT" == pageF0DataRAttributes.varType);
+    REQUIRE("ASDF" == pageF0DataRAttributes.varForm);
+    REQUIRE(4 == pageF0DataRAttributes.varDim);
+    REQUIRE("ARBITRARY UNITS" == pageF0DataRAttributes.units);
+    REQUIRE(Approx(10.0) == pageF0DataRAttributes.first);
+    REQUIRE_FALSE(pageF0DataRAttributes.last.has_value());
+    REQUIRE_FALSE(pageF0DataRAttributes.min.has_value());
+    REQUIRE_FALSE(pageF0DataRAttributes.max.has_value());
+    REQUIRE(Approx(1.0) == pageF0DataRAttributes.factor);
+
+    auto pageF0Data = pageF0DataTable.getData();
+    REQUIRE(4 == pageF0Data.size());
+    REQUIRE(Approx(1.0) == pageF0Data.at(0).first);
+    REQUIRE(Approx(10.0) == pageF0Data.at(0).second);
+    REQUIRE(Approx(2.5) == pageF0Data.at(3).first);
+    REQUIRE(Approx(21.0) == pageF0Data.at(3).second);
+}
+
+// TODO: add test for NMR spectrum format as described in round robin readme
+
 TEST_CASE("parses NTUPLES MS record", "[NTuples]")
 {
     // clang-format off
@@ -413,10 +575,11 @@ TEST_CASE("fails when NTUPLES record contains duplicate LDRs", "[NTuples]")
             || Catch::Matchers::Contains("Multipe", Catch::CaseSensitive::No));
 }
 
-TEST_CASE("fails when NTUPLES standard variable LDR lacks columns", "[NTuples]")
+TEST_CASE("correctly handles NTUPLES standard variable LDR missing columns",
+    "[NTuples]")
 {
+    auto nextLine = std::optional<std::string>{"##NTUPLES= NMR SPECTRUM"};
     // clang-format off
-    // "##NTUPLES= NMR SPECTRUM"
     std::string input{
         "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
@@ -436,18 +599,24 @@ TEST_CASE("fails when NTUPLES standard variable LDR lacks columns", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
-    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
-                            blockLdrs, reader, nextLine),
-        Catch::Matchers::Contains("UNITS", Catch::CaseSensitive::Yes)
-            || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "NMR SPECTRUM", blockLdrs, reader, nextLine};
+
+    REQUIRE(3 == nTuples.getAttributes().size());
+    auto attributesX = nTuples.getAttributes().at(0);
+    REQUIRE(attributesX.units.has_value());
+    auto attributesY = nTuples.getAttributes().at(1);
+    REQUIRE_FALSE(attributesY.units.has_value());
+    auto attributesN = nTuples.getAttributes().at(2);
+    REQUIRE_FALSE(attributesN.units.has_value());
 }
 
-TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
+TEST_CASE("correctly handles NTUPLES custom variable LDR missing columns",
+    "[NTuples]")
 {
+    auto nextLine = std::optional<std::string>{"##NTUPLES= NMR SPECTRUM"};
     // clang-format off
-    // "##NTUPLES= NMR SPECTRUM"
     std::string input{
         "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n"
         "##SYMBOL=             X,                Y,             N\n"
@@ -455,7 +624,7 @@ TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
         "##VAR_FORM=        AFFN,             ASDF,          AFFN\n"
         "##VAR_DIM=            4,                4,             1\n"
         "##UNITS=             HZ,  ARBITRARY UNITS,              \n"
-        "##$CUSTOM_LDR=     VAL1\n"
+        "##$CUSTOM_LDR=     VAL1\n" // only one column
         "##PAGE= N=1\n"
         "##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n"
         "1.0 +10+11\n"
@@ -468,12 +637,20 @@ TEST_CASE("fails when NTUPLES custom variable LDR lacks columns", "[NTuples]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
     std::vector<sciformats::jdx::StringLdr> blockLdrs;
-    auto nextLine = std::optional<std::string>{};
 
-    REQUIRE_THROWS_WITH(sciformats::jdx::NTuples("NTUPLES", "NMR SPECTRUM",
-                            blockLdrs, reader, nextLine),
-        Catch::Matchers::Contains("CUSTOM_LDR", Catch::CaseSensitive::Yes)
-            || Catch::Matchers::Contains("column", Catch::CaseSensitive::No));
+    sciformats::jdx::NTuples nTuples{
+        "NTUPLES", "NMR SPECTRUM", blockLdrs, reader, nextLine};
+
+    REQUIRE(3 == nTuples.getAttributes().size());
+
+    auto attributesX = nTuples.getAttributes().at(0);
+    REQUIRE(1 == attributesX.applicationAttributes.size());
+    REQUIRE("$CUSTOMLDR" == attributesX.applicationAttributes.at(0).getLabel());
+    REQUIRE("VAL1" == attributesX.applicationAttributes.at(0).getValue());
+    auto attributesY = nTuples.getAttributes().at(1);
+    REQUIRE(attributesY.applicationAttributes.empty());
+    auto attributesN = nTuples.getAttributes().at(2);
+    REQUIRE(attributesN.applicationAttributes.empty());
 }
 
 TEST_CASE("fails when NTUPLES record ends prematurely", "[NTuples]")

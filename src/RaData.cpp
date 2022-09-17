@@ -24,8 +24,7 @@ sciformats::jdx::RaData::getParameters() const
 std::vector<std::pair<double, double>> sciformats::jdx::RaData::getData()
 {
     return Data2D::parseXppYYData(getLabel(), getReader(), m_parameters.firstR,
-        m_parameters.lastR, m_parameters.rFactor, m_parameters.nPoints,
-        VariableList::RppAA);
+        m_parameters.lastR, m_parameters.rFactor, m_parameters.nPoints);
 }
 
 sciformats::jdx::RaParameters sciformats::jdx::RaData::parseParameters(

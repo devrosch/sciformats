@@ -30,6 +30,15 @@ protected:
         /** (X++(I..I)) */
         XppII,
 
+        /** (T2++(R..R)) */
+        T2ppRR,
+
+        /** (T2++(I..I)) */
+        T2ppII,
+
+        /** (F2++(Y..Y)) */
+        F2ppYY,
+
         /** (XY..XY) */
         XYXY,
 
@@ -75,8 +84,7 @@ protected:
      */
     std::vector<std::pair<double, double>> parseXppYYData(
         const std::string& label, TextReader& reader, double firstX,
-        double lastX, double yFactor, size_t nPoints,
-        VariableList variableList);
+        double lastX, double yFactor, size_t nPoints);
 
     /**
      * @brief Parses the xy data pairs (i.e. "(XY..XY)" or "(RA..RA)") from a
@@ -97,8 +105,7 @@ protected:
      */
     std::vector<std::pair<double, double>> parseXyXyData(
         const std::string& label, TextReader& reader, double xFactor,
-        double yFactor, std::optional<size_t> nPoints,
-        VariableList variableList);
+        double yFactor, std::optional<size_t> nPoints);
 };
 } // namespace sciformats::jdx
 

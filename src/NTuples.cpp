@@ -131,7 +131,8 @@ sciformats::jdx::NTuples::splitValues(const std::vector<StringLdr>& ldrs)
     std::map<std::string, std::vector<std::string>> output;
     for (const auto& ldr : ldrs)
     {
-        auto values = util::split(ldr.getValue(), ",", true);
+        auto valueString = util::stripLineComment(ldr.getValue(), true).first;
+        auto values = util::split(valueString, ",", true);
         auto inserted = output.emplace(ldr.getLabel(), values).second;
         if (!inserted)
         {
@@ -176,21 +177,16 @@ sciformats::jdx::NTuplesAttributes sciformats::jdx::NTuples::map(
     size_t valueColumnIndex)
 {
     auto pickColumnValue
-        = [this, valueColumnIndex](
-              const std::optional<std::vector<std::string>>& values,
-              const std::string& key) {
+        = [valueColumnIndex](
+              const std::optional<std::vector<std::string>>& values) {
               if (values.value().size() <= valueColumnIndex)
               {
-                  throw ParseException("For LDR \"" + key + "\" in NTUPLES \""
-                                       + m_dataForm
-                                       + "\" value not available at column: "
-                                       + std::to_string(valueColumnIndex));
+                  return std::optional<std::string>{std::nullopt};
               }
               auto value = values.value().at(valueColumnIndex);
               util::trim(value);
-              return value.empty() ? std::optional<std::string>{std::nullopt}
-                                   : std::optional<std::string>{
-                                       values.value().at(valueColumnIndex)};
+              return std::optional<std::string>{
+                  values.value().at(valueColumnIndex)};
           };
 
     auto findColumnValue
@@ -201,7 +197,8 @@ sciformats::jdx::NTuplesAttributes sciformats::jdx::NTuples::map(
               {
                   return std::optional<std::string>{std::nullopt};
               }
-              return pickColumnValue(values, key);
+              //              return pickColumnValue(values, key);
+              return pickColumnValue(values);
           };
 
     auto varNameString = findColumnValue("VARNAME");
@@ -225,36 +222,52 @@ sciformats::jdx::NTuplesAttributes sciformats::jdx::NTuples::map(
 
     // TODO: make stol/stod more reliable (new util function) and use across
     // project
+    if (!varNameString)
+    {
+        throw ParseException("VAR_NAME missing in NTUPLES column: "
+                             + std::to_string(valueColumnIndex));
+    }
+    if (!symbolString)
+    {
+        throw ParseException("SYMBOL missing in NTUPLES column: "
+                             + std::to_string(valueColumnIndex));
+    }
     auto varName = varNameString.value();
     auto symbol = symbolString.value();
     auto& varType = varTypeString;
     auto& varForm = varFormString;
-    auto varDim = varDimString
+
+    auto debug = firstString.value_or("-");
+
+    auto varDim = varDimString && !varDimString.value().empty()
                       ? std::optional<uint64_t>(std::stol(varDimString.value()))
                       : std::nullopt;
     auto& units = unitsString;
-    auto first = firstString
+    auto first = firstString && !firstString.value().empty()
                      ? std::optional<double>(std::stod(firstString.value()))
                      : std::nullopt;
-    auto last = lastString
+    auto last = lastString && !lastString.value().empty()
                     ? std::optional<double>(std::stod(lastString.value()))
                     : std::nullopt;
-    auto min = minString ? std::optional<double>(std::stod(minString.value()))
-                         : std::nullopt;
-    auto max = maxString ? std::optional<double>(std::stod(maxString.value()))
-                         : std::nullopt;
-    auto factor = factorString
+    auto min = minString && !minString.value().empty()
+                   ? std::optional<double>(std::stod(minString.value()))
+                   : std::nullopt;
+    auto max = maxString && !maxString.value().empty()
+                   ? std::optional<double>(std::stod(maxString.value()))
+                   : std::nullopt;
+    auto factor = factorString && !factorString.value().empty()
                       ? std::optional<double>(std::stod(factorString.value()))
                       : std::nullopt;
 
     std::vector<StringLdr> additionalAttrsInColum;
-    std::transform(additionalAttributes.begin(), additionalAttributes.end(),
-        std::back_inserter(additionalAttrsInColum),
-        [&pickColumnValue](
-            const std::pair<std::string, std::vector<std::string>>& var) {
-            auto value = pickColumnValue(var.second, var.first);
-            return StringLdr{var.first, value.value_or("")};
-        });
+    for (const auto& var : additionalAttributes)
+    {
+        auto value = pickColumnValue(var.second);
+        if (value)
+        {
+            additionalAttrsInColum.emplace_back(var.first, value.value());
+        }
+    }
 
     NTuplesAttributes nTupleAttrs{
         varName,

@@ -15,17 +15,10 @@ sciformats::jdx::XyData::XyData(const std::string& label,
 std::vector<std::pair<double, double>> sciformats::jdx::XyData::getData()
 {
     auto varList = getVariableList();
-    if (s_xyDataVariableLists.at(0) == varList)
+    if (std::any_of(s_xyDataVariableLists.begin(), s_xyDataVariableLists.end(),
+            [&varList](const std::string& s) { return s == varList; }))
     {
-        return XyBase::getXppYYData(Data2D::VariableList::XppYY);
-    }
-    if (s_xyDataVariableLists.at(1) == varList)
-    {
-        return XyBase::getXppYYData(Data2D::VariableList::XppRR);
-    }
-    if (s_xyDataVariableLists.at(2) == varList)
-    {
-        return XyBase::getXppYYData(Data2D::VariableList::XppII);
+        return XyBase::getXppYYData();
     }
     throw ParseException("Unsupported variable list for XYDATA: " + varList);
 }

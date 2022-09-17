@@ -82,11 +82,14 @@ private:
     };
 
     static constexpr const char* s_label = "DATATABLE";
-    static constexpr std::array<std::pair<const char*, VariableList>, 6>
+    static constexpr std::array<std::pair<const char*, VariableList>, 9>
         s_varListMapping = {{
             {"(X++(Y..Y))", VariableList::XppYY},
             {"(X++(R..R))", VariableList::XppRR},
             {"(X++(I..I))", VariableList::XppII},
+            {"(T2++(R..R))", VariableList::T2ppRR},
+            {"(T2++(I..I))", VariableList::T2ppII},
+            {"(F2++(Y..Y))", VariableList::F2ppYY},
             {"(XY..XY)", VariableList::XYXY},
             {"(XR..XR)", VariableList::XRXR},
             {"(XI..XI)", VariableList::XIXI},
@@ -96,7 +99,7 @@ private:
             {"XYDATA", PlotDescriptor::XyData},
             {"PEAKS", PlotDescriptor::Peaks},
             {"CONTOUR", PlotDescriptor::Contour}}};
-    static constexpr const char* s_xSymbol = "X";
+    static constexpr std::array<const char*, 3> s_xSymbols = {"X", "T2", "F2"};
     static constexpr std::array<const char*, 3> s_ySymbols = {"Y", "R", "I"};
 
     const std::optional<std::string> m_plotDescriptor;
@@ -118,6 +121,8 @@ private:
         std::map<std::string, std::optional<double>&> doubleMapping,
         std::map<std::string, std::optional<uint64_t>&> uint64Mapping,
         bool replace);
+    static void mergePageFirstLdr(NTuplesAttributes& mergedVars,
+        const std::vector<StringLdr>& pageLdrs, size_t columnIndex);
     template<typename R, size_t SIZE>
     static R findValue(
         std::array<std::pair<const char*, R>, SIZE> keyValuePairs,

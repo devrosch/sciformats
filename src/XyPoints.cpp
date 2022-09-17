@@ -15,17 +15,11 @@ sciformats::jdx::XyPoints::XyPoints(const std::string& label,
 std::vector<std::pair<double, double>> sciformats::jdx::XyPoints::getData()
 {
     auto varList = getVariableList();
-    if (s_xyPointsVariableLists.at(0) == varList)
+    if (std::any_of(s_xyPointsVariableLists.begin(),
+            s_xyPointsVariableLists.end(),
+            [&varList](const std::string& s) { return s == varList; }))
     {
-        return XyBase::getXYXYData(Data2D::VariableList::XYXY);
-    }
-    if (s_xyPointsVariableLists.at(1) == varList)
-    {
-        return XyBase::getXYXYData(Data2D::VariableList::XRXR);
-    }
-    if (s_xyPointsVariableLists.at(2) == varList)
-    {
-        return XyBase::getXYXYData(Data2D::VariableList::XIXI);
+        return XyBase::getXYXYData();
     }
     throw ParseException("Unsupported variable list for XYPOINTS: " + varList);
 }

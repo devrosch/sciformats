@@ -14,6 +14,7 @@ add_executable(jdxparser_test
     PeakAssignmentsTest.cpp
     NTuplesTest.cpp
     IntegrationTest.cpp
+    AuditTrailTest.cpp
     )
 
 # I'm using C++17 in the test

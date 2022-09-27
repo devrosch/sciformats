@@ -8,6 +8,7 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/src/util/DataParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakTableParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakAssignmentsParser.hpp"
+    "${PROJECT_SOURCE_DIR}/src/util/AuditTrailParser.hpp"
     # ldr
     "${PROJECT_SOURCE_DIR}/include/jdx/LdrContainer.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/Block.hpp"
@@ -33,6 +34,8 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakTable.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignment.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/PeakAssignments.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/AuditTrail.hpp"
+    "${PROJECT_SOURCE_DIR}/include/jdx/AuditTrailEntry.hpp"
     # exception
     "${PROJECT_SOURCE_DIR}/include/jdx/ParseException.hpp"
     "${PROJECT_SOURCE_DIR}/include/jdx/BlockParseException.hpp"
@@ -49,6 +52,7 @@ add_library(jdxparser
     util/DataParser.cpp
     util/PeakTableParser.cpp
     util/PeakAssignmentsParser.cpp
+    util/AuditTrailParser.cpp
     # ldr
     Block.cpp
     LdrContainer.cpp
@@ -69,6 +73,7 @@ add_library(jdxparser
     TabularData.cpp
     PeakTable.cpp
     PeakAssignments.cpp
+    AuditTrail.cpp
     # exception
     ParseException.cpp
     BlockParseException.cpp

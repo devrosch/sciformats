@@ -166,7 +166,10 @@ void sciformats::jdx::util::skipToNextLdr(TextReader& reader,
         {
             nextLine = std::nullopt;
         }
-        nextLine = reader.readLine();
+        else
+        {
+            nextLine = reader.readLine();
+        }
     }
     while (nextLine.has_value() && !util::isLdrStart(nextLine.value()))
     {

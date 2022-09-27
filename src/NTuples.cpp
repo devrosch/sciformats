@@ -237,8 +237,6 @@ sciformats::jdx::NTuplesAttributes sciformats::jdx::NTuples::map(
     auto& varType = varTypeString;
     auto& varForm = varFormString;
 
-    auto debug = firstString.value_or("-");
-
     auto varDim = varDimString && !varDimString.value().empty()
                       ? std::optional<uint64_t>(std::stol(varDimString.value()))
                       : std::nullopt;

@@ -14,17 +14,12 @@ sciformats::jdx::util::AuditTrailParser::AuditTrailParser(
 {
 }
 
-// TODO: duplicate of PeakAssignmentsParser
 std::optional<sciformats::jdx::AuditTrailEntry>
 sciformats::jdx::util::AuditTrailParser::next()
 {
-    auto nextString = nextTuple();
-    if (!nextString)
-    {
-        return std::nullopt;
-    }
-    auto nextAssignment = createAuditTrailEntry(nextString.value());
-    return nextAssignment;
+    return TuplesParser::next<AuditTrailEntry>([this]() { return nextTuple(); },
+        [this](
+            const std::string& tuple) { return createAuditTrailEntry(tuple); });
 }
 
 sciformats::jdx::AuditTrailEntry

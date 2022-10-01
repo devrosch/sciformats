@@ -17,13 +17,12 @@ sciformats::jdx::util::PeakTableParser::PeakTableParser(
 std::optional<sciformats::jdx::Peak>
 sciformats::jdx::util::PeakTableParser::next()
 {
-    auto nextString = nextTuple();
-    if (!nextString)
-    {
-        return std::nullopt;
-    }
-    auto nextPeak = createPeak(nextString.value());
-    return nextPeak;
+    return TuplesParser::next<Peak>([this]() { return nextTuple(); },
+        [this](const std::string& tuple) { return createPeak(tuple); });
+    // alternative without lambdas:
+    // return TuplesParser::next<Peak>(
+    //    std::bind(&PeakTableParser::nextTuple, this),
+    //    std::bind(&PeakTableParser::createPeak, this, std::placeholders::_1));
 }
 
 std::optional<std::string> sciformats::jdx::util::PeakTableParser::nextTuple()

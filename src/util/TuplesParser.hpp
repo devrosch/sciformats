@@ -62,6 +62,11 @@ protected:
      */
     static double parseDoubleToken(const std::optional<std::string>& token);
 
+    template<typename R>
+    std::optional<R> next(
+        const std::function<std::optional<std::string>()>& nextTuple,
+        const std::function<R(const std::string&)>& create);
+
 private:
     const std::string m_variableList;
     const std::string m_ldrName;
@@ -71,6 +76,21 @@ private:
     [[nodiscard]] std::smatch match(
         const std::string& tuple, const std::regex& regex) const;
 };
+
+template<typename R>
+std::optional<R> sciformats::jdx::util::TuplesParser::next(
+    const std::function<std::optional<std::string>()>& nextTuple,
+    const std::function<R(const std::string&)>& create)
+{
+    auto tuple = nextTuple();
+    if (!tuple)
+    {
+        return std::nullopt;
+    }
+    auto nextObject = create(tuple.value());
+    return nextObject;
+}
+
 }
 
 #endif /* LIBJDX_TUPLESPARSER_HPP */

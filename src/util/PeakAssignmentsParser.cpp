@@ -16,13 +16,9 @@ sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
 std::optional<sciformats::jdx::PeakAssignment>
 sciformats::jdx::util::PeakAssignmentsParser::next()
 {
-    auto nextString = nextTuple();
-    if (!nextString)
-    {
-        return std::nullopt;
-    }
-    auto nextAssignment = createPeakAssignment(nextString.value());
-    return nextAssignment;
+    return TuplesParser::next<PeakAssignment>([this]() { return nextTuple(); },
+        [this](
+            const std::string& tuple) { return createPeakAssignment(tuple); });
 }
 
 sciformats::jdx::PeakAssignment

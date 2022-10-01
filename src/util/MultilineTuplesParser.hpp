@@ -4,6 +4,7 @@
 #include "jdx/TextReader.hpp"
 #include "util/TuplesParser.hpp"
 
+#include <optional>
 #include <regex>
 
 namespace sciformats::jdx::util

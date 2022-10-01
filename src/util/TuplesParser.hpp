@@ -3,6 +3,8 @@
 
 #include "jdx/TextReader.hpp"
 
+#include <map>
+#include <optional>
 #include <regex>
 
 namespace sciformats::jdx::util

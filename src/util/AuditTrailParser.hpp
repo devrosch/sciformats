@@ -6,6 +6,7 @@
 #include "util/MultilineTuplesParser.hpp"
 
 #include <array>
+#include <optional>
 
 namespace sciformats::jdx::util
 {

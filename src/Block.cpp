@@ -191,6 +191,7 @@ void sciformats::jdx::Block::parseInput(
                 return NTuples(label, value, m_ldrs, m_reader, nextLine);
             });
         }
+        // TODO: add audit trail
         else
         {
             throw BlockParseException("Unsupported", label, title);

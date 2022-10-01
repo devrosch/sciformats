@@ -9,8 +9,8 @@
 
 sciformats::jdx::util::PeakTableParser::PeakTableParser(
     TextReader& reader, std::string variableList)
-    : m_reader{reader}
-    , m_variableList{std::move(variableList)}
+    : TuplesParser(std::move(variableList), "peak table")
+    , m_reader{reader}
 {
 }
 
@@ -74,61 +74,38 @@ sciformats::jdx::Peak sciformats::jdx::util::PeakTableParser::createPeak(
     const std::string& tuple) const
 {
     // tokenize
-    // matches 2-3 peak segments as groups 1-3, corresponding to
-    // (XY..XY), (XYW..XYW), or (XYM..XYM), with X as matches[1], Y as matche[2]
-    // and W or M as matches[3]
-    const auto* regexString = R"(^\s*)"
-                              R"(([^,]*))"
-                              R"((?:\s*,\s*([^,]*)))"
-                              R"((?:\s*,\s*([^,]*))?)"
-                              R"($)";
-    std::regex regex{regexString};
-    std::smatch matches;
-    auto [lineStart, _] = util::stripLineComment(tuple, true);
-    if (!std::regex_match(lineStart, matches, regex))
-    {
-        throw ParseException("Illegal peak string: " + tuple);
-    }
+    // token[0] is the full match so extract 1 + 3 tokens for 3 groups
+    const auto tokens = extractTokens(tuple, m_regex, 1 + 3);
+    const auto& varList = getVariableList();
 
-    auto token1 = matches[1].matched
-                      ? std::optional<std::string>{matches[1].str()}
-                      : std::nullopt;
-    auto token2 = matches[2].matched
-                      ? std::optional<std::string>{matches[2].str()}
-                      : std::nullopt;
-    auto token3 = matches[3].matched
-                      ? std::optional<std::string>{matches[3].str()}
-                      : std::nullopt;
-
-    auto parseDoubleToken = [](const std::optional<std::string>& token) {
-        return token.value().empty() ? std::numeric_limits<double>::quiet_NaN()
-                                     : strtod(token.value().data(), nullptr);
+    // error conditions {varList, {error condition, error message}}
+    const std::multimap<std::string, std::tuple<bool, std::string>> errorMap{
+        {s_varLists.at(0),
+            {tokens.at(3).has_value(), std::string{"Illegal "} + s_ldrName
+                                           + " entry for " + s_varLists.at(0)
+                                           + ": " + tuple}},
+        {s_varLists.at(1),
+            {!tokens.at(3), std::string{"Illegal "} + s_ldrName + " entry for "
+                                + s_varLists.at(1) + ": " + tuple}},
+        {s_varLists.at(2),
+            {!tokens.at(3), std::string{"Illegal "} + s_ldrName + " entry for "
+                                + s_varLists.at(2) + ": " + tuple}},
     };
 
-    // map to peak
+    checkForErrors(varList, errorMap, s_ldrName);
+
+    // map
     Peak peak{};
-    peak.x = parseDoubleToken(token1);
-    peak.y = parseDoubleToken(token2);
-    if ("(XY..XY)" == m_variableList)
+    peak.x = parseDoubleToken(tokens.at(1));
+    peak.y = parseDoubleToken(tokens.at(2));
+    // nothing to do for varLists[0]
+    if (s_varLists.at(1) == varList)
     {
-        if (token3)
-        {
-            throw ParseException(
-                "Illegal peak component for (XY..XY): " + lineStart);
-        }
+        peak.w = parseDoubleToken(tokens.at(3));
     }
-    else if ("(XYW..XYW)" == m_variableList)
+    else if (s_varLists.at(2) == varList)
     {
-        peak.w = parseDoubleToken(token3);
-    }
-    else if ("(XYM..XYM)" == m_variableList)
-    {
-        peak.m = token3;
-    }
-    else
-    {
-        throw ParseException(
-            "Unsupported variable list for peak table: " + m_variableList);
+        peak.m = tokens.at(3);
     }
 
     return peak;

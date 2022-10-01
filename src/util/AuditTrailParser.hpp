@@ -3,13 +3,16 @@
 
 #include "jdx/AuditTrailEntry.hpp"
 #include "jdx/TextReader.hpp"
+#include "util/MultilineTuplesParser.hpp"
+
+#include <array>
 
 namespace sciformats::jdx::util
 {
 /**
  * @brief A parser for AUDIT TRAIL.
  */
-class AuditTrailParser
+class AuditTrailParser : protected MultilineTuplesParser
 {
 public:
     explicit AuditTrailParser(TextReader& reader, std::string variableList);
@@ -24,14 +27,30 @@ public:
     std::optional<AuditTrailEntry> next();
 
 private:
-    TextReader& m_reader;
-    const std::string m_variableList;
+    static constexpr const char* s_ldrName = "audit trail";
 
-    // tuple
-    std::optional<std::string> nextTuple();
-    static bool isTupleStart(const std::string& stringValue);
-    static bool isTupleEnd(const std::string& stringValue);
-    // assignment
+    static constexpr std::array<const char*, 3> s_varLists = {
+        "(NUMBER, WHEN, WHO, WHERE, WHAT)",
+        "(NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)",
+        "(NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)",
+    };
+
+    /**
+     * matches 5 - 7 audit trail entry segments as groups 1-7, groups 5 nd 6
+     * being optional, corresponding to one of (NUMBER, WHEN, WHO, WHERE, WHAT),
+     * (NUMBER, WHEN, WHO, WHERE, VERSION, WHAT),
+     * (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+     */
+    const std::regex m_regex{R"(^\s*\(\s*)"
+                             R"((\d))"
+                             R"((?:\s*,\s*<([^>]*)>))"
+                             R"((?:\s*,\s*<([^>]*)>))"
+                             R"((?:\s*,\s*<([^>]*)>))"
+                             R"((?:\s*,\s*<([^>]*)>)?)"
+                             R"((?:\s*,\s*<([^>]*)>)?)"
+                             R"((?:\s*,\s*<([^>]*)>))"
+                             R"(\s*\)\s*$)"};
+
     [[nodiscard]] sciformats::jdx::AuditTrailEntry createAuditTrailEntry(
         const std::string& tuple) const;
 };

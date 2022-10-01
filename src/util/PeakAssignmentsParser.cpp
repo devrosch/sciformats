@@ -9,8 +9,7 @@
 
 sciformats::jdx::util::PeakAssignmentsParser::PeakAssignmentsParser(
     TextReader& reader, std::string variableList)
-    : m_reader{reader}
-    , m_variableList{std::move(variableList)}
+    : MultilineTuplesParser(reader, std::move(variableList), s_ldrName, " ")
 {
 }
 
@@ -26,213 +25,75 @@ sciformats::jdx::util::PeakAssignmentsParser::next()
     return nextAssignment;
 }
 
-std::optional<std::string>
-sciformats::jdx::util::PeakAssignmentsParser::nextTuple()
-{
-    std::string peakAssignmentString{};
-    // find start
-    while (!m_reader.eof())
-    {
-        std::streampos pos = m_reader.tellg();
-        auto line = m_reader.readLine();
-        auto [lineStart, _] = util::stripLineComment(line, true);
-        if (isTupleStart(lineStart))
-        {
-            peakAssignmentString.append(lineStart);
-            break;
-        }
-        if (util::isLdrStart(lineStart))
-        {
-            // PEAKASSIGNMENT LDR ended, no peak assignments
-            m_reader.seekg(pos);
-            return std::nullopt;
-        }
-        if (!lineStart.empty())
-        {
-            throw ParseException(
-                "Illegal string found in peak assignment: " + line);
-        }
-    }
-    if (isTupleEnd(peakAssignmentString))
-    {
-        return peakAssignmentString;
-    }
-    // read to end of current peak assignment
-    while (!m_reader.eof())
-    {
-        std::streampos pos = m_reader.tellg();
-        auto line = m_reader.readLine();
-        auto [lineStart, _] = util::stripLineComment(line, true);
-
-        if (util::isLdrStart(lineStart))
-        {
-            // PEAKASSIGNMENT LDR ended before end of last peak assignment
-            m_reader.seekg(pos);
-            throw ParseException(
-                "No closing parenthesis found for peak assignment: "
-                + peakAssignmentString);
-        }
-        peakAssignmentString.append(" ");
-        peakAssignmentString.append(lineStart);
-        if (isTupleEnd(lineStart))
-        {
-            return peakAssignmentString;
-        }
-        if (m_reader.eof() || util::isLdrStart(lineStart))
-        {
-            // PEAKASSIGNMENT LDR ended before end of last peak assignment
-            m_reader.seekg(pos);
-            throw ParseException(
-                "No closing parenthesis found for peak assignment: "
-                + peakAssignmentString);
-        }
-    }
-    throw ParseException(
-        "File ended before closing parenthesis was found for peak assignment: "
-        + peakAssignmentString);
-}
-
-bool sciformats::jdx::util::PeakAssignmentsParser::isTupleStart(
-    const std::string& stringValue)
-{
-    std::string value{stringValue};
-    util::trimLeft(value);
-    return !value.empty() && value.at(0) == '(';
-}
-
-bool sciformats::jdx::util::PeakAssignmentsParser::isTupleEnd(
-    const std::string& stringValue)
-{
-    std::string value{stringValue};
-    util::trimRight(value);
-    return !value.empty() && value.back() == ')';
-}
-
 sciformats::jdx::PeakAssignment
 sciformats::jdx::util::PeakAssignmentsParser::createPeakAssignment(
     const std::string& tuple) const
 {
     // tokenize
-    // matches 2 - 5 peak assignments segments  as groups 1-5, corresponding to
-    // one of (X[, Y][, W], A), (X[, Y][, M], A), (X[, Y][, M][, W], A), with X
-    // as matches[1] and A as matches[5]
-    const auto* regexString = R"(^\s*\(\s*)"
-                              R"(([^,]*))"
-                              R"((?:\s*,\s*([^,]*))?)"
-                              R"((?:\s*,\s*([^,]*))?)"
-                              R"((?:\s*,\s*([^,]*))?)"
-                              R"(\s*,\s*(<.*>)\s*\))"
-                              R"(\s*$)";
-    std::regex regex{regexString};
-    std::smatch matches;
-    auto [lineStart, _] = util::stripLineComment(tuple, true);
-    if (!std::regex_match(lineStart, matches, regex))
-    {
-        throw ParseException("Illegal peak assignment string: " + tuple);
-    }
+    // token[0] is the full match so extract 1 + 5 tokens for 5 groups
+    const auto tokens = extractTokens(tuple, m_regex, 1 + 5);
+    const auto& varList = getVariableList();
 
-    auto token1 = matches[1].matched
-                      ? std::optional<std::string>{matches[1].str()}
-                      : std::nullopt;
-    auto token2 = matches[2].matched
-                      ? std::optional<std::string>{matches[2].str()}
-                      : std::nullopt;
-    auto token3 = matches[3].matched
-                      ? std::optional<std::string>{matches[3].str()}
-                      : std::nullopt;
-    auto token4 = matches[4].matched
-                      ? std::optional<std::string>{matches[4].str()}
-                      : std::nullopt;
-    auto token5 = matches[5].matched
-                      ? std::optional<std::string>{matches[5].str()}
-                      : std::nullopt;
-    // remove enclosing < and >
-    token5 = token5.value().substr(1, token5.value().size() - 2);
-
-    auto parseDoubleToken = [](const std::optional<std::string>& token) {
-        return token.value().empty() ? std::numeric_limits<double>::quiet_NaN()
-                                     : strtod(token.value().data(), nullptr);
+    // error conditions {varList, {error condition, error message}}
+    const std::multimap<std::string, std::tuple<bool, std::string>> errorMap{
+        {s_varLists.at(0),
+            {tokens.at(3) || tokens.at(4),
+                std::string{"Illegal "} + s_ldrName + " entry for "
+                    + s_varLists.at(0) + ": " + tuple}},
+        {s_varLists.at(1),
+            {tokens.at(4).has_value(), std::string{"Illegal "} + s_ldrName
+                                           + " entry for " + s_varLists.at(1)
+                                           + ": " + tuple}},
+        {s_varLists.at(1),
+            {tokens.at(2) && !tokens.at(3),
+                std::string{"Ambiguous "} + s_ldrName + " entry for "
+                    + s_varLists.at(1) + ": " + tuple}},
+        {s_varLists.at(2),
+            {tokens.at(4).has_value(), std::string{"Illegal "} + s_ldrName
+                                           + " entry for " + s_varLists.at(2)
+                                           + ": " + tuple}},
+        {s_varLists.at(2),
+            {tokens.at(2) && !tokens.at(3),
+                std::string{"Ambiguous "} + s_ldrName + " entry for "
+                    + s_varLists.at(2) + ": " + tuple}},
+        {s_varLists.at(3),
+            {!(tokens.at(2) && tokens.at(3) && tokens.at(4))
+                    && (tokens.at(2) || tokens.at(3) || tokens.at(4)),
+                std::string{"Ambiguous "} + s_ldrName + " entry for "
+                    + s_varLists.at(2) + ": " + tuple}},
     };
 
-    // map to peak assignment
+    checkForErrors(varList, errorMap, s_ldrName);
+
+    // map
     PeakAssignment peakAssignment{};
-    peakAssignment.x = parseDoubleToken(token1);
-    peakAssignment.a = token5.value();
-    if ("(XYA)" == m_variableList)
+    peakAssignment.x = parseDoubleToken(tokens.at(1));
+    peakAssignment.a = tokens.at(5).value();
+    if (s_varLists.at(0) == varList && tokens.at(2))
     {
-        if (token3 || token4)
-        {
-            throw ParseException(
-                "Illegal peak assignment components for (XYA): " + lineStart);
-        }
-        if (token2)
-        {
-            // 3 tokens
-            peakAssignment.y = parseDoubleToken(token2);
-        }
+        // 3 tokens
+        peakAssignment.y = parseDoubleToken(tokens.at(2));
     }
-    else if ("(XYWA)" == m_variableList)
+    else if (s_varLists.at(1) == varList && tokens.at(2) && tokens.at(3))
     {
-        if (token4)
-        {
-            throw ParseException(
-                "Illegal peak assignment component for (XYWA): " + lineStart);
-        }
-        // 2, 3 or 4 tokens
-        if (token2 && token3)
-        {
-            // 4 tokens
-            peakAssignment.y = parseDoubleToken(token2);
-            peakAssignment.w = parseDoubleToken(token3);
-        }
-        else if (token2)
-        {
-            // 3 tokens
-            throw ParseException(
-                "Ambiguous peak assignment component for (XYWA): " + lineStart);
-        }
+        // 4 tokens
+        peakAssignment.y = parseDoubleToken(tokens.at(2));
+        peakAssignment.w = parseDoubleToken(tokens.at(3));
     }
-    else if ("(XYMA)" == m_variableList)
+    else if (s_varLists.at(2) == varList && tokens.at(2) && tokens.at(3))
     {
-        if (token4)
-        {
-            throw ParseException(
-                "Illegal peak assignment component for (XYMA): " + lineStart);
-        }
-        // 2, 3 or 4 tokens
-        if (token2 && token3)
-        {
-            // 4 tokens
-            peakAssignment.y = parseDoubleToken(token2);
-            peakAssignment.m = token3;
-        }
-        else if (token2)
-        {
-            // 3 tokens
-            throw ParseException(
-                "Ambiguous peak assignment component for (XYMA): " + lineStart);
-        }
+        // 4 tokens
+        peakAssignment.y = parseDoubleToken(tokens.at(2));
+        peakAssignment.m = tokens.at(3);
     }
-    else if ("(XYMWA)" == m_variableList)
+    else if (s_varLists.at(3) == varList && tokens.at(2) && tokens.at(3)
+             && tokens.at(4))
     {
-        if (token2 && token3 && token4)
-        {
-            // 5 tokens
-            peakAssignment.y = parseDoubleToken(token2);
-            peakAssignment.m = token3;
-            peakAssignment.w = parseDoubleToken(token4);
-        }
-        else if (token2 || token3 || token4)
-        {
-            // 3 or 4 tokens
-            throw ParseException(
-                "Ambiguous peak assignment for (XYMWA): " + lineStart);
-        }
+        // 5 tokens
+        peakAssignment.y = parseDoubleToken(tokens.at(2));
+        peakAssignment.m = tokens.at(3);
+        peakAssignment.w = parseDoubleToken(tokens.at(4));
     }
-    else
-    {
-        throw ParseException(
-            "Unsupported variable list for peak assignment: " + m_variableList);
-    }
+
     return peakAssignment;
 }

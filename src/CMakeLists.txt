@@ -6,7 +6,9 @@ set(HEADER_LIST
     "${PROJECT_SOURCE_DIR}/src/util/StringUtils.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/LdrUtils.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/DataParser.hpp"
+    "${PROJECT_SOURCE_DIR}/src/util/TuplesParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakTableParser.hpp"
+    "${PROJECT_SOURCE_DIR}/src/util/MultilineTuplesParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/PeakAssignmentsParser.hpp"
     "${PROJECT_SOURCE_DIR}/src/util/AuditTrailParser.hpp"
     # ldr
@@ -50,7 +52,9 @@ add_library(jdxparser
     util/StringUtils.cpp
     util/LdrUtils.cpp
     util/DataParser.cpp
+    util/TuplesParser.cpp
     util/PeakTableParser.cpp
+    util/MultilineTuplesParser.cpp
     util/PeakAssignmentsParser.cpp
     util/AuditTrailParser.cpp
     # ldr

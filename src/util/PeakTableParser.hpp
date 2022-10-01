@@ -6,6 +6,7 @@
 #include "util/TuplesParser.hpp"
 
 #include <array>
+#include <optional>
 #include <queue>
 #include <regex>
 

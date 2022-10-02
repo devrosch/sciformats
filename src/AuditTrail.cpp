@@ -29,7 +29,7 @@ sciformats::jdx::AuditTrail::AuditTrail(const std::string& label,
 }
 
 std::vector<sciformats::jdx::AuditTrailEntry>
-sciformats::jdx::AuditTrail::getData()
+sciformats::jdx::AuditTrail::getData() const
 {
     auto variableList = m_brukerVarList.value_or(getVariableList());
     if (util::isPureComment(variableList))

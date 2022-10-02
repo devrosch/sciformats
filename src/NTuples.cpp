@@ -12,23 +12,24 @@ sciformats::jdx::NTuples::NTuples(const std::string& label,
     parse(blockLdrs, reader, nextLine);
 }
 
-std::string sciformats::jdx::NTuples::getDataForm()
+std::string sciformats::jdx::NTuples::getDataForm() const
 {
     return m_dataForm;
 }
 
-std::vector<sciformats::jdx::NTuplesAttributes>
-sciformats::jdx::NTuples::getAttributes()
+const std::vector<sciformats::jdx::NTuplesAttributes>&
+sciformats::jdx::NTuples::getAttributes() const
 {
     return m_attributes;
 }
 
-size_t sciformats::jdx::NTuples::getNumPages()
+size_t sciformats::jdx::NTuples::getNumPages() const
 {
     return m_pages.size();
 }
 
-sciformats::jdx::Page sciformats::jdx::NTuples::getPage(size_t pageIndex)
+const sciformats::jdx::Page& sciformats::jdx::NTuples::getPage(
+    size_t pageIndex) const
 {
     return m_pages.at(pageIndex);
 }

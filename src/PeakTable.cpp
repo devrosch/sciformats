@@ -16,7 +16,7 @@ sciformats::jdx::PeakTable::PeakTable(const std::string& label,
     util::skipToNextLdr(reader, nextLine, true);
 }
 
-std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData()
+std::vector<sciformats::jdx::Peak> sciformats::jdx::PeakTable::getData() const
 {
     util::PeakTableParser parser{getReader(), getVariableList()};
     return TabularData::getData<util::PeakTableParser, Peak>(parser);

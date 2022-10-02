@@ -12,7 +12,8 @@ sciformats::jdx::XyPoints::XyPoints(const std::string& label,
 {
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::XyPoints::getData()
+std::vector<std::pair<double, double>>
+sciformats::jdx::XyPoints::getData() const
 {
     auto varList = getVariableList();
     if (std::any_of(s_xyPointsVariableLists.begin(),

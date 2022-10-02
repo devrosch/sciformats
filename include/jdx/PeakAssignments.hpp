@@ -40,7 +40,7 @@ public:
      * @brief Provides the parsed peak assignments.
      * @return The list of peak assignments.
      */
-    std::vector<PeakAssignment> getData();
+    std::vector<PeakAssignment> getData() const;
 
 private:
     static constexpr const char* s_peakAssignentsLabel = "PEAKASSIGNMENTS";

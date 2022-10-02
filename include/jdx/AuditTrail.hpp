@@ -40,7 +40,7 @@ public:
      * @brief Provides the parsed audit trail data.
      * @return The list of audit trail entries.
      */
-    std::vector<AuditTrailEntry> getData();
+    std::vector<AuditTrailEntry> getData() const;
 
 private:
     static constexpr const char* s_label = "AUDITTRAIL";

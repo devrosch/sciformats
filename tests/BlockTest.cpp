@@ -170,6 +170,8 @@ TEST_CASE("parses block with XYPOINTS", "[Block]")
 
     auto block = sciformats::jdx::Block(reader);
     REQUIRE(block.getXyPoints().has_value());
+    const auto& xyPoints = block.getXyPoints().value();
+    REQUIRE(4 == xyPoints.getData().size());
 }
 
 TEST_CASE("fails to parse block with duplicate XYPOINTS", "[Block]")
@@ -220,7 +222,7 @@ TEST_CASE("parses block with PEAK TABLE", "[Block]")
     // member
     REQUIRE(2 == ldrs.size());
     REQUIRE(block.getPeakTable().has_value());
-    auto peakTable = block.getPeakTable().value();
+    const auto& peakTable = block.getPeakTable().value();
     REQUIRE(2 == peakTable.getData().size());
 }
 
@@ -264,7 +266,7 @@ TEST_CASE("parses block with PEAK ASSIGNMENTS", "[Block]")
     // specialized member
     REQUIRE(2 == ldrs.size());
     REQUIRE(block.getPeakAssignments().has_value());
-    auto peakAssignments = block.getPeakAssignments().value();
+    const auto& peakAssignments = block.getPeakAssignments().value();
     REQUIRE(2 == peakAssignments.getData().size());
 }
 
@@ -513,6 +515,11 @@ TEST_CASE("parses block with NTUPLES", "[Block]")
 
     auto block = sciformats::jdx::Block(reader);
     REQUIRE(block.getNTuples().has_value());
+    const auto& nTuples = block.getNTuples().value();
+    const auto& pageN1 = nTuples.getPage(0);
+    const auto& pageN1DataTable = pageN1.getDataTable();
+    auto pageN1Data = pageN1DataTable.value().getData();
+    REQUIRE(4 == pageN1Data.size());
 }
 
 TEST_CASE("parses block with AUDIT TRAIL", "[Block]")
@@ -539,6 +546,6 @@ TEST_CASE("parses block with AUDIT TRAIL", "[Block]")
 
     auto block = sciformats::jdx::Block(reader);
     REQUIRE(block.getAuditTrail().has_value());
-    auto auditTrail = block.getAuditTrail().value();
+    const auto& auditTrail = block.getAuditTrail().value();
     REQUIRE(2 == auditTrail.getData().size());
 }

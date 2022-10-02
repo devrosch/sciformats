@@ -84,7 +84,7 @@ protected:
      */
     std::vector<std::pair<double, double>> parseXppYYData(
         const std::string& label, TextReader& reader, double firstX,
-        double lastX, double yFactor, size_t nPoints);
+        double lastX, double yFactor, size_t nPoints) const;
 
     /**
      * @brief Parses the xy data pairs (i.e. "(XY..XY)" or "(RA..RA)") from a
@@ -105,7 +105,7 @@ protected:
      */
     std::vector<std::pair<double, double>> parseXyXyData(
         const std::string& label, TextReader& reader, double xFactor,
-        double yFactor, std::optional<size_t> nPoints);
+        double yFactor, std::optional<size_t> nPoints) const;
 };
 } // namespace sciformats::jdx
 

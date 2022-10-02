@@ -32,18 +32,20 @@ sciformats::jdx::DataTable::DataTable(std::string label,
     parse(blockLdrs, nTuplesAttributes, pageLdrs, nextLine);
 }
 
-std::optional<std::string> sciformats::jdx::DataTable::getPlotDescriptor()
+const std::optional<std::string>&
+sciformats::jdx::DataTable::getPlotDescriptor() const
 {
     return m_plotDescriptor;
 }
 
-sciformats::jdx::DataTable::Attributes
-sciformats::jdx::DataTable::getAttributes()
+const sciformats::jdx::DataTable::Attributes&
+sciformats::jdx::DataTable::getAttributes() const
 {
     return m_mergedAttributes;
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::DataTable::getData()
+std::vector<std::pair<double, double>>
+sciformats::jdx::DataTable::getData() const
 {
     auto variableList = determineVariableList(getVariableList());
     auto dataTableParams = m_mergedAttributes;

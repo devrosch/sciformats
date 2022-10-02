@@ -26,7 +26,7 @@ public:
 protected:
     DataLdr(std::string label, std::string variableList, TextReader& reader);
 
-    TextReader& getReader();
+    TextReader& getReader() const;
     /**
      * @brief Validates if input is a valid data LDR.
      * @param label LDR label.
@@ -40,7 +40,7 @@ protected:
         const std::vector<std::string>& expectedVariableLists);
 
     template<typename R>
-    R callAndResetStreamPos(const std::function<R()>& func);
+    R callAndResetStreamPos(const std::function<R()>& func) const;
 
 private:
     const std::string m_variableList;
@@ -50,7 +50,7 @@ private:
 
 template<typename R>
 R sciformats::jdx::DataLdr::callAndResetStreamPos(
-    const std::function<R()>& func)
+    const std::function<R()>& func) const
 {
     auto pos = m_reader.eof() ? std::nullopt
                               : std::optional<std::streampos>(m_reader.tellg());

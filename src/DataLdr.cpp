@@ -17,7 +17,7 @@ const std::string& sciformats::jdx::DataLdr::getVariableList() const
     return m_variableList;
 }
 
-sciformats::jdx::TextReader& sciformats::jdx::DataLdr::getReader()
+sciformats::jdx::TextReader& sciformats::jdx::DataLdr::getReader() const
 {
     return m_reader;
 }

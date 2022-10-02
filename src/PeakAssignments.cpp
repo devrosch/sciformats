@@ -15,7 +15,7 @@ sciformats::jdx::PeakAssignments::PeakAssignments(const std::string& label,
 }
 
 std::vector<sciformats::jdx::PeakAssignment>
-sciformats::jdx::PeakAssignments::getData()
+sciformats::jdx::PeakAssignments::getData() const
 {
     util::PeakAssignmentsParser parser{getReader(), getVariableList()};
     return TabularData::getData<util::PeakAssignmentsParser, PeakAssignment>(

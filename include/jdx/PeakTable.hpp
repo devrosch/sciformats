@@ -39,7 +39,7 @@ public:
      * @brief Provides the parsed peak data.
      * @return The list of peaks.
      */
-    std::vector<Peak> getData();
+    std::vector<Peak> getData() const;
 
 private:
     static constexpr const char* s_peakTableLabel = "PEAKTABLE";

@@ -35,11 +35,12 @@ protected:
      * @param Parser for the data.
      * @return The list of peak assignments or peaks.
      */
-    template<typename Parser, typename R> std::vector<R> getData(Parser parser);
+    template<typename Parser, typename R>
+    std::vector<R> getData(Parser parser) const;
 };
 
 template<typename Parser, typename R>
-std::vector<R> sciformats::jdx::TabularData::getData(Parser parser)
+std::vector<R> sciformats::jdx::TabularData::getData(Parser parser) const
 {
     auto func = [&]() {
         std::vector<R> data{};

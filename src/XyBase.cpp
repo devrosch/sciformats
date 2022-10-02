@@ -22,13 +22,15 @@ sciformats::jdx::XyBase::getParameters() const
     return m_parameters;
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getXppYYData()
+std::vector<std::pair<double, double>>
+sciformats::jdx::XyBase::getXppYYData() const
 {
     return Data2D::parseXppYYData(getLabel(), getReader(), m_parameters.firstX,
         m_parameters.lastX, m_parameters.yFactor, m_parameters.nPoints);
 }
 
-std::vector<std::pair<double, double>> sciformats::jdx::XyBase::getXYXYData()
+std::vector<std::pair<double, double>>
+sciformats::jdx::XyBase::getXYXYData() const
 {
     return Data2D::parseXyXyData(getLabel(), getReader(), m_parameters.xFactor,
         m_parameters.yFactor, m_parameters.nPoints);

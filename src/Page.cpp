@@ -24,17 +24,19 @@ void sciformats::jdx::Page::validateInput(const std::string& label)
     }
 }
 
-std::string sciformats::jdx::Page::getPageVariables()
+const std::string& sciformats::jdx::Page::getPageVariables() const
 {
     return m_pageVariables;
 }
 
-std::vector<sciformats::jdx::StringLdr> sciformats::jdx::Page::getPageLdrs()
+const std::vector<sciformats::jdx::StringLdr>&
+sciformats::jdx::Page::getPageLdrs() const
 {
     return m_pageLdrs;
 }
 
-std::optional<sciformats::jdx::DataTable> sciformats::jdx::Page::getDataTable()
+const std::optional<sciformats::jdx::DataTable>&
+sciformats::jdx::Page::getDataTable() const
 {
     return m_dataTable;
 }

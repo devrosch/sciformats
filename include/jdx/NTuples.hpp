@@ -40,26 +40,26 @@ public:
      * first line of the LDR), e.g., "NMR FID" or "MASS SPECTRUM".
      * @return The data form.
      */
-    std::string getDataForm();
+    std::string getDataForm() const;
 
     /**
      * @brief Returns the page attributes.
      * @return The page attributes.
      */
-    std::vector<NTuplesAttributes> getAttributes();
+    const std::vector<NTuplesAttributes>& getAttributes() const;
 
     /**
      * @brief Returns the number of pages in this record.
      * @return The number of pages.
      */
-    size_t getNumPages();
+    size_t getNumPages() const;
 
     /**
      * @brief Retrieves a page from the record.
      * @param pageIndex The page index starting at zero.
      * @return The page.
      */
-    Page getPage(size_t pageIndex);
+    const Page& getPage(size_t pageIndex) const;
 
 private:
     static constexpr const char* s_label = "NTUPLES";

@@ -6,7 +6,8 @@
 
 TEST_CASE("parses well-formed 5 parameters audit trail", "[AuditTrail]")
 {
-    // ##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, WHAT)
+    auto nextLine = std::optional<std::string>{
+        "##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, WHAT)"};
     const auto* label = "AUDITTRAIL";
     const auto* variables = " $$ (NUMBER, WHEN, WHO, WHERE, WHAT)";
     // clang-format off
@@ -23,7 +24,6 @@ TEST_CASE("parses well-formed 5 parameters audit trail", "[AuditTrail]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto nextLine = std::optional<std::string>{};
     auto auditTrail
         = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
     auto entries = auditTrail.getData();
@@ -49,7 +49,8 @@ TEST_CASE("parses well-formed 5 parameters audit trail", "[AuditTrail]")
 
 TEST_CASE("parses well-formed 6 parameters audit trail", "[AuditTrail]")
 {
-    // ##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)
+    auto nextLine = std::optional<std::string>{
+        "##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)"};
     const auto* label = "AUDITTRAIL";
     const auto* variables = "$$ (NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)";
     // clang-format off
@@ -66,7 +67,6 @@ TEST_CASE("parses well-formed 6 parameters audit trail", "[AuditTrail]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto nextLine = std::optional<std::string>{};
     auto auditTrail
         = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
     auto entries = auditTrail.getData();
@@ -92,7 +92,8 @@ TEST_CASE("parses well-formed 6 parameters audit trail", "[AuditTrail]")
 
 TEST_CASE("parses well-formed 7 parameters audit trail", "[AuditTrail]")
 {
-    // ##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+    auto nextLine = std::optional<std::string>{
+        "##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)"};
     const auto* label = "AUDITTRAIL";
     const auto* variables
         = " $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)";
@@ -110,7 +111,6 @@ TEST_CASE("parses well-formed 7 parameters audit trail", "[AuditTrail]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto nextLine = std::optional<std::string>{};
     auto auditTrail
         = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
     auto entries = auditTrail.getData();
@@ -136,6 +136,8 @@ TEST_CASE("parses well-formed 7 parameters audit trail", "[AuditTrail]")
 
 TEST_CASE("parses Bruker NMR type audit trail", "[AuditTrail]")
 {
+    auto nextLine = std::optional<std::string>{
+        "##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, WHAT)"};
     // ##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
     const auto* label = "AUDITTRAIL";
     // variables list given may deviate between "##AUDIT TRAIL" and "$$ ##AUDIT
@@ -174,7 +176,6 @@ TEST_CASE("parses Bruker NMR type audit trail", "[AuditTrail]")
     streamPtr->str(input);
     sciformats::jdx::TextReader reader{std::move(streamPtr)};
 
-    auto nextLine = std::optional<std::string>{};
     auto auditTrail
         = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
     auto entries = auditTrail.getData();
@@ -199,4 +200,52 @@ TEST_CASE("parses Bruker NMR type audit trail", "[AuditTrail]")
     auto entry3 = entries.at(2);
     REQUIRE(3 == entry3.number);
     REQUIRE("2022-01-02 05:04:05.999 +0001" == entry3.when);
+}
+
+TEST_CASE("fails when unclosed audit trail entry parenthesis", "[AuditTrail]")
+{
+    auto nextLine = std::optional<std::string>{
+        "##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, WHAT)"};
+    // ##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+    const auto* label = "AUDITTRAIL";
+    const auto* variables
+        = " $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)";
+    // clang-format off
+    std::string input{"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,<proc1>,<SW 1.3>,\n"
+                      "##END=\n"
+                     };
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    auto auditTrail
+        = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
+
+    REQUIRE_THROWS_WITH(auditTrail.getData(),
+        Catch::Matchers::Contains("parenthesis", Catch::CaseSensitive::No));
+}
+
+TEST_CASE("fails when file ends unexpectedly", "[AuditTrail]")
+{
+    auto nextLine = std::optional<std::string>{
+        "##AUDIT TRAIL= $$ (NUMBER, WHEN, WHO, WHERE, WHAT)"};
+    // ##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+    const auto* label = "AUDITTRAIL";
+    const auto* variables
+        = " $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)";
+    // clang-format off
+    std::string input{"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,<proc1>,<SW 1.3>,\n"
+                      "      <acquisition>)\n"
+                     };
+    // clang-format on
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    auto auditTrail
+        = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
+
+    REQUIRE_THROWS_WITH(auditTrail.getData(),
+        Catch::Matchers::Contains("end", Catch::CaseSensitive::No));
 }

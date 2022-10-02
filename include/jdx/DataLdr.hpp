@@ -26,7 +26,7 @@ public:
 protected:
     DataLdr(std::string label, std::string variableList, TextReader& reader);
 
-    TextReader& getReader() const;
+    [[nodiscard]] TextReader& getReader() const;
     /**
      * @brief Validates if input is a valid data LDR.
      * @param label LDR label.

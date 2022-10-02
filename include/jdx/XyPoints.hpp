@@ -40,7 +40,7 @@ public:
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getData() const;
+    [[nodiscard]] std::vector<std::pair<double, double>> getData() const;
 
 private:
     static constexpr const char* s_xyPointsLabel = "XYPOINTS";

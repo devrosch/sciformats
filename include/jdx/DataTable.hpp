@@ -53,20 +53,20 @@ public:
      * "(X++(R..R)), XYDATA".
      * @return The data table plot descriptor.
      */
-    const std::optional<std::string>& getPlotDescriptor() const;
+    [[nodiscard]] const std::optional<std::string>& getPlotDescriptor() const;
 
     /**
      * @brief The relevant parameters merged from LDRs of BLOCK,
      * NTUPLES, and PAGE for the DATA TABLE.
      * @return The attributes for the DATA TABLE.
      */
-    const Attributes& getAttributes() const;
+    [[nodiscard]] const Attributes& getAttributes() const;
 
     /**
      * @brief The (already scaled if applicable) data from the DATA TABLE.
      * @return The data from the data table.
      */
-    std::vector<std::pair<double, double>> getData() const;
+    [[nodiscard]] std::vector<std::pair<double, double>> getData() const;
 
 private:
     enum class PlotDescriptor

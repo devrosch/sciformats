@@ -50,14 +50,14 @@ protected:
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getXppYYData() const;
+    [[nodiscard]] std::vector<std::pair<double, double>> getXppYYData() const;
 
     /**
      * @brief Provides the parsed xy data of type (XY..XY) and similar.
      * @return Pairs of xy data. Invalid values ("?") will be represented by
      * std::numeric_limits<double>::quiet_NaN.
      */
-    std::vector<std::pair<double, double>> getXYXYData() const;
+    [[nodiscard]] std::vector<std::pair<double, double>> getXYXYData() const;
 
 private:
     XyParameters m_parameters;

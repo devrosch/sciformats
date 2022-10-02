@@ -43,20 +43,20 @@ public:
      * the first line of the LDR), e.g., "N=1" or "X=2.2, Y=3.3".
      * @return The page variables.
      */
-    const std::string& getPageVariables() const;
+    [[nodiscard]] const std::string& getPageVariables() const;
 
     /**
      * @brief The LDRs contained by the PAGE, e.g.
      * "NPOINTS", not including "DATA TABLE".
      * @return The page LDRs.
      */
-    const std::vector<StringLdr>& getPageLdrs() const;
+    [[nodiscard]] const std::vector<StringLdr>& getPageLdrs() const;
 
     /**
      * @brief The DATA TABLE.
      * @return The DATA TABLE.
      */
-    const std::optional<DataTable>& getDataTable() const;
+    [[nodiscard]] const std::optional<DataTable>& getDataTable() const;
 
 private:
     static constexpr const char* s_label = "PAGE";

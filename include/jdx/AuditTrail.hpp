@@ -12,7 +12,6 @@
 
 namespace sciformats::jdx
 {
-// TODO: introduce new base type
 /**
  * @brief A JCAMP-DX AUDIT TRAIL record.
  */

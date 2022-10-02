@@ -1,5 +1,6 @@
 #ifndef LIBJDX_BLOCK_HPP
 #define LIBJDX_BLOCK_HPP
+#include "jdx/AuditTrail.hpp"
 #include "jdx/BlockParseException.hpp"
 #include "jdx/LdrContainer.hpp"
 #include "jdx/NTuples.hpp"
@@ -118,11 +119,17 @@ public:
      */
     [[nodiscard]] const std::optional<NTuples>& getNTuples() const;
 
+    /**
+     * @brief Provides the AUDIT TRAIL record if available.
+     * @return AUDIT TRAIL record.
+     */
+    [[nodiscard]] const std::optional<AuditTrail>& getAuditTrail() const;
+
 private:
     static constexpr const char* s_blockStartLabel = "TITLE";
-    static constexpr std::array<const char*, 9> s_specialLdrs
+    static constexpr std::array<const char*, 10> s_specialLdrs
         = {"", "END", s_blockStartLabel, "XYDATA", "RADATA", "XYPOINTS",
-            "PEAKTABLE", "PEAKASSIGNMENTS", "NTUPLES"};
+            "PEAKTABLE", "PEAKASSIGNMENTS", "NTUPLES", "AUDITTRAIL"};
 
     std::unique_ptr<TextReader> m_readerPtr;
     TextReader& m_reader;
@@ -135,6 +142,7 @@ private:
     std::optional<PeakTable> m_peakTable;
     std::optional<PeakAssignments> m_peakAssignments;
     std::optional<NTuples> m_nTuples;
+    std::optional<AuditTrail> m_auditTrail;
 
     /**
      * @brief Constructs a Block from first line value and reader.

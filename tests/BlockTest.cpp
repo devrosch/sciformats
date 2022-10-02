@@ -480,7 +480,7 @@ TEST_CASE("parses block with NTUPLES", "[Block]")
 {
     // clang-format off
     std::string input{"##TITLE= Test\n"
-                      "##JCAMP-DX= 4.24\n"
+                      "##JCAMP-DX= 5.01\n"
                       "##DATA TYPE= NMR FID\n"
                       "##DATA CLASS= NTUPLES\n"
                       "##NTUPLES= NMR FID\n"
@@ -513,4 +513,32 @@ TEST_CASE("parses block with NTUPLES", "[Block]")
 
     auto block = sciformats::jdx::Block(reader);
     REQUIRE(block.getNTuples().has_value());
+}
+
+TEST_CASE("parses block with AUDIT TRAIL", "[Block]")
+{
+    // clang-format off
+    std::string input{"##TITLE= Audit Trail Test\n"
+                      "##JCAMP-DX= 5.01\n"
+                      "##DATA TYPE= NMR FID\n"
+                      "##ORIGIN= test\r\n"
+                      "##OWNER= PUBLIC DOMAIN\r\n"
+                      "##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, WHAT)\n"
+                      "(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,\n"
+                      "      <acquisition>)\n"
+                      "(   2,<2022-09-01 19:10:12.123 -0200>,<testuser>,<location01>,\n"
+                      "      <raw data processing\n"
+                      "       line 2\n"
+                      "       line 3>)\n"
+                      "##END=\n"};
+    // clang-format on
+
+    auto streamPtr = std::make_unique<std::stringstream>(std::ios_base::in);
+    streamPtr->str(input);
+    sciformats::jdx::TextReader reader{std::move(streamPtr)};
+
+    auto block = sciformats::jdx::Block(reader);
+    REQUIRE(block.getAuditTrail().has_value());
+    auto auditTrail = block.getAuditTrail().value();
+    REQUIRE(2 == auditTrail.getData().size());
 }

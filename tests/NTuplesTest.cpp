@@ -123,8 +123,6 @@ TEST_CASE("parses NTUPLES NMR FID record (round robin format)", "[NTuples]")
         "##VAR DIM=  2, 4, 4, 4\n"
         "##UNITS=    SECONDS,       SECONDS,         ARBITRARY UNITS, ARBITRARY UNITS\n"
         "##FIRST=    0.0, 1.0, , $$FIRST for R and I are in PAGEs\n"
-        // TODO: alternative:
-        // "##FIRST=    0.0, 1.0 $$FIRST for R and I are in PAGEs\n"
         "##LAST=     0.1, 2.5, ,\n"
         "##FACTOR=   1.0, 1.0, 1.0, 1.0\n"
         "##PAGE= T1=0.0\n"

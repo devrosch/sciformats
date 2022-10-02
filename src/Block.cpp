@@ -89,6 +89,12 @@ sciformats::jdx::Block::getNTuples() const
     return m_nTuples;
 }
 
+const std::optional<sciformats::jdx::AuditTrail>&
+sciformats::jdx::Block::getAuditTrail() const
+{
+    return m_auditTrail;
+}
+
 std::string sciformats::jdx::Block::parseFirstLine(const std::string& firstLine)
 {
     if (!util::isLdrStart(firstLine))
@@ -191,7 +197,11 @@ void sciformats::jdx::Block::parseInput(
                 return NTuples(label, value, m_ldrs, m_reader, nextLine);
             });
         }
-        // TODO: add audit trail
+        else if ("AUDITTRAIL" == label)
+        {
+            addLdr<AuditTrail>(title, "AUDITTRAIL", m_auditTrail,
+                [&]() { return AuditTrail(label, value, m_reader, nextLine); });
+        }
         else
         {
             throw BlockParseException("Unsupported", label, title);

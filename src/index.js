@@ -1,3 +1,6 @@
+import ParametersPanel from './components/ParametersPanel';
 import './style.css';
 
-console.log('index.js executed')
+customElements.define("parameters-panel", ParametersPanel);
+
+console.log('index.js executed');

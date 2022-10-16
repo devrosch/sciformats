@@ -1,0 +1,60 @@
+/* html - body */
+
+html {
+  background-color: brown;
+  height: calc(100% - 8px - 8px);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+body {
+  background-color: lightgrey;
+  height: 100%;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  /* make flexbox to allow content to fill 100% height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* header - content - footer */
+
+.header {
+  background-color: lightblue;
+  height: 2em;
+}
+
+.content {
+  background-color: lightgoldenrodyellow;
+  flex-grow: 1; /* fill 100% height */
+  display: flex;
+}
+
+.footer {
+  background-color: lightcoral;
+  height: 2em;
+}
+
+/* content */
+
+.tree {
+  background-color: aqua;
+  flex-grow: 1;
+}
+
+.node-content {
+  background-color: aliceblue;
+  flex-grow: 4;
+  display: flex;
+  flex-direction: column;
+}
+
+.data {
+  background-color: aquamarine;
+  flex-grow: 2;
+}
+
+.params {
+  background-color: azure;
+  flex-grow: 1;
+}

@@ -50,3 +50,5 @@ export default class Parameter extends HTMLElement {
   }
 
 }
+
+customElements.define("sf-parameter", Parameter);

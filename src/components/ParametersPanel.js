@@ -1,3 +1,5 @@
+import {} from './Parameter';
+
 const html = `
   <h1>Heading 1</h1>
   <ul></ul>
@@ -60,3 +62,5 @@ export default class ParametersPanel extends HTMLElement {
   }
 
 }
+
+customElements.define("sf-parameters-panel", ParametersPanel);

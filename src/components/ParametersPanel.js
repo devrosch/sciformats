@@ -28,10 +28,10 @@ export default class ParametersPanel extends HTMLElement {
     this.innerHTML = html;
 
     const text = this.hasAttribute('title') ? this.getAttribute('title') : '';
-    const heading = document.querySelector('h1');
+    const heading = this.querySelector('h1');
     heading.textContent = text;
 
-    const ul = document.querySelector('ul');
+    const ul = this.querySelector('ul');
     for (const param of this.data) {
       const li = document.createElement('li');
 

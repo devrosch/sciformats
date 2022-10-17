@@ -25,18 +25,19 @@ export default class ParametersPanel extends HTMLElement {
   render() {
     this.innerHTML = html;
 
-    const text = this.hasAttribute('test-attr') ? this.getAttribute('test-attr') : 'Test Heading';
+    const text = this.hasAttribute('title') ? this.getAttribute('title') : '';
     const heading = document.querySelector('h1');
     heading.textContent = text;
 
     const ul = document.querySelector('ul');
     for (const param of this.data) {
       const li = document.createElement('li');
-      const keySpan = document.createElement('span');
-      keySpan.textContent = param.key;
-      const valueSpan = document.createElement('span');
-      valueSpan.textContent = param.value;
-      li.append(keySpan, ': ', valueSpan);
+
+      const parameterEl = document.createElement('sf-parameter');
+      parameterEl.setAttribute('key', param.key);
+      parameterEl.setAttribute('value', param.value);
+      li.append(parameterEl);
+
       ul.appendChild(li);
     }
   }

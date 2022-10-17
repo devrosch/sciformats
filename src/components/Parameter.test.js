@@ -1,9 +1,22 @@
 import {} from './Parameter';
 
 test('sf-parameter renders', async () => {
-  document.body.innerHTML = `<sf-parameter key="abc" value="def"></sf-parameter>`;
-  expect(document.body.innerHTML).toContain('abc');
-  expect(document.body.innerHTML).toContain('def');
+  const element = 'sf-parameter';
+  const keyAttr = 'key';
+  const valueAttr = 'value';
+  const key = 'abc';
+  const value = 'def';
+
+  document.body.innerHTML = `<${element}/>`;
+  expect(document.body.innerHTML).not.toContain(key);
+  expect(document.body.innerHTML).not.toContain(value);
+
+  const parameter = document.body.querySelector(element);
+  parameter.setAttribute(keyAttr, key);
+  parameter.setAttribute(valueAttr, value);
+  expect(document.body.innerHTML).toContain(key);
+  expect(document.body.innerHTML).toContain(value);
+
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = ``;
 })

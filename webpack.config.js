@@ -5,12 +5,10 @@ module.exports = {
   mode: 'development',
   entry: {
     index: './src/index.js',
-    // print: './src/print.js',
   },
   devtool: 'source-map',
   devServer: {
     static: './dist',
-    // watchFiles: ['src/**/*.html', 'dist/**/*'],
     watchFiles: ['src/**/*.html', 'dist/**/*'],
   },
   plugins: [

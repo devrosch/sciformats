@@ -9,8 +9,12 @@ To install the required packages run:
 npm install
 ```
 
+After that, to run the tests, run:
+```
+npm test
+```
 
-After that, to run the development server, run:
+To start the development server, run:
 ```
 npm start
 ```
@@ -22,9 +26,9 @@ npm run build
 
 Build artifacts are placed into the `dist` directory.
 
-## Authors
+## Author
 
-* **Robert Schiwon** - *Main developer* - [devrosch](https://gitlab.com/devrosch)
+**Robert Schiwon** - *Main developer* - [devrosch](https://gitlab.com/devrosch)
 
 ## License
 

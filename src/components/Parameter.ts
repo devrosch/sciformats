@@ -1,11 +1,12 @@
 const template = `
   <span></span>: <span></span>
-`
+`;
 
 export default class Parameter extends HTMLElement {
   static get observedAttributes() { return ['key', 'value']; }
 
   #key = null as string | null;
+
   #value = null as string | null;
 
   constructor() {
@@ -43,14 +44,12 @@ export default class Parameter extends HTMLElement {
     console.log('Parameter attributeChangedCallback() called');
     if (name === 'key') {
       this.#key = newValue;
-    }
-    else if (name === 'value') {
+    } else if (name === 'value') {
       this.#value = newValue;
     }
     this.render();
   }
-
 }
 
 console.log('define "sf-parameter"');
-customElements.define("sf-parameter", Parameter);
+customElements.define('sf-parameter', Parameter);

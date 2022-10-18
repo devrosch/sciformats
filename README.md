@@ -2,7 +2,7 @@
 
 An HTML/CSS/JS UI for visualizing scientific data.
 
-# Build
+## Build
 
 To install the required packages run:
 ```
@@ -12,6 +12,11 @@ npm install
 After that, to run the tests, run:
 ```
 npm test
+```
+
+To lint the code, run:
+```
+npm run lint
 ```
 
 To start the development server, run:

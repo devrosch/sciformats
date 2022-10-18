@@ -1,3 +1,4 @@
+/* eslint-disable import/no-duplicates */
 import './Parameter'; // for side effects
 import Parameter from './Parameter';
 
@@ -19,5 +20,5 @@ test('sf-parameter renders', async () => {
   expect(document.body.innerHTML).toContain(value);
 
   // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = ``;
-})
+  document.body.innerHTML = '';
+});

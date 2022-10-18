@@ -3,7 +3,7 @@ import './Parameter';
 const html = `
   <h1>Heading 1</h1>
   <ul></ul>
-`
+`;
 
 export default class ParametersPanel extends HTMLElement {
   static get observedAttributes() { return ['test-attr']; }
@@ -61,11 +61,11 @@ export default class ParametersPanel extends HTMLElement {
     console.log('ParametersPanel adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('ParametersPanel attributeChangedCallback() called');
   }
-
 }
 
 console.log('define "sf-parameters-panel"');
-customElements.define("sf-parameters-panel", ParametersPanel);
+customElements.define('sf-parameters-panel', ParametersPanel);

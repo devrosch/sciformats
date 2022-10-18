@@ -1,4 +1,5 @@
-import {} from './Parameter';
+import './Parameter'; // for side effects
+import Parameter from './Parameter';
 
 test('sf-parameter renders', async () => {
   const element = 'sf-parameter';
@@ -11,7 +12,7 @@ test('sf-parameter renders', async () => {
   expect(document.body.innerHTML).not.toContain(key);
   expect(document.body.innerHTML).not.toContain(value);
 
-  const parameter = document.body.querySelector(element);
+  const parameter = document.body.querySelector(element) as Parameter;
   parameter.setAttribute(keyAttr, key);
   parameter.setAttribute(valueAttr, value);
   expect(document.body.innerHTML).toContain(key);

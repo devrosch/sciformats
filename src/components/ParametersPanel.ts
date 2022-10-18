@@ -1,4 +1,4 @@
-import {} from './Parameter';
+import './Parameter';
 
 const html = `
   <h1>Heading 1</h1>
@@ -8,7 +8,7 @@ const html = `
 export default class ParametersPanel extends HTMLElement {
   static get observedAttributes() { return ['test-attr']; }
 
-  #data = [{ key: 'key1', value: 'value1' }, { key: 'key2', value: 'value2' }, { key: 'key3', value: 'value3' }];
+  #data : { key: string, value: string }[] = [{ key: 'key1', value: 'value1' }, { key: 'key2', value: 'value2' }, { key: 'key3', value: 'value3' }];
 
   constructor() {
     super();
@@ -19,7 +19,7 @@ export default class ParametersPanel extends HTMLElement {
     return this.#data;
   }
 
-  set data(data) {
+  set data(data: { key: string, value: string }[]) {
     this.#data = data;
     this.render();
   }
@@ -29,17 +29,21 @@ export default class ParametersPanel extends HTMLElement {
 
     const text = this.hasAttribute('title') ? this.getAttribute('title') : '';
     const heading = this.querySelector('h1');
+    if (heading === null) {
+      throw new Error('Ilegal state. No "h1" found in ParametersPanel.');
+    }
     heading.textContent = text;
 
     const ul = this.querySelector('ul');
+    if (ul === null) {
+      throw new Error('Ilegal state. No "ul" found in ParametersPanel.');
+    }
     for (const param of this.data) {
       const li = document.createElement('li');
-
       const parameterEl = document.createElement('sf-parameter');
       parameterEl.setAttribute('key', param.key);
       parameterEl.setAttribute('value', param.value);
       li.append(parameterEl);
-
       ul.appendChild(li);
     }
   }
@@ -57,10 +61,11 @@ export default class ParametersPanel extends HTMLElement {
     console.log('ParametersPanel adoptedCallback() called');
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('ParametersPanel attributeChangedCallback() called');
   }
 
 }
 
+console.log('define "sf-parameters-panel"');
 customElements.define("sf-parameters-panel", ParametersPanel);

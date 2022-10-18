@@ -1,4 +1,5 @@
-import {} from './ParametersPanel';
+import './ParametersPanel'; // for side effects
+import ParametersPanel from './ParametersPanel';
 
 test('sf-parameters-panel renders', async () => {
   const element = 'sf-parameters-panel';
@@ -16,7 +17,7 @@ test('sf-parameters-panel renders', async () => {
   expect(document.body.innerHTML).not.toContain(data[1].key);
   expect(document.body.innerHTML).not.toContain(data[1].value);
 
-  const panel = document.body.querySelector(element);
+  let panel = document.body.querySelector(element) as ParametersPanel;
   panel.data = data;
   expect(document.body.innerHTML).toContain(data[0].key);
   expect(document.body.innerHTML).toContain(data[0].value);

@@ -5,7 +5,8 @@ const template = `
 export default class Parameter extends HTMLElement {
   static get observedAttributes() { return ['key', 'value']; }
 
-  #data = { key: null, value: null };
+  #key = null as string | null;
+  #value = null as string | null;
 
   constructor() {
     super();
@@ -17,16 +18,16 @@ export default class Parameter extends HTMLElement {
     const spans = this.querySelectorAll('span');
     const keySpan = spans[0];
     const valueSpan = spans[1];
-    keySpan.textContent = this.#data.key;
-    valueSpan.textContent = this.#data.value;
+    keySpan.textContent = this.#key;
+    valueSpan.textContent = this.#value;
   }
 
   connectedCallback() {
     console.log('Parameter connectedCallback() called');
     const key = this.getAttribute('key');
     const value = this.getAttribute('value');
-    this.#data.key = key;
-    this.#data.value = value;
+    this.#key = key;
+    this.#value = value;
     this.render();
   }
 
@@ -38,17 +39,18 @@ export default class Parameter extends HTMLElement {
     console.log('Parameter adoptedCallback() called');
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Parameter attributeChangedCallback() called');
     if (name === 'key') {
-      this.#data.key = newValue;
+      this.#key = newValue;
     }
     else if (name === 'value') {
-      this.#data.value = newValue;
+      this.#value = newValue;
     }
     this.render();
   }
 
 }
 
+console.log('define "sf-parameter"');
 customElements.define("sf-parameter", Parameter);

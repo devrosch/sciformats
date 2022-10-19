@@ -39,12 +39,14 @@ body {
 
 .tree {
   background-color: aqua;
-  flex-grow: 1;
+  flex: 0 0 20%;
+  white-space: nowrap;
+  overflow: scroll;
 }
 
 .node-content {
   background-color: aliceblue;
-  flex-grow: 4;
+  flex: 0 0 80%;
   display: flex;
   flex-direction: column;
 }

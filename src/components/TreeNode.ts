@@ -37,6 +37,7 @@ export default class TreeNode extends HTMLElement {
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
       const plusMinusSpan = document.createElement('span');
+      plusMinusSpan.classList.add('plusminus');
       plusMinusSpan.textContent = hasChildren ? this.#collapsed ? '⊞' : '⊟' : '';
       plusMinusSpan.addEventListener('click', () => this.onClick());
       this.append(plusMinusSpan);

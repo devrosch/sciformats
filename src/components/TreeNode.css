@@ -8,5 +8,7 @@ sf-tree-node > sf-tree-node {
 }
 
 sf-tree-node > .plusminus {
-  width: 2em;
+  display: inline-block;
+  width: 1em;
+  text-align: left;
 }

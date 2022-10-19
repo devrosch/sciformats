@@ -1,0 +1,12 @@
+sf-tree-node {
+  cursor: pointer;
+  display: block; /* new line for each */
+}
+
+sf-tree-node > sf-tree-node {
+  margin-left: 1em;
+}
+
+sf-tree-node > .plusminus {
+  width: 2em;
+}

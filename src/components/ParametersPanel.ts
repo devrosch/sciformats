@@ -30,13 +30,13 @@ export default class ParametersPanel extends HTMLElement {
     const text = this.hasAttribute('title') ? this.getAttribute('title') : '';
     const heading = this.querySelector('h1');
     if (heading === null) {
-      throw new Error('Ilegal state. No "h1" found in ParametersPanel.');
+      throw new Error('Illegal state. No "h1" found in ParametersPanel.');
     }
     heading.textContent = text;
 
     const ul = this.querySelector('ul');
     if (ul === null) {
-      throw new Error('Ilegal state. No "ul" found in ParametersPanel.');
+      throw new Error('Illegal state. No "ul" found in ParametersPanel.');
     }
     for (const param of this.data) {
       const li = document.createElement('li');

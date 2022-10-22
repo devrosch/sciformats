@@ -1,4 +1,3 @@
-// import 'model/StubDataRepository';
 import DataRepository from 'model/DataRepository';
 import StubDataRepository from 'model/StubDataRepository';
 import './TreeNode.css';
@@ -8,7 +7,7 @@ const template = '';
 export default class TreeNode extends HTMLElement {
   static get observedAttributes() { return ['url']; }
 
-  #repository = new StubDataRepository as DataRepository;
+  #repository = new StubDataRepository() as DataRepository;
 
   #url = new URL('file:///dummy.txt#/') as URL;
 
@@ -33,9 +32,9 @@ export default class TreeNode extends HTMLElement {
     console.log('onClick() called');
     this.#collapsed = !this.#collapsed;
     this.render();
-  }
+  };
 
-  #extractName(path: string): string {
+  static #extractName(path: string): string {
     const segments : string[] = path.split('/');
     if (segments.length === 0) {
       return '';
@@ -50,9 +49,9 @@ export default class TreeNode extends HTMLElement {
   get name() {
     const hash = this.#url.hash.trim();
     if (hash === '' || hash === '#' || hash === '#/') {
-      return this.#extractName(this.#url.pathname);
+      return TreeNode.#extractName(this.#url.pathname);
     }
-    return this.#extractName(hash);
+    return TreeNode.#extractName(hash);
   }
 
   render() {
@@ -60,11 +59,13 @@ export default class TreeNode extends HTMLElement {
     const numChildNodes = this.#children.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
-      const plusMinusSpan = document.createElement('span');
-      plusMinusSpan.classList.add('plusminus');
-      plusMinusSpan.textContent = hasChildren ? this.#collapsed ? '⊞' : '⊟' : '';
-      plusMinusSpan.addEventListener('click', this.onClick);
-      this.append(plusMinusSpan);
+      if (hasChildren) {
+        const plusMinusSpan = document.createElement('span');
+        plusMinusSpan.classList.add('plusminus');
+        plusMinusSpan.textContent = this.#collapsed ? '⊞' : '⊟';
+        plusMinusSpan.addEventListener('click', this.onClick);
+        this.append(plusMinusSpan);
+      }
     }
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('plusminus');
@@ -73,7 +74,7 @@ export default class TreeNode extends HTMLElement {
 
     if (hasChildren && !this.#collapsed) {
       for (const childNodeName of this.#children) {
-        let childUrl = new URL(this.#url);
+        const childUrl = new URL(this.#url);
         if (!this.#url.hash.endsWith('/')) {
           childUrl.hash += ('/');
         }

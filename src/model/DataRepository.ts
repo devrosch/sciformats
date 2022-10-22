@@ -1,6 +1,5 @@
 export default interface DataRepository {
   /**
-   * 
    * @param {URL} url URL to file including fragment.
    * @example
    * file:///local/path/to/file#/

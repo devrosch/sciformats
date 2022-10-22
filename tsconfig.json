@@ -13,6 +13,11 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     // https://stackoverflow.com/questions/40443806/webpack-resolve-alias-does-not-work-with-typescript
-    "baseUrl": "./src",
+    // https://medium.com/@martin_hotell/type-safe-es2015-module-import-path-aliasing-with-webpack-typescript-and-jest-fe461347e010
+    "baseUrl": "./",
+    "paths": {
+      "components/*": ["src/components/*"],
+      "model/*": ["src/model/*"],
+    }
   }
 }

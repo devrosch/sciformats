@@ -43,10 +43,8 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js'],
     // to avoid relative paths to parent or sibling directories
     // https://medium.com/@etherealm/getting-rid-of-relative-paths-in-imports-using-webpack-alias-78d4bf15bb42
-    // https://webpack.js.org/configuration/module/#condition
-    // https://webpack.js.org/configuration/resolve/#resolveroots
-    // but:
     // https://stackoverflow.com/questions/40443806/webpack-resolve-alias-does-not-work-with-typescript
+    // https://medium.com/@martin_hotell/type-safe-es2015-module-import-path-aliasing-with-webpack-typescript-and-jest-fe461347e010
     alias: {
       model: path.resolve(__dirname, 'src/model/'),
       components: path.resolve(__dirname, 'src/components/'),

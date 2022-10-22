@@ -13,6 +13,10 @@
     "testEnvironment": "jsdom",
     "transform": {
       "^.+\\.[t|j]sx?$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "\\.(css|less|sass)$": "<rootDir>/src/styleMock.css",
+      "^model/(.*)": "<rootDir>/src/model/$1"
     }
   },
   "keywords": [

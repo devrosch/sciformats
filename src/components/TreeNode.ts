@@ -15,6 +15,8 @@ export default class TreeNode extends HTMLElement {
 
   #collapsed = true as boolean;
 
+  #selected = false as boolean;
+
   constructor(repository: DataRepository | null, url: URL | null) {
     super();
     console.log('TreeNode constructor() called');
@@ -28,14 +30,44 @@ export default class TreeNode extends HTMLElement {
     this.#children = data.children;
   }
 
-  onClick = () => {
-    console.log('onClick() called');
-    this.#collapsed = !this.#collapsed;
-    this.render();
-  };
+  render() {
+    this.innerHTML = template;
+    const numChildNodes = this.#children.length;
+    const hasChildren = numChildNodes > 0;
+    if (hasChildren) {
+      if (hasChildren) {
+        const plusMinusSpan = document.createElement('span');
+        plusMinusSpan.classList.add('plusminus');
+        plusMinusSpan.textContent = this.#collapsed ? '⊞' : '⊟';
+        plusMinusSpan.addEventListener('click', this.onToggleCollapsed);
+        this.append(plusMinusSpan);
+      }
+    }
+    const nameSpan = document.createElement('span');
+    nameSpan.classList.add('node-name');
+    nameSpan.addEventListener('click', this.onSelected);
+    nameSpan.textContent = this.name;
+    if (this.#selected) {
+      nameSpan.classList.add('selected');
+    }
+    this.append(nameSpan);
+
+    if (hasChildren && !this.#collapsed) {
+      for (const childNodeName of this.#children) {
+        const childUrl = new URL(this.#url);
+        if (!this.#url.hash.endsWith('/')) {
+          childUrl.hash += ('/');
+        }
+        childUrl.hash += childNodeName;
+        const childNode = new TreeNode(this.#repository, childUrl);
+        childNode.setAttribute('url', childUrl.toString());
+        this.appendChild(childNode);
+      }
+    }
+  }
 
   static #extractName(path: string): string {
-    const segments : string[] = path.split('/');
+    const segments: string[] = path.split('/');
     if (segments.length === 0) {
       return '';
     }
@@ -54,45 +86,63 @@ export default class TreeNode extends HTMLElement {
     return TreeNode.#extractName(hash);
   }
 
-  render() {
-    this.innerHTML = template;
-    const numChildNodes = this.#children.length;
-    const hasChildren = numChildNodes > 0;
-    if (hasChildren) {
-      if (hasChildren) {
-        const plusMinusSpan = document.createElement('span');
-        plusMinusSpan.classList.add('plusminus');
-        plusMinusSpan.textContent = this.#collapsed ? '⊞' : '⊟';
-        plusMinusSpan.addEventListener('click', this.onClick);
-        this.append(plusMinusSpan);
-      }
-    }
-    const nameSpan = document.createElement('span');
-    nameSpan.classList.add('plusminus');
-    nameSpan.textContent = this.name;
-    this.append(nameSpan);
-
-    if (hasChildren && !this.#collapsed) {
-      for (const childNodeName of this.#children) {
-        const childUrl = new URL(this.#url);
-        if (!this.#url.hash.endsWith('/')) {
-          childUrl.hash += ('/');
-        }
-        childUrl.hash += childNodeName;
-        const childNode = new TreeNode(this.#repository, childUrl);
-        childNode.setAttribute('url', childUrl.toString());
-        this.appendChild(childNode);
-      }
+  setSelected(selected: boolean) {
+    this.#selected = selected;
+    if (selected) {
+      this.classList.add('selected');
+      TreeNode.#dispatchGlobalCustomEvent('sf-tree-node-selected', { url: this.#url });
+    } else {
+      this.classList.remove('selected');
+      TreeNode.#dispatchGlobalCustomEvent('sf-tree-node-unselected', { url: this.#url });
     }
   }
 
+  static #dispatchGlobalCustomEvent(name: string, detail: any) {
+    window.dispatchEvent(new CustomEvent(name, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      detail,
+    }));
+  }
+
+  // #region user events
+
+  onToggleCollapsed = () => {
+    console.log('onClickPlusMinus() called');
+    this.#collapsed = !this.#collapsed;
+    this.render();
+  };
+
+  onSelected = () => {
+    console.log('onSelected() called');
+    this.setSelected(true);
+  };
+
+  handleTreeNodeSelected(e: Event) {
+    const ce = e as CustomEvent;
+    const url = ce.detail.url;
+    if (this.#url !== url) {
+      this.setSelected(false);
+    }
+  }
+
+  // #endregion user events
+
+  // #region lifecycle events
+
   connectedCallback() {
     console.log('TreeNode connectedCallback() called');
+    window.addEventListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
     this.render();
   }
 
   disconnectedCallback() {
     console.log('TreeNode disconnectedCallback() called');
+    if (this.#selected) {
+      this.setSelected(false);
+    }
+    window.removeEventListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
   }
 
   adoptedCallback() {
@@ -109,6 +159,8 @@ export default class TreeNode extends HTMLElement {
       }
     }
   }
+
+  // #endregion lifecycle events
 }
 
 console.log('define "sf-tree-node"');

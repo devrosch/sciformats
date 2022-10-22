@@ -12,3 +12,7 @@ sf-tree-node > .plusminus {
   width: 1em;
   text-align: left;
 }
+
+sf-tree-node.selected > .node-name {
+  background-color: darkorange;
+}

@@ -35,6 +35,16 @@ test('sf-tree-node renders', async () => {
   expect(document.body.innerHTML).toContain('child 2');
   expect(document.body.innerHTML).toContain('child 3');
 
+  // make sure disconnectedCallback() is called during test
+  document.body.innerHTML = '';
+});
+
+test('sf-tree-node generates sf-tree-node-changed events', async () => {
+  const element = 'sf-tree-node';
+
+  document.body.innerHTML = `<${element}/>`;
+  const treeNode = document.body.querySelector(element) as TreeNode;
+
   let called = 0;
   const eventHandler = () => {
     called += 1;

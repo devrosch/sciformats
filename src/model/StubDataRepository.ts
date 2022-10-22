@@ -13,10 +13,19 @@ export default class StubDataRepository implements DataRepository {
       children = ['child 1', 'child 2'];
     }
 
+    const parameters = [{ key: 'key 1', value: 'value 1' }];
+    if (hash.endsWith('/child 2')) {
+      parameters.push({ key: 'key 2', value: 'value 2' });
+    }
+    if (hash.endsWith('/child 3')) {
+      parameters.push({ key: 'key 2', value: 'value 2' });
+      parameters.push({ key: 'key 3', value: 'value 3' });
+    }
+
     return {
       url,
       data: [{ x: 1, y: 2 }, { x: 2, y: 4 }, { x: 3, y: 6 }],
-      parameters: [{ key: 'key 1', value: 'value 1' }],
+      parameters,
       children,
     };
   }

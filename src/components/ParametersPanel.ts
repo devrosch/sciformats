@@ -1,4 +1,6 @@
 import './Parameter';
+import DataRepository from 'model/DataRepository';
+import StubDataRepository from 'model/StubDataRepository';
 
 const html = `
   <h1>Heading 1</h1>
@@ -8,11 +10,16 @@ const html = `
 export default class ParametersPanel extends HTMLElement {
   static get observedAttributes() { return ['test-attr']; }
 
-  #data : { key: string, value: string }[] = [{ key: 'key1', value: 'value1' }, { key: 'key2', value: 'value2' }, { key: 'key3', value: 'value3' }];
+  #repository = new StubDataRepository() as DataRepository;
 
-  constructor() {
+  #data : { key: string, value: string }[] = [];
+
+  constructor(repository: DataRepository | null) {
     super();
     console.log('ParametersPanel constructor() called');
+    if (repository !== null && typeof repository !== 'undefined') {
+      this.#repository = repository;
+    }
   }
 
   get data() {
@@ -48,13 +55,24 @@ export default class ParametersPanel extends HTMLElement {
     }
   }
 
+  handleParametersChanged(e: Event) {
+    console.log('ParametersPanel handleParametersChanged() called');
+    const ce = e as CustomEvent;
+    const url = ce.detail.url;
+    const data = this.#repository.read(url);
+    this.#data = data.parameters;
+    this.render();
+  }
+
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
+    window.addEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
     this.render();
   }
 
   disconnectedCallback() {
     console.log('ParametersPanel disconnectedCallback() called');
+    window.removeEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
   }
 
   adoptedCallback() {

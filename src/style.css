@@ -53,10 +53,10 @@ body {
 
 .data {
   background-color: aquamarine;
-  flex-grow: 2;
+  flex: 0 0 60%;
 }
 
 .params {
   background-color: azure;
-  flex-grow: 1;
+  flex: 0 0 40%;
 }

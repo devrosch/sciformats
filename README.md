@@ -31,6 +31,12 @@ npm run build
 
 Build artifacts are placed into the `dist` directory.
 
+## Coding conventions
+
+* Code sits in the "src" directory.
+* Directory names are all lower case.
+* Custom events are named using kebab-case with "sf" prefix. Example: "sf-node-selected".
+
 ## Author
 
 **Robert Schiwon** - *Main developer* - [devrosch](https://gitlab.com/devrosch)

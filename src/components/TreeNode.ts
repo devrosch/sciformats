@@ -1,24 +1,32 @@
+// import 'model/StubDataRepository';
+import DataRepository from 'model/DataRepository';
+import StubDataRepository from 'model/StubDataRepository';
 import './TreeNode.css';
 
 const template = '';
 
 export default class TreeNode extends HTMLElement {
-  static get observedAttributes() { return ['name']; }
+  static get observedAttributes() { return ['url']; }
 
-  #name = '' as string;
+  #repository = new StubDataRepository as DataRepository;
+
+  #url = new URL('file:///dummy.txt#/') as URL;
+
+  #children = [] as string[];
 
   #collapsed = true as boolean;
 
-  #dataModel = (path: string) =>
-    path === 'root' ? ['child 1', 'child 2', 'child 3'] :
-    path === 'child 2' ? ['child 4', 'child 5'] : [];
-
-  constructor(dataModel : ((path: string) => string[]) | null) {
+  constructor(repository: DataRepository | null, url: URL | null) {
     super();
     console.log('TreeNode constructor() called');
-    if (dataModel !== null && typeof dataModel !== 'undefined') {
-      this.#dataModel = dataModel;
+    if (repository !== null && typeof repository !== 'undefined') {
+      this.#repository = repository;
     }
+    if (url !== null && typeof url !== 'undefined') {
+      this.#url = url;
+    }
+    const data = this.#repository.read(this.#url);
+    this.#children = data.children;
   }
 
   onClick = () => {
@@ -27,31 +35,51 @@ export default class TreeNode extends HTMLElement {
     this.render();
   }
 
+  #extractName(path: string): string {
+    const segments : string[] = path.split('/');
+    if (segments.length === 0) {
+      return '';
+    }
+    let name = segments.pop()!.trim();
+    if (name === '' || typeof name === undefined) {
+      name = segments.length > 0 ? segments.pop()!.trim() : '';
+    }
+    return decodeURIComponent(name);
+  }
+
   get name() {
-    return this.#name;
+    const hash = this.#url.hash.trim();
+    if (hash === '' || hash === '#' || hash === '#/') {
+      return this.#extractName(this.#url.pathname);
+    }
+    return this.#extractName(hash);
   }
 
   render() {
     this.innerHTML = template;
-    const numChildNodes = this.#dataModel(this.#name).length;
+    const numChildNodes = this.#children.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
       const plusMinusSpan = document.createElement('span');
       plusMinusSpan.classList.add('plusminus');
       plusMinusSpan.textContent = hasChildren ? this.#collapsed ? '⊞' : '⊟' : '';
-      plusMinusSpan.addEventListener('click', () => this.onClick());
+      plusMinusSpan.addEventListener('click', this.onClick);
       this.append(plusMinusSpan);
     }
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('plusminus');
-    nameSpan.textContent = this.#name;
+    nameSpan.textContent = this.name;
     this.append(nameSpan);
 
     if (hasChildren && !this.#collapsed) {
-      const childNodeNames = this.#dataModel(this.#name);
-      for (const childNodeName of childNodeNames) {
-        const childNode = new TreeNode(this.#dataModel);
-        childNode.setAttribute('name', childNodeName);
+      for (const childNodeName of this.#children) {
+        let childUrl = new URL(this.#url);
+        if (!this.#url.hash.endsWith('/')) {
+          childUrl.hash += ('/');
+        }
+        childUrl.hash += childNodeName;
+        const childNode = new TreeNode(this.#repository, childUrl);
+        childNode.setAttribute('url', childUrl.toString());
         this.appendChild(childNode);
       }
     }
@@ -72,10 +100,13 @@ export default class TreeNode extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('TreeNode attributeChangedCallback() called');
-    if (name === 'name') {
-      this.#name = newValue;
+    if (name === 'url') {
+      if (this.#url.toString() !== newValue) {
+        console.log('TreeNode url attribute value changed');
+        this.#url = new URL(newValue);
+        this.render();
+      }
     }
-    this.render();
   }
 }
 

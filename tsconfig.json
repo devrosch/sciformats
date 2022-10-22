@@ -12,5 +12,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+    // https://stackoverflow.com/questions/40443806/webpack-resolve-alias-does-not-work-with-typescript
+    "baseUrl": "./src",
   }
 }

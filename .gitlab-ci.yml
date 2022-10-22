@@ -24,6 +24,12 @@ audit:
     - npm audit --audit-level=critical --production
   allow_failure: true
 
+outdated:
+  stage: test
+  script:
+    - npm outdated
+  allow_failure: true
+
 build:
   stage: build
   script:
@@ -32,7 +38,7 @@ build:
     paths:
       - dist
   only:
-    - master
+    - main
 
 pages:
   stage: deploy
@@ -44,4 +50,4 @@ pages:
     paths:
       - public
   only:
-    - master
+    - main

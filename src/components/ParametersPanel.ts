@@ -8,9 +8,11 @@ const html = `
 `;
 
 export default class ParametersPanel extends HTMLElement {
-  static get observedAttributes() { return ['test-attr']; }
+  static get observedAttributes() { return ['title']; }
 
   #repository = new StubDataRepository() as DataRepository;
+
+  #title = '';
 
   #data : { key: string, value: string }[] = [];
 
@@ -36,22 +38,16 @@ export default class ParametersPanel extends HTMLElement {
 
     const text = this.hasAttribute('title') ? this.getAttribute('title') : '';
     const heading = this.querySelector('h1');
-    if (heading === null) {
-      throw new Error('Illegal state. No "h1" found in ParametersPanel.');
-    }
-    heading.textContent = text;
+    heading!.textContent = text;
 
     const ul = this.querySelector('ul');
-    if (ul === null) {
-      throw new Error('Illegal state. No "ul" found in ParametersPanel.');
-    }
     for (const param of this.data) {
       const li = document.createElement('li');
       const parameterEl = document.createElement('sf-parameter');
       parameterEl.setAttribute('key', param.key);
       parameterEl.setAttribute('value', param.value);
       li.append(parameterEl);
-      ul.appendChild(li);
+      ul!.appendChild(li);
     }
   }
 
@@ -67,6 +63,8 @@ export default class ParametersPanel extends HTMLElement {
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
     window.addEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
+    const title = this.hasAttribute('title') ? this.getAttribute('title') : '';
+    this.#title = title === null ? '' : title;
     this.render();
   }
 
@@ -82,6 +80,10 @@ export default class ParametersPanel extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('ParametersPanel attributeChangedCallback() called');
+    if (name === 'title' && this.#title !== newValue) {
+      this.#title = newValue;
+      this.render();
+    }
   }
 }
 

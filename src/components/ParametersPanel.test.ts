@@ -7,6 +7,7 @@ test('sf-parameters-panel renders', async () => {
   const element = 'sf-parameters-panel';
   const titleAttr = 'title';
   const title = 'Test Title';
+  const title2 = 'Test Title2';
   const data = [
     { key: 'testKey1', value: 'testValue1' },
     { key: 'testKey2', value: 'testValue2' },
@@ -25,6 +26,8 @@ test('sf-parameters-panel renders', async () => {
   expect(document.body.innerHTML).toContain(data[0].value);
   expect(document.body.innerHTML).toContain(data[1].key);
   expect(document.body.innerHTML).toContain(data[1].value);
+  panel.setAttribute(titleAttr, title2);
+  expect(document.body.innerHTML).toContain(title2);
 
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';

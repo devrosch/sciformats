@@ -6,6 +6,7 @@ test('sf-tree-node renders', async () => {
   const element = 'sf-tree-node';
   const urlAttr = 'url';
   const urlRoot = new URL('file:///test/path/root.txt');
+  const urlRootSlash = new URL('file:///test/path/root.txt/');
   const urlFragment = new URL('file:///test/path/root.txt#/fragment');
 
   document.body.innerHTML = `<${element}/>`;
@@ -17,9 +18,14 @@ test('sf-tree-node renders', async () => {
 
   treeNode.setAttribute(urlAttr, urlRoot.toString());
   expect(document.body.innerHTML).toContain('root.txt');
+  expect(treeNode.textContent).toContain('root.txt');
+
+  treeNode.setAttribute(urlAttr, urlRootSlash.toString());
+  expect(treeNode.textContent).toContain('root.txt');
 
   treeNode.setAttribute(urlAttr, urlFragment.toString());
   expect(document.body.innerHTML).toContain('fragment');
+  expect(treeNode.textContent).toContain('fragment');
 
   let plusMinusSpan = document.body.querySelector('.plusminus') as HTMLSpanElement;
   expect(plusMinusSpan?.innerHTML).toContain('⊞');

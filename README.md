@@ -2,6 +2,8 @@
 
 An HTML/CSS/JS UI for visualizing scientific data.
 
+You can find the application published at [GitLab Pages](https://devrosch.gitlab.io/sf-ui/).
+
 ## Build
 
 To install the required packages run:

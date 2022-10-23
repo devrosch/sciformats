@@ -1,5 +1,7 @@
 import DataRepository from 'model/DataRepository';
 import StubDataRepository from 'model/StubDataRepository';
+import { isSameUrl } from 'util/UrlUtils';
+import { dispatchWindowCustomEvent } from 'util/EventUtils';
 import './TreeNode.css';
 
 const template = '';
@@ -90,20 +92,11 @@ export default class TreeNode extends HTMLElement {
     this.#selected = selected;
     if (selected) {
       this.classList.add('selected');
-      TreeNode.#dispatchGlobalCustomEvent('sf-tree-node-selected', { url: this.#url });
+      dispatchWindowCustomEvent('sf-tree-node-selected', { url: this.#url });
     } else {
       this.classList.remove('selected');
-      TreeNode.#dispatchGlobalCustomEvent('sf-tree-node-unselected', { url: this.#url });
+      dispatchWindowCustomEvent('sf-tree-node-unselected', { url: this.#url });
     }
-  }
-
-  static #dispatchGlobalCustomEvent(name: string, detail: any) {
-    window.dispatchEvent(new CustomEvent(name, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      detail,
-    }));
   }
 
   // #region user events
@@ -122,8 +115,7 @@ export default class TreeNode extends HTMLElement {
   handleTreeNodeSelected(e: Event) {
     const ce = e as CustomEvent;
     const url = ce.detail.url;
-    const sameUrl = this.#url.toString() === url.toString();
-    if (!sameUrl && this.#selected) {
+    if (!isSameUrl(this.#url, url) && this.#selected) {
       this.setSelected(false);
     }
   }

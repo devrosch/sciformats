@@ -1,6 +1,7 @@
 import './Parameter';
 import DataRepository from 'model/DataRepository';
 import StubDataRepository from 'model/StubDataRepository';
+import { isSameUrl } from 'util/UrlUtils';
 
 const html = `
   <h1>Heading 1</h1>
@@ -57,7 +58,7 @@ export default class ParametersPanel extends HTMLElement {
     console.log('ParametersPanel handleParametersChanged() called');
     const ce = e as CustomEvent;
     const url = new URL(ce.detail.url);
-    const sameUrl = url.toString() === this.#url?.toString();
+    const sameUrl = isSameUrl(this.#url, url);
     if (sameUrl && e.type === 'sf-tree-node-unselected') {
       this.#url = null;
       this.#data = [];

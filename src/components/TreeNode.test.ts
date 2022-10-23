@@ -1,4 +1,5 @@
 /* eslint-disable import/no-duplicates */
+import { dispatchWindowCustomEvent } from 'util/EventUtils';
 import './TreeNode'; // for side effects
 import TreeNode from './TreeNode';
 
@@ -73,12 +74,7 @@ test('sf-tree-node observes sf-tree-node-selected events', async () => {
   treeNode.onSelected();
   expect(treeNode.classList).toContain('selected');
 
-  window.dispatchEvent(new CustomEvent('sf-tree-node-selected', {
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-    detail: { url: new URL('https://dummy') },
-  }));
+  dispatchWindowCustomEvent('sf-tree-node-selected', { url: new URL('https://dummy') });
 
   expect(treeNode.classList).not.toContain('selected');
 

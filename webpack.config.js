@@ -46,8 +46,9 @@ module.exports = {
     // https://stackoverflow.com/questions/40443806/webpack-resolve-alias-does-not-work-with-typescript
     // https://medium.com/@martin_hotell/type-safe-es2015-module-import-path-aliasing-with-webpack-typescript-and-jest-fe461347e010
     alias: {
-      model: path.resolve(__dirname, 'src/model/'),
       components: path.resolve(__dirname, 'src/components/'),
+      model: path.resolve(__dirname, 'src/model/'),
+      util: path.resolve(__dirname, 'src/util/'),
     }
   },
   // optimization: {

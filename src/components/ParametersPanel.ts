@@ -59,7 +59,7 @@ export default class ParametersPanel extends HTMLElement {
     const ce = e as CustomEvent;
     const url = new URL(ce.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
-    if (sameUrl && e.type === 'sf-tree-node-unselected') {
+    if (sameUrl && e.type === 'sf-tree-node-deselected') {
       this.#url = null;
       this.#data = [];
       this.render();
@@ -74,7 +74,7 @@ export default class ParametersPanel extends HTMLElement {
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
     window.addEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
-    window.addEventListener('sf-tree-node-unselected', this.handleParametersChanged.bind(this));
+    window.addEventListener('sf-tree-node-deselected', this.handleParametersChanged.bind(this));
     const title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#title = title === null ? '' : title;
     this.render();
@@ -83,7 +83,7 @@ export default class ParametersPanel extends HTMLElement {
   disconnectedCallback() {
     console.log('ParametersPanel disconnectedCallback() called');
     window.removeEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
-    window.removeEventListener('sf-tree-node-unselected', this.handleParametersChanged.bind(this));
+    window.removeEventListener('sf-tree-node-deselected', this.handleParametersChanged.bind(this));
   }
 
   adoptedCallback() {

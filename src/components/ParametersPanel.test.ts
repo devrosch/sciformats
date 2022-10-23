@@ -61,7 +61,7 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
 
-  window.dispatchEvent(new CustomEvent('sf-tree-node-unselected', {
+  window.dispatchEvent(new CustomEvent('sf-tree-node-deselected', {
     bubbles: true,
     cancelable: true,
     composed: true,

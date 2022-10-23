@@ -95,7 +95,7 @@ export default class TreeNode extends HTMLElement {
       dispatchWindowCustomEvent('sf-tree-node-selected', { url: this.#url });
     } else {
       this.classList.remove('selected');
-      dispatchWindowCustomEvent('sf-tree-node-unselected', { url: this.#url });
+      dispatchWindowCustomEvent('sf-tree-node-deselected', { url: this.#url });
     }
   }
 

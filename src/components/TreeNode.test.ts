@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 import { dispatchWindowCustomEvent } from 'util/EventUtils';
-import './TreeNode'; // for side effects
-import TreeNode from './TreeNode';
+import 'components/TreeNode'; // for side effects
+import TreeNode from 'components/TreeNode';
 
 test('sf-tree-node renders', async () => {
   const element = 'sf-tree-node';

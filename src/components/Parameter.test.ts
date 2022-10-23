@@ -1,6 +1,6 @@
 /* eslint-disable import/no-duplicates */
-import './Parameter'; // for side effects
-import Parameter from './Parameter';
+import 'components/Parameter'; // for side effects
+import Parameter from 'components/Parameter';
 
 test('sf-parameter renders', async () => {
   const element = 'sf-parameter';

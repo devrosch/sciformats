@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
 import StubDataRepository from 'model/StubDataRepository';
-import './ParametersPanel'; // for side effects
-import ParametersPanel from './ParametersPanel';
+import 'components/ParametersPanel'; // for side effects
+import ParametersPanel from 'components/ParametersPanel';
 
 test('sf-parameters-panel renders', async () => {
   const element = 'sf-parameters-panel';

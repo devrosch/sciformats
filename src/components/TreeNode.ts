@@ -2,7 +2,7 @@ import DataRepository from 'model/DataRepository';
 import StubDataRepository from 'model/StubDataRepository';
 import { isSameUrl } from 'util/UrlUtils';
 import { dispatchWindowCustomEvent } from 'util/EventUtils';
-import './TreeNode.css';
+import 'components/TreeNode.css';
 
 const template = '';
 

@@ -1,4 +1,4 @@
-import { dispatchWindowCustomEvent } from './EventUtils';
+import { dispatchWindowCustomEvent } from 'util/EventUtils';
 
 test('dispatchWindowCustomEvent() dispatches', async () => {
   const eventType = 'sf-dispatch-event-test';

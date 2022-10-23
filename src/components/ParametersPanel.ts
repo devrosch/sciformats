@@ -1,4 +1,4 @@
-import './Parameter';
+import 'components/Parameter';
 import DataRepository from 'model/DataRepository';
 import StubDataRepository from 'model/StubDataRepository';
 import { isSameUrl } from 'util/UrlUtils';

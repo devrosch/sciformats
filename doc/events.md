@@ -1,4 +1,4 @@
-# Event Overview
+# Event overview
 
 The following custom events are dispatched or listened to by components.
 

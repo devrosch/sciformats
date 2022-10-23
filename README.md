@@ -15,6 +15,7 @@ After that, to run the tests, run:
 ```
 npm test
 ```
+Test coverage information can be generated with `npm test -- --coverage`.
 
 To lint the code, run:
 ```
@@ -33,15 +34,13 @@ npm run build
 
 Build artifacts are placed into the `dist` directory.
 
-## Coding conventions
+## Documentation
 
-* Code sits in the "src" directory.
-* Directory names are all lower case.
-* Custom events are named using kebab-case with "sf" prefix. Example: "sf-node-selected".
+More detailed documentation can be found in the [doc](/doc) directory.
 
 ## Author
 
-**Robert Schiwon** - *Main developer* - [devrosch](https://gitlab.com/devrosch)
+**Robert Schiwon** - [devrosch](https://gitlab.com/devrosch)
 
 ## License
 

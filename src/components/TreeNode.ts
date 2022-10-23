@@ -122,7 +122,8 @@ export default class TreeNode extends HTMLElement {
   handleTreeNodeSelected(e: Event) {
     const ce = e as CustomEvent;
     const url = ce.detail.url;
-    if (this.#url !== url) {
+    const sameUrl = this.#url.toString() === url.toString();
+    if (!sameUrl && this.#selected) {
       this.setSelected(false);
     }
   }

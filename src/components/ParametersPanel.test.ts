@@ -33,7 +33,7 @@ test('sf-parameters-panel renders', async () => {
   document.body.innerHTML = '';
 });
 
-test('sf-parameters-panel reacts to sf-tree-node-changed events', async () => {
+test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () => {
   const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
 
   const repo = new StubDataRepository();
@@ -58,6 +58,20 @@ test('sf-parameters-panel reacts to sf-tree-node-changed events', async () => {
   expect(document.body.innerHTML).toContain('value 1');
   expect(document.body.innerHTML).toContain('key 2');
   expect(document.body.innerHTML).toContain('value 2');
+  expect(document.body.innerHTML).not.toContain('key 3');
+  expect(document.body.innerHTML).not.toContain('value 3');
+
+  window.dispatchEvent(new CustomEvent('sf-tree-node-unselected', {
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    detail: { url: urlChild2 },
+  }));
+
+  expect(document.body.innerHTML).not.toContain('key 1');
+  expect(document.body.innerHTML).not.toContain('value 1');
+  expect(document.body.innerHTML).not.toContain('key 2');
+  expect(document.body.innerHTML).not.toContain('value 2');
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
 

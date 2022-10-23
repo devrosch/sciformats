@@ -45,7 +45,7 @@ test('sf-tree-node renders', async () => {
   document.body.innerHTML = '';
 });
 
-test('sf-tree-node generates sf-tree-node-changed events', async () => {
+test('sf-tree-node generates sf-tree-node-selected events', async () => {
   const element = 'sf-tree-node';
 
   document.body.innerHTML = `<${element}/>`;
@@ -59,6 +59,28 @@ test('sf-tree-node generates sf-tree-node-changed events', async () => {
   treeNode.onSelected();
   expect(called).toBe(1);
   window.removeEventListener('sf-tree-node-selected', eventHandler);
+
+  // make sure disconnectedCallback() is called during test
+  document.body.innerHTML = '';
+});
+
+test('sf-tree-node observes sf-tree-node-selected events', async () => {
+  const element = 'sf-tree-node';
+
+  document.body.innerHTML = `<${element}/>`;
+  const treeNode = document.body.querySelector(element) as TreeNode;
+  expect(treeNode.classList).not.toContain('selected');
+  treeNode.onSelected();
+  expect(treeNode.classList).toContain('selected');
+
+  window.dispatchEvent(new CustomEvent('sf-tree-node-selected', {
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    detail: { url: new URL('https://dummy') },
+  }));
+
+  expect(treeNode.classList).not.toContain('selected');
 
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';

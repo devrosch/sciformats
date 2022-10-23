@@ -14,6 +14,8 @@ export default class ParametersPanel extends HTMLElement {
 
   #title = '';
 
+  #url: URL | null = null;
+
   #data : { key: string, value: string }[] = [];
 
   constructor(repository: DataRepository | null) {
@@ -54,15 +56,24 @@ export default class ParametersPanel extends HTMLElement {
   handleParametersChanged(e: Event) {
     console.log('ParametersPanel handleParametersChanged() called');
     const ce = e as CustomEvent;
-    const url = ce.detail.url;
-    const data = this.#repository.read(url);
-    this.#data = data.parameters;
-    this.render();
+    const url = new URL(ce.detail.url);
+    const sameUrl = url.toString() === this.#url?.toString();
+    if (sameUrl && e.type === 'sf-tree-node-unselected') {
+      this.#url = null;
+      this.#data = [];
+      this.render();
+    } else if (!sameUrl && e.type === 'sf-tree-node-selected') {
+      const data = this.#repository.read(url);
+      this.#url = url;
+      this.#data = data.parameters;
+      this.render();
+    }
   }
 
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
     window.addEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
+    window.addEventListener('sf-tree-node-unselected', this.handleParametersChanged.bind(this));
     const title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#title = title === null ? '' : title;
     this.render();
@@ -71,6 +82,7 @@ export default class ParametersPanel extends HTMLElement {
   disconnectedCallback() {
     console.log('ParametersPanel disconnectedCallback() called');
     window.removeEventListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
+    window.removeEventListener('sf-tree-node-unselected', this.handleParametersChanged.bind(this));
   }
 
   adoptedCallback() {

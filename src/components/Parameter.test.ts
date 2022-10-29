@@ -2,6 +2,11 @@
 import 'components/Parameter'; // for side effects
 import Parameter from 'components/Parameter';
 
+afterEach(() => {
+  // make sure disconnectedCallback() is called during test
+  document.body.innerHTML = '';
+});
+
 test('sf-parameter renders', async () => {
   const element = 'sf-parameter';
   const keyAttr = 'key';
@@ -20,7 +25,4 @@ test('sf-parameter renders', async () => {
   expect(document.body.innerHTML).toContain(key);
   expect(document.body.innerHTML).toContain(value);
   expect(document.body.textContent).toContain(`${key}: ${value}`);
-
-  // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = '';
 });

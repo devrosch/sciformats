@@ -3,6 +3,11 @@ import 'components/TreeNode'; // for side effects
 import TreeNode from 'components/TreeNode';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
+afterEach(() => {
+  // make sure disconnectedCallback() is called during test
+  document.body.innerHTML = '';
+});
+
 test('sf-tree-node renders', async () => {
   const element = 'sf-tree-node';
   const urlAttr = 'url';
@@ -41,9 +46,6 @@ test('sf-tree-node renders', async () => {
   expect(document.body.innerHTML).toContain('child 1');
   expect(document.body.innerHTML).toContain('child 2');
   expect(document.body.innerHTML).toContain('child 3');
-
-  // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = '';
 });
 
 test('sf-tree-node generates sf-tree-node-selected events', async () => {
@@ -60,9 +62,6 @@ test('sf-tree-node generates sf-tree-node-selected events', async () => {
   treeNode.onSelected();
   expect(called).toBe(1);
   channel.removeListener(handle);
-
-  // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = '';
 });
 
 test('sf-tree-node observes sf-tree-node-selected events', async () => {
@@ -78,7 +77,4 @@ test('sf-tree-node observes sf-tree-node-selected events', async () => {
   channel.dispatch('sf-tree-node-selected', { url: new URL('https://dummy') });
 
   expect(treeNode.classList).not.toContain('selected');
-
-  // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = '';
 });

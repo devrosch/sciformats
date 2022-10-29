@@ -4,6 +4,11 @@ import 'components/ParametersPanel'; // for side effects
 import ParametersPanel from 'components/ParametersPanel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
+afterEach(() => {
+  // make sure disconnectedCallback() is called during test
+  document.body.innerHTML = '';
+});
+
 test('sf-parameters-panel renders', async () => {
   const element = 'sf-parameters-panel';
   const titleAttr = 'title';
@@ -29,9 +34,6 @@ test('sf-parameters-panel renders', async () => {
   expect(document.body.innerHTML).toContain(data[1].value);
   panel.setAttribute(titleAttr, title2);
   expect(document.body.innerHTML).toContain(title2);
-
-  // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = '';
 });
 
 test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () => {
@@ -67,7 +69,4 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   expect(document.body.innerHTML).not.toContain('value 2');
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
-
-  // make sure disconnectedCallback() is called during test
-  document.body.innerHTML = '';
 });

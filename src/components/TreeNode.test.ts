@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
-import { dispatchWindowCustomEvent } from 'util/EventUtils';
 import 'components/TreeNode'; // for side effects
 import TreeNode from 'components/TreeNode';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 test('sf-tree-node renders', async () => {
   const element = 'sf-tree-node';
@@ -48,6 +48,7 @@ test('sf-tree-node renders', async () => {
 
 test('sf-tree-node generates sf-tree-node-selected events', async () => {
   const element = 'sf-tree-node';
+  const bus = new CustomEventsMessageBus();
 
   document.body.innerHTML = `<${element}/>`;
   const treeNode = document.body.querySelector(element) as TreeNode;
@@ -56,10 +57,10 @@ test('sf-tree-node generates sf-tree-node-selected events', async () => {
   const eventHandler = () => {
     called += 1;
   };
-  window.addEventListener('sf-tree-node-selected', eventHandler);
+  const handle = bus.addListener('sf-tree-node-selected', eventHandler);
   treeNode.onSelected();
   expect(called).toBe(1);
-  window.removeEventListener('sf-tree-node-selected', eventHandler);
+  bus.removeListener(handle);
 
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';
@@ -74,7 +75,8 @@ test('sf-tree-node observes sf-tree-node-selected events', async () => {
   treeNode.onSelected();
   expect(treeNode.classList).toContain('selected');
 
-  dispatchWindowCustomEvent('sf-tree-node-selected', { url: new URL('https://dummy') });
+  const bus = new CustomEventsMessageBus();
+  bus.dispatch('sf-tree-node-selected', { url: new URL('https://dummy') });
 
   expect(treeNode.classList).not.toContain('selected');
 

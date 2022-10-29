@@ -2,6 +2,7 @@
 import StubDataRepository from 'model/StubDataRepository';
 import 'components/ParametersPanel'; // for side effects
 import ParametersPanel from 'components/ParametersPanel';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 test('sf-parameters-panel renders', async () => {
   const element = 'sf-parameters-panel';
@@ -40,6 +41,8 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   const panel = new ParametersPanel(repo);
   document.body.append(panel);
 
+  const bus = new CustomEventsMessageBus();
+
   expect(document.body.innerHTML).not.toContain('key 1');
   expect(document.body.innerHTML).not.toContain('value 1');
   expect(document.body.innerHTML).not.toContain('key 2');
@@ -47,12 +50,7 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
 
-  window.dispatchEvent(new CustomEvent('sf-tree-node-selected', {
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-    detail: { url: urlChild2 },
-  }));
+  bus.dispatch('sf-tree-node-selected', { url: urlChild2 });
 
   expect(document.body.innerHTML).toContain('key 1');
   expect(document.body.innerHTML).toContain('value 1');
@@ -61,12 +59,7 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
 
-  window.dispatchEvent(new CustomEvent('sf-tree-node-deselected', {
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-    detail: { url: urlChild2 },
-  }));
+  bus.dispatch('sf-tree-node-deselected', { url: urlChild2 });
 
   expect(document.body.innerHTML).not.toContain('key 1');
   expect(document.body.innerHTML).not.toContain('value 1');

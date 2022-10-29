@@ -36,5 +36,5 @@ module.exports = {
       'WithStatement',
     ],
     'prefer-destructuring' : 'off',
-  }
+  },
 }

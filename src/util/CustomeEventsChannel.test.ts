@@ -40,3 +40,14 @@ test('registering/unregistering listener and message dispatch succeeds for non d
 
   checker(eventType, payload, channel);
 });
+
+test('fails when tyring to remove a listener for a different channel', async () => {
+  const eventType = 'sf-dispatch-event-test';
+  const channelName0 = 'sf-test-channel0';
+  const channelName1 = 'sf-test-channel1';
+  const channel0 = CustomEventsMessageBus.getChannel(channelName0);
+  const channel1 = CustomEventsMessageBus.getChannel(channelName1);
+
+  const handle0 = channel0.addListener(eventType, () => {});
+  expect(() => channel1.removeListener(handle0)).toThrow();
+});

@@ -48,9 +48,8 @@ test('sf-tree-node renders', async () => {
 
 test('sf-tree-node generates sf-tree-node-selected events', async () => {
   const element = 'sf-tree-node';
-  const bus = new CustomEventsMessageBus();
-
   document.body.innerHTML = `<${element}/>`;
+  const bus = new CustomEventsMessageBus();
   const treeNode = document.body.querySelector(element) as TreeNode;
 
   let called = 0;

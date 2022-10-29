@@ -1,7 +1,3 @@
-// TODO: disable rule until better config option is found
-// see: https://stackoverflow.com/questions/63767199/typescript-eslint-no-unused-vars-false-positive-in-type-declarations
-// https://stackoverflow.com/questions/55807329/why-eslint-throws-no-unused-vars-for-typescript-interface
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
@@ -37,7 +33,7 @@ test('using non default channels currently fails', async () => {
   const channel = 'sf-non-default-channel';
 
   const bus = new CustomEventsMessageBus();
-  const eventHandler = (message: Message) => {};
+  const eventHandler = () => {};
 
   expect(() => bus.addListener(eventType, eventHandler, channel)).toThrow(Error);
 });

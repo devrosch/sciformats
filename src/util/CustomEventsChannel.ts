@@ -62,7 +62,7 @@ export default class CustomEventsChannel implements Channel {
   removeListener(handle: any) {
     const channelName = handle?.meta?.channel;
     if (channelName !== this.#name) {
-      throw new Error('Illegal listener for for removal from this channel.');
+      throw new Error('Illegal listener for removal from this channel.');
     }
     this.#domElement.removeEventListener(handle.meta.name, handle.customEventListener);
   }

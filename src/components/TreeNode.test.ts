@@ -49,17 +49,17 @@ test('sf-tree-node renders', async () => {
 test('sf-tree-node generates sf-tree-node-selected events', async () => {
   const element = 'sf-tree-node';
   document.body.innerHTML = `<${element}/>`;
-  const bus = new CustomEventsMessageBus();
+  const channel = CustomEventsMessageBus.getDefaultChannel();
   const treeNode = document.body.querySelector(element) as TreeNode;
 
   let called = 0;
   const eventHandler = () => {
     called += 1;
   };
-  const handle = bus.addListener('sf-tree-node-selected', eventHandler);
+  const handle = channel.addListener('sf-tree-node-selected', eventHandler);
   treeNode.onSelected();
   expect(called).toBe(1);
-  bus.removeListener(handle);
+  channel.removeListener(handle);
 
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';
@@ -74,8 +74,8 @@ test('sf-tree-node observes sf-tree-node-selected events', async () => {
   treeNode.onSelected();
   expect(treeNode.classList).toContain('selected');
 
-  const bus = new CustomEventsMessageBus();
-  bus.dispatch('sf-tree-node-selected', { url: new URL('https://dummy') });
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch('sf-tree-node-selected', { url: new URL('https://dummy') });
 
   expect(treeNode.classList).not.toContain('selected');
 

@@ -3,23 +3,26 @@ import Message from 'model/Message';
 /**
  * A message bus for sending/receiving application events.
  */
-export default interface MessageBus {
+export default interface Channel {
+  /**
+   * The channel name.
+   */
+  get name(): string;
+
   /**
    * Dispatches a message.
    * @param name The message name.
    * @param detail Message details.
-   * @param channel The channel to dispatch the message to. If not specified, uses default channel.
    */
-  dispatch(name: string, detail: any, channel?: string): void;
+  dispatch(name: string, detail: any): void;
 
   /**
    * Registers a listener for messages.
    * @param name The message name to listen to.
    * @param listener The listener function.
-   * @param channel The channel to listen to. If not specified, uses default channel.
    * @return A handle for the listener. Required to unregister.
    */
-  addListener(name: string, listener: (message: Message) => void, channel?: string): any;
+  addListener(name: string, listener: (message: Message) => void): any;
 
   /**
    * Unregisters a listener.

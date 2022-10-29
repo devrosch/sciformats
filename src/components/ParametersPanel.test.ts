@@ -41,7 +41,7 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   const panel = new ParametersPanel(repo);
   document.body.append(panel);
 
-  const bus = new CustomEventsMessageBus();
+  const channel = CustomEventsMessageBus.getDefaultChannel();
 
   expect(document.body.innerHTML).not.toContain('key 1');
   expect(document.body.innerHTML).not.toContain('value 1');
@@ -50,7 +50,7 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
 
-  bus.dispatch('sf-tree-node-selected', { url: urlChild2 });
+  channel.dispatch('sf-tree-node-selected', { url: urlChild2 });
 
   expect(document.body.innerHTML).toContain('key 1');
   expect(document.body.innerHTML).toContain('value 1');
@@ -59,7 +59,7 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   expect(document.body.innerHTML).not.toContain('key 3');
   expect(document.body.innerHTML).not.toContain('value 3');
 
-  bus.dispatch('sf-tree-node-deselected', { url: urlChild2 });
+  channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
 
   expect(document.body.innerHTML).not.toContain('key 1');
   expect(document.body.innerHTML).not.toContain('value 1');

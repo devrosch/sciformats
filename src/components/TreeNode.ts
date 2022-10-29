@@ -4,6 +4,7 @@ import { isSameUrl } from 'util/UrlUtils';
 import 'components/TreeNode.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
+import Channel from 'model/Channel';
 
 const template = '';
 
@@ -12,7 +13,7 @@ export default class TreeNode extends HTMLElement {
 
   #repository = new StubDataRepository() as DataRepository;
 
-  #messageBus = new CustomEventsMessageBus();
+  #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #eventListener: any = null;
 
@@ -97,10 +98,10 @@ export default class TreeNode extends HTMLElement {
     this.#selected = selected;
     if (selected) {
       this.classList.add('selected');
-      this.#messageBus.dispatch('sf-tree-node-selected', { url: this.#url });
+      this.#channel.dispatch('sf-tree-node-selected', { url: this.#url });
     } else {
       this.classList.remove('selected');
-      this.#messageBus.dispatch('sf-tree-node-deselected', { url: this.#url });
+      this.#channel.dispatch('sf-tree-node-deselected', { url: this.#url });
     }
   }
 
@@ -130,7 +131,7 @@ export default class TreeNode extends HTMLElement {
 
   connectedCallback() {
     console.log('TreeNode connectedCallback() called');
-    this.#eventListener = this.#messageBus.addListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
+    this.#eventListener = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
     this.render();
   }
 
@@ -139,7 +140,7 @@ export default class TreeNode extends HTMLElement {
     if (this.#selected) {
       this.setSelected(false);
     }
-    this.#messageBus.removeListener(this.#eventListener);
+    this.#channel.removeListener(this.#eventListener);
   }
 
   adoptedCallback() {

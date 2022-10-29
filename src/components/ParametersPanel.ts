@@ -1,4 +1,5 @@
 import 'components/Parameter';
+import Channel from 'model/Channel';
 import DataRepository from 'model/DataRepository';
 import Message from 'model/Message';
 import StubDataRepository from 'model/StubDataRepository';
@@ -15,7 +16,7 @@ export default class ParametersPanel extends HTMLElement {
 
   #repository = new StubDataRepository() as DataRepository;
 
-  #messageBus = new CustomEventsMessageBus();
+  #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #handles: any = [];
 
@@ -78,8 +79,8 @@ export default class ParametersPanel extends HTMLElement {
 
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
-    const handle0 = this.#messageBus.addListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
-    const handle1 = this.#messageBus.addListener('sf-tree-node-deselected', this.handleParametersChanged.bind(this));
+    const handle0 = this.#channel.addListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
+    const handle1 = this.#channel.addListener('sf-tree-node-deselected', this.handleParametersChanged.bind(this));
     this.#handles.push(handle0, handle1);
     const title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#title = title === null ? '' : title;
@@ -89,7 +90,7 @@ export default class ParametersPanel extends HTMLElement {
   disconnectedCallback() {
     console.log('ParametersPanel disconnectedCallback() called');
     for (const handle of this.#handles) {
-      this.#messageBus.removeListener(handle);
+      this.#channel.removeListener(handle);
     }
   }
 

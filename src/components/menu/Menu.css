@@ -39,7 +39,7 @@ ul[is="sf-menu"] li ul {
   z-index: 1;
 }
 
-ul[is="sf-menu"] li:hover > ul {
+ul[is="sf-menu"] li.sf-submenu-expand > ul {
   display: block;
 }
 

@@ -15,9 +15,7 @@ export default class MenuItem extends HTMLLIElement {
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const key: string = this.getAttribute('key') ? this.getAttribute('key') as string : '' as string;
     a.setAttribute('key', key);
-    // this.textContent = 'Test Menu Item';
     a.textContent = this.#title;
-    // this.textContent = this.#title;
   }
 
   connectedCallback() {

@@ -1,10 +1,11 @@
-// const template = `<a href="#"></a>`;
-
 export default class Submenu extends HTMLLIElement {
-  static get observedAttributes() { return ['title', 'key']; }
+  static get observedAttributes() { return ['title', 'key', 'expand']; }
   
   #title: string | null = null;
+
   #key: string | null = null;
+
+  #expand: boolean = false;
 
   constructor() {
     super();
@@ -12,37 +13,84 @@ export default class Submenu extends HTMLLIElement {
   }
 
   render() {
-    // this.innerHTML = template;
-    const key: string = this.getAttribute('key') ? this.getAttribute('key') as string : '' as string;
-    if (this.children.length === 2
-      && this.children.item(0) instanceof HTMLAnchorElement
-      && this.children.item(1) instanceof HTMLUListElement) {
-        // no elements to render
-    } else {
-      // add <a> and wrap children in <ul>
+    if (this.children.length !== 2
+      || !(this.children.item(0) instanceof HTMLAnchorElement)
+      || !(this.children.item(1) instanceof HTMLUListElement)) {
+      // add <a> and wrap children in <ul> on first render
       const innerHtml = this.innerHTML;
       this.innerHTML = `
-        <a href="#" key="${key}">
-          <span>▸</span>&nbsp;${this.title}
+        <a href="#" key="${this.#key}">
+          <span>▸</span>&nbsp;${this.#title}
         </a>
         ${innerHtml}`;
     }
+
+    const key = this.getAttribute('key') ? this.getAttribute('key') as string : '';    
+    const title = this.getAttribute('title') ? this.getAttribute('title') as string : '';
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    a.setAttribute('key', key);
-    // this.textContent = 'Test Menu Item';
-    a.textContent = '▸ ' + this.#title;
-    // this.textContent = this.#title;
+    if (key != this.#key) {
+      a.setAttribute('key', this.#key ? this.#key : '');
+    }
+    if (title != this.#title) {
+      a.setAttribute('title', this.#title ? this.#title : '');
+    }
+    const expandendChar = this.#expand ? '▾ ' : '▸ ';
+    if (this.#expand) {
+      this.classList.add('sf-submenu-expand');
+    } else {
+      this.classList.remove('sf-submenu-expand');
+      // TODO: only do this for direct children of <ul> as optimization
+      const subMenus = this.getElementsByClassName('sf-submenu-expand');      
+      for (const subMenu of subMenus) {
+        subMenu.setAttribute('expand', 'false');
+      }
+    }
+    a.textContent = expandendChar + this.#title;
+  }
+
+  onMouseEnter(e: Event) {
+    console.log('onMouseEnter(): ' + this.#key);
+    e.stopPropagation();
+    this.#expand = true;
+    this.render();
+  }
+
+  onMouseLeave(e: Event) {
+    console.log('onMouseLeave(): ' + this.#key);
+    this.#expand = false;
+    this.render();
+  }
+
+  onClick(e: MouseEvent) {
+    console.log('onClick(): ' + this.#key);
+    if (!(e.target instanceof Element)) {
+      return;
+    }
+    const key = e?.target?.getAttribute('key');
+    console.log('key attruibute: ' + key);
+    if (key === this.#key) {
+      e.stopPropagation();
+      this.#expand = !this.#expand;
+      this.render();
+    }
   }
 
   connectedCallback() {
     console.log('Submenu connectedCallback() called');
-    this.#title = this.getAttribute('title');
-    this.#key = this.getAttribute('key');
+    this.#title = this.hasAttribute('title') ? this.getAttribute('title') : '';
+    this.#key = this.hasAttribute('key') ? this.getAttribute('key') : '';
+    this.#expand = this.hasAttribute('expand') ? this.getAttribute('key') === 'true' : false;
+    this.addEventListener('mouseenter', this.onMouseEnter.bind(this));
+    this.addEventListener('mouseleave', this.onMouseLeave.bind(this));
+    this.addEventListener('click', this.onClick.bind(this));
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Submenu disconnectedCallback() called');
+    this.removeEventListener('mouseenter', this.onMouseEnter.bind(this));
+    this.removeEventListener('mouseleave', this.onMouseLeave.bind(this));
+    this.removeEventListener('click', this.onClick.bind(this));
   }
 
   adoptedCallback() {
@@ -57,6 +105,9 @@ export default class Submenu extends HTMLLIElement {
       this.render();
     } else  if (name === 'key' && this.#key !== newValue) {
       this.#key = newValue;
+      this.render();
+    } else  if (name === 'expand' && (newValue === 'true') !== this.#expand) {
+      this.#expand = newValue === 'true';
       this.render();
     }
   }

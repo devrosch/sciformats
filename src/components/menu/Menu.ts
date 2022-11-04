@@ -4,8 +4,6 @@ import './Menu.css';
 
 // no template with slots required/possible
 // see: https://stackoverflow.com/a/67333433
-// const template = ``;
-
 // maybe use html-template-loader instead
 // https://stackoverflow.com/questions/37818401/importing-html-files-with-es6-template-string-loader
 // <ul> required because of: https://stackoverflow.com/a/20550925
@@ -35,13 +33,9 @@ export default class Menu extends HTMLUListElement {
 
   render() {
     this.innerHTML = template;
-    // this.innerHTML = template;
-    // for (let index = 0; index < 5; index++) {
-    //   const li = document.createElement('li', { is: 'sf-menu-item' });
-    //   this.append(li);
-    // }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   onClick(e: MouseEvent) {
     console.log('Menu item clicked.');
     if (!(e.target instanceof Element)) {
@@ -49,7 +43,7 @@ export default class Menu extends HTMLUListElement {
     }
     e.preventDefault();
     const key = e?.target?.getAttribute('key');
-    console.log({key});
+    console.log({ key });
     if (!key) {
       return;
     }
@@ -81,6 +75,7 @@ export default class Menu extends HTMLUListElement {
     console.log('Menu adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Menu attributeChangedCallback() called');
   }

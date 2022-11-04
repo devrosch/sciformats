@@ -1,6 +1,6 @@
 export default class Submenu extends HTMLLIElement {
   static get observedAttributes() { return ['title', 'key', 'expand']; }
-  
+
   #title: string | null = null;
 
   #key: string | null = null;
@@ -25,49 +25,49 @@ export default class Submenu extends HTMLLIElement {
         ${innerHtml}`;
     }
 
-    const key = this.getAttribute('key') ? this.getAttribute('key') as string : '';    
-    const title = this.getAttribute('title') ? this.getAttribute('title') as string : '';
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    if (key != this.#key) {
+    const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
+    const aTitle = a.getAttribute('title') ? a.getAttribute('title') as string : '';
+    const expandendChar = this.#expand ? '▾ ' : '▸ ';
+    if (aKey !== this.#key) {
       a.setAttribute('key', this.#key ? this.#key : '');
     }
-    if (title != this.#title) {
+    if (aTitle !== this.#title) {
       a.setAttribute('title', this.#title ? this.#title : '');
     }
-    const expandendChar = this.#expand ? '▾ ' : '▸ ';
+    a.textContent = expandendChar + this.#title;
     if (this.#expand) {
       this.classList.add('sf-submenu-expand');
     } else {
       this.classList.remove('sf-submenu-expand');
-      // TODO: only do this for direct children of <ul> as optimization
-      const subMenus = this.getElementsByClassName('sf-submenu-expand');      
+      const subMenus = this.getElementsByClassName('sf-submenu-expand');
       for (const subMenu of subMenus) {
         subMenu.setAttribute('expand', 'false');
       }
     }
-    a.textContent = expandendChar + this.#title;
   }
 
   onMouseEnter(e: Event) {
-    console.log('onMouseEnter(): ' + this.#key);
+    console.log(`onMouseEnter(): ${this.#key}`);
     e.stopPropagation();
     this.#expand = true;
     this.render();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMouseLeave(e: Event) {
-    console.log('onMouseLeave(): ' + this.#key);
+    console.log(`onMouseLeave(): ${this.#key}`);
     this.#expand = false;
     this.render();
   }
 
   onClick(e: MouseEvent) {
-    console.log('onClick(): ' + this.#key);
+    console.log(`onClick(): ${this.#key}`);
     if (!(e.target instanceof Element)) {
       return;
     }
     const key = e?.target?.getAttribute('key');
-    console.log('key attruibute: ' + key);
+    console.log(`key attribute: ${key}`);
     if (key === this.#key) {
       e.stopPropagation();
       this.#expand = !this.#expand;
@@ -103,10 +103,10 @@ export default class Submenu extends HTMLLIElement {
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
       this.render();
-    } else  if (name === 'key' && this.#key !== newValue) {
+    } else if (name === 'key' && this.#key !== newValue) {
       this.#key = newValue;
       this.render();
-    } else  if (name === 'expand' && (newValue === 'true') !== this.#expand) {
+    } else if (name === 'expand' && (newValue === 'true') !== this.#expand) {
       this.#expand = newValue === 'true';
       this.render();
     }

@@ -1,9 +1,11 @@
-const template = `<a href="#"></a>`;
+const template = '<a href="#"></a>';
 
 export default class MenuItem extends HTMLLIElement {
-  static get observedAttributes() { return ['title']; }
-  
+  static get observedAttributes() { return ['title', 'key']; }
+
   #title: string | null = null;
+
+  #key: string | null = null;
 
   constructor() {
     super();
@@ -13,14 +15,21 @@ export default class MenuItem extends HTMLLIElement {
   render() {
     this.innerHTML = template;
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const key: string = this.getAttribute('key') ? this.getAttribute('key') as string : '' as string;
-    a.setAttribute('key', key);
-    a.textContent = this.#title;
+    const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
+    const aTitle = a.getAttribute('title') ? a.getAttribute('title') as string : '';
+    if (aKey !== this.#key) {
+      a.setAttribute('key', this.#key ? this.#key : '');
+    }
+    if (aTitle !== this.#title) {
+      a.setAttribute('title', this.#title ? this.#title : '');
+      a.textContent = this.#title;
+    }
   }
 
   connectedCallback() {
     console.log('MenuItem connectedCallback() called');
     this.#title = this.getAttribute('title');
+    this.#key = this.getAttribute('key');
     this.render();
   }
 
@@ -37,6 +46,9 @@ export default class MenuItem extends HTMLLIElement {
     console.log('MenuItem attributeChangedCallback() called');
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
+      this.render();
+    } else if (name === 'key' && this.#key !== newValue) {
+      this.#key = newValue;
       this.render();
     }
   }

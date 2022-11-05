@@ -3,25 +3,20 @@ import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 const checker = (eventType: string, payload: { test: string }, channel: Channel) => {
-  let numCalls = 0;
-  let receivedPayload: any = null;
-  const eventHandler = (message: Message) => {
-    numCalls += 1;
-    receivedPayload = message.detail;
-  };
+  const eventHandler = jest.fn((message: Message) => message.detail);
 
-  expect(numCalls).toBe(0);
+  expect(eventHandler).toHaveBeenCalledTimes(0);
   channel.dispatch(eventType, payload);
-  expect(numCalls).toBe(0);
+  expect(eventHandler).toHaveBeenCalledTimes(0);
 
   const handle = channel.addListener(eventType, eventHandler);
   channel.dispatch(eventType, payload);
-  expect(numCalls).toBe(1);
-  expect(receivedPayload.test).toBe(payload.test);
+  expect(eventHandler).toHaveBeenCalledTimes(1);
+  expect(eventHandler).toHaveLastReturnedWith(payload);
 
   channel.removeListener(handle);
   channel.dispatch(eventType, payload);
-  expect(numCalls).toBe(1);
+  expect(eventHandler).toHaveBeenCalledTimes(1);
 };
 
 test('registering/unregistering listener and message dispatch succeeds for default channel', async () => {

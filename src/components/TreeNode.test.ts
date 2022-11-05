@@ -54,14 +54,11 @@ test('sf-tree-node generates sf-tree-node-selected events', async () => {
   const channel = CustomEventsMessageBus.getDefaultChannel();
   const treeNode = document.body.querySelector(element) as TreeNode;
 
-  let called = 0;
-  const eventHandler = () => {
-    called += 1;
-  };
+  const eventHandler = jest.fn();
   const handle = channel.addListener('sf-tree-node-selected', eventHandler);
   treeNode.onSelected();
-  expect(called).toBe(1);
   channel.removeListener(handle);
+  expect(eventHandler).toHaveBeenCalledTimes(1);
 });
 
 test('sf-tree-node observes sf-tree-node-selected events', async () => {

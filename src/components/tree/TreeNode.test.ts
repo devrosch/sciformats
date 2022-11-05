@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
-import 'components/TreeNode'; // for side effects
-import TreeNode from 'components/TreeNode';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import './TreeNode'; // for side effects
+import TreeNode from './TreeNode';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test

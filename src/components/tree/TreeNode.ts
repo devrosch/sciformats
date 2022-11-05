@@ -1,7 +1,7 @@
 import DataRepository from 'model/DataRepository';
 import StubDataRepository from 'model/StubDataRepository';
 import { isSameUrl } from 'util/UrlUtils';
-import 'components/TreeNode.css';
+import './TreeNode.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';

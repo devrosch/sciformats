@@ -1,6 +1,6 @@
 /* eslint-disable import/no-duplicates */
-import 'components/Parameter'; // for side effects
-import Parameter from 'components/Parameter';
+import './Parameter'; // for side effects
+import Parameter from './Parameter';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test

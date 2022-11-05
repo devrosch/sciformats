@@ -1,8 +1,8 @@
 /* eslint-disable import/no-duplicates */
-import StubDataRepository from 'model/StubDataRepository';
-import 'components/ParametersPanel'; // for side effects
-import ParametersPanel from 'components/ParametersPanel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import StubDataRepository from 'model/StubDataRepository';
+import './ParametersPanel'; // for side effects
+import ParametersPanel from './ParametersPanel';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test

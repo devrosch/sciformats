@@ -1,4 +1,4 @@
-import 'components/Parameter';
+import './Parameter';
 import Channel from 'model/Channel';
 import DataRepository from 'model/DataRepository';
 import Message from 'model/Message';

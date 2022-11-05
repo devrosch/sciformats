@@ -2,20 +2,20 @@
 import 'components/menu/MenuItem'; // for side effects
 import MenuItem from 'components/menu/MenuItem';
 
+const element = 'sf-menu-item';
+const keyAttr = 'key';
+const key = 'abc';
+const key2 = 'abc2';
+const titleAttr = 'title';
+const title = 'def';
+const title2 = 'def2';
+
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';
 });
 
 test('sf-menu-item renders and observes attribute changes', async () => {
-  const element = 'sf-menu-item';
-  const keyAttr = 'key';
-  const key = 'abc';
-  const key2 = 'abc2';
-  const titleAttr = 'title';
-  const title = 'def';
-  const title2 = 'def2';
-
   document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
   const menuItem = document.body.querySelector('li') as MenuItem;
   expect(menuItem).toBeTruthy();
@@ -40,19 +40,13 @@ test('sf-menu-item renders and observes attribute changes', async () => {
 });
 
 test('sf-menu-item generates click events', async () => {
-  const element = 'sf-menu-item';
-  const keyAttr = 'key';
-  const key = 'abc';
-  const titleAttr = 'title';
-  const title = 'def';
-
   document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
   const menuItem = document.body.querySelector('li') as MenuItem;
   expect(menuItem).toBeTruthy();
   const a = menuItem.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
 
-  const clickHandler = jest.fn(e => e.target.getAttribute(keyAttr));
+  const clickHandler = jest.fn((e) => e.target.getAttribute(keyAttr));
   document.body.addEventListener('click', clickHandler);
   a.click();
   document.body.removeEventListener('click', clickHandler);

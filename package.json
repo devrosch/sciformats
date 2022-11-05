@@ -4,10 +4,10 @@
   "description": "An HTML/CSS/JS UI for visualizing scientific data.",
   "private": true,
   "scripts": {
-    "test": "REACT_APP_VERSION=$npm_package_version jest",
+    "test": "APP_VERSION=$npm_package_version jest",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
-    "start": "REACT_APP_VERSION=$npm_package_version webpack serve --open",
-    "build": "REACT_APP_VERSION=$npm_package_version webpack"
+    "start": "APP_VERSION=$npm_package_version webpack serve --open",
+    "build": "APP_VERSION=$npm_package_version webpack"
   },
   "jest": {
     "testEnvironment": "jsdom",

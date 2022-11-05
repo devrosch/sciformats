@@ -8,7 +8,12 @@ import './Menu.css';
 // https://stackoverflow.com/questions/37818401/importing-html-files-with-es6-template-string-loader
 // <ul> required because of: https://stackoverflow.com/a/20550925
 const template = `
-  <li is="sf-menu-item" key="sf-menu-item-1" title="Menu Item 1"></li>
+  <li is="sf-submenu" key="sf-submenu-file" title="File">
+    <ul>
+      <li is="sf-menu-item" key="sf-file-open" title="File Open..."></li>
+      <li is="sf-menu-item" key="sf-file-close" title="File Close"></li>
+    </ul>
+  </li>
   <li is="sf-menu-item" key="sf-menu-item-2" title="Menu Item 2"></li>
   <li is="sf-submenu" key="sf-submenu-1" title="Submenu 1">
     <ul>
@@ -27,12 +32,15 @@ const template = `
 export default class Menu extends HTMLUListElement {
   constructor() {
     super();
-    this.render();
     console.log('Menu constructor() called');
   }
 
-  render() {
+  init() {
     this.innerHTML = template;
+  }
+
+  render() {
+    this.init();
   }
 
   // eslint-disable-next-line class-methods-use-this

@@ -12,12 +12,16 @@ export default class MenuItem extends HTMLLIElement {
     console.log('MenuItem constructor() called');
   }
 
-  render() {
+  init() {
     if (this.children.length !== 1
       || !(this.children.item(0) instanceof HTMLAnchorElement)) {
       // add <a>
       this.innerHTML = template;
     }
+  }
+
+  render() {
+    this.init();
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
     const aTitle = a.getAttribute('title') ? a.getAttribute('title') as string : '';

@@ -12,11 +12,10 @@ export default class Submenu extends HTMLLIElement {
     console.log('Submenu constructor() called');
   }
 
-  render() {
-    if (this.children.length !== 2
-      || !(this.children.item(0) instanceof HTMLAnchorElement)
-      || !(this.children.item(1) instanceof HTMLUListElement)) {
-      // add <a> and wrap children in <ul> on first render
+  init() {
+    if (this.children.length < 1
+      || !(this.children.item(0) instanceof HTMLAnchorElement)) {
+      // add <a> at beginning
       const innerHtml = this.innerHTML;
       this.innerHTML = `
         <a href="#" key="${this.#key}">
@@ -24,18 +23,24 @@ export default class Submenu extends HTMLLIElement {
         </a>
         ${innerHtml}`;
     }
+  }
 
+  render() {
+    this.init();
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
     const aTitle = a.getAttribute('title') ? a.getAttribute('title') as string : '';
     const expandendChar = this.#expand ? '▾ ' : '▸ ';
+    const textContent = expandendChar + this.#title;
     if (aKey !== this.#key) {
       a.setAttribute('key', this.#key ? this.#key : '');
     }
     if (aTitle !== this.#title) {
       a.setAttribute('title', this.#title ? this.#title : '');
     }
-    a.textContent = expandendChar + this.#title;
+    if (a.textContent !== textContent) {
+      a.textContent = textContent;
+    }
     if (this.#expand) {
       this.classList.add('sf-submenu-expand');
     } else {
@@ -67,9 +72,9 @@ export default class Submenu extends HTMLLIElement {
       return;
     }
     const key = e?.target?.getAttribute('key');
-    console.log(`key attribute: ${key}`);
     if (key === this.#key) {
       e.stopPropagation();
+      e.preventDefault();
       this.#expand = !this.#expand;
       this.render();
     }

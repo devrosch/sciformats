@@ -19,7 +19,11 @@
       "^components/(.*)": "<rootDir>/src/components/$1",
       "^model/(.*)": "<rootDir>/src/model/$1",
       "^util/(.*)": "<rootDir>/src/util/$1"
-    }
+    },
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/index.ts"
+    ]
   },
   "keywords": [
     "sciformats"

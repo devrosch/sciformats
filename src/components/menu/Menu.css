@@ -61,8 +61,11 @@ ul[is="sf-menu"] li ul li ul {
 @media screen and (max-width: 576px) {
   ul[is="sf-menu"] {
     position: absolute;
-    display: block;
+    display: none;
     background-color: #f9f9f9;
+  }
+  ul[is="sf-menu"].sf-show-menu {
+    display: block;
   }
   ul[is="sf-menu"] li {
     display: block;

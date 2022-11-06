@@ -1,4 +1,5 @@
 import 'components/menu/Menu';
+import Menu from 'components/menu/Menu';
 import './Navbar.css'
 
 const template = `
@@ -15,12 +16,26 @@ export default class Navbar extends HTMLElement {
     console.log('Navbar constructor() called');
   }
 
+  #showMenu: boolean = false;
+
   init() {
-    this.innerHTML = template;
+    if (this.children.length !== 3
+      || !(this.children.item(0) instanceof HTMLAnchorElement)
+      || this.children.item(1)?.nodeName !== 'NAV'
+      || !(this.children.item(2) instanceof HTMLAnchorElement)) {
+      // init
+      this.innerHTML = template;
+    }
   }
 
   render() {
     this.init();
+    const menu = this.querySelector('ul[is="sf-menu"]') as Menu;
+    if (this.#showMenu) {
+      menu.classList.add('sf-show-menu');
+    } else {
+      menu.classList.remove('sf-show-menu');
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -32,6 +47,19 @@ export default class Navbar extends HTMLElement {
     e.preventDefault();
     const key = e?.target?.getAttribute('key');
     console.log({ key });
+    if (!key) {
+      return;
+    }
+
+    switch (key) {
+      case 'sf-navbar-hamburger':
+        this.#showMenu = !this.#showMenu;
+        console.log('show vertical menu: ' + this.#showMenu);
+        this.render();
+        break;
+      default:
+        break;
+    }
   }
 
   connectedCallback() {

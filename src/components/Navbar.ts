@@ -1,6 +1,7 @@
-import 'components/menu/Menu';
+/* eslint-disable import/no-duplicates */
+import 'components/menu/Menu'; // for side effects
 import Menu from 'components/menu/Menu';
-import './Navbar.css'
+import './Navbar.css';
 
 const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
@@ -9,6 +10,8 @@ const template = `
   </nav>
   <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
 `;
+
+const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 
 export default class Navbar extends HTMLElement {
   constructor() {
@@ -31,11 +34,7 @@ export default class Navbar extends HTMLElement {
   render() {
     this.init();
     const menu = this.querySelector('ul[is="sf-menu"]') as Menu;
-    if (this.#showMenu) {
-      menu.classList.add('sf-show-menu');
-    } else {
-      menu.classList.remove('sf-show-menu');
-    }
+    menu.showMenu(this.#showMenu);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -54,23 +53,47 @@ export default class Navbar extends HTMLElement {
     switch (key) {
       case 'sf-navbar-hamburger':
         this.#showMenu = !this.#showMenu;
-        console.log('show vertical menu: ' + this.#showMenu);
         this.render();
         break;
       default:
+        this.#showMenu = false;
+        this.render();
         break;
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleScreenChange(e: MediaQueryListEvent) {
+    // close menu including submenus whenever screen layout crosses threshold
+    this.#showMenu = false;
+    this.render();
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleOutsideSelection(e: MouseEvent) {
+    console.log('handleOutsideSelection: ' + e.target);
+    const node = e.target as Node;
+    if (!this.contains(node)) {
+      // close menu including submenus whenever click ouside navbar occured
+      console.log('Navbar non child node clicked: ' + node);
+      this.#showMenu = false;
+      this.render();
     }
   }
 
   connectedCallback() {
     console.log('Navbar connectedCallback() called');
     this.addEventListener('click', this.onClick.bind(this));
+    mediaQuery.addEventListener('change', this.handleScreenChange.bind(this));
+    document.addEventListener('click', this.handleOutsideSelection.bind(this));
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Navbar disconnectedCallback() called');
     this.removeEventListener('click', this.onClick.bind(this));
+    mediaQuery.removeEventListener('change', this.handleScreenChange.bind(this));
+    document.removeEventListener('click', this.handleOutsideSelection.bind(this));
   }
 
   adoptedCallback() {

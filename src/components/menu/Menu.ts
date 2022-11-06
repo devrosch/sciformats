@@ -43,6 +43,18 @@ export default class Menu extends HTMLUListElement {
     this.init();
   }
 
+  showMenu(show: boolean) {
+    if (show) {
+      this.classList.add('sf-show-menu');
+    } else {
+      this.classList.remove('sf-show-menu');
+      const subMenus = this.getElementsByClassName('sf-submenu-expand');
+      for (const subMenu of subMenus) {
+        subMenu.setAttribute('expand', 'false');
+      }
+    }
+  }
+
   // eslint-disable-next-line class-methods-use-this
   onClick(e: MouseEvent) {
     console.log('Menu item clicked.');

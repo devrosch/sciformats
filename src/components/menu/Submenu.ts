@@ -1,3 +1,8 @@
+/**
+ * Max width for vertical menu.
+ */
+const maxWidth = 576;
+
 export default class Submenu extends HTMLLIElement {
   static get observedAttributes() { return ['title', 'key', 'expand']; }
 
@@ -54,16 +59,22 @@ export default class Submenu extends HTMLLIElement {
 
   onMouseEnter(e: Event) {
     console.log(`onMouseEnter(): ${this.#key}`);
-    e.stopPropagation();
-    this.#expand = true;
-    this.render();
+    // only take action if screen is small
+    if (window.innerWidth > maxWidth) {
+      e.stopPropagation();
+      this.#expand = true;
+      this.render();
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMouseLeave(e: Event) {
     console.log(`onMouseLeave(): ${this.#key}`);
-    this.#expand = false;
-    this.render();
+    // only take action if screen is small
+    if (window.innerWidth > maxWidth) {
+      this.#expand = false;
+      this.render();
+    }
   }
 
   onClick(e: MouseEvent) {

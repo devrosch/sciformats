@@ -72,10 +72,10 @@ ul[is="sf-menu"] > li > ul li ul {
     background-color: #f9f9f9;
     box-sizing: border-box;
   }
-  ul[is="sf-menu"] > li > ul {
+  ul[is="sf-menu"] li > ul {
     box-shadow: none;
   }
-  ul[is="sf-menu"] > li.sf-submenu-expand > ul {
+  ul[is="sf-menu"] li.sf-submenu-expand > ul {
     padding-left: 1em;
     display: block;
     position: inherit;

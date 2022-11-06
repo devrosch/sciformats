@@ -41,7 +41,7 @@ body {
   background-color: aqua;
   flex: 0 0 20%;
   white-space: nowrap;
-  overflow: scroll;
+  overflow: auto;
 }
 
 .node-content {

@@ -71,11 +71,10 @@ export default class Navbar extends HTMLElement {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleOutsideSelection(e: MouseEvent) {
-    console.log('handleOutsideSelection: ' + e.target);
+    console.log('handleOutsideSelection() called');
     const node = e.target as Node;
     if (!this.contains(node)) {
       // close menu including submenus whenever click ouside navbar occured
-      console.log('Navbar non child node clicked: ' + node);
       this.#showMenu = false;
       this.render();
     }

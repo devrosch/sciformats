@@ -35,7 +35,7 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     this.init();
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
     const inputKey = input.getAttribute('key') ? input.getAttribute('key') as string : '';
-    if (inputKey !== this.#key + '-input') {
+    if (inputKey !== `${this.#key}-input`) {
       input.setAttribute('key', inputKey);
     }
 
@@ -71,17 +71,15 @@ export default class MenuItemFileOpen extends HTMLLIElement {
 
   onChange(e: Event) {
     console.log('MenuItemFileOpen onChange().');
-    console.log(e);
     const input = e.target as HTMLInputElement;
     const selectedFiles = input.files;
     if (selectedFiles === null || typeof selectedFiles === 'undefined') {
       return;
     }
     const files = [];
-    for (let i = 0; i < selectedFiles.length; i++) {
+    for (let i = 0; i < selectedFiles.length; i += 1) {
       files.push(selectedFiles[i]);
     }
-    console.log(files);
     // reset file input, see https://stackoverflow.com/questions/20549241/how-to-reset-input-type-file
     // if not reset, opening the same file again does not fire on change event => cannot be opened
     input.value = '';
@@ -110,7 +108,6 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     console.log('MenuItemFileOpen adoptedCallback() called');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('MenuItemFileOpen attributeChangedCallback() called');
     if (name === 'title' && this.#title !== newValue) {

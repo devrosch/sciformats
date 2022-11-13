@@ -113,7 +113,6 @@ export default class Submenu extends HTMLLIElement {
     console.log('Submenu adoptedCallback() called');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Submenu attributeChangedCallback() called');
     if (name === 'title' && this.#title !== newValue) {

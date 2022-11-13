@@ -98,7 +98,6 @@ export default class ParametersPanel extends HTMLElement {
     console.log('ParametersPanel adoptedCallback() called');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('ParametersPanel attributeChangedCallback() called');
     if (name === 'title' && this.#title !== newValue) {

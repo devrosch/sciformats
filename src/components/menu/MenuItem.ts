@@ -49,7 +49,6 @@ export default class MenuItem extends HTMLLIElement {
     console.log('MenuItem adoptedCallback() called');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('MenuItem attributeChangedCallback() called');
     if (name === 'title' && this.#title !== newValue) {

@@ -44,6 +44,7 @@ export default class Navbar extends HTMLElement {
       return;
     }
     e.preventDefault();
+    e.stopPropagation();
     const key = e?.target?.getAttribute('key');
     console.log({ key });
     if (!key) {
@@ -69,7 +70,6 @@ export default class Navbar extends HTMLElement {
     this.render();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleOutsideSelection(e: MouseEvent) {
     console.log('handleOutsideSelection() called');
     const node = e.target as Node;

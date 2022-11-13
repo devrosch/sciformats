@@ -1,4 +1,5 @@
 import 'components/menu/MenuItem';
+import 'components/menu/MenuItemFileOpen';
 import 'components/menu/Submenu';
 import './Menu.css';
 
@@ -10,7 +11,7 @@ import './Menu.css';
 const template = `
   <li is="sf-submenu" key="sf-submenu-file" title="File">
     <ul>
-      <li is="sf-menu-item" key="sf-file-open" title="File Open..."></li>
+      <li is="sf-menu-item-file-open" key="sf-file-open" title="File Open..."></li>
       <li is="sf-menu-item" key="sf-file-close" title="File Close"></li>
     </ul>
   </li>
@@ -70,7 +71,7 @@ export default class Menu extends HTMLUListElement {
 
     switch (key) {
       case 'sf-file-open':
-        console.log('TODO: file open...');
+        console.log('file open called => no action required in menu');
         break;
       case 'sf-file-close':
         console.log('TODO: file close...');

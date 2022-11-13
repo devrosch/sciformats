@@ -44,6 +44,7 @@ sf-navbar > a.sf-hamburger:hover {
   /* nav */
   sf-navbar > nav {
     top: 100%;
+    /* height: 0; */
     position: relative;
     display: block;
   }

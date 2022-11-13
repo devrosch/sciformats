@@ -1,0 +1,9 @@
+/* make file input element invisible */
+.sf-file-open-input {
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -99;
+  width: 0.01em;
+  height: 0.01em;
+}

@@ -33,6 +33,7 @@ Using TypeScript's [importsNotUsedAsValues](https://www.typescriptlang.org/tscon
 The following custom events are dispatched or listened to by components.
 
 | Event                   | Details                     | Dispatchers | Listeners                 |
-| ----------------------- | --------------------------- | ----------- | ------------------------- |
-| sf-tree-node-selected   | { url: `URL to data: URL` } | TreeNode    | TreeNode, ParametersPanel |
-| sf-tree-node-deselected | { url: `URL to data: URL` } | TreeNode    | TreeNode, ParametersPanel |
+| ----------------------- | --------------------------- | ---------------- | ------------------------- |
+| sf-tree-node-selected   | { url: `URL to data: URL` } | TreeNode         | TreeNode, ParametersPanel |
+| sf-tree-node-deselected | { url: `URL to data: URL` } | TreeNode         | TreeNode, ParametersPanel |
+| sf-files-opened         | { files: `array of files` } | MenuItemFileOpen | TODO: ???                 |

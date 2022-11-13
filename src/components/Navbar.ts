@@ -5,10 +5,10 @@ import './Navbar.css';
 
 const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
+  <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
   <nav>
     <ul is="sf-menu"></ul>
   </nav>
-  <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
 `;
 
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
@@ -24,8 +24,8 @@ export default class Navbar extends HTMLElement {
   init() {
     if (this.children.length !== 3
       || !(this.children.item(0) instanceof HTMLAnchorElement)
-      || this.children.item(1)?.nodeName !== 'NAV'
-      || !(this.children.item(2) instanceof HTMLAnchorElement)) {
+      || !(this.children.item(1) instanceof HTMLAnchorElement)
+      || this.children.item(2)?.nodeName !== 'NAV') {
       // init
       this.innerHTML = template;
     }

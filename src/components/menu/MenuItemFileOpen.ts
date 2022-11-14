@@ -36,7 +36,7 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
     const inputKey = input.getAttribute('key') ? input.getAttribute('key') as string : '';
     if (inputKey !== `${this.#key}-input`) {
-      input.setAttribute('key', `${this.#key}-input`);    
+      input.setAttribute('key', `${this.#key}-input`);
     }
 
     const label = this.querySelector('label') as HTMLLabelElement;
@@ -49,7 +49,7 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
     if (aKey !== `${this.#key}-input-a`) {
       a.setAttribute('key', `${this.#key}-input-a`);
-    }    
+    }
     const aText = a.textContent;
     if (aText !== this.#title) {
       a.textContent = this.#title;

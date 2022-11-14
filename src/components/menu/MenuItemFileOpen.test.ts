@@ -80,7 +80,7 @@ test('sf-menu-item-file-open stops propagation of input click events', async () 
   expect(mouseEvent.stopPropagation).toHaveBeenCalledTimes(1);
 });
 
-test('sf-menu-item-file-open dispatches click and custom event on file upload', done => {
+test('sf-menu-item-file-open dispatches click and custom event on file upload', (done) => {
   document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
   const menuItem = document.body.querySelector('li') as MenuItemFileOpen;
   const channel = CustomEventsMessageBus.getDefaultChannel();
@@ -90,7 +90,7 @@ test('sf-menu-item-file-open dispatches click and custom event on file upload', 
   const event = {
     target: {
       files: [file, file2],
-    }
+    },
   } as unknown as Event;
 
   const customEventHandler = jest.fn((e) => e.detail.files);
@@ -100,7 +100,7 @@ test('sf-menu-item-file-open dispatches click and custom event on file upload', 
   menuItem.onChange(event);
   channel.removeListener(handle);
   document.removeEventListener('click', clickEventHandler);
-  
+
   expect(customEventHandler).toHaveBeenCalledTimes(1);
   expect(clickEventHandler).toHaveBeenCalledTimes(1);
 

@@ -36,13 +36,23 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
     const inputKey = input.getAttribute('key') ? input.getAttribute('key') as string : '';
     if (inputKey !== `${this.#key}-input`) {
-      input.setAttribute('key', inputKey);
+      input.setAttribute('key', `${this.#key}-input`);    
     }
 
-    const labelA = this.querySelector('label > a') as HTMLLabelElement;
-    const labelText = labelA.textContent;
-    if (labelText !== this.#title) {
-      labelA.textContent = this.#title;
+    const label = this.querySelector('label') as HTMLLabelElement;
+    const labelKey = label.getAttribute('key') ? input.getAttribute('key') as string : '';
+    if (labelKey !== `${this.#key}-input-label`) {
+      label.setAttribute('key', `${this.#key}-input-label`);
+    }
+
+    const a = this.querySelector('label > a') as HTMLAnchorElement;
+    const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
+    if (aKey !== `${this.#key}-input-a`) {
+      a.setAttribute('key', `${this.#key}-input-a`);
+    }    
+    const aText = a.textContent;
+    if (aText !== this.#title) {
+      a.textContent = this.#title;
     }
   }
 
@@ -51,19 +61,18 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     if (!(e.target instanceof Element)) {
       return;
     }
-    // e.stopPropagation();
     const key = e?.target?.getAttribute('key');
     console.log({ key });
     if (!key) {
       return;
     }
-    if (key === 'sf-file-open-input-a') {
+    if (key === `${this.#key}-input-a`) {
       console.log('MenuItemFileOpen sf-file-open-input-a clicked.');
       e.stopPropagation();
       const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
       input.click();
     }
-    if (key === 'sf-file-open-input') {
+    if (key === `${this.#key}-input`) {
       console.log('MenuItemFileOpen sf-file-open-input clicked.');
       e.stopPropagation();
     }

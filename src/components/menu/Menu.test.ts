@@ -33,7 +33,7 @@ test('sf-menu listenes to click events', async () => {
   expect(logSpy).toHaveBeenLastCalledWith(expect.stringMatching(/.*TODO.*/));
 });
 
-test('showMenu() sets CSS class and for "false" argument collapses all submenus', async () => {
+test('sf-menu showMenu() sets CSS class and for "false" argument collapses all submenus', async () => {
   document.body.innerHTML = `<ul is="${element}"></ul>`;
   const menu = document.body.querySelector('ul') as MenuItem;
   expect(menu).toBeTruthy();

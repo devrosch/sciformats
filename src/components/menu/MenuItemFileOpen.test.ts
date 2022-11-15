@@ -43,7 +43,7 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   expect(a.textContent).toBe(title2);
 });
 
-test('a click event results in input click event', async () => {
+test('sf-menu-item-file-open a click event results in input click event', async () => {
   document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
   const menuItem = document.body.querySelector('li') as MenuItemFileOpen;
   const input = document.body.querySelector('input') as HTMLInputElement;

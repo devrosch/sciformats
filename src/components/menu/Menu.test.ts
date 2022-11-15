@@ -32,3 +32,27 @@ test('sf-menu listenes to click events', async () => {
   aFileClose.click();
   expect(logSpy).toHaveBeenLastCalledWith(expect.stringMatching(/.*TODO.*/));
 });
+
+test('showMenu() sets CSS class and for "false" argument collapses all submenus', async () => {
+  document.body.innerHTML = `<ul is="${element}"></ul>`;
+  const menu = document.body.querySelector('ul') as MenuItem;
+  expect(menu).toBeTruthy();
+  expect(menu.classList).not.toContain('sf-show-menu');
+  const submenus = menu.querySelectorAll('li[is="sf-submenu"]');
+  expect(submenus.length).toBeGreaterThan(0);
+  for (const submenu of submenus) {
+    submenu.setAttribute('expand', 'true');
+  }
+
+  menu.showMenu(true);
+  expect(menu.classList).toContain('sf-show-menu');
+  for (const submenu of submenus) {
+    expect(submenu.getAttribute('expand')).toBe('true');
+  }
+
+  menu.showMenu(false);
+  expect(menu.classList).not.toContain('sf-show-menu');
+  for (const submenu of submenus) {
+    expect(submenu.getAttribute('expand')).toBe('false');
+  }
+});

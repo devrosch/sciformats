@@ -3,6 +3,7 @@ import Menu from 'components/menu/Menu';
 import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects
 import Navbar from './Navbar';
+import AboutDialog from './menu/AboutDialog';
 
 const element = 'sf-navbar';
 
@@ -127,4 +128,27 @@ test('sf-navbar screen change closes menu', async () => {
 
   expect(mockShowMenu).toHaveBeenCalledTimes(1);
   expect(mockShowMenu.mock.results[0].value).toBe(false);
+});
+
+test('sf-navbar - about click opens AboutDialog', async () => {
+  document.body.innerHTML = `<${element}/>`;
+  const navbar = document.body.querySelector('sf-navbar') as Navbar;
+  expect(navbar).toBeTruthy();
+  const aboutDialog = navbar.querySelector('sf-about-dialog') as AboutDialog;
+  expect(aboutDialog).toBeTruthy();
+
+  const showModalMock = jest.fn((show) => show);
+  aboutDialog.showModal = showModalMock;
+
+  const mockElement = document.createElement('a');
+  mockElement.setAttribute('key', 'sf-about');
+  const mouseEvent = {
+    target: mockElement,
+    stopPropagation: jest.fn(),
+    preventDefault: jest.fn(),
+  } as unknown as MouseEvent;
+
+  expect(showModalMock).toHaveBeenCalledTimes(0);
+  navbar.onClick(mouseEvent);
+  expect(showModalMock).toHaveBeenCalledTimes(1);
 });

@@ -10,8 +10,6 @@ const template = `
 `;
 
 export default class AboutDialog extends HTMLElement {
-  static get observedAttributes() { return ['open']; }
-
   #open: boolean = false;
 
   constructor() {
@@ -30,10 +28,19 @@ export default class AboutDialog extends HTMLElement {
     this.init();
     const dialog = this.getElementsByTagName('dialog').item(0) as HTMLDialogElement;
     if (this.#open) {
-      dialog.showModal();
+      if (!dialog.hasAttribute('open')) {
+        dialog.showModal();
+      }
+      if (!this.hasAttribute('open')) {
+        this.setAttribute('open', '');
+      }
     } else {
-      // dialog.removeAttribute('open');
-      dialog.close();
+      if (dialog.hasAttribute('open')) {
+        dialog.close();
+      }
+      if (this.hasAttribute('open')) {
+        this.removeAttribute('open');
+      }
     }
   }
 
@@ -70,12 +77,9 @@ export default class AboutDialog extends HTMLElement {
     console.log('AboutDialog adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('AboutDialog attributeChangedCallback() called');
-    if (name === 'open' && this.#open !== (newValue === 'true')) {
-      this.#open = newValue === 'true';
-      this.render();
-    }
   }
 }
 

@@ -47,8 +47,10 @@ export default class Submenu extends HTMLLIElement {
       a.textContent = textContent;
     }
     if (this.#expand) {
+      this.setAttribute('expand', 'true');
       this.classList.add('sf-submenu-expand');
     } else {
+      this.setAttribute('expand', 'false');
       this.classList.remove('sf-submenu-expand');
       const subMenus = this.getElementsByClassName('sf-submenu-expand');
       for (const subMenu of subMenus) {

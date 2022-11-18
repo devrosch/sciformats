@@ -20,18 +20,18 @@ test('sf-menu renders', async () => {
   expect(menuItem).toBeTruthy();
 });
 
-test('sf-menu listenes to click events', async () => {
-  document.body.innerHTML = `<ul is="${element}"></ul>`;
-  const menu = document.body.querySelector('ul') as MenuItem;
-  expect(menu).toBeTruthy();
-  const aFileClose = document.body.querySelector('a[key="sf-file-close"]') as HTMLAnchorElement;
-  expect(aFileClose).toBeTruthy();
+// test('sf-menu listenes to click events', async () => {
+//   document.body.innerHTML = `<ul is="${element}"></ul>`;
+//   const menu = document.body.querySelector('ul') as MenuItem;
+//   expect(menu).toBeTruthy();
+//   const aFileClose = document.body.querySelector('a[key="sf-file-close"]') as HTMLAnchorElement;
+//   expect(aFileClose).toBeTruthy();
 
-  // logs "TODO" for file open/close
-  const logSpy = jest.spyOn(console, 'log');
-  aFileClose.click();
-  expect(logSpy).toHaveBeenLastCalledWith(expect.stringMatching(/.*TODO.*/));
-});
+//   // logs "TODO" for file open/close
+//   const logSpy = jest.spyOn(console, 'log');
+//   aFileClose.click();
+//   expect(logSpy).toHaveBeenLastCalledWith(expect.stringMatching(/.*TODO.*/));
+// });
 
 test('sf-menu showMenu() sets CSS class and for "false" argument collapses all submenus', async () => {
   document.body.innerHTML = `<ul is="${element}"></ul>`;

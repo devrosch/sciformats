@@ -1,19 +1,21 @@
 /* eslint-disable import/no-duplicates */
+import Menu from 'components/menu/Menu';
 import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects
 import Navbar from './Navbar';
-import Menu from 'components/menu/Menu';
 
 const element = 'sf-navbar';
 
 beforeAll(() => {
-  window.matchMedia = jest.fn(() => {
-    return {
-      matches: false,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-    }
-  }) as any;
+  window.matchMedia = jest.fn(() => ({
+    matches: false,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+  })) as any;
+
+  // see: https://github.com/jsdom/jsdom/issues/3294
+  HTMLDialogElement.prototype.showModal = jest.fn();
+  HTMLDialogElement.prototype.close = jest.fn();
 });
 
 afterEach(() => {
@@ -26,10 +28,11 @@ test('sf-navbar renders', async () => {
   const navbar = document.body.querySelector('sf-navbar') as Navbar;
   expect(navbar).toBeTruthy();
 
-  expect(navbar.children).toHaveLength(3);
+  expect(navbar.children).toHaveLength(4);
   expect(navbar.children.item(0)?.nodeName).toBe('A');
   expect(navbar.children.item(1)?.nodeName).toBe('A');
   expect(navbar.children.item(2)?.nodeName).toBe('NAV');
+  expect(navbar.children.item(3)?.nodeName).toBe('SF-ABOUT-DIALOG');
 });
 
 test('sf-navbar hamburger menu toggles menu visibility', async () => {
@@ -43,7 +46,7 @@ test('sf-navbar hamburger menu toggles menu visibility', async () => {
   menu.showMenu = mockShowMenu;
 
   const mockElement = document.createElement('a');
-  mockElement.setAttribute('key', `sf-navbar-hamburger`);
+  mockElement.setAttribute('key', 'sf-navbar-hamburger');
   const mouseEvent = {
     target: mockElement,
     stopPropagation: jest.fn(),
@@ -73,7 +76,7 @@ test('sf-navbar menu item click closes menu', async () => {
   menu.showMenu = mockShowMenu;
 
   const mockElement = document.createElement('a');
-  mockElement.setAttribute('key', `sf-menu-item-1`);
+  mockElement.setAttribute('key', 'sf-menu-item-1');
   const mouseEvent = {
     target: mockElement,
     stopPropagation: jest.fn(),
@@ -113,7 +116,7 @@ test('sf-navbar screen change closes menu', async () => {
   menu.showMenu = mockShowMenu;
 
   const mockElement = document.createElement('a');
-  mockElement.setAttribute('key', `any`);
+  mockElement.setAttribute('key', 'any');
   const mouseEvent = {
     target: mockElement,
     stopPropagation: jest.fn(),

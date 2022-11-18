@@ -1,6 +1,8 @@
 /* eslint-disable import/no-duplicates */
-import 'components/menu/Menu'; // for side effects
-import Menu from 'components/menu/Menu';
+import './menu/Menu'; // for side effects
+import Menu from './menu/Menu';
+import './menu/AboutDialog'; // for side effects
+import AboutDialog from './menu/AboutDialog';
 import './Navbar.css';
 
 const template = `
@@ -9,6 +11,7 @@ const template = `
   <nav>
     <ul is="sf-menu"></ul>
   </nav>
+  <sf-about-dialog/>
 `;
 
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
@@ -22,10 +25,11 @@ export default class Navbar extends HTMLElement {
   #showMenu: boolean = false;
 
   init() {
-    if (this.children.length !== 3
+    if (this.children.length !== 4
       || !(this.children.item(0) instanceof HTMLAnchorElement)
       || !(this.children.item(1) instanceof HTMLAnchorElement)
-      || this.children.item(2)?.nodeName !== 'NAV') {
+      || this.children.item(2)?.nodeName !== 'NAV'
+      || !(this.children.item(3) instanceof AboutDialog)) {
       // init
       this.innerHTML = template;
     }
@@ -35,6 +39,11 @@ export default class Navbar extends HTMLElement {
     this.init();
     const menu = this.querySelector('ul[is="sf-menu"]') as Menu;
     menu.showMenu(this.#showMenu);
+  }
+
+  showAboutDialog() {
+    const aboutDialog = this.querySelector('sf-about-dialog') as AboutDialog;
+    aboutDialog.showModal(true);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -54,6 +63,11 @@ export default class Navbar extends HTMLElement {
     switch (key) {
       case 'sf-navbar-hamburger':
         this.#showMenu = !this.#showMenu;
+        this.render();
+        break;
+      case 'sf-about':
+        this.showAboutDialog();
+        this.#showMenu = false;
         this.render();
         break;
       default:

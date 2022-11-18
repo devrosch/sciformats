@@ -1,0 +1,22 @@
+sf-about-dialog > dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+sf-about-dialog > dialog[open] {
+  animation: fadein 0.1s forwards;
+}
+
+/* this does not work, a class needs to be added manually for a closing animation */
+/* https://stackoverflow.com/a/71984473 */
+/* sf-about-dialog > dialog::not([open]) {
+  animation: fadein 0.5s backwards;
+} */
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

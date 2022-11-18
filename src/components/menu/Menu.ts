@@ -1,6 +1,6 @@
-import 'components/menu/MenuItem';
-import 'components/menu/MenuItemFileOpen';
-import 'components/menu/Submenu';
+import './MenuItem';
+import './MenuItemFileOpen';
+import './Submenu';
 import './Menu.css';
 
 // no template with slots required/possible
@@ -28,6 +28,7 @@ const template = `
       <li is="sf-menu-item" key="sf-menu-item-4" title="Menu Item 4"></li>
     </ul>
   </li>
+  <li is="sf-menu-item" key="sf-about" title="About..."></li>
 `;
 
 export default class Menu extends HTMLUListElement {
@@ -58,40 +59,13 @@ export default class Menu extends HTMLUListElement {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  onClick(e: MouseEvent) {
-    console.log('Menu item clicked.');
-    if (!(e.target instanceof Element)) {
-      return;
-    }
-    e.preventDefault();
-    const key = e?.target?.getAttribute('key');
-    console.log({ key });
-    if (!key) {
-      return;
-    }
-
-    switch (key) {
-      case 'sf-file-open':
-        console.log('file open called => no action required in menu');
-        break;
-      case 'sf-file-close':
-        console.log('TODO: file close...');
-        break;
-      default:
-        break;
-    }
-  }
-
   connectedCallback() {
     console.log('Menu connectedCallback() called');
-    this.addEventListener('click', this.onClick.bind(this));
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Menu disconnectedCallback() called');
-    this.removeEventListener('click', this.onClick.bind(this));
   }
 
   adoptedCallback() {

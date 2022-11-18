@@ -79,3 +79,20 @@ test('sf-submenu expands/collapses on mouse enter/leave', async () => {
   submenu.onMouseLeave(new Event('onmouseleave'));
   expect(a.textContent).toBe(`▸ ${title}`);
 });
+
+test('sf-submenu "expand" attribute sets visibility', async () => {
+  document.body.innerHTML = `<li is="${element}"/>`;
+  const submenu = document.body.querySelector('li') as Submenu;
+  expect(submenu).toBeTruthy();
+
+  expect(submenu.getAttribute('expand')).toBe('false');
+  expect(submenu.classList).not.toContain('sf-submenu-expand');
+
+  submenu.setAttribute('expand', 'true');
+  expect(submenu.getAttribute('expand')).toBe('true');
+  expect(submenu.classList).toContain('sf-submenu-expand');
+
+  submenu.removeAttribute('expand');
+  expect(submenu.getAttribute('expand')).toBe('false');
+  expect(submenu.classList).not.toContain('sf-submenu-expand');
+});

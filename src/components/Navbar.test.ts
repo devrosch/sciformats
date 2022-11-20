@@ -8,12 +8,6 @@ import AboutDialog from './menu/AboutDialog';
 const element = 'sf-navbar';
 
 beforeAll(() => {
-  window.matchMedia = jest.fn(() => ({
-    matches: false,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-  })) as any;
-
   // see: https://github.com/jsdom/jsdom/issues/3294
   HTMLDialogElement.prototype.showModal = jest.fn();
   HTMLDialogElement.prototype.close = jest.fn();

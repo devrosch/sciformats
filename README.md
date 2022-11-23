@@ -4,6 +4,10 @@ An HTML/CSS/JS UI for visualizing scientific data.
 
 You can find the application published at [GitLab Pages](https://devrosch.gitlab.io/sf-ui/).
 
+## Prerequisites
+
+Node.js v14.17.0 (support for crypto.randomUUID()).
+
 ## Build
 
 To install the required packages run:

@@ -55,12 +55,14 @@ test('sf-menu-item-file-open a click event results in input click event', async 
   const mouseEvent = {
     target: mockElement,
     stopPropagation: jest.fn(),
+    preventDefault: jest.fn(),
   } as unknown as MouseEvent;
 
   input.onclick = jest.fn();
 
   menuItem.onClick(mouseEvent);
   expect(mouseEvent.stopPropagation).toHaveBeenCalledTimes(1);
+  expect(mouseEvent.preventDefault).toHaveBeenCalledTimes(1);
   expect(input.onclick).toHaveBeenCalledTimes(1);
 });
 

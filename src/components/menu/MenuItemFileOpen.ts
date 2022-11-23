@@ -69,6 +69,7 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     if (key === `${this.#key}-input-a`) {
       console.log('MenuItemFileOpen sf-file-open-input-a clicked.');
       e.stopPropagation();
+      e.preventDefault();
       const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
       input.click();
     }

@@ -40,6 +40,10 @@ export default class TreeNode extends HTMLElement {
 
   render() {
     this.innerHTML = template;
+    const urlAttr = this.getAttribute('url');
+    if (urlAttr !== this.#url.toString()) {
+      this.setAttribute('url', this.#url.toString())
+    }
     const numChildNodes = this.#children.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
@@ -98,7 +102,8 @@ export default class TreeNode extends HTMLElement {
     this.#selected = selected;
     if (selected) {
       this.classList.add('selected');
-      this.#channel.dispatch('sf-tree-node-selected', { url: this.#url });
+      const nodeData = this.#repository.read(this.#url);
+      this.#channel.dispatch('sf-tree-node-selected', { url: this.#url, data: nodeData.data, parameters: nodeData.parameters });
     } else {
       this.classList.remove('selected');
       this.#channel.dispatch('sf-tree-node-deselected', { url: this.#url });

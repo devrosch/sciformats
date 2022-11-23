@@ -1,8 +1,6 @@
 import './Parameter';
 import Channel from 'model/Channel';
-import DataRepository from 'model/DataRepository';
 import Message from 'model/Message';
-import StubDataRepository from 'model/StubDataRepository';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import { isSameUrl } from 'util/UrlUtils';
 
@@ -14,8 +12,6 @@ const html = `
 export default class ParametersPanel extends HTMLElement {
   static get observedAttributes() { return ['title']; }
 
-  #repository = new StubDataRepository() as DataRepository;
-
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #handles: any = [];
@@ -26,12 +22,9 @@ export default class ParametersPanel extends HTMLElement {
 
   #data : { key: string, value: string }[] = [];
 
-  constructor(repository: DataRepository | null) {
+  constructor() {
     super();
     console.log('ParametersPanel constructor() called');
-    if (repository !== null && typeof repository !== 'undefined') {
-      this.#repository = repository;
-    }
   }
 
   get data() {
@@ -70,9 +63,8 @@ export default class ParametersPanel extends HTMLElement {
       this.#data = [];
       this.render();
     } else if (!sameUrl && message.name === 'sf-tree-node-selected') {
-      const data = this.#repository.read(url);
       this.#url = url;
-      this.#data = data.parameters;
+      this.#data = message.detail.parameters;
       this.render();
     }
   }

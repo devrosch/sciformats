@@ -14,9 +14,11 @@ export default class Tree extends HTMLElement {
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
-  #eventListener: any = null;
+  #eventListeners: any[] = [];
 
   #children = [] as TreeNode[];
+
+  #selectedNodeUrl: URL | null = null;
 
   constructor(repository: DataRepository | null) {
     super();
@@ -38,20 +40,28 @@ export default class Tree extends HTMLElement {
     const children = this.children;
     let i = 0;
 
+    // TODO: do more generic set reconciliation
+    // assumes that new root nodes are always appended, not inserted
     for (const rootNode of rootNodes) {
-      if (i < children.length) {
-        const rootNodeUrl = rootNode.getAttribute('url');
+      if (i >= children.length) {
+        this.append(rootNode);
+        i++;
+        continue;
+      }
+      const rootNodeUrl = rootNode.getAttribute('url');
+      while (i < children.length) {
         const childNode = children.item(i) as TreeNode;
         const childNodeUrl = childNode.getAttribute('url');
-        if (rootNodeUrl !== childNodeUrl) {
-          // missing child node => insert
-          childNode.insertBefore(rootNode, childNode);
+        if (rootNodeUrl === childNodeUrl) {
+          // matches => noop
+          i++;
+          break;
+        } else {
+          // surplus child node => remove
+          this.removeChild(children.item(i) as Element)
+          // children gets updated => do not i++
         }
-      } else {
-        // 
-        this.append(rootNode);
       }
-      i++;
     }
     // more children than root nodes => remove extra children
     while (i < children.length) {
@@ -61,10 +71,10 @@ export default class Tree extends HTMLElement {
 
   // #region user events
 
-  handleFilesOpened(message: Message) {
+  handleFilesOpenRequested(message: Message) {
     const files = message.detail.files as File[];
     for (const file of files) {
-      console.log('Tree -> sf-files-opened received for: ' + file.name);
+      console.log('Tree -> sf-files-open-requested received for: ' + file.name);
       // generate URL of type file:///UUID/fileName#/
       const uuid = crypto.randomUUID();
       const url = new URL(`file:///${uuid}/${file.name}#/`);
@@ -75,19 +85,57 @@ export default class Tree extends HTMLElement {
     this.render();
   }
 
+  handleFileCloseRequested(message: Message) {
+    console.log('handleFileCloseRequested()');
+    if (!this.#selectedNodeUrl) {
+      return;
+    }
+    const selectedUrl = this.#selectedNodeUrl.toString();
+    for (const child of this.#children) {
+      const childUrl = child.getAttribute('url');
+      if (childUrl !== null && selectedUrl.startsWith(childUrl)) {
+        const index = this.#children.indexOf(child);
+        this.#children.splice(index, 1);
+        this.render();
+        return;
+      }
+    }
+  }
+
+  handleTreeNodeSelection(message: Message) {
+    console.log('handleTreeNodeSelection() -> ' + message.name + ': ' + message.detail.url);
+    const url = message.detail.url;
+    if ('sf-tree-node-selected' === message.name) {
+      this.#selectedNodeUrl = url;
+    } else if ('sf-tree-node-deselected' === message.name) {
+      if (this.#selectedNodeUrl === url) {
+        this.#selectedNodeUrl = null;
+      }
+    }
+  }
+
   // #endregion user events
 
   // #region lifecycle events
 
   connectedCallback() {
     console.log('Tree connectedCallback() called');
-    this.#eventListener = this.#channel.addListener('sf-files-opened', this.handleFilesOpened.bind(this));
+    const fileOpenHandle = this.#channel.addListener('sf-files-open-requested', this.handleFilesOpenRequested.bind(this));
+    const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
+    const selectedHandle = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelection.bind(this));
+    const deselectedHandle = this.#channel.addListener('sf-tree-node-deselected', this.handleTreeNodeSelection.bind(this));
+    this.#eventListeners.push(fileOpenHandle);
+    this.#eventListeners.push(fileCloseHandle);
+    this.#eventListeners.push(selectedHandle);
+    this.#eventListeners.push(deselectedHandle);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
-    this.#channel.removeListener(this.#eventListener);
+    for (const handle of this.#eventListeners) {
+      this.#channel.removeListener(handle);
+    }
   }
 
   adoptedCallback() {

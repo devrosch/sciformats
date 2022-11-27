@@ -94,7 +94,7 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     // if not reset, opening the same file again does not fire on change event => cannot be opened
     input.value = '';
     // notify other application components
-    this.#channel.dispatch('sf-files-opened', { files });
+    this.#channel.dispatch('sf-files-open-requested', { files });
     // notify parents, so that menu might be closed
     this.click();
   }

@@ -6,7 +6,7 @@ import TreeNode from './TreeNode';
 
 const element = 'sf-tree';
 const nodeElement = 'sf-tree-node';
-const fileOpenedEvent = 'sf-files-opened';
+const fileOpenedEvent = 'sf-files-open-requested';
 const fileContent = 'abc';
 const fileName = 'dummy.txt';
 const urlAttr = 'url';

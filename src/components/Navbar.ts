@@ -4,6 +4,8 @@ import Menu from './menu/Menu';
 import './menu/AboutDialog'; // for side effects
 import AboutDialog from './menu/AboutDialog';
 import './Navbar.css';
+import Channel from 'model/Channel';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
@@ -17,6 +19,8 @@ const template = `
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 
 export default class Navbar extends HTMLElement {
+  #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
+  
   constructor() {
     super();
     console.log('Navbar constructor() called');
@@ -63,6 +67,11 @@ export default class Navbar extends HTMLElement {
     switch (key) {
       case 'sf-navbar-hamburger':
         this.#showMenu = !this.#showMenu;
+        this.render();
+        break;
+      case 'sf-file-close':
+        this.#channel.dispatch('sf-file-close-requested', null);
+        this.#showMenu = false;
         this.render();
         break;
       case 'sf-about':

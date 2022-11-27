@@ -32,8 +32,9 @@ Using TypeScript's [importsNotUsedAsValues](https://www.typescriptlang.org/tscon
 
 The following custom events are dispatched or listened to by components.
 
-| Event                   | Details                                                                                                    | Dispatchers      | Listeners                 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------- |
-| sf-tree-node-selected   | { url: `URL`,<br/>data: `{ x: number, y: number }[]`,<br/>parameters: `{ key: string, value: string }[]` } | TreeNode         | TreeNode, ParametersPanel |
-| sf-tree-node-deselected | { url: `URL` }                                                                                             | TreeNode         | TreeNode, ParametersPanel |
-| sf-files-opened         | { files: `File[]` }                                                                                        | MenuItemFileOpen | Tree                      |
+| Event                   | Details                                                                                                    | Dispatchers       | Listeners                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------- |
+| sf-tree-node-selected   | { url: `URL`,<br/>data: `{ x: number, y: number }[]`,<br/>parameters: `{ key: string, value: string }[]` } | TreeNode          | Tree, TreeNode, ParametersPanel |
+| sf-tree-node-deselected | { url: `URL` }                                                                                             | TreeNode          | Tree, TreeNode, ParametersPanel |
+| sf-files-open-requested | { files: `File[]` }                                                                                        | MenuItemFileOpen  | Tree                            |
+| sf-file-close-requested | `null`                                                                                                     | MenuItemFileClose | Tree                            |

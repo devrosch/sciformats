@@ -85,7 +85,7 @@ export default class Tree extends HTMLElement {
     this.render();
   }
 
-  handleFileCloseRequested(message: Message) {
+  handleFileCloseRequested() {
     console.log('handleFileCloseRequested()');
     if (!this.#selectedNodeUrl) {
       return;

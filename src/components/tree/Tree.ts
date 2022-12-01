@@ -74,7 +74,7 @@ export default class Tree extends HTMLElement {
   handleFilesOpenRequested(message: Message) {
     const files = message.detail.files as File[];
     for (const file of files) {
-      console.log('Tree -> sf-files-open-requested received for: ' + file.name);
+      console.log('Tree -> sf-file-open-requested received for: ' + file.name);
       // generate URL of type file:///UUID/fileName#/
       const uuid = crypto.randomUUID();
       const url = new URL(`file:///${uuid}/${file.name}#/`);
@@ -120,7 +120,7 @@ export default class Tree extends HTMLElement {
 
   connectedCallback() {
     console.log('Tree connectedCallback() called');
-    const fileOpenHandle = this.#channel.addListener('sf-files-open-requested', this.handleFilesOpenRequested.bind(this));
+    const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
     const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
     const selectedHandle = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelection.bind(this));
     const deselectedHandle = this.#channel.addListener('sf-tree-node-deselected', this.handleTreeNodeSelection.bind(this));

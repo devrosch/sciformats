@@ -36,5 +36,5 @@ The following custom events are dispatched or listened to by components.
 | ----------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------- |
 | sf-tree-node-selected   | { url: `URL`,<br/>data: `{ x: number, y: number }[]`,<br/>parameters: `{ key: string, value: string }[]` } | TreeNode          | Tree, TreeNode, ParametersPanel |
 | sf-tree-node-deselected | { url: `URL` }                                                                                             | TreeNode          | Tree, TreeNode, ParametersPanel |
-| sf-files-open-requested | { files: `File[]` }                                                                                        | MenuItemFileOpen  | Tree                            |
+| sf-file-open-requested | { files: `File[]` }                                                                                        | MenuItemFileOpen  | Tree                            |
 | sf-file-close-requested | `null`                                                                                                     | MenuItemFileClose | Tree                            |

@@ -11,8 +11,9 @@ import './Menu.css';
 const template = `
   <li is="sf-submenu" key="sf-submenu-file" title="File">
     <ul>
-      <li is="sf-menu-item-file-open" key="sf-file-open" title="File Open..."></li>
-      <li is="sf-menu-item" key="sf-file-close" title="File Close"></li>
+      <li is="sf-menu-item-file-open" key="sf-file-open" title="Open..."></li>
+      <li is="sf-menu-item" key="sf-file-close" title="Close"></li>
+      <li is="sf-menu-item" key="sf-file-close-all" title="Close All"></li>
     </ul>
   </li>
   <li is="sf-menu-item" key="sf-menu-item-2" title="Menu Item 2"></li>

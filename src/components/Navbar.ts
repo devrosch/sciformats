@@ -16,6 +16,11 @@ const template = `
   <sf-about-dialog/>
 `;
 
+const events = {
+  fileCloseRequested: 'sf-file-close-requested',
+  fileCloseAllRequested: 'sf-file-close-all-requested',
+}
+
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 
 export default class Navbar extends HTMLElement {
@@ -70,7 +75,12 @@ export default class Navbar extends HTMLElement {
         this.render();
         break;
       case 'sf-file-close':
-        this.#channel.dispatch('sf-file-close-requested', null);
+        this.#channel.dispatch(events.fileCloseRequested, null);
+        this.#showMenu = false;
+        this.render();
+        break;
+      case 'sf-file-close-all':
+        this.#channel.dispatch(events.fileCloseAllRequested, null);
         this.#showMenu = false;
         this.render();
         break;
@@ -116,15 +126,6 @@ export default class Navbar extends HTMLElement {
     this.removeEventListener('click', this.onClick.bind(this));
     mediaQuery.removeEventListener('change', this.handleScreenChange.bind(this));
     document.removeEventListener('click', this.handleOutsideSelection.bind(this));
-  }
-
-  adoptedCallback() {
-    console.log('Navbar adoptedCallback() called');
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Navbar attributeChangedCallback() called');
   }
 }
 

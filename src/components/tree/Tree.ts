@@ -102,6 +102,13 @@ export default class Tree extends HTMLElement {
     }
   }
 
+  handleFileCloseAllRequested() {
+    console.log('handleFileCloseAllRequested()');
+    this.#children = [];
+    this.render();
+    return;
+  }
+
   handleTreeNodeSelection(message: Message) {
     console.log('handleTreeNodeSelection() -> ' + message.name + ': ' + message.detail.url);
     const url = message.detail.url;
@@ -122,10 +129,12 @@ export default class Tree extends HTMLElement {
     console.log('Tree connectedCallback() called');
     const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
     const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
+    const fileCloseAllHandle = this.#channel.addListener('sf-file-close-all-requested', this.handleFileCloseAllRequested.bind(this));
     const selectedHandle = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelection.bind(this));
     const deselectedHandle = this.#channel.addListener('sf-tree-node-deselected', this.handleTreeNodeSelection.bind(this));
     this.#eventListeners.push(fileOpenHandle);
     this.#eventListeners.push(fileCloseHandle);
+    this.#eventListeners.push(fileCloseAllHandle);
     this.#eventListeners.push(selectedHandle);
     this.#eventListeners.push(deselectedHandle);
     this.render();

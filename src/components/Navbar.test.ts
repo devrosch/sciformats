@@ -4,8 +4,38 @@ import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects
 import Navbar from './Navbar';
 import AboutDialog from './menu/AboutDialog';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Message from 'model/Message';
 
 const element = 'sf-navbar';
+
+const testEventDispatchedForClickedKey = (key: string, expectedEventName: string, done: (error?: any) => any) => {
+  document.body.innerHTML = `<${element}/>`;
+  const navbar = document.body.querySelector(element) as Navbar;
+  expect(navbar).toBeTruthy();
+
+  const mockElement = document.createElement('a');
+  mockElement.setAttribute('key', key);
+  const mouseEvent = {
+    target: mockElement,
+    stopPropagation: jest.fn(),
+    preventDefault: jest.fn(),
+  } as unknown as MouseEvent;
+
+  const listener = (message: Message) => {
+    try {
+      expect(message.name).toBe(expectedEventName);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  };
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.addListener(expectedEventName, listener);
+
+  navbar.onClick(mouseEvent);
+};
 
 beforeAll(() => {
   // see: https://github.com/jsdom/jsdom/issues/3294
@@ -145,4 +175,12 @@ test('sf-navbar - about click opens AboutDialog', async () => {
   expect(showModalMock).toHaveBeenCalledTimes(0);
   navbar.onClick(mouseEvent);
   expect(showModalMock).toHaveBeenCalledTimes(1);
+});
+
+test('close event dispatched when "file - close" is clicked', (done) => {
+  testEventDispatchedForClickedKey('sf-file-close', 'sf-file-close-requested', done);
+});
+
+test('close event dispatched when "file - close all" is clicked', (done) => {
+  testEventDispatchedForClickedKey('sf-file-close-all', 'sf-file-close-all-requested', done);
 });

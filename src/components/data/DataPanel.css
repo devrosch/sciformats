@@ -1,0 +1,33 @@
+sf-data-panel {
+  background-color: darkcyan;
+  height: 100%;
+}
+
+.tabs {
+  background-color: crimson;
+}
+
+.tab-link {
+  background-color: inherit;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  line-height: 2em;
+  background-color: #eee;
+}
+
+.tab-link:hover {
+  background-color: #ddd;
+}
+
+.tab-link.active {
+  background-color: #ccc;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}

@@ -54,6 +54,8 @@ body {
 .data {
   background-color: aquamarine;
   flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
 }
 
 .params {

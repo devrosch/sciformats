@@ -1,4 +1,4 @@
-// import './DataTable.css';
+import './DataTable.css';
 
 import Channel from "model/Channel";
 import Message from "model/Message";
@@ -14,10 +14,6 @@ const template = `
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td>1.0</td>
-      <td>1.23</td>
-    </tr>
   </tbody>
   </table>
 `;

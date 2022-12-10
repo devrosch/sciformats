@@ -1,0 +1,14 @@
+sf-data-panel table {
+  margin: 0.5em;
+}
+
+sf-data-panel table, th, td {
+  border: 1px solid;
+  border-collapse: collapse;
+  min-width: 10%;
+}
+
+sf-data-panel th {
+  background-color: #999;
+  text-align: left;
+}

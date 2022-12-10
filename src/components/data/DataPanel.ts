@@ -60,7 +60,6 @@ export default class DataPanel extends HTMLElement {
       return;
     }
     e.preventDefault();
-    e.stopPropagation();
     const id = e?.target?.getAttribute('id');
     console.log({ id });
 

@@ -53,7 +53,8 @@ export default class Menu extends HTMLUListElement {
       this.classList.remove('sf-show-menu');
       const subMenus = this.querySelectorAll('li[is="sf-submenu"]');
       for (const subMenu of subMenus) {
-        if (subMenu.getAttribute('expand')) {
+        if (subMenu.hasAttribute('expand')
+          && subMenu.getAttribute('expand') !== 'false') {
           subMenu.setAttribute('expand', 'false');
         }
       }

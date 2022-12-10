@@ -25,12 +25,21 @@ export default class DataTable extends HTMLElement {
 
   #url: URL | null = null;
 
+  #data: { x: number, y: number }[] = [];
+
   constructor() {
     super();
     console.log('DataTable constructor() called');
   }
 
-  #data: { x: number, y: number }[] = [];
+  get data() {
+    return this.#data;
+  }
+
+  set data(data: { x: number, y: number }[]) {
+    this.#data = data;
+    this.render();
+  }
 
   init() {
     if (this.children.length !== 1
@@ -63,12 +72,10 @@ export default class DataTable extends HTMLElement {
     const sameUrl = isSameUrl(this.#url, url);
     if (sameUrl && message.name === 'sf-tree-node-deselected') {
       this.#url = null;
-      this.#data = [];
-      this.render();
+      this.data = [];
     } else if (!sameUrl && message.name === 'sf-tree-node-selected') {
       this.#url = url;
-      this.#data = message.detail.data;
-      this.render();
+      this.data = message.detail.data;
     }
   }
 

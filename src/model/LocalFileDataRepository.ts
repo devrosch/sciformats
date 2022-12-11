@@ -4,9 +4,11 @@ import DataRepository from './DataRepository';
 
 export default class StubDataRepository implements DataRepository {
   #url: URL;
-  
+
   // #file: File;
 
+  // TODO: actually implement
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(url: URL, file: File) {
     this.#url = url;
     // this.#file = file;
@@ -16,14 +18,14 @@ export default class StubDataRepository implements DataRepository {
     const baseUrlString = this.#url.toString();
     const urlString = url.toString();
     if (!urlString.startsWith(baseUrlString)) {
-      throw new Error('Illegal URL for repository: ' + url);
+      throw new Error(`Illegal URL for repository: ${url}`);
     }
 
     // TODO: dummy
     const hash = decodeURIComponent(url.hash);
     let children: string[] = [];
     let data: { x: number, y: number }[] = [];
-    if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {      
+    if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {
       children = ['child 1', 'child 2', 'child 3'];
     }
     if (hash.endsWith('/child 2')) {

@@ -15,11 +15,11 @@ const fileName3 = 'dummy3.txt';
 const urlAttr = 'url';
 const urlRegex = new RegExp(`file:///.*/${fileName}#/`);
 
-const prepareFileOpenMessage = (fileNames: string[]) => {  
+const prepareFileOpenMessage = (fileNames: string[]) => {
   const blob = new Blob([fileContent]);
   const files = [];
-  for (const fileName of fileNames) {
-    const file = new File([blob], fileName);  
+  for (const name of fileNames) {
+    const file = new File([blob], name);
     files.push(file);
   }
   const message = new Message(fileOpenedEvent, { files });
@@ -42,7 +42,7 @@ test('sf-tree renders', async () => {
 
 test('sf-tree listenes to file open events', async () => {
   document.body.innerHTML = `<${element}/>`;
-  
+
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
 
@@ -56,7 +56,7 @@ test('sf-tree listenes to file open events', async () => {
   const treeNode = tree.querySelector(nodeElement) as TreeNode;
   expect(treeNode).toBeTruthy();
   expect(treeNode.hasAttribute(urlAttr)).toBeTruthy();
-  expect(treeNode.getAttribute(urlAttr)).toMatch(urlRegex)
+  expect(treeNode.getAttribute(urlAttr)).toMatch(urlRegex);
   expect(treeNode.innerHTML).toContain(fileName);
 
   channel.dispatch(fileOpenedEvent, { files: [file] });
@@ -65,7 +65,7 @@ test('sf-tree listenes to file open events', async () => {
 
 test('sf-tree listenes to file close events', async () => {
   document.body.innerHTML = `<${element}/>`;
-  
+
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
 
@@ -77,7 +77,7 @@ test('sf-tree listenes to file close events', async () => {
   tree.handleFileCloseRequested();
 
   expect(tree.children).toHaveLength(3);
-  
+
   const child0 = tree.children.item(0) as TreeNode;
   const child1 = tree.children.item(1) as TreeNode;
   const child2 = tree.children.item(2) as TreeNode;
@@ -92,7 +92,7 @@ test('sf-tree listenes to file close events', async () => {
 
 test('sf-tree listenes to file close all events', async () => {
   document.body.innerHTML = `<${element}/>`;
-  
+
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
 

@@ -51,8 +51,8 @@ test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () 
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data: null,
-    parameters: parameters,
-   });
+    parameters,
+  });
 
   expect(document.body.innerHTML).toContain(parameters[0].key);
   expect(document.body.innerHTML).toContain(parameters[0].value);

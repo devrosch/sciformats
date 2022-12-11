@@ -1,7 +1,4 @@
-import DataRepository from 'model/DataRepository';
 import LocalFileDataRepository from 'model/LocalFileDataRepository';
-// import StubDataRepository from 'model/StubDataRepository';
-// import { isSameUrl } from 'util/UrlUtils';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
@@ -10,8 +7,6 @@ import TreeNode from './TreeNode';
 const template = '';
 
 export default class Tree extends HTMLElement {
-  // #repository = new StubDataRepository() as DataRepository;
-
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #eventListeners: any[] = [];
@@ -20,12 +15,9 @@ export default class Tree extends HTMLElement {
 
   #selectedNodeUrl: URL | null = null;
 
-  constructor(repository: DataRepository | null) {
+  constructor() {
     super();
     console.log('Tree constructor() called');
-    // if (repository !== null && typeof repository !== 'undefined') {
-    //   this.#repository = repository;
-    // }
   }
 
   init() {
@@ -45,21 +37,21 @@ export default class Tree extends HTMLElement {
     for (const rootNode of rootNodes) {
       if (i >= children.length) {
         this.append(rootNode);
-        i++;
-        continue;
-      }
-      const rootNodeUrl = rootNode.getAttribute('url');
-      while (i < children.length) {
-        const childNode = children.item(i) as TreeNode;
-        const childNodeUrl = childNode.getAttribute('url');
-        if (rootNodeUrl === childNodeUrl) {
-          // matches => noop
-          i++;
-          break;
-        } else {
-          // surplus child node => remove
-          this.removeChild(children.item(i) as Element)
-          // children gets updated => do not i++
+        i += 1;
+      } else {
+        const rootNodeUrl = rootNode.getAttribute('url');
+        while (i < children.length) {
+          const childNode = children.item(i) as TreeNode;
+          const childNodeUrl = childNode.getAttribute('url');
+          if (rootNodeUrl === childNodeUrl) {
+            // matches => noop
+            i += 1;
+            break;
+          } else {
+            // surplus child node => remove
+            this.removeChild(children.item(i) as Element);
+            // children gets updated => do not i++
+          }
         }
       }
     }
@@ -74,7 +66,7 @@ export default class Tree extends HTMLElement {
   handleFilesOpenRequested(message: Message) {
     const files = message.detail.files as File[];
     for (const file of files) {
-      console.log('Tree -> sf-file-open-requested received for: ' + file.name);
+      console.log(`Tree -> sf-file-open-requested received for: ${file.name}`);
       // generate URL of type file:///UUID/fileName#/
       const uuid = crypto.randomUUID();
       const url = new URL(`file:///${uuid}/${file.name}#/`);
@@ -106,15 +98,14 @@ export default class Tree extends HTMLElement {
     console.log('handleFileCloseAllRequested()');
     this.#children = [];
     this.render();
-    return;
   }
 
   handleTreeNodeSelection(message: Message) {
-    console.log('handleTreeNodeSelection() -> ' + message.name + ': ' + message.detail.url);
+    console.log(`handleTreeNodeSelection() -> ${message.name}: ${message.detail.url}`);
     const url = message.detail.url;
-    if ('sf-tree-node-selected' === message.name) {
+    if (message.name === 'sf-tree-node-selected') {
       this.#selectedNodeUrl = url;
-    } else if ('sf-tree-node-deselected' === message.name) {
+    } else if (message.name === 'sf-tree-node-deselected') {
       if (this.#selectedNodeUrl === url) {
         this.#selectedNodeUrl = null;
       }
@@ -151,6 +142,7 @@ export default class Tree extends HTMLElement {
     console.log('Tree adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Tree attributeChangedCallback() called');
   }

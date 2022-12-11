@@ -1,15 +1,19 @@
 /* eslint-disable import/no-duplicates */
 import Menu from 'components/menu/Menu';
+import Message from 'model/Message';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects
 import Navbar from './Navbar';
 import AboutDialog from './menu/AboutDialog';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-import Message from 'model/Message';
 
 const element = 'sf-navbar';
 
-const testEventDispatchedForClickedKey = (key: string, expectedEventName: string, done: (error?: any) => any) => {
+const testEventDispatchedForClickedKey = (
+  key: string,
+  expectedEventName: string,
+  done: (error?: any) => any,
+) => {
   document.body.innerHTML = `<${element}/>`;
   const navbar = document.body.querySelector(element) as Navbar;
   expect(navbar).toBeTruthy();

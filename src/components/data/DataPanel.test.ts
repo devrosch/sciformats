@@ -14,7 +14,7 @@ test('sf-data-panel renders', async () => {
 
   const panel = document.body.querySelector(element) as DataPanel;
   expect(panel.children).toHaveLength(3);
-  expect(panel.children[0].id).toBe('sf-data-tabs');  
+  expect(panel.children[0].id).toBe('sf-data-tabs');
   expect(panel.children[1].id).toBe('sf-data-chart-panel');
   expect(panel.children[2].id).toBe('sf-data-table-panel');
 
@@ -49,7 +49,7 @@ test('sf-data-panel reacts to tab click events', async () => {
   expect(table.classList).not.toContain('active');
 
   tableTab.click();
-  
+
   expect(chartTab.classList).not.toContain('active');
   expect(chart.classList).not.toContain('active');
   expect(tableTab.classList).toContain('active');

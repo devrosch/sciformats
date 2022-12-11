@@ -1,9 +1,9 @@
 import './DataTable.css';
 
-import Channel from "model/Channel";
-import Message from "model/Message";
-import CustomEventsMessageBus from "util/CustomEventsMessageBus";
-import { isSameUrl } from "util/UrlUtils";
+import Channel from 'model/Channel';
+import Message from 'model/Message';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import { isSameUrl } from 'util/UrlUtils';
 
 const template = `
   <table>
@@ -20,7 +20,7 @@ const template = `
 
 export default class DataTable extends HTMLElement {
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
-  
+
   #handles: any = [];
 
   #url: URL | null = null;
@@ -50,7 +50,7 @@ export default class DataTable extends HTMLElement {
 
   render() {
     this.init();
-    
+
     const tBody = this.querySelector('table > tbody') as HTMLTableSectionElement;
     tBody.innerHTML = '';
 
@@ -98,6 +98,7 @@ export default class DataTable extends HTMLElement {
     console.log('DataTable adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('DataTable attributeChangedCallback() called');
   }

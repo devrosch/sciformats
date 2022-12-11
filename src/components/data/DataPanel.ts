@@ -34,7 +34,7 @@ export default class DataPanel extends HTMLElement {
 
   render() {
     this.init();
-    
+
     const tabLinks = this.querySelectorAll('#sf-data-tabs > button');
     for (const link of tabLinks) {
       if (link.id === `sf-data-${this.#active}-link`) {
@@ -92,6 +92,7 @@ export default class DataPanel extends HTMLElement {
     console.log('DataPanel adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('DataPanel attributeChangedCallback() called');
   }

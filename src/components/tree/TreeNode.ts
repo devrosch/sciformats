@@ -42,7 +42,7 @@ export default class TreeNode extends HTMLElement {
     this.innerHTML = template;
     const urlAttr = this.getAttribute('url');
     if (urlAttr !== this.#url.toString()) {
-      this.setAttribute('url', this.#url.toString())
+      this.setAttribute('url', this.#url.toString());
     }
     const numChildNodes = this.#children.length;
     const hasChildren = numChildNodes > 0;

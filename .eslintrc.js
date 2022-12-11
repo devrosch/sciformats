@@ -27,7 +27,7 @@ module.exports = {
         ]
       }
     ],
-    // allow ForOfStatement and ForInStatement
+    // allow ForOfStatement
     // https://github.com/airbnb/javascript/issues/1271
     'no-restricted-syntax': [
       'error',

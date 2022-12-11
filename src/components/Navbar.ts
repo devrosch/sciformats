@@ -1,11 +1,11 @@
 /* eslint-disable import/no-duplicates */
+import Channel from 'model/Channel';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './menu/Menu'; // for side effects
 import Menu from './menu/Menu';
 import './menu/AboutDialog'; // for side effects
 import AboutDialog from './menu/AboutDialog';
 import './Navbar.css';
-import Channel from 'model/Channel';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
@@ -19,13 +19,13 @@ const template = `
 const events = {
   fileCloseRequested: 'sf-file-close-requested',
   fileCloseAllRequested: 'sf-file-close-all-requested',
-}
+};
 
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 
 export default class Navbar extends HTMLElement {
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
-  
+
   constructor() {
     super();
     console.log('Navbar constructor() called');

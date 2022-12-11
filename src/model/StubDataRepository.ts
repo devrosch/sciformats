@@ -7,7 +7,7 @@ export default class StubDataRepository implements DataRepository {
     const hash = decodeURIComponent(url.hash);
     let children: string[] = [];
     let data: { x: number, y: number }[] = [];
-    if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {      
+    if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {
       children = ['child 1', 'child 2', 'child 3'];
     }
     if (hash.endsWith('/child 2')) {

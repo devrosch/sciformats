@@ -1,0 +1,54 @@
+sf-app {
+  flex-grow: 1; /* fill 100% height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* header - content - footer */
+
+sf-app > .header {
+  background-color: lightblue;
+  height: 2em;
+}
+
+sf-app > .content {
+  background-color: lightgoldenrodyellow;
+  flex-grow: 1; /* fill 100% height */
+  display: flex;
+}
+
+sf-app > .footer {
+  background-color: lightcoral;
+  height: 2em;
+}
+
+/* content */
+
+sf-app > .content > .tree {
+  background-color: aqua;
+  flex: 0 0 20%;
+  white-space: nowrap;
+  overflow: auto;
+}
+
+sf-app > .content > .node-content {
+  background-color: aliceblue;
+  flex: 0 0 80%;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+sf-app > .content > .node-content > .data {
+  background-color: aquamarine;
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+sf-app > .content > .node-content > .params {
+  background-color: azure;
+  flex: 0 0 40%;
+  overflow: auto;
+}

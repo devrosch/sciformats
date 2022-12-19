@@ -1,11 +1,11 @@
 /* eslint-disable import/no-duplicates */
-import Menu from 'components/menu/Menu';
 import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Menu from './Menu';
 import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects
 import Navbar from './Navbar';
-import AboutDialog from './menu/AboutDialog';
+import AboutDialog from './AboutDialog';
 
 const element = 'sf-navbar';
 

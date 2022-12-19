@@ -1,10 +1,10 @@
 /* eslint-disable import/no-duplicates */
 import Channel from 'model/Channel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-import './menu/Menu'; // for side effects
-import Menu from './menu/Menu';
-import './menu/AboutDialog'; // for side effects
-import AboutDialog from './menu/AboutDialog';
+import './Menu'; // for side effects
+import Menu from './Menu';
+import './AboutDialog'; // for side effects
+import AboutDialog from './AboutDialog';
 import './Navbar.css';
 
 const template = `

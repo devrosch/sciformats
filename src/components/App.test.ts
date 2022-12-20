@@ -9,8 +9,8 @@ const element = 'sf-app';
 const file = new File(['dummy'], 'test.txt');
 const file2 = new File(['dummy2'], 'test2.txt');
 const item = {
-  webkitGetAsEntry() { return {isFile: true}; }
-}
+  webkitGetAsEntry() { return { isFile: true }; },
+};
 let dataTransfer: DataTransfer;
 
 beforeAll(() => {
@@ -22,7 +22,7 @@ beforeEach(() => {
     files: [file, file2],
     items: [item, item],
     dropEffect: 'none',
-  } as unknown as DataTransfer
+  } as unknown as DataTransfer;
 });
 
 afterEach(() => {
@@ -47,7 +47,7 @@ test('sf-app dispatches custom event on file drop', () => {
   const channel = CustomEventsMessageBus.getDefaultChannel();
 
   // simulate DragEvent, not supported by jsdom
-  const event = new Event("drop") as any;
+  const event = new Event('drop') as any;
   event.dataTransfer = dataTransfer;
 
   const customEventHandler = jest.fn((e) => e.detail.files);
@@ -67,7 +67,7 @@ test('sf-app prevents default and stops propagation on dragenter', () => {
   const app = document.body.querySelector('sf-app') as App;
 
   // simulate DragEvent, not supported by jsdom
-  const event = new Event("dragenter") as DragEvent;
+  const event = new Event('dragenter') as DragEvent;
   event.preventDefault = jest.fn();
   event.stopPropagation = jest.fn();
   app.dispatchEvent(event);
@@ -81,7 +81,7 @@ test('sf-app prevents shows copy symbol on dragover', () => {
   const app = document.body.querySelector('sf-app') as App;
 
   // simulate DragEvent, not supported by jsdom
-  const event = new Event("dragover") as any;
+  const event = new Event('dragover') as any;
   event.dataTransfer = dataTransfer;
   event.preventDefault = jest.fn();
   event.stopPropagation = jest.fn();

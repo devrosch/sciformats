@@ -48,13 +48,15 @@ export default class App extends HTMLElement {
     this.init();
   }
 
+  /* eslint-disable class-methods-use-this */
   onDragEnter(e: DragEvent) {
     // see https://www.quirksmode.org/blog/archives/2009/09/the_html5_drag.html for why this is necessary
     e.stopPropagation();
     e.preventDefault();
   }
 
-  onDragOver(e: DragEvent) {    
+  /* eslint-disable class-methods-use-this */
+  onDragOver(e: DragEvent) {
     e.stopPropagation();
     e.preventDefault();
     if (e.dataTransfer !== null) {
@@ -76,15 +78,16 @@ export default class App extends HTMLElement {
     // see: https://developer.mozilla.org/en-US/docs/Web/API/DataTransferItem/webkitGetAsEntry
     const items = e.dataTransfer.items;
     let files: File[] = [];
-    for (let i = 0; i < items.length; i++) {
+    for (let i = 0; i < items.length; i += 1) {
+      /* eslint-disable no-extra-boolean-cast */
       if (!!items[i].webkitGetAsEntry) {
         const entry = items[i].webkitGetAsEntry(); // non-standard
         if (entry && entry.isFile) {
           files.push(selectedFiles[i]);
         }
-      }
-      else {
-        // non-standard webkitGetAsEntry() not available => rely on error handling when trying to read the data
+      } else {
+        // non-standard webkitGetAsEntry() not available
+        // => rely on error handling when trying to read the data
         files = Array.from(selectedFiles);
         break;
       }

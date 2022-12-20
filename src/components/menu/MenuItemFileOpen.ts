@@ -86,10 +86,7 @@ export default class MenuItemFileOpen extends HTMLLIElement {
     if (selectedFiles === null || typeof selectedFiles === 'undefined') {
       return;
     }
-    const files = [];
-    for (let i = 0; i < selectedFiles.length; i += 1) {
-      files.push(selectedFiles[i]);
-    }
+    const files = Array.from(selectedFiles);
     // reset file input, see https://stackoverflow.com/questions/20549241/how-to-reset-input-type-file
     // if not reset, opening the same file again does not fire on change event => cannot be opened
     input.value = '';

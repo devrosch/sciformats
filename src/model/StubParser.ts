@@ -1,8 +1,8 @@
 // disable one generally applicable eslint error for this stub
 /* eslint-disable class-methods-use-this */
-import DataRepository from './DataRepository';
+import Parser from './Parser';
 
-export default class StubDataRepository implements DataRepository {
+export default class StubParser implements Parser {
   read(url: URL) {
     const hash = decodeURIComponent(url.hash);
     let children: string[] = [];

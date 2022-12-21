@@ -1,5 +1,5 @@
-import DataRepository from 'model/DataRepository';
-import StubDataRepository from 'model/StubDataRepository';
+import Parser from 'model/Parser';
+import StubParser from 'model/StubParser';
 import { isSameUrl } from 'util/UrlUtils';
 import './TreeNode.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
@@ -11,30 +11,30 @@ const template = '';
 export default class TreeNode extends HTMLElement {
   static get observedAttributes() { return ['url']; }
 
-  #repository = new StubDataRepository() as DataRepository;
+  #parser: Parser = new StubParser();
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #eventListener: any = null;
 
-  #url = new URL('file:///dummy.txt#/') as URL;
+  #url: URL = new URL('file:///dummy.txt#/');
 
-  #children = [] as string[];
+  #children: string[] = [];
 
-  #collapsed = true as boolean;
+  #collapsed: boolean = true;
 
-  #selected = false as boolean;
+  #selected: boolean = false;
 
-  constructor(repository: DataRepository | null, url: URL | null) {
+  constructor(parser: Parser | null, url: URL | null) {
     super();
     console.log('TreeNode constructor() called');
-    if (repository !== null && typeof repository !== 'undefined') {
-      this.#repository = repository;
+    if (parser !== null && typeof parser !== 'undefined') {
+      this.#parser = parser;
     }
     if (url !== null && typeof url !== 'undefined') {
       this.#url = url;
     }
-    const data = this.#repository.read(this.#url);
+    const data = this.#parser.read(this.#url);
     this.#children = data.children;
   }
 
@@ -71,7 +71,7 @@ export default class TreeNode extends HTMLElement {
           childUrl.hash += ('/');
         }
         childUrl.hash += childNodeName;
-        const childNode = new TreeNode(this.#repository, childUrl);
+        const childNode = new TreeNode(this.#parser, childUrl);
         childNode.setAttribute('url', childUrl.toString());
         this.appendChild(childNode);
       }
@@ -102,7 +102,7 @@ export default class TreeNode extends HTMLElement {
     this.#selected = selected;
     if (selected) {
       this.classList.add('selected');
-      const nodeData = this.#repository.read(this.#url);
+      const nodeData = this.#parser.read(this.#url);
       this.#channel.dispatch('sf-tree-node-selected', { url: this.#url, data: nodeData.data, parameters: nodeData.parameters });
     } else {
       this.classList.remove('selected');

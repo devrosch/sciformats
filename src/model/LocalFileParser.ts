@@ -1,8 +1,8 @@
 // disable one generally applicable eslint error for this stub
 /* eslint-disable class-methods-use-this */
-import DataRepository from './DataRepository';
+import Parser from './Parser';
 
-export default class StubDataRepository implements DataRepository {
+export default class LocalFileParser implements Parser {
   #url: URL;
 
   // #file: File;
@@ -18,7 +18,7 @@ export default class StubDataRepository implements DataRepository {
     const baseUrlString = this.#url.toString();
     const urlString = url.toString();
     if (!urlString.startsWith(baseUrlString)) {
-      throw new Error(`Illegal URL for repository: ${url}`);
+      throw new Error(`Illegal URL for parser: ${url}`);
     }
 
     // TODO: dummy

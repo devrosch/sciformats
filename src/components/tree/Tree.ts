@@ -1,4 +1,4 @@
-import LocalFileDataRepository from 'model/LocalFileDataRepository';
+import LocalFileParser from 'model/LocalFileParser';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
@@ -70,7 +70,7 @@ export default class Tree extends HTMLElement {
       // generate URL of type file:///UUID/fileName#/
       const uuid = crypto.randomUUID();
       const url = new URL(`file:///${uuid}/${file.name}#/`);
-      const repo = new LocalFileDataRepository(url, file);
+      const repo = new LocalFileParser(url, file);
       const rootNode = new TreeNode(repo, url);
       this.#children.push(rootNode);
     }

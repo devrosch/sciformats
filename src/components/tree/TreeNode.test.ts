@@ -16,6 +16,7 @@ class StubParser implements Parser {
     return this.#url;
   }
 
+  /* eslint-disable class-methods-use-this */
   async read(url: URL) {
     const hash = decodeURIComponent(url.hash);
     let children: string[] = [];
@@ -85,8 +86,7 @@ test('sf-tree-node renders', (done) => {
       expect(document.body.innerHTML).toContain(child3);
 
       done();
-    }
-    catch(err) {
+    } catch (err) {
       done(err);
     }
   });
@@ -127,7 +127,7 @@ test('sf-tree-node generates sf-tree-node-data-read events', (done) => {
     }
   };
   handle = channel.addListener(dataReadEvent, listener);
-  
+
   treeNode = new TreeNode(parser, parser.rootUrl);
   document.body.append(treeNode);
 });

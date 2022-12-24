@@ -15,7 +15,8 @@ test('root URL matches the one passed into the constructor', async () => {
 });
 
 test('reading node data succeeds', async () => {
-  // TODO: this whole test just checks the mock implementation and needs to be re-written for the actual feature
+  // TODO: this whole test just checks the mock implementation
+  // needs to be re-written for the actual feature
   const rootNodeData = await parser.read(url);
 
   expect(rootNodeData.url).toBe(url);

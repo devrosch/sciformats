@@ -115,7 +115,9 @@ export default class TreeNode extends HTMLElement {
       this.classList.add('selected');
       let nodeData = this.#nodeData;
       if (nodeData == null) {
-        nodeData = { url: this.#url, data: [], parameters: [], children: [] };
+        nodeData = {
+          url: this.#url, data: [], parameters: [], children: [],
+        };
       }
       this.#channel.dispatch(nodeSelectedEvent, nodeData);
     } else {
@@ -167,6 +169,7 @@ export default class TreeNode extends HTMLElement {
     console.log('TreeNode adoptedCallback() called');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('TreeNode attributeChangedCallback() called');
   }

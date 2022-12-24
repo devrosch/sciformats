@@ -26,7 +26,7 @@ export default class LocalFileParser implements Parser {
     }
 
     // TODO: dummy
-    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+    const delay = (ms: number) => new Promise((resolve) => { setTimeout(resolve, ms); });
     await delay(500);
 
     const hash = decodeURIComponent(url.hash);

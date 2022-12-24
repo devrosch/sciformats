@@ -53,7 +53,7 @@ test('sf-tree listenes to file open events', () => {
   channel.dispatch(fileOpenedEvent, { files: [file] });
 
   expect(tree.children).toHaveLength(1);
-  let treeNode = tree.querySelector(nodeElement) as TreeNode;
+  const treeNode = tree.querySelector(nodeElement) as TreeNode;
   expect(treeNode).toBeTruthy();
   expect(treeNode.hasAttribute(urlAttr)).toBeTruthy();
   expect(treeNode.getAttribute(urlAttr)).toMatch(urlRegex);

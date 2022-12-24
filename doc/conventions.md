@@ -32,9 +32,10 @@ Using TypeScript's [importsNotUsedAsValues](https://www.typescriptlang.org/tscon
 
 The following custom events are dispatched or listened to by components.
 
-| Event                   | Details                                                                                                    | Dispatchers            | Listeners                       |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------- |
-| sf-tree-node-selected   | { url: `URL`,<br/>data: `{ x: number, y: number }[]`,<br/>parameters: `{ key: string, value: string }[]` } | TreeNode               | Tree, TreeNode, ParametersPanel |
-| sf-tree-node-deselected | { url: `URL` }                                                                                             | TreeNode               | Tree, TreeNode, ParametersPanel |
-| sf-file-open-requested  | { files: `File[]` }                                                                                        | App, MenuItemFileOpen  | Tree                            |
-| sf-file-close-requested | `null`                                                                                                     | MenuItemFileClose      | Tree                            |
+| Event                   | Details             | Dispatchers            | Listeners                       |
+| ----------------------- | ------------------- | ---------------------- | ------------------------------- |
+| sf-tree-node-selected   | `NodeData`          | TreeNode               | Tree, TreeNode, ParametersPanel |
+| sf-tree-node-deselected | { url: `URL` }      | TreeNode               | Tree, TreeNode, ParametersPanel |
+| sf-tree-node-data-read  | `NodeData`          | TreeNode               |                                 |
+| sf-file-open-requested  | { files: `File[]` } | App, MenuItemFileOpen  | Tree                            |
+| sf-file-close-requested | `null`              | MenuItemFileClose      | Tree                            |

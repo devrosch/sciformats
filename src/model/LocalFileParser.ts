@@ -1,4 +1,4 @@
-// disable one generally applicable eslint error for this stub
+// disable one generally applicable eslint error for this until full implementation is done
 /* eslint-disable class-methods-use-this */
 import Parser from './Parser';
 
@@ -14,7 +14,11 @@ export default class LocalFileParser implements Parser {
     // this.#file = file;
   }
 
-  read(url: URL) {
+  get rootUrl(): URL {
+    return this.#url;
+  }
+
+  async read(url: URL) {
     const baseUrlString = this.#url.toString();
     const urlString = url.toString();
     if (!urlString.startsWith(baseUrlString)) {
@@ -22,6 +26,9 @@ export default class LocalFileParser implements Parser {
     }
 
     // TODO: dummy
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+    await delay(500);
+
     const hash = decodeURIComponent(url.hash);
     let children: string[] = [];
     let data: { x: number, y: number }[] = [];

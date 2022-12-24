@@ -1,41 +1,37 @@
 import Parser from 'model/Parser';
-import StubParser from 'model/StubParser';
 import { isSameUrl } from 'util/UrlUtils';
 import './TreeNode.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
+import NodeData from 'model/NodeData';
+
+const nodeSelectedEvent = 'sf-tree-node-selected';
+const nodeDeselectedEvent = 'sf-tree-node-deselected';
+const nodeDataReadEvent = 'sf-tree-node-data-read';
 
 const template = '';
 
 export default class TreeNode extends HTMLElement {
-  static get observedAttributes() { return ['url']; }
-
-  #parser: Parser = new StubParser();
-
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #eventListener: any = null;
 
-  #url: URL = new URL('file:///dummy.txt#/');
+  #parser: Parser;
 
-  #children: string[] = [];
+  #url: URL;
+
+  #nodeData: NodeData | null = null;
 
   #collapsed: boolean = true;
 
   #selected: boolean = false;
 
-  constructor(parser: Parser | null, url: URL | null) {
+  constructor(parser: Parser, url: URL) {
     super();
     console.log('TreeNode constructor() called');
-    if (parser !== null && typeof parser !== 'undefined') {
-      this.#parser = parser;
-    }
-    if (url !== null && typeof url !== 'undefined') {
-      this.#url = url;
-    }
-    const data = this.#parser.read(this.#url);
-    this.#children = data.children;
+    this.#parser = parser;
+    this.#url = url;
   }
 
   render() {
@@ -44,7 +40,15 @@ export default class TreeNode extends HTMLElement {
     if (urlAttr !== this.#url.toString()) {
       this.setAttribute('url', this.#url.toString());
     }
-    const numChildNodes = this.#children.length;
+    if (this.#nodeData === null) {
+      const nameSpan = document.createElement('span');
+      nameSpan.classList.add('node-name');
+      nameSpan.textContent = 'Loading...';
+      this.append(nameSpan);
+      return;
+    }
+
+    const numChildNodes = this.#nodeData.children.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
       if (hasChildren) {
@@ -65,7 +69,7 @@ export default class TreeNode extends HTMLElement {
     this.append(nameSpan);
 
     if (hasChildren && !this.#collapsed) {
-      for (const childNodeName of this.#children) {
+      for (const childNodeName of this.#nodeData.children) {
         const childUrl = new URL(this.#url);
         if (!this.#url.hash.endsWith('/')) {
           childUrl.hash += ('/');
@@ -76,6 +80,13 @@ export default class TreeNode extends HTMLElement {
         this.appendChild(childNode);
       }
     }
+  }
+
+  async #retrieveNodeData() {
+    const data = await this.#parser.read(this.#url);
+    this.#nodeData = data;
+    this.#channel.dispatch(nodeDataReadEvent, this.#nodeData);
+    this.render();
   }
 
   static #extractName(path: string): string {
@@ -98,15 +109,18 @@ export default class TreeNode extends HTMLElement {
     return TreeNode.#extractName(hash);
   }
 
-  setSelected(selected: boolean) {
+  async setSelected(selected: boolean) {
     this.#selected = selected;
     if (selected) {
       this.classList.add('selected');
-      const nodeData = this.#parser.read(this.#url);
-      this.#channel.dispatch('sf-tree-node-selected', { url: this.#url, data: nodeData.data, parameters: nodeData.parameters });
+      let nodeData = this.#nodeData;
+      if (nodeData == null) {
+        nodeData = { url: this.#url, data: [], parameters: [], children: [] };
+      }
+      this.#channel.dispatch(nodeSelectedEvent, nodeData);
     } else {
       this.classList.remove('selected');
-      this.#channel.dispatch('sf-tree-node-deselected', { url: this.#url });
+      this.#channel.dispatch(nodeDeselectedEvent, { url: this.#url });
     }
   }
 
@@ -137,6 +151,7 @@ export default class TreeNode extends HTMLElement {
   connectedCallback() {
     console.log('TreeNode connectedCallback() called');
     this.#eventListener = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
+    this.#retrieveNodeData();
     this.render();
   }
 
@@ -154,13 +169,6 @@ export default class TreeNode extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('TreeNode attributeChangedCallback() called');
-    if (name === 'url') {
-      if (this.#url.toString() !== newValue) {
-        console.log('TreeNode url attribute value changed');
-        this.#url = new URL(newValue);
-        this.render();
-      }
-    }
   }
 
   // #endregion lifecycle events

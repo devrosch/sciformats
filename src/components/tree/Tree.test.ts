@@ -40,7 +40,7 @@ test('sf-tree renders', async () => {
   expect(document.body.innerHTML).toContain(element);
 });
 
-test('sf-tree listenes to file open events', async () => {
+test('sf-tree listenes to file open events', () => {
   document.body.innerHTML = `<${element}/>`;
 
   const tree = document.body.querySelector(element) as Tree;
@@ -53,11 +53,10 @@ test('sf-tree listenes to file open events', async () => {
   channel.dispatch(fileOpenedEvent, { files: [file] });
 
   expect(tree.children).toHaveLength(1);
-  const treeNode = tree.querySelector(nodeElement) as TreeNode;
+  let treeNode = tree.querySelector(nodeElement) as TreeNode;
   expect(treeNode).toBeTruthy();
   expect(treeNode.hasAttribute(urlAttr)).toBeTruthy();
   expect(treeNode.getAttribute(urlAttr)).toMatch(urlRegex);
-  expect(treeNode.innerHTML).toContain(fileName);
 
   channel.dispatch(fileOpenedEvent, { files: [file] });
   expect(tree.children).toHaveLength(2);

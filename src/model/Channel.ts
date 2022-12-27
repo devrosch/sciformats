@@ -7,7 +7,7 @@ export default interface Channel {
   /**
    * The channel name.
    */
-  get name(): string;
+  readonly name: string;
 
   /**
    * Dispatches a message.

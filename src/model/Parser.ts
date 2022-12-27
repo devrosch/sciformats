@@ -7,7 +7,7 @@ export default interface Parser {
    * file:///local/path/to/file
    * https://host/path/to/file
   */
-  get rootUrl(): URL;
+  readonly rootUrl: URL;
 
   /**
    * @param {URL} url URL to file including fragment. Should start with root URL.

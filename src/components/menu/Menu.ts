@@ -26,6 +26,7 @@ const template = `
           <li is="sf-menu-item" key="sf-menu-item-6" title="Menu Item 6"></li>
           <li is="sf-menu-item" key="sf-menu-item-7" title="Menu Item 7"></li>
         </ul>
+      </li>
       <li is="sf-menu-item" key="sf-menu-item-4" title="Menu Item 4"></li>
     </ul>
   </li>

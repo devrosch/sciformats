@@ -27,6 +27,11 @@ Each web component fpr the UI sits in its own module and contains a statement th
 
 Using TypeScript's [importsNotUsedAsValues](https://www.typescriptlang.org/tsconfig#importsNotUsedAsValues) and Webpack's [sideEffects](https://webpack.js.org/guides/tree-shaking/) config options instead did not succeed.
 
+## Custom elements
+
+Components are implemented through custom elements ("web components"). As Safari does not support customized built-in elements ([GitHub](https://github.com/WebKit/standards-positions/issues/97), [Bugzilla](https://bugs.webkit.org/show_bug.cgi?id=182671)), only autonomous elements are used.
+
+For easier styling, only light DOM (no shadow DOM) is used for those elements.
 
 ## Events
 

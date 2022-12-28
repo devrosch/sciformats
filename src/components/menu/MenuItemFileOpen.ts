@@ -9,7 +9,7 @@ const template = `
   </label>  
 `;
 
-export default class MenuItemFileOpen extends HTMLLIElement {
+export default class MenuItemFileOpen extends HTMLElement {
   static get observedAttributes() { return ['title', 'key']; }
 
   #title: string | null = null;
@@ -128,4 +128,4 @@ export default class MenuItemFileOpen extends HTMLLIElement {
 }
 
 console.log('define "sf-menu-item-file-open"');
-customElements.define('sf-menu-item-file-open', MenuItemFileOpen, { extends: 'li' });
+customElements.define('sf-menu-item-file-open', MenuItemFileOpen);

@@ -16,8 +16,8 @@ afterEach(() => {
 });
 
 test('sf-menu-item renders and observes attribute changes', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const menuItem = document.body.querySelector('li') as MenuItem;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const menuItem = document.body.querySelector(element) as MenuItem;
   expect(menuItem).toBeTruthy();
   expect(menuItem.getAttribute(titleAttr)).toBe(title);
   expect(menuItem.getAttribute(keyAttr)).toBe(key);
@@ -40,8 +40,8 @@ test('sf-menu-item renders and observes attribute changes', async () => {
 });
 
 test('sf-menu-item generates click events', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const menuItem = document.body.querySelector('li') as MenuItem;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const menuItem = document.body.querySelector(element) as MenuItem;
   expect(menuItem).toBeTruthy();
   const a = menuItem.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();

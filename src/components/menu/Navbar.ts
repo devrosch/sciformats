@@ -11,7 +11,7 @@ const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
   <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
   <nav>
-    <ul is="sf-menu"></ul>
+    <sf-menu></sf-menu>
   </nav>
   <sf-about-dialog/>
 `;
@@ -46,7 +46,7 @@ export default class Navbar extends HTMLElement {
 
   render() {
     this.init();
-    const menu = this.querySelector('ul[is="sf-menu"]') as Menu;
+    const menu = this.querySelector('sf-menu') as Menu;
     menu.showMenu(this.#showMenu);
   }
 

@@ -68,7 +68,7 @@ test('sf-navbar hamburger menu toggles menu visibility', async () => {
   document.body.innerHTML = `<${element}/>`;
   const navbar = document.body.querySelector('sf-navbar') as Navbar;
   expect(navbar).toBeTruthy();
-  const menu = navbar.querySelector('ul[is="sf-menu"]') as Menu;
+  const menu = navbar.querySelector('sf-menu') as Menu;
   expect(menu).toBeTruthy();
 
   const mockShowMenu = jest.fn((show) => show);
@@ -98,7 +98,7 @@ test('sf-navbar menu item click closes menu', async () => {
   document.body.innerHTML = `<${element}/>`;
   const navbar = document.body.querySelector('sf-navbar') as Navbar;
   expect(navbar).toBeTruthy();
-  const menu = navbar.querySelector('ul[is="sf-menu"]') as Menu;
+  const menu = navbar.querySelector('sf-menu') as Menu;
   expect(menu).toBeTruthy();
 
   const mockShowMenu = jest.fn((show) => show);
@@ -121,7 +121,7 @@ test('sf-navbar screen change closes menu', async () => {
   document.body.innerHTML = `<${element}/>`;
   const navbar = document.body.querySelector('sf-navbar') as Navbar;
   expect(navbar).toBeTruthy();
-  const menu = navbar.querySelector('ul[is="sf-menu"]') as Menu;
+  const menu = navbar.querySelector('sf-menu') as Menu;
   expect(menu).toBeTruthy();
 
   const mockShowMenu = jest.fn((show) => show);
@@ -134,11 +134,11 @@ test('sf-navbar screen change closes menu', async () => {
   expect(mockShowMenu.mock.results[0].value).toBe(false);
 });
 
-test('sf-navbar screen change closes menu', async () => {
+test('sf-navbar selction outside menu closes menu', async () => {
   document.body.innerHTML = `<${element}/>`;
   const navbar = document.body.querySelector('sf-navbar') as Navbar;
   expect(navbar).toBeTruthy();
-  const menu = navbar.querySelector('ul[is="sf-menu"]') as Menu;
+  const menu = navbar.querySelector('sf-menu') as Menu;
   expect(menu).toBeTruthy();
 
   const mockShowMenu = jest.fn((show) => show);

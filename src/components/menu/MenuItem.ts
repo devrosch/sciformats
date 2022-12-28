@@ -1,6 +1,6 @@
 const template = '<a href="#"></a>';
 
-export default class MenuItem extends HTMLLIElement {
+export default class MenuItem extends HTMLElement {
   static get observedAttributes() { return ['title', 'key']; }
 
   #title: string | null = null;
@@ -62,4 +62,4 @@ export default class MenuItem extends HTMLLIElement {
 }
 
 console.log('define "sf-menu-item"');
-customElements.define('sf-menu-item', MenuItem, { extends: 'li' });
+customElements.define('sf-menu-item', MenuItem);

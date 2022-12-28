@@ -19,8 +19,8 @@ afterEach(() => {
 });
 
 test('sf-menu-item-file-open renders and observes attribute changes', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const menuItem = document.body.querySelector('li') as MenuItemFileOpen;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const menuItem = document.body.querySelector(element) as MenuItemFileOpen;
   expect(menuItem).toBeTruthy();
   expect(menuItem.getAttribute(titleAttr)).toBe(title);
   expect(menuItem.getAttribute(keyAttr)).toBe(key);
@@ -44,8 +44,8 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
 });
 
 test('sf-menu-item-file-open a click event results in input click event', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const menuItem = document.body.querySelector('li') as MenuItemFileOpen;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const menuItem = document.body.querySelector(element) as MenuItemFileOpen;
   const input = document.body.querySelector('input') as HTMLInputElement;
   expect(menuItem).toBeTruthy();
   expect(input).toBeTruthy();
@@ -67,8 +67,8 @@ test('sf-menu-item-file-open a click event results in input click event', async 
 });
 
 test('sf-menu-item-file-open stops propagation of input click events', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const menuItem = document.body.querySelector('li') as MenuItemFileOpen;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const menuItem = document.body.querySelector(element) as MenuItemFileOpen;
   expect(menuItem).toBeTruthy();
 
   const mockElement = document.createElement('input');
@@ -83,8 +83,8 @@ test('sf-menu-item-file-open stops propagation of input click events', async () 
 });
 
 test('sf-menu-item-file-open dispatches click and custom event on file upload', (done) => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const menuItem = document.body.querySelector('li') as MenuItemFileOpen;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const menuItem = document.body.querySelector(element) as MenuItemFileOpen;
   const channel = CustomEventsMessageBus.getDefaultChannel();
 
   const file = new File(['dummy'], 'test.txt');

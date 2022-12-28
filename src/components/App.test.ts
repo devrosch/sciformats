@@ -76,7 +76,7 @@ test('sf-app prevents default and stops propagation on dragenter', () => {
   expect(event.stopPropagation).toBeCalledTimes(1);
 });
 
-test('sf-app prevents shows copy symbol on dragover', () => {
+test('sf-app shows copy symbol on dragover', () => {
   document.body.innerHTML = `<${element}/>`;
   const app = document.body.querySelector('sf-app') as App;
 

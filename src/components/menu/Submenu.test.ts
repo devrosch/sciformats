@@ -19,12 +19,12 @@ afterEach(() => {
 });
 
 test('sf-menu-item renders and observes attribute changes', async () => {
-  document.body.innerHTML = `<li
-    is="${element}"
+  document.body.innerHTML = `
+    <${element}
     ${keyAttr}="${key}"
     ${titleAttr}="${title}"
     ${expandAttr}="${expand}"/>`;
-  const submenu = document.body.querySelector('li') as Submenu;
+  const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
   expect(submenu.getAttribute(titleAttr)).toBe(title);
   expect(submenu.getAttribute(keyAttr)).toBe(key);
@@ -52,8 +52,8 @@ test('sf-menu-item renders and observes attribute changes', async () => {
 });
 
 test('sf-submenu expands on click, event does not get propagated', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const submenu = document.body.querySelector('li') as Submenu;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
   const a = submenu.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
@@ -68,8 +68,8 @@ test('sf-submenu expands on click, event does not get propagated', async () => {
 });
 
 test('sf-submenu expands/collapses on mouse enter/leave', async () => {
-  document.body.innerHTML = `<li is="${element}" ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
-  const submenu = document.body.querySelector('li') as Submenu;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
   const a = submenu.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
@@ -81,8 +81,8 @@ test('sf-submenu expands/collapses on mouse enter/leave', async () => {
 });
 
 test('sf-submenu "expand" attribute sets visibility', async () => {
-  document.body.innerHTML = `<li is="${element}"/>`;
-  const submenu = document.body.querySelector('li') as Submenu;
+  document.body.innerHTML = `<${element}/>`;
+  const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
 
   expect(submenu.getAttribute('expand')).toBe('false');

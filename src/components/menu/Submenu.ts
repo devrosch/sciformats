@@ -3,7 +3,7 @@
  */
 const maxWidth = 576;
 
-export default class Submenu extends HTMLLIElement {
+export default class Submenu extends HTMLElement {
   static get observedAttributes() { return ['title', 'key', 'expand']; }
 
   #title: string | null = null;
@@ -134,4 +134,4 @@ export default class Submenu extends HTMLLIElement {
 }
 
 console.log('define "sf-submenu"');
-customElements.define('sf-submenu', Submenu, { extends: 'li' });
+customElements.define('sf-submenu', Submenu);

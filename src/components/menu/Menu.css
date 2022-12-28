@@ -1,6 +1,6 @@
 /* menu */
 
-ul[is="sf-menu"] {
+ul[is="sf-menu"], sf-menu {
   display: flex;
   list-style-type: none;
   margin: 0;
@@ -9,12 +9,12 @@ ul[is="sf-menu"] {
   width: 100%;
 }
 
-ul[is="sf-menu"] li {
+ul[is="sf-menu"] li, ul[is="sf-menu"] sf-menu-item-file-open, ul[is="sf-menu"] sf-menu-item, ul[is="sf-menu"] sf-submenu, sf-menu li, sf-menu sf-menu-item-file-open, sf-menu sf-menu-item, sf-menu sf-submenu {
   display: flex;
   position: relative;
 }
 
-ul[is="sf-menu"] li a {
+ul[is="sf-menu"] li a, ul[is="sf-menu"] sf-menu-item-file-open a, ul[is="sf-menu"] sf-menu-item a, ul[is="sf-menu"] sf-submenu a, sf-menu li a, sf-menu sf-menu-item-file-open a, sf-menu sf-menu-item a, sf-menu sf-submenu a {
   cursor: pointer;
   text-decoration: none;
   display: flex;
@@ -24,13 +24,17 @@ ul[is="sf-menu"] li a {
   box-sizing: border-box;
 }
 
-ul[is="sf-menu"] li a:hover {
+ul[is="sf-menu"] li a:hover, ul[is="sf-menu"] sf-menu-item-file-open a:hover, ul[is="sf-menu"] sf-menu-item a:hover, ul[is="sf-menu"] sf-submenu a:hover, sf-menu li a:hover, sf-menu sf-menu-item-file-open a:hover, sf-menu sf-menu-item a:hover, sf-menu sf-submenu a:hover  {
   background-color: blanchedalmond;
 }
 
 /* submenus */
 
-ul[is="sf-menu"] li ul {
+sf-menu ul {
+  margin: 0;
+}
+
+ul[is="sf-menu"] li ul, ul[is="sf-menu"] sf-submenu ul, sf-menu li ul, sf-menu sf-submenu ul {
   display: none;
   position: absolute;
   padding-left: 0;
@@ -40,50 +44,50 @@ ul[is="sf-menu"] li ul {
   z-index: 1;
 }
 
-ul[is="sf-menu"] li.sf-submenu-expand > ul {
+ul[is="sf-menu"] li.sf-submenu-expand > ul, ul[is="sf-menu"] sf-submenu.sf-submenu-expand > ul, sf-menu li.sf-submenu-expand > ul, sf-menu sf-submenu.sf-submenu-expand > ul {
   display: block;
 }
 
 /* first level submenu */
 
-ul[is="sf-menu"] > li > ul {
+ul[is="sf-menu"] > li > ul, ul[is="sf-menu"] > sf-submenu > ul, sf-menu > li > ul, sf-menu > sf-submenu > ul {
   top: 100%;
 }
 
 /* nested submenus */
 
-ul[is="sf-menu"] > li > ul li ul {
+ul[is="sf-menu"] > li > ul li ul, ul[is="sf-menu"] > sf-submenu > ul sf-submenu ul, sf-menu > li > ul li ul, sf-menu > sf-submenu > ul sf-submenu ul {
   left: 100%;
 }
 
 /* mobile */
 
 @media screen and (max-width: 576px) {
-  ul[is="sf-menu"] {
+  ul[is="sf-menu"], sf-menu {
     position: absolute;
     display: none;
     background-color: #f9f9f9;
   }
-  ul[is="sf-menu"].sf-show-menu {
+  ul[is="sf-menu"].sf-show-menu, sf-menu.sf-show-menu {
     display: block;
   }
-  ul[is="sf-menu"] li {
+  ul[is="sf-menu"] li, ul[is="sf-menu"] sf-menu-item-file-open, ul[is="sf-menu"] sf-menu-item, ul[is="sf-menu"] sf-submenu, sf-menu li, sf-menu sf-menu-item-file-open, sf-menu sf-menu-item, sf-menu sf-submenu {
     display: block;
     background-color: #f9f9f9;
     box-sizing: border-box;
   }
-  ul[is="sf-menu"] li > ul {
+  ul[is="sf-menu"] li > ul, ul[is="sf-menu"] sf-submenu > ul, sf-menu li > ul, sf-menu sf-submenu > ul {
     box-shadow: none;
   }
-  ul[is="sf-menu"] li.sf-submenu-expand > ul {
+  ul[is="sf-menu"] li.sf-submenu-expand > ul, ul[is="sf-menu"] sf-submenu.sf-submenu-expand > ul, sf-menu li.sf-submenu-expand > ul, sf-menu sf-submenu.sf-submenu-expand > ul {
     padding-left: 1em;
     display: block;
     position: inherit;
   }
-  ul[is="sf-menu"] > li > ul {
+  ul[is="sf-menu"] > li > ul, ul[is="sf-menu"] > sf-submenu > ul, sf-menu > li > ul, sf-menu > sf-submenu > ul {
     top: 0%;
   }
-  ul[is="sf-menu"] > li > ul li ul {
+  ul[is="sf-menu"] > li > ul li ul, ul[is="sf-menu"] > sf-submenu > ul sf-submenu ul, sf-menu > li > ul li ul, sf-menu > sf-submenu > ul sf-submenu ul {
     left: 0%;
   }
 }

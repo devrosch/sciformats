@@ -1,3 +1,5 @@
+import './Submenu.css';
+
 /**
  * Max width for vertical menu.
  */
@@ -26,7 +28,10 @@ export default class Submenu extends HTMLElement {
         <a href="#" key="${this.#key}">
           <span>▸</span>&nbsp;${this.#title}
         </a>
-        ${innerHtml}`;
+        <div role="none">
+          ${innerHtml}
+        </div>
+        `;
     }
   }
 

@@ -11,7 +11,7 @@ const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
   <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
   <nav>
-    <sf-menu></sf-menu>
+    <sf-menu role="menubar"></sf-menu>
   </nav>
   <sf-about-dialog/>
 `;

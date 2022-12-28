@@ -29,18 +29,19 @@ Using TypeScript's [importsNotUsedAsValues](https://www.typescriptlang.org/tscon
 
 ## Custom elements
 
-Components are implemented through custom elements ("web components"). As Safari does not support customized built-in elements ([GitHub](https://github.com/WebKit/standards-positions/issues/97), [Bugzilla](https://bugs.webkit.org/show_bug.cgi?id=182671)), only autonomous elements are used.
+UI components are implemented through custom elements ("web components"). As Safari does not support customized built-in elements ([GitHub](https://github.com/WebKit/standards-positions/issues/97), [Bugzilla](https://bugs.webkit.org/show_bug.cgi?id=182671)), only autonomous elements are used.
 
-For easier styling, only light DOM (no shadow DOM) is used for those elements.
+For easier styling, only light DOM (no shadow DOM) is used in custom elements.
 
 ## Events
 
 The following custom events are dispatched or listened to by components.
 
-| Event                   | Details             | Dispatchers            | Listeners                       |
-| ----------------------- | ------------------- | ---------------------- | ------------------------------- |
-| sf-tree-node-selected   | `NodeData`          | TreeNode               | Tree, TreeNode, ParametersPanel |
-| sf-tree-node-deselected | { url: `URL` }      | TreeNode               | Tree, TreeNode, ParametersPanel |
-| sf-tree-node-data-read  | `NodeData`          | TreeNode               |                                 |
-| sf-file-open-requested  | { files: `File[]` } | App, MenuItemFileOpen  | Tree                            |
-| sf-file-close-requested | `null`              | MenuItemFileClose      | Tree                            |
+| Event                       | Details             | Dispatchers            | Listeners                       |
+| --------------------------- | ------------------- | ---------------------- | ------------------------------- |
+| sf-tree-node-selected       | `NodeData`          | TreeNode               | Tree, TreeNode, ParametersPanel |
+| sf-tree-node-deselected     | { url: `URL` }      | TreeNode               | Tree, TreeNode, ParametersPanel |
+| sf-tree-node-data-read      | `NodeData`          | TreeNode               |                                 |
+| sf-file-open-requested      | { files: `File[]` } | App, NavBar            | Tree                            |
+| sf-file-close-requested     | `null`              | NavBar                 | Tree                            |
+| sf-file-close-all-requested | `null`              | NavBar                 | Tree                            |

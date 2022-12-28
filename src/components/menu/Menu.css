@@ -16,7 +16,7 @@ sf-menu-item, sf-menu-item-file-open, sf-submenu {
   position: relative;
 }
 
-sf-menu-item a, sf-menu-item-file-open a, sf-submenu a {
+sf-menu a {
   cursor: pointer;
   text-decoration: none;
   display: flex;
@@ -26,7 +26,7 @@ sf-menu-item a, sf-menu-item-file-open a, sf-submenu a {
   box-sizing: border-box;
 }
 
-sf-menu-item a:hover, sf-menu-item-file-open a:hover, sf-submenu a:hover  {
+sf-menu a:hover  {
   background-color: blanchedalmond;
 }
 

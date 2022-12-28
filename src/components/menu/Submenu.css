@@ -30,7 +30,7 @@ sf-submenu > div sf-submenu div {
 /* mobile */
 
 @media screen and (max-width: 576px) {
-  sf-submenu > div {
+  sf-submenu div {
     box-shadow: none;
   }
   sf-submenu.sf-submenu-expand > div {

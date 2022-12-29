@@ -12,6 +12,8 @@ const title2 = 'def2';
 const expandAttr = 'expand';
 const expand = false;
 const expand2 = true;
+const roleAttr = 'role';
+const role = 'menu';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
@@ -29,6 +31,7 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(submenu.getAttribute(titleAttr)).toBe(title);
   expect(submenu.getAttribute(keyAttr)).toBe(key);
   expect(submenu.getAttribute(expandAttr)).toBe(`${expand}`);
+  expect(submenu.getAttribute(roleAttr)).toBe(role);
 
   const a = submenu.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();

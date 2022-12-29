@@ -16,6 +16,10 @@ export default class Menu extends HTMLElement {
 
   render() {
     this.init();
+    const role = this.hasAttribute('role') ? this.getAttribute('role') : '';
+    if (role !== 'menu') {
+      this.setAttribute('role', 'menubar');
+    }
   }
 
   showMenu(show: boolean) {

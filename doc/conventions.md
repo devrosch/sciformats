@@ -33,6 +33,10 @@ UI components are implemented through custom elements ("web components"). As Saf
 
 For easier styling, only light DOM (no shadow DOM) is used in custom elements.
 
+### Menu
+
+Because extending `<li>` and `<ul>` elements is not supported by Safari, and the [ElementInternals](https://developer.mozilla.org/en-US/docs/Web/API/ElementInternals) API with `ARIAMixin` are not supported by Safaria and only partially supported by Firefox, a11y is implemented through automatically setting `role` attributes for menu elements (insipred by this [example](https://www.w3.org/WAI/ARIA/apg/example-index/menubar/menubar-navigation)). However, any explicitly set `role` attributes will be overwritten.
+
 ## Events
 
 The following custom events are dispatched or listened to by components.

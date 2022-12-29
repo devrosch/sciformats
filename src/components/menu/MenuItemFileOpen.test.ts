@@ -10,6 +10,9 @@ const key2 = 'abc2';
 const titleAttr = 'title';
 const title = 'def';
 const title2 = 'def2';
+const roleAttr = 'role';
+const role = 'none';
+const aRole = 'menuitem';
 const inputKeyPostfix = '-input';
 const aKeyPostfix = '-input-a';
 
@@ -24,6 +27,7 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   expect(menuItem).toBeTruthy();
   expect(menuItem.getAttribute(titleAttr)).toBe(title);
   expect(menuItem.getAttribute(keyAttr)).toBe(key);
+  expect(menuItem.getAttribute(roleAttr)).toBe(role);
 
   const input = menuItem.querySelector('input') as HTMLInputElement;
   expect(input).toBeTruthy();
@@ -32,6 +36,7 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   expect(a).toBeTruthy();
   expect(a.getAttribute(keyAttr)).toBe(key + aKeyPostfix);
   expect(a.textContent).toBe(title);
+  expect(a.getAttribute(roleAttr)).toBe(aRole);
 
   menuItem.setAttribute(keyAttr, key2);
   expect(menuItem.getAttribute(keyAttr)).toBe(key2);

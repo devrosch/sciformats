@@ -33,6 +33,11 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   render() {
     this.init();
+    const role = this.hasAttribute('role') ? this.getAttribute('role') : '';
+    if (role !== 'none') {
+      this.setAttribute('role', 'none');
+    }
+
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
     const inputKey = input.getAttribute('key') ? input.getAttribute('key') as string : '';
     if (inputKey !== `${this.#key}-input`) {
@@ -46,13 +51,17 @@ export default class MenuItemFileOpen extends HTMLElement {
     }
 
     const a = this.querySelector('label > a') as HTMLAnchorElement;
-    const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
+    const aKey = a.hasAttribute('key') ? a.getAttribute('key') as string : '';
     if (aKey !== `${this.#key}-input-a`) {
       a.setAttribute('key', `${this.#key}-input-a`);
     }
     const aText = a.textContent;
     if (aText !== this.#title) {
       a.textContent = this.#title;
+    }
+    const aRole = a.hasAttribute('role') ? a.getAttribute('role') : '';
+    if (aRole !== 'menuitem') {
+      a.setAttribute('role', 'menuitem');
     }
   }
 

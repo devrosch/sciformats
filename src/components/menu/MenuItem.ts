@@ -22,15 +22,23 @@ export default class MenuItem extends HTMLElement {
 
   render() {
     this.init();
+    const role = this.hasAttribute('role') ? this.getAttribute('role') : '';
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
-    const aTitle = a.getAttribute('title') ? a.getAttribute('title') as string : '';
+    const aKey = a.hasAttribute('key') ? a.getAttribute('key') as string : '';
+    const aTitle = a.hasAttribute('title') ? a.getAttribute('title') as string : '';
+    const aRole = a.hasAttribute('role') ? a.getAttribute('role') as string : '';
+    if (role !== 'none') {
+      this.setAttribute('role', 'none');
+    }
     if (aKey !== this.#key) {
       a.setAttribute('key', this.#key ? this.#key : '');
     }
     if (aTitle !== this.#title) {
       a.setAttribute('title', this.#title ? this.#title : '');
       a.textContent = this.#title;
+    }
+    if (aRole !== 'menuitem') {
+      a.setAttribute('role', 'menuitem');
     }
   }
 

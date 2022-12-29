@@ -9,6 +9,9 @@ const key2 = 'abc2';
 const titleAttr = 'title';
 const title = 'def';
 const title2 = 'def2';
+const roleAttr = 'role';
+const role = 'none';
+const aRole = 'menuitem';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
@@ -21,11 +24,13 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(menuItem).toBeTruthy();
   expect(menuItem.getAttribute(titleAttr)).toBe(title);
   expect(menuItem.getAttribute(keyAttr)).toBe(key);
+  expect(menuItem.getAttribute(roleAttr)).toBe(role);
 
   const a = menuItem.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
   expect(a.getAttribute(titleAttr)).toBe(title);
   expect(a.getAttribute(keyAttr)).toBe(key);
+  expect(a.getAttribute(roleAttr)).toBe(aRole);
   // a.innerText not available in JSDOM
   // see: https://github.com/jsdom/jsdom/issues/1245
   expect(a.textContent).toBe(title);

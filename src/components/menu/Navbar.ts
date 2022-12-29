@@ -16,23 +16,23 @@ const template = `
   <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
   <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
   <nav>
-    <sf-menu role="menubar">
-      <sf-submenu key="sf-submenu-file" title="File" role="menu">
-        <sf-menu-item-file-open key="sf-file-open" title="Open..." role="menuitem"></sf-menu-item-file-open>
-        <sf-menu-item key="sf-file-close" title="Close" role="menuitem"></sf-menu-item>
-        <sf-menu-item key="sf-file-close-all" title="Close All" role="menuitem"></sf-menu-item>
+    <sf-menu>
+      <sf-submenu key="sf-submenu-file" title="File">
+        <sf-menu-item-file-open key="sf-file-open" title="Open..."></sf-menu-item-file-open>
+        <sf-menu-item key="sf-file-close" title="Close"></sf-menu-item>
+        <sf-menu-item key="sf-file-close-all" title="Close All"></sf-menu-item>
       </sf-submenu>
-      <sf-menu-item key="sf-menu-item-2" title="Menu Item 2" role="menuitem"></sf-menu-item>
-      <sf-submenu key="sf-submenu-1" title="Submenu 1" role="menu">
-        <sf-menu-item key="sf-menu-item-3" title="Menu Item 3" role="menuitem"></sf-menu-item>
-        <sf-submenu key="sf-submenu-2" title="Submenu 2" role="menu">
-          <sf-menu-item key="sf-menu-item-5" title="Menu Item 5" role="menuitem"></sf-menu-item>
-          <sf-menu-item key="sf-menu-item-6" title="Menu Item 6" role="menuitem"></sf-menu-item>
-          <sf-menu-item key="sf-menu-item-7" title="Menu Item 7" role="menuitem"></sf-menu-item>
+      <sf-menu-item key="sf-menu-item-2" title="Menu Item 2"></sf-menu-item>
+      <sf-submenu key="sf-submenu-1" title="Submenu 1">
+        <sf-menu-item key="sf-menu-item-3" title="Menu Item 3"></sf-menu-item>
+        <sf-submenu key="sf-submenu-2" title="Submenu 2">
+          <sf-menu-item key="sf-menu-item-5" title="Menu Item 5"></sf-menu-item>
+          <sf-menu-item key="sf-menu-item-6" title="Menu Item 6"></sf-menu-item>
+          <sf-menu-item key="sf-menu-item-7" title="Menu Item 7"></sf-menu-item>
         </sf-submenu>
-        <sf-menu-item key="sf-menu-item-4" title="Menu Item 4" role="menuitem"></sf-menu-item>
+        <sf-menu-item key="sf-menu-item-4" title="Menu Item 4"></sf-menu-item>
       </sf-submenu>
-      <sf-menu-item key="sf-about" title="About..." role="menuitem"></sf-menu-item>
+      <sf-menu-item key="sf-about" title="About..."></sf-menu-item>
     </sf-menu>
   </nav>
   <sf-about-dialog/>

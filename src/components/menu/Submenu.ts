@@ -37,11 +37,15 @@ export default class Submenu extends HTMLElement {
 
   render() {
     this.init();
+    const role = this.hasAttribute('role') ? this.getAttribute('role') as string : '';
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aKey = a.getAttribute('key') ? a.getAttribute('key') as string : '';
-    const aTitle = a.getAttribute('title') ? a.getAttribute('title') as string : '';
+    const aKey = a.hasAttribute('key') ? a.getAttribute('key') as string : '';
+    const aTitle = a.hasAttribute('title') ? a.getAttribute('title') as string : '';
     const expandendChar = this.#expand ? '▾ ' : '▸ ';
     const textContent = expandendChar + this.#title;
+    if (role !== 'menu') {
+      this.setAttribute('role', 'menu');
+    }
     if (aKey !== this.#key) {
       a.setAttribute('key', this.#key ? this.#key : '');
     }

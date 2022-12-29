@@ -12,12 +12,13 @@ afterEach(() => {
 test('sf-menu renders', async () => {
   document.body.innerHTML = `
   <${element}>
-    <sf-submenu key="sf-submenu-file" title="File" role="menu"></sf-submenu>
-    <sf-menu-item key="sf-menu-item-2" title="Menu Item 2" role="menuitem"></sf-menu-item>
+    <sf-submenu key="sf-submenu-file" title="File"></sf-submenu>
+    <sf-menu-item key="sf-menu-item-2" title="Menu Item 2"></sf-menu-item>
   </${element}>
   `;
   const menu = document.body.querySelector(element) as Menu;
   expect(menu).toBeTruthy();
+  expect(menu.getAttribute('role')).toBe('menubar');
 
   const submenuFile = menu.querySelector('sf-submenu[key="sf-submenu-file"]');
   expect(submenuFile).toBeTruthy();
@@ -28,8 +29,8 @@ test('sf-menu renders', async () => {
 test('sf-menu showMenu() sets CSS class and for "false" argument collapses all submenus', async () => {
   document.body.innerHTML = `
   <${element}>
-    <sf-submenu key="sf-submenu-1" title="Submenu 1" role="menu"></sf-submenu>
-    <sf-submenu key="sf-submenu-2" title="Submenu 2" role="menu"></sf-submenu>
+    <sf-submenu key="sf-submenu-1" title="Submenu 1"></sf-submenu>
+    <sf-submenu key="sf-submenu-2" title="Submenu 2"></sf-submenu>
   </${element}>
   `;
   const menu = document.body.querySelector(element) as Menu;

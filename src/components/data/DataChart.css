@@ -1,0 +1,17 @@
+sf-data-chart {
+  background-color: darkolivegreen;
+  flex: 1 1 100%;
+}
+
+sf-data-chart > div {
+  /* required to make chart resize to available space */
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: darkorange;
+}
+
+sf-data-chart > div > div {
+  /* required to make chart resize to available space */
+  position: absolute;
+}

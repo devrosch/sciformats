@@ -41,11 +41,11 @@ Because extending `<li>` and `<ul>` elements is not supported by Safari, and the
 
 The following custom events are dispatched or listened to by components.
 
-| Event                       | Details             | Dispatchers            | Listeners                       |
-| --------------------------- | ------------------- | ---------------------- | ------------------------------- |
-| sf-tree-node-selected       | `NodeData`          | TreeNode               | Tree, TreeNode, ParametersPanel |
-| sf-tree-node-deselected     | { url: `URL` }      | TreeNode               | Tree, TreeNode, ParametersPanel |
-| sf-tree-node-data-read      | `NodeData`          | TreeNode               |                                 |
-| sf-file-open-requested      | { files: `File[]` } | App, NavBar            | Tree                            |
-| sf-file-close-requested     | `null`              | NavBar                 | Tree                            |
-| sf-file-close-all-requested | `null`              | NavBar                 | Tree                            |
+| Event                       | Details             | Dispatchers | Listeners                                             |
+| --------------------------- | ------------------- | ----------- | ----------------------------------------------------- |
+| sf-tree-node-selected       | `NodeData`          | TreeNode    | Tree, TreeNode, ParametersPanel, DataTable, DataChart |
+| sf-tree-node-deselected     | { url: `URL` }      | TreeNode    | Tree, TreeNode, ParametersPanel, DataTable, DataChart |
+| sf-tree-node-data-read      | `NodeData`          | TreeNode    |                                                       |
+| sf-file-open-requested      | { files: `File[]` } | App, NavBar | Tree                                                  |
+| sf-file-close-requested     | `null`              | NavBar      | Tree                                                  |
+| sf-file-close-all-requested | `null`              | NavBar      | Tree                                                  |

@@ -1,3 +1,4 @@
+import './DataChart';
 import './DataTable';
 import './DataPanel.css';
 
@@ -8,7 +9,7 @@ const template = `
   </div>
 
   <div id="sf-data-chart-panel" class="tab-content">
-    <h3>Chart</h3>
+    <sf-data-chart/>
   </div>
   <div id="sf-data-table-panel" class="tab-content">
     <sf-data-table/>

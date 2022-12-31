@@ -1,5 +1,10 @@
 /* submenus */
 
+sf-submenu .sf-expand-collapse-indicator {
+  font-family: monospace;
+  padding-bottom: 0.2em;
+}
+
 sf-submenu div {
   display: none;
   position: absolute;

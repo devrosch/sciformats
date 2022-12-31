@@ -26,7 +26,7 @@ export default class Submenu extends HTMLElement {
       const innerHtml = this.innerHTML;
       this.innerHTML = `
         <a href="#" key="${this.#key}">
-          <span>▸</span>&nbsp;${this.#title}
+          <span class="sf-expand-collapse-indicator">▸</span>&nbsp;<span id="sf-submenu-title">${this.#title}</span>
         </a>
         <div role="none">
           ${innerHtml}
@@ -41,8 +41,9 @@ export default class Submenu extends HTMLElement {
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const aKey = a.hasAttribute('key') ? a.getAttribute('key') as string : '';
     const aTitle = a.hasAttribute('title') ? a.getAttribute('title') as string : '';
-    const expandendChar = this.#expand ? '▾ ' : '▸ ';
-    const textContent = expandendChar + this.#title;
+    const aExpandCollapseSpan = a.querySelector('.sf-expand-collapse-indicator') as HTMLSpanElement;
+    const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
+    const expandendChar = this.#expand ? '▼' : '▶';
     if (role !== 'menu') {
       this.setAttribute('role', 'menu');
     }
@@ -52,8 +53,11 @@ export default class Submenu extends HTMLElement {
     if (aTitle !== this.#title) {
       a.setAttribute('title', this.#title ? this.#title : '');
     }
-    if (a.textContent !== textContent) {
-      a.textContent = textContent;
+    if (aExpandCollapseSpan.textContent !== expandendChar) {
+      aExpandCollapseSpan.textContent = expandendChar
+    }
+    if (aTitleSpan.textContent !== this.#title) {
+      aTitleSpan.textContent = this.#title;
     }
     if (this.#expand) {
       this.setAttribute('expand', 'true');

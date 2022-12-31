@@ -3,6 +3,12 @@ sf-data-chart {
   flex: 1 1 100%;
 }
 
+/* set initially to prevent flash of unstyled chart */
+sf-data-chart.init {
+  visibility: hidden;
+  overflow:hidden;
+}
+
 sf-data-chart > div {
   /* required to make chart resize to available space */
   position: relative;

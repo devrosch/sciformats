@@ -16,9 +16,43 @@ export default class DataChart extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: { x: number, y: number }[] = [];
-
   #chartContainer: Plotly.Root | null = null;
+
+  #chartState = {
+    data: {
+      x: [] as number[],
+      y: [] as number[],
+      type: 'scatter',
+      mode: 'lines',
+    },
+    layout: {
+      // no title
+      // smaller margins
+      margin: {
+        l: 50,
+        r: 50,
+        b: 50,
+        t: 50,
+        pad: 10,
+      },
+      xaxis: {
+        title: 'x',
+        showgrid: true,
+        zeroline: false,
+        showline: true,
+      },
+      yaxis: {
+        title: 'y',
+        showgrid: true,
+        zeroline: false,
+        showline: true,
+      },
+    },
+    config: {
+      responsive: true,
+      displaylogo: false
+    }
+  }
 
   constructor() {
     super();
@@ -26,11 +60,15 @@ export default class DataChart extends HTMLElement {
   }
 
   get data() {
-    return this.#data;
+    const x = this.#chartState.data.x;
+    const y = this.#chartState.data.y;
+    return DataChart.fromXyArrays({ x, y });
   }
 
   set data(data: { x: number, y: number }[]) {
-    this.#data = data;
+    const xyData = DataChart.toXyArrays(data);
+    this.#chartState.data.x = xyData.x;
+    this.#chartState.data.y = xyData.y;
     this.render();
   }
 
@@ -38,60 +76,46 @@ export default class DataChart extends HTMLElement {
     if (this.children.length !== 1
       || (this.children.item(0)?.nodeName !== 'DIV')
       || this.#chartContainer === null) {
+
+      // avoid initial flash of incorrectly sized chart => hide
+      this.classList.add('init');
+
       this.innerHTML = template;
-
       this.#chartContainer = this.querySelector('#sf-data-chart-placeholder') as Plotly.Root;
-
-      const data: Plotly.Data[] = [{
-        x: [],
-        y: [],
-        type: 'scatter',
-        mode: 'lines',
-      }];
-  
-      const layout = {
-        title: 'Data',
-        xaxis: {
-          title: 'x',
-          showgrid: true,
-          zeroline: true,
-          showline: true,
-        },
-        yaxis: {
-          title: 'y',
-          showgrid: true,
-          zeroline: true,
-          showline: true,
-        }
-      };
-  
-      const config = { responsive: true, displaylogo: false };
-      Plotly.newPlot(this.#chartContainer!, data, layout, config);
+      Plotly.newPlot(this.#chartContainer!, [this.#chartState.data] as Plotly.Data[], this.#chartState.layout, this.#chartState.config);
       // initial resize to panel before 'responsive' config kicks in
       Plotly.Plots.resize(this.#chartContainer!);
+
+      // unhide chart
+      setTimeout(() => { this.classList.remove('init'); }, 100);
     }
+  }
+
+  static toXyArrays(data: { x: number, y: number }[]) {
+    const xArray: number[] = [];
+    const yArray: number[] = [];
+    for (const xyPair of data) {
+      xArray.push(xyPair.x);
+      yArray.push(xyPair.y);
+    }
+    return { x: xArray, y: yArray };
+  }
+
+  static fromXyArrays(data: { x: number[], y: number[] }) {
+    const xyArray: { x: number, y: number }[] = [];
+    for (let index = 0; index < data.x.length; index++) {
+      const x = data.x[index];
+      const y = data.y[index];
+      xyArray.push({ x, y });
+    }
+    return xyArray;
   }
 
   render() {
     this.init();
-
-    const xArray: number[] = [];
-    const yArray: number[] = [];
-    for (const xyPair of this.#data) {
-      xArray.push(xyPair.x);
-      yArray.push(xyPair.y);
-    }
-
-    const mode = xArray.length > 1 ? 'lines' : 'markers';
-
-    const data: Plotly.Data[] = [{
-      x: xArray,
-      y: yArray,
-      type: 'scatter',
-      mode,
-    }];
-
-    Plotly.react(this.#chartContainer!, data);
+    const mode = this.#chartState.data.x.length > 1 ? 'lines' : 'markers';
+    this.#chartState.data.mode = mode;
+    Plotly.newPlot(this.#chartContainer!, [this.#chartState.data] as Plotly.Data[], this.#chartState.layout, this.#chartState.config);
   }
 
   handleDataChanged(message: Message) {

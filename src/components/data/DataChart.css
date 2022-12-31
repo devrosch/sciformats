@@ -1,6 +1,7 @@
 sf-data-chart {
   background-color: darkolivegreen;
   flex: 1 1 100%;
+  overflow: hidden;
 }
 
 /* set initially to prevent flash of unstyled chart */

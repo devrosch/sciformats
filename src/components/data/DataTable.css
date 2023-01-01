@@ -1,14 +1,20 @@
-sf-data-panel table {
-  margin: 0.5em;
+sf-data-table {
+  flex: 0 0 100%;
 }
 
-sf-data-panel table, th, td {
+sf-data-table table {
+  margin: 0.5em;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+sf-data-table table, th, td {
   border: 1px solid;
   border-collapse: collapse;
   min-width: 10%;
 }
 
-sf-data-panel th {
+sf-data-table th {
   background-color: #999;
   text-align: left;
 }

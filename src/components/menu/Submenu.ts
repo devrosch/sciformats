@@ -43,6 +43,7 @@ export default class Submenu extends HTMLElement {
     const aTitle = a.hasAttribute('title') ? a.getAttribute('title') as string : '';
     const aExpandCollapseSpan = a.querySelector('.sf-expand-collapse-indicator') as HTMLSpanElement;
     const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
+    const aTitleSpanKey = aTitleSpan.hasAttribute('key') ? a.getAttribute('key') as string : '';
     const expandendChar = this.#expand ? '▼' : '▶';
     if (role !== 'menu') {
       this.setAttribute('role', 'menu');
@@ -55,6 +56,9 @@ export default class Submenu extends HTMLElement {
     }
     if (aExpandCollapseSpan.textContent !== expandendChar) {
       aExpandCollapseSpan.textContent = expandendChar
+    }
+    if (aTitleSpanKey !== this.#key) {
+      aTitleSpan.setAttribute('key', this.#key ? this.#key : '');
     }
     if (aTitleSpan.textContent !== this.#title) {
       aTitleSpan.textContent = this.#title;

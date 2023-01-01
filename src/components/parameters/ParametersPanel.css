@@ -1,0 +1,19 @@
+sf-parameters-panel {
+  font-family: sans-serif;
+}
+
+sf-parameters-panel > h1 {
+  font-size: 1em;
+  font-weight: normal;
+  line-height: 2em;
+  margin: 0;
+  padding: 0 0.5em 0 0.5em;
+  background-color: blanchedalmond;
+}
+
+sf-parameters-panel ul {
+  font-size: 14px;
+  margin: 0;
+  list-style-position: inside;
+  padding-left: 0;
+}

@@ -1,6 +1,8 @@
 sf-tree-node {
   cursor: pointer;
   display: block; /* new line for each */
+  font-family: sans-serif;
+  font-size: 14px;
 }
 
 sf-tree-node > sf-tree-node {

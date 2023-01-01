@@ -4,6 +4,12 @@ sf-navbar {
   height: 100%;
 }
 
+sf-navbar a {
+  font-family: sans-serif;
+  font-size: 1em;
+  color: black;
+}
+
 /* logo */
 
 sf-navbar > a.sf-logo {

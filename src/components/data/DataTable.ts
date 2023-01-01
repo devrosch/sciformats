@@ -1,9 +1,8 @@
-import './DataTable.css';
-
 import Channel from 'model/Channel';
 import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import { isSameUrl } from 'util/UrlUtils';
+import './DataTable.css';
 
 const template = `
   <table>

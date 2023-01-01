@@ -35,7 +35,7 @@ test('sf-parameters-panel renders', async () => {
   expect(document.body.innerHTML).toContain(title2);
 });
 
-test('sf-parameters-panel reacts to sf-tree-node-(un)selected events', async () => {
+test('sf-parameters-panel reacts to sf-tree-node-(de)selected events', async () => {
   const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
 
   const panel = new ParametersPanel();

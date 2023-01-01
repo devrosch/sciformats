@@ -52,7 +52,7 @@ test('sf-data-table renders', async () => {
   checkDataIsRendered(data, document, true);
 });
 
-test('sf-data-table reacts to sf-tree-node-(un)selected events', async () => {
+test('sf-data-table reacts to sf-tree-node-(de)selected events', async () => {
   const table = new DataTable();
   document.body.append(table);
   const channel = CustomEventsMessageBus.getDefaultChannel();

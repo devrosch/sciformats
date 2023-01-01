@@ -1,0 +1,15 @@
+sf-footer {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+}
+
+sf-footer > span {
+  font-family: sans-serif;
+  font-size: 14px;
+  /* don't wrap, show ellipsis */
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

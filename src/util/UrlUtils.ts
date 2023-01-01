@@ -5,8 +5,8 @@
  * Test if two URLs are the same.
  * @param url0 A URL.
  * @param url1 Another URL.
- * @returns True if the URLs their normalized string representations match.
- * False if either or both URLs are null or undefined
+ * @returns True if the URLs are valid and their normalized string representations match.
+ * False if either or both URLs are null, undefined or invalid
  * or their normalized string representations do not match.
  */
 /* eslint-disable-next-line function-paren-newline */
@@ -19,8 +19,11 @@ export const isSameUrl = (
     return false;
   }
 
-  const urlLhs = typeof url0 === 'string' ? new URL(url0).toString() : url0!.toString();
-  const urlRhs = typeof url1 === 'string' ? new URL(url1).toString() : url1!.toString();
-
-  return urlLhs === urlRhs;
+  try {
+    const urlLhs = typeof url0 === 'string' ? new URL(url0).toString() : url0!.toString();
+    const urlRhs = typeof url1 === 'string' ? new URL(url1).toString() : url1!.toString();
+    return urlLhs === urlRhs;
+  } catch (error) {
+    return false;
+  }
 };

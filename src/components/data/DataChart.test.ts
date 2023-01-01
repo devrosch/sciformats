@@ -20,7 +20,7 @@ test('sf-data-chart renders', async () => {
   expect(document.body.innerHTML).toContain('svg');
 });
 
-test('sf-data-chart reacts to sf-tree-node-(un)selected events', async () => {
+test('sf-data-chart reacts to sf-tree-node-(de)selected events', async () => {
   const chart = new DataChart();
   document.body.append(chart);
   const channel = CustomEventsMessageBus.getDefaultChannel();

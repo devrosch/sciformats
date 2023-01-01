@@ -2,28 +2,31 @@ import 'components/menu/Navbar';
 import 'components/tree/Tree';
 import 'components/data/DataPanel';
 import 'components/parameters/ParametersPanel';
+import 'components/footer/Footer';
 import './App.css';
 import Channel from 'model/Channel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 const template = `
   <div class="header">
-    <sf-navbar/>
+    <sf-navbar></sf-navbar>
   </div>
   <div class="content">
     <div class="tree">
-      <sf-tree/>
+      <sf-tree></sf-tree>
     </div>
     <div class="node-content">
       <div class="data">
-        <sf-data-panel/>
+        <sf-data-panel></sf-data-panel>
       </div>
       <div class="params">
-        <sf-parameters-panel title="Parameters"/>
+        <sf-parameters-panel title="Parameters"></sf-parameters-panel>
       </div>
     </div>
   </div>
-  <div class="footer">Footer</div>
+  <div class="footer">
+    <sf-footer></sf-footer>
+  </div>
 `;
 
 export default class App extends HTMLElement {

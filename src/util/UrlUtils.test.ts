@@ -37,3 +37,12 @@ test('isSameURL() is false for mismatching URLs', async () => {
   expect(isSameUrl(url00, url10)).toBe(false);
   expect(isSameUrl(url00, url01)).toBe(false);
 });
+
+test('isSameURL() is false when comparing illegal URLs', async () => {
+  const url00 = new URL('https://valid.url0#fragment0');
+  const urlFragment = '#fragment0';
+  const urlBlank = '';
+
+  expect(isSameUrl(url00, urlFragment)).toBe(false);
+  expect(isSameUrl(url00, urlBlank)).toBe(false);
+});

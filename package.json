@@ -25,7 +25,7 @@
       "!src/index.ts"
     ],
     "setupFiles": [
-      "<rootDir>/src/jest.stub.js"
+      "<rootDir>/src/jest.stub.ts"
     ]
   },
   "keywords": [

@@ -10,8 +10,8 @@ const titleAttr = 'title';
 const title = 'def';
 const title2 = 'def2';
 const expandAttr = 'expand';
-const expand = false;
-const expand2 = true;
+const expandFalse = false;
+const expandTrue = true;
 const roleAttr = 'role';
 const role = 'menu';
 
@@ -25,21 +25,26 @@ test('sf-menu-item renders and observes attribute changes', async () => {
     <${element}
     ${keyAttr}="${key}"
     ${titleAttr}="${title}"
-    ${expandAttr}="${expand}"/>`;
+    ${expandAttr}="${expandFalse}"/>`;
   const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
   expect(submenu.getAttribute(titleAttr)).toBe(title);
   expect(submenu.getAttribute(keyAttr)).toBe(key);
-  expect(submenu.getAttribute(expandAttr)).toBe(`${expand}`);
+  expect(submenu.getAttribute(expandAttr)).toBe(`${expandFalse}`);
   expect(submenu.getAttribute(roleAttr)).toBe(role);
 
   const a = submenu.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
   expect(a.getAttribute(titleAttr)).toBe(title);
   expect(a.getAttribute(keyAttr)).toBe(key);
-  // a.innerText not available in JSDOM
+
+  expect(a.children).toHaveLength(2);
+  const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
+  const aTitleSpan = a.children.item(1) as HTMLSpanElement;
+  expect(aPlusMinusSpan.textContent).toBe('▶');
+  // HTMLElement.innerText not available in JSDOM
   // see: https://github.com/jsdom/jsdom/issues/1245
-  expect(a.textContent).toBe(`▸ ${title}`);
+  expect(aTitleSpan.textContent).toBe(`${title}`);
 
   submenu.setAttribute(keyAttr, key2);
   expect(submenu.getAttribute(keyAttr)).toBe(key2);
@@ -49,9 +54,10 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(submenu.getAttribute(titleAttr)).toBe(title2);
   expect(a.getAttribute(titleAttr)).toBe(title2);
 
-  submenu.setAttribute(expandAttr, `${expand2}`);
-  expect(submenu.getAttribute(expandAttr)).toBe(`${expand2}`);
-  expect(a.textContent).toBe(`▾ ${title2}`);
+  submenu.setAttribute(expandAttr, `${expandTrue}`);
+  expect(submenu.getAttribute(expandAttr)).toBe(`${expandTrue}`);
+  expect(aPlusMinusSpan.textContent).toBe('▼');
+  expect(aTitleSpan.textContent).toBe(`${title2}`);
 });
 
 test('sf-submenu expands on click, event does not get propagated', async () => {
@@ -60,13 +66,18 @@ test('sf-submenu expands on click, event does not get propagated', async () => {
   expect(submenu).toBeTruthy();
   const a = submenu.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
-  expect(a.textContent).toBe(`▸ ${title}`);
+  expect(a.children).toHaveLength(2);
+  const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
+  const aTitleSpan = a.children.item(1) as HTMLSpanElement;
+  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aTitleSpan.textContent).toBe(`${title}`);
 
   const clickHandler = jest.fn();
   document.body.addEventListener('click', clickHandler);
   a.click();
   document.body.removeEventListener('click', clickHandler);
-  expect(a.textContent).toBe(`▾ ${title}`);
+  expect(aPlusMinusSpan.textContent).toBe('▼');
+  expect(aTitleSpan.textContent).toBe(`${title}`);
   expect(clickHandler).toHaveBeenCalledTimes(0);
 });
 
@@ -76,11 +87,19 @@ test('sf-submenu expands/collapses on mouse enter/leave', async () => {
   expect(submenu).toBeTruthy();
   const a = submenu.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
-  expect(a.textContent).toBe(`▸ ${title}`);
+  expect(a.children).toHaveLength(2);
+  const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
+  const aTitleSpan = a.children.item(1) as HTMLSpanElement;
+  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aTitleSpan.textContent).toBe(`${title}`);
+
   submenu.onMouseEnter(new Event('onmouseenter'));
-  expect(a.textContent).toBe(`▾ ${title}`);
+  expect(aPlusMinusSpan.textContent).toBe('▼');
+  expect(aTitleSpan.textContent).toBe(`${title}`);
+
   submenu.onMouseLeave(new Event('onmouseleave'));
-  expect(a.textContent).toBe(`▸ ${title}`);
+  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aTitleSpan.textContent).toBe(`${title}`);
 });
 
 test('sf-submenu "expand" attribute sets visibility', async () => {

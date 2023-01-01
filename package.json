@@ -23,6 +23,9 @@
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/index.ts"
+    ],
+    "setupFiles": [
+      "<rootDir>/src/jest.stub.js"
     ]
   },
   "keywords": [

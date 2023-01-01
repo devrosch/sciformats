@@ -7,7 +7,7 @@ import { isSameUrl } from 'util/UrlUtils';
 // import * as Plotly from 'plotly.js';
 import * as Plotly from 'plotly.js-dist-min';
 
-const template = `<div id="sf-data-chart-placeholder"/>`;
+const template = '<div id="sf-data-chart-placeholder"/>';
 
 export default class DataChart extends HTMLElement {
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
@@ -50,9 +50,9 @@ export default class DataChart extends HTMLElement {
     },
     config: {
       responsive: true,
-      displaylogo: false
-    }
-  }
+      displaylogo: false,
+    },
+  };
 
   constructor() {
     super();
@@ -76,13 +76,17 @@ export default class DataChart extends HTMLElement {
     if (this.children.length !== 1
       || (this.children.item(0)?.nodeName !== 'DIV')
       || this.#chartContainer === null) {
-
       // avoid initial flash of incorrectly sized chart => hide
       this.classList.add('init');
 
       this.innerHTML = template;
       this.#chartContainer = this.querySelector('#sf-data-chart-placeholder') as Plotly.Root;
-      Plotly.newPlot(this.#chartContainer!, [this.#chartState.data] as Plotly.Data[], this.#chartState.layout, this.#chartState.config);
+      Plotly.newPlot(
+        this.#chartContainer!,
+        [this.#chartState.data] as Plotly.Data[],
+        this.#chartState.layout,
+        this.#chartState.config,
+      );
       // initial resize to panel before 'responsive' config kicks in
       Plotly.Plots.resize(this.#chartContainer!);
 
@@ -103,7 +107,7 @@ export default class DataChart extends HTMLElement {
 
   static fromXyArrays(data: { x: number[], y: number[] }) {
     const xyArray: { x: number, y: number }[] = [];
-    for (let index = 0; index < data.x.length; index++) {
+    for (let index = 0; index < data.x.length; index += 1) {
       const x = data.x[index];
       const y = data.y[index];
       xyArray.push({ x, y });
@@ -115,7 +119,12 @@ export default class DataChart extends HTMLElement {
     this.init();
     const mode = this.#chartState.data.x.length > 1 ? 'lines' : 'markers';
     this.#chartState.data.mode = mode;
-    Plotly.newPlot(this.#chartContainer!, [this.#chartState.data] as Plotly.Data[], this.#chartState.layout, this.#chartState.config);
+    Plotly.newPlot(
+      this.#chartContainer!,
+      [this.#chartState.data] as Plotly.Data[],
+      this.#chartState.layout,
+      this.#chartState.config,
+    );
   }
 
   handleDataChanged(message: Message) {

@@ -55,7 +55,7 @@ export default class Submenu extends HTMLElement {
       a.setAttribute('title', this.#title ? this.#title : '');
     }
     if (aExpandCollapseSpan.textContent !== expandendChar) {
-      aExpandCollapseSpan.textContent = expandendChar
+      aExpandCollapseSpan.textContent = expandendChar;
     }
     if (aTitleSpanKey !== this.#key) {
       aTitleSpan.setAttribute('key', this.#key ? this.#key : '');

@@ -12,4 +12,7 @@ sf-footer > span {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+  /* show ellipsis on the left hand side */
+  /* in combination with &lrm; entity prepended and appended to text */
+  direction: rtl;
 }

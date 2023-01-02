@@ -16,3 +16,13 @@ sf-footer > span {
   /* in combination with &lrm; entity prepended and appended to text */
   direction: rtl;
 }
+
+/* prepend &lrm; entity to text to avoid re-ordering of text */
+sf-footer > span::before {
+  content: "\200E";
+}
+
+/* append &lrm; entity to text to avoid re-ordering of text*/
+sf-footer > span::after {
+  content: "\200E";
+}

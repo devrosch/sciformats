@@ -36,9 +36,7 @@ export default class Footer extends HTMLElement {
       span.removeAttribute('title');
     } else if (this.#url !== null && span !== null && !isSameUrl(this.#url, span.textContent)) {
       const url = this.#url.toString();
-      // &lrm; in combination with CSS prop "direction: rtl;" and "text-overflow: ellipsis;"
-      // => to show ellipsis on left hand side
-      span.innerHTML = `&lrm;${url}&lrm;`;
+      span.textContent = url;
       span.setAttribute('title', url);
     }
   }

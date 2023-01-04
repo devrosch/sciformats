@@ -198,11 +198,13 @@ export default class Tree extends HTMLElement {
       }
       case 'ArrowRight':
         treeNode.setExpand(true);
+        treeNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
         break;
       case 'ArrowLeft':
         treeNode.setExpand(false);
+        treeNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
         break;
@@ -211,12 +213,14 @@ export default class Tree extends HTMLElement {
           const expanded = treeNode.getAttribute('expand') === 'true';
           treeNode.setExpand(!expanded);
         }
+        treeNode.setSelected(true);
         break;
       case ' ':
         if (treeNode.hasAttribute('expand')) {
           const expanded = treeNode.getAttribute('expand') === 'true';
           treeNode.setExpand(!expanded);
         }
+        treeNode.setSelected(true);
         break;
       default:
         break;

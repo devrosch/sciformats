@@ -25,6 +25,7 @@ sf-menu a {
   padding: 0.25em 0.5em 0.25em 0.5em;
   width: 100%;
   box-sizing: border-box;
+  outline-offset: -0.2em;
 }
 
 sf-menu a:hover  {

@@ -19,6 +19,7 @@ sf-navbar > a.sf-logo {
   height: 100%;
   padding: 0em 0.5em 0em 0.5em;
   text-decoration: none;
+  outline-offset: -0.2em;
 }
 
 /* nav */
@@ -38,6 +39,7 @@ sf-navbar > a.sf-hamburger {
   padding: 0em 0.5em 0em 0.5em;
   text-decoration: none;
   align-items: center;
+  outline-offset: -0.2em;
 }
 
 sf-navbar > a.sf-hamburger:hover {

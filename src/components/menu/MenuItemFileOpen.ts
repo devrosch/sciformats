@@ -3,7 +3,7 @@ import Channel from 'util/CustomEventsChannel';
 import './MenuItemFileOpen.css';
 
 const template = `
-  <input id="sf-file-open-input" class="sf-file-open-input" key="sf-file-open-input" type="file" multiple="true"/>
+  <input id="sf-file-open-input" class="sf-file-open-input" tabindex="-1" key="sf-file-open-input" type="file" multiple="true"/>
   <label for="sf-file-open-input" class="sf-file-input-label" accessKey="o">
     <a href="#" key="sf-file-open-input-a"></a>
   </label>  

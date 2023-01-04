@@ -15,12 +15,12 @@ sf-data-panel {
   background-color: inherit;
   border: none;
   cursor: pointer;
-  outline: none;
   line-height: 2em;
   background-color: #eee;
   font-size: 1em;
   font-family: sans-serif;
   padding: 0 0.5em 0 0.5em;
+  outline-offset: -0.2em;
 }
 
 .tab-link:hover {

@@ -206,6 +206,18 @@ export default class Tree extends HTMLElement {
         // do not scroll view
         e.preventDefault();
         break;
+      case 'Enter':
+        if (treeNode.hasAttribute('expand')) {
+          const expanded = treeNode.getAttribute('expand') === 'true';
+          treeNode.setExpand(!expanded);
+        }
+        break;
+      case ' ':
+        if (treeNode.hasAttribute('expand')) {
+          const expanded = treeNode.getAttribute('expand') === 'true';
+          treeNode.setExpand(!expanded);
+        }
+        break;
       default:
         break;
     }

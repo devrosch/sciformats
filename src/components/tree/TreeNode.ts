@@ -10,7 +10,7 @@ const nodeSelectedEvent = 'sf-tree-node-selected';
 const nodeDeselectedEvent = 'sf-tree-node-deselected';
 const nodeDataReadEvent = 'sf-tree-node-data-read';
 
-const template = '';
+const template = '<span class="plusminus"></span><span class="node-name" tabindex="0"></span>';
 
 export default class TreeNode extends HTMLElement {
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
@@ -23,7 +23,7 @@ export default class TreeNode extends HTMLElement {
 
   #nodeData: NodeData | null = null;
 
-  #collapsed: boolean = true;
+  #expand: boolean = false;
 
   #selected: boolean = false;
 
@@ -34,54 +34,75 @@ export default class TreeNode extends HTMLElement {
     this.#url = url;
   }
 
+  init() {
+    if (this.children.length < 2
+      || !(this.children.item(0) instanceof HTMLSpanElement)
+      || !(this.children.item(1) instanceof HTMLSpanElement)) {
+      this.innerHTML = template;
+    }
+  }
+
   render() {
-    this.innerHTML = template;
+    this.init();
     const urlAttr = this.getAttribute('url');
+    const nameSpan = this.querySelector('.node-name') as HTMLSpanElement;
+    const plusMinusSpan = this.querySelector('.plusminus') as HTMLSpanElement;
+
     if (urlAttr !== this.#url.toString()) {
       this.setAttribute('url', this.#url.toString());
     }
+    // do not bind 'this' as that results in a new callable and thus multiple listeners
+    nameSpan.addEventListener('click', this.onSelected);
+
     if (this.#nodeData === null) {
-      const nameSpan = document.createElement('span');
-      nameSpan.classList.add('node-name');
+      // while loading data ...
+      plusMinusSpan.style.display = 'none';
       nameSpan.textContent = 'Loading...';
-      this.append(nameSpan);
       return;
+    }
+
+    // after data has been loaded ...
+    if (nameSpan.getAttribute('url') !== this.#url.toString()) {
+      // span is focusable and thus is keyboard event target and requires URL
+      nameSpan.setAttribute('url', this.#url.toString());
+    }
+    if (nameSpan.textContent !== this.name) {
+      nameSpan.textContent = this.name;
+    }
+    if (this.#selected) {
+      nameSpan.classList.add('selected');
     }
 
     const numChildNodes = this.#nodeData.children.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
-      this.setAttribute('expand', `${!this.#collapsed}`);
-      
-      const plusMinusSpan = document.createElement('span');
-      plusMinusSpan.classList.add('plusminus');
-      plusMinusSpan.textContent = this.#collapsed ? '⊞' : '⊟';
+      this.setAttribute('expand', `${this.#expand}`);
+      plusMinusSpan.style.display = '';
+      plusMinusSpan.textContent = this.#expand ? '⊟' : '⊞';
       plusMinusSpan.addEventListener('click', this.onToggleCollapsed);
-      this.append(plusMinusSpan);
     }
 
-    const nameSpan = document.createElement('span');
-    // allow span to receive keydown events
-    nameSpan.setAttribute('tabindex', '0');
-    nameSpan.setAttribute('url', this.#url.toString());
-    nameSpan.classList.add('node-name');
-    nameSpan.addEventListener('click', this.onSelected);
-    nameSpan.textContent = this.name;
-    if (this.#selected) {
-      nameSpan.classList.add('selected');
-    }
-    this.append(nameSpan);
-
-    if (hasChildren && !this.#collapsed) {
-      for (const childNodeName of this.#nodeData.children) {
-        const childUrl = new URL(this.#url);
-        if (!this.#url.hash.endsWith('/')) {
-          childUrl.hash += ('/');
+    if (hasChildren) {
+      if (this.#expand) {
+        // add child nodes
+        for (const childNodeName of this.#nodeData.children) {
+          const childUrl = new URL(this.#url);
+          if (!this.#url.hash.endsWith('/')) {
+            childUrl.hash += ('/');
+          }
+          childUrl.hash += childNodeName;
+          const childNode = new TreeNode(this.#parser, childUrl);
+          this.appendChild(childNode);
         }
-        childUrl.hash += childNodeName;
-        const childNode = new TreeNode(this.#parser, childUrl);
-        childNode.setAttribute('url', childUrl.toString());
-        this.appendChild(childNode);
+      } else {
+        // remove child nodes
+        const numChildren = this.children.length;
+        for (let index = numChildren; index >= 0; index -= 1) {
+          const child = this.children[index];
+          if (child instanceof TreeNode) {
+            this.removeChild(child);
+          }
+        }
       }
     }
   }
@@ -130,11 +151,19 @@ export default class TreeNode extends HTMLElement {
     }
   }
 
+  setExpand(expand: boolean) {
+    if (this.#expand === expand) {
+      return;
+    }
+    this.#expand = expand;
+    this.render();
+  }
+
   // #region user events
 
   onToggleCollapsed = () => {
     console.log('onClickPlusMinus() called');
-    this.#collapsed = !this.#collapsed;
+    this.#expand = !this.#expand;
     this.render();
   };
 

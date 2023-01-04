@@ -157,12 +157,6 @@ export default class Tree extends HTMLElement {
       next = element.nextSibling;
       if (next === null || !(next instanceof TreeNode)) {
         next = Tree.#findParentNextSibling(element);
-        // const parentSibling = element.parentElement!.nextElementSibling;
-        // if (parentSibling instanceof TreeNode) {
-        //   next = parentSibling;
-        // } else {
-        //   next = null;
-        // }
       }
     }
     return next as TreeNode | null;
@@ -171,14 +165,14 @@ export default class Tree extends HTMLElement {
   static selectNode(element: TreeNode | null) {
     if (element !== null) {
       const nameElement = element.querySelector('.node-name') as HTMLElement;
-      // nameElement.focus( { focusVisible: false } as FocusOptions );
-      nameElement.focus();
+      // focus on node name, but do not show outline
+      nameElement.focus({ focusVisible: false } as FocusOptions);
       element.setSelected(true);
     }
   }
 
-  onKeyDown(e: KeyboardEvent) {
-    console.log('onKeyDown()');    
+  static onKeyDown(e: KeyboardEvent) {
+    console.log('onKeyDown()');
     if (!(e.target instanceof Element)) {
       return;
     }
@@ -186,21 +180,35 @@ export default class Tree extends HTMLElement {
     console.log(key);
 
     // event originates from span within TreeNode => parentElement
-    const treeNode = e.target.parentElement;
+    const treeNode = e.target.parentElement as TreeNode | null;
     if (treeNode === null) {
       return;
     }
 
-    switch(key) {
-      case 'ArrowUp':
+    switch (key) {
+      case 'ArrowUp': {
         const prev = Tree.#findPreviousTreeNode(treeNode);
         Tree.selectNode(prev);
         break;
-      case 'ArrowDown':
+      }
+      case 'ArrowDown': {
         const next = Tree.#findNextTreeNode(treeNode);
         Tree.selectNode(next);
         break;
       }
+      case 'ArrowRight':
+        treeNode.setExpand(true);
+        // do not scroll view
+        e.preventDefault();
+        break;
+      case 'ArrowLeft':
+        treeNode.setExpand(false);
+        // do not scroll view
+        e.preventDefault();
+        break;
+      default:
+        break;
+    }
   }
 
   // #endregion user events
@@ -209,7 +217,7 @@ export default class Tree extends HTMLElement {
 
   connectedCallback() {
     console.log('Tree connectedCallback() called');
-    this.addEventListener('keydown', this.onKeyDown.bind(this));
+    this.addEventListener('keydown', Tree.onKeyDown.bind(this));
     const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
     const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
     const fileCloseAllHandle = this.#channel.addListener('sf-file-close-all-requested', this.handleFileCloseAllRequested.bind(this));
@@ -225,7 +233,7 @@ export default class Tree extends HTMLElement {
 
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
-    this.removeEventListener('keydown', this.onKeyDown.bind(this));
+    this.removeEventListener('keydown', Tree.onKeyDown.bind(this));
     for (const handle of this.#eventListeners) {
       this.#channel.removeListener(handle);
     }

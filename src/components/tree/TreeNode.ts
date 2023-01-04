@@ -51,15 +51,19 @@ export default class TreeNode extends HTMLElement {
     const numChildNodes = this.#nodeData.children.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
-      if (hasChildren) {
-        const plusMinusSpan = document.createElement('span');
-        plusMinusSpan.classList.add('plusminus');
-        plusMinusSpan.textContent = this.#collapsed ? '⊞' : '⊟';
-        plusMinusSpan.addEventListener('click', this.onToggleCollapsed);
-        this.append(plusMinusSpan);
-      }
+      this.setAttribute('expand', `${!this.#collapsed}`);
+      
+      const plusMinusSpan = document.createElement('span');
+      plusMinusSpan.classList.add('plusminus');
+      plusMinusSpan.textContent = this.#collapsed ? '⊞' : '⊟';
+      plusMinusSpan.addEventListener('click', this.onToggleCollapsed);
+      this.append(plusMinusSpan);
     }
+
     const nameSpan = document.createElement('span');
+    // allow span to receive keydown events
+    nameSpan.setAttribute('tabindex', '0');
+    nameSpan.setAttribute('url', this.#url.toString());
     nameSpan.classList.add('node-name');
     nameSpan.addEventListener('click', this.onSelected);
     nameSpan.textContent = this.name;

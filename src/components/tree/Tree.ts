@@ -112,12 +112,104 @@ export default class Tree extends HTMLElement {
     }
   }
 
+  static #findLastLeafNode(node: Element): TreeNode {
+    // recursively find last TreeNode
+    let currentNode = node;
+    while (currentNode.hasAttribute('expand') && currentNode.getAttribute('expand') === 'true') {
+      currentNode = currentNode.lastChild as Element;
+    }
+    return currentNode as TreeNode;
+  }
+
+  static #findPreviousTreeNode(element: Element): TreeNode | null {
+    let prev = element.previousSibling;
+    if (prev === null || !(prev instanceof TreeNode)) {
+      prev = element.parentElement;
+      if (!(prev instanceof TreeNode)) {
+        prev = null;
+      }
+    } else if (prev !== null && prev.hasAttribute('expand') && prev.getAttribute('expand') === 'true') {
+      prev = Tree.#findLastLeafNode(prev);
+    }
+    return prev as TreeNode;
+  }
+
+  static #findParentNextSibling(node: Element): TreeNode | null {
+    // recursively move up tree to find parent's next sibling
+    let parent = node.parentElement;
+    while ((parent instanceof TreeNode) || (parent instanceof Tree)) {
+      const nextSibling = parent.nextSibling;
+      if (nextSibling instanceof TreeNode) {
+        return nextSibling;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  }
+
+  static #findNextTreeNode(element: Element): TreeNode | null {
+    let next = null;
+    if (element.hasAttribute('expand') && element.getAttribute('expand') === 'true') {
+      // find first child node
+      next = element.querySelector('sf-tree-node');
+    } else {
+      // find next sibling
+      next = element.nextSibling;
+      if (next === null || !(next instanceof TreeNode)) {
+        next = Tree.#findParentNextSibling(element);
+        // const parentSibling = element.parentElement!.nextElementSibling;
+        // if (parentSibling instanceof TreeNode) {
+        //   next = parentSibling;
+        // } else {
+        //   next = null;
+        // }
+      }
+    }
+    return next as TreeNode | null;
+  }
+
+  static selectNode(element: TreeNode | null) {
+    if (element !== null) {
+      const nameElement = element.querySelector('.node-name') as HTMLElement;
+      // nameElement.focus( { focusVisible: false } as FocusOptions );
+      nameElement.focus();
+      element.setSelected(true);
+    }
+  }
+
+  onKeyDown(e: KeyboardEvent) {
+    console.log('onKeyDown()');    
+    if (!(e.target instanceof Element)) {
+      return;
+    }
+    const key = e.key;
+    console.log(key);
+
+    // event originates from span within TreeNode => parentElement
+    const treeNode = e.target.parentElement;
+    if (treeNode === null) {
+      return;
+    }
+
+    switch(key) {
+      case 'ArrowUp':
+        const prev = Tree.#findPreviousTreeNode(treeNode);
+        Tree.selectNode(prev);
+        break;
+      case 'ArrowDown':
+        const next = Tree.#findNextTreeNode(treeNode);
+        Tree.selectNode(next);
+        break;
+      }
+  }
+
   // #endregion user events
 
   // #region lifecycle events
 
   connectedCallback() {
     console.log('Tree connectedCallback() called');
+    this.addEventListener('keydown', this.onKeyDown.bind(this));
     const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
     const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
     const fileCloseAllHandle = this.#channel.addListener('sf-file-close-all-requested', this.handleFileCloseAllRequested.bind(this));
@@ -133,6 +225,7 @@ export default class Tree extends HTMLElement {
 
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
+    this.removeEventListener('keydown', this.onKeyDown.bind(this));
     for (const handle of this.#eventListeners) {
       this.#channel.removeListener(handle);
     }

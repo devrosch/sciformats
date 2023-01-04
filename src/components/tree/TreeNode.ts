@@ -8,7 +8,7 @@ import NodeData from 'model/NodeData';
 
 const nodeSelectedEvent = 'sf-tree-node-selected';
 const nodeDeselectedEvent = 'sf-tree-node-deselected';
-const nodeDataReadEvent = 'sf-tree-node-data-read';
+const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 
 const template = '<span class="plusminus"></span><span class="node-name" tabindex="0"></span>';
 
@@ -110,7 +110,7 @@ export default class TreeNode extends HTMLElement {
   async #retrieveNodeData() {
     const data = await this.#parser.read(this.#url);
     this.#nodeData = data;
-    this.#channel.dispatch(nodeDataReadEvent, this.#nodeData);
+    this.#channel.dispatch(nodeDataUpdatedEvent, this.#nodeData);
     this.render();
   }
 

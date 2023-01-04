@@ -9,6 +9,10 @@ import * as Plotly from 'plotly.js-dist-min';
 
 const template = '<div id="sf-data-chart-placeholder"/>';
 
+const nodeSelectedEvent = 'sf-tree-node-selected';
+const nodeDeselectedEvent = 'sf-tree-node-deselected';
+const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
+
 export default class DataChart extends HTMLElement {
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
@@ -131,20 +135,32 @@ export default class DataChart extends HTMLElement {
     console.log('DataChart handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
-    if (sameUrl && message.name === 'sf-tree-node-deselected') {
+    if (!sameUrl && message.name === nodeSelectedEvent) {
+      this.#url = url;
+      this.data = message.detail.data;
+    } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
       this.data = [];
-    } else if (!sameUrl && message.name === 'sf-tree-node-selected') {
-      this.#url = url;
+    } else if (sameUrl && message.name === nodeDataUpdatedEvent) {
       this.data = message.detail.data;
     }
   }
 
   connectedCallback() {
     console.log('DataChart connectedCallback() called');
-    const handle0 = this.#channel.addListener('sf-tree-node-selected', this.handleDataChanged.bind(this));
-    const handle1 = this.#channel.addListener('sf-tree-node-deselected', this.handleDataChanged.bind(this));
-    this.#handles.push(handle0, handle1);
+    const handle0 = this.#channel.addListener(
+      nodeSelectedEvent,
+      this.handleDataChanged.bind(this),
+    );
+    const handle1 = this.#channel.addListener(
+      nodeDeselectedEvent,
+      this.handleDataChanged.bind(this),
+    );
+    const handle2 = this.#channel.addListener(
+      nodeDataUpdatedEvent,
+      this.handleDataChanged.bind(this),
+    );
+    this.#handles.push(handle0, handle1, handle2);
     this.render();
   }
 

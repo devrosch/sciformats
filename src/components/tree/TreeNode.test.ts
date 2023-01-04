@@ -112,8 +112,8 @@ test('sf-tree-node observes sf-tree-node-selected events', async () => {
   expect(treeNode.classList).not.toContain('selected');
 });
 
-test('sf-tree-node generates sf-tree-node-data-read events', (done) => {
-  const dataReadEvent = 'sf-tree-node-data-read';
+test('sf-tree-node generates sf-tree-node-data-updated events', (done) => {
+  const dataReadEvent = 'sf-tree-node-data-updated';
 
   const channel = CustomEventsMessageBus.getDefaultChannel();
   let handle: any;

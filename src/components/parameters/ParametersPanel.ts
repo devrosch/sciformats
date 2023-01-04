@@ -10,6 +10,10 @@ const html = `
   <ul></ul>
 `;
 
+const nodeSelectedEvent = 'sf-tree-node-selected';
+const nodeDeselectedEvent = 'sf-tree-node-deselected';
+const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
+
 export default class ParametersPanel extends HTMLElement {
   static get observedAttributes() { return ['title']; }
 
@@ -59,22 +63,32 @@ export default class ParametersPanel extends HTMLElement {
     console.log('ParametersPanel handleParametersChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
-    if (sameUrl && message.name === 'sf-tree-node-deselected') {
+    if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
-      this.#data = [];
-      this.render();
-    } else if (!sameUrl && message.name === 'sf-tree-node-selected') {
+      this.data = [];
+    } else if (!sameUrl && message.name === nodeSelectedEvent) {
       this.#url = url;
-      this.#data = message.detail.parameters;
-      this.render();
+      this.data = message.detail.parameters;
+    } else if (sameUrl && message.name === nodeDataUpdatedEvent) {
+      this.data = message.detail.parameters;
     }
   }
 
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
-    const handle0 = this.#channel.addListener('sf-tree-node-selected', this.handleParametersChanged.bind(this));
-    const handle1 = this.#channel.addListener('sf-tree-node-deselected', this.handleParametersChanged.bind(this));
-    this.#handles.push(handle0, handle1);
+    const handle0 = this.#channel.addListener(
+      nodeSelectedEvent,
+      this.handleParametersChanged.bind(this),
+    );
+    const handle1 = this.#channel.addListener(
+      nodeDeselectedEvent,
+      this.handleParametersChanged.bind(this),
+    );
+    const handle2 = this.#channel.addListener(
+      nodeDataUpdatedEvent,
+      this.handleParametersChanged.bind(this),
+    );
+    this.#handles.push(handle0, handle1, handle2);
     const title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#title = title === null ? '' : title;
     this.render();

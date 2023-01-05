@@ -215,13 +215,6 @@ export default class Tree extends HTMLElement {
         }
         treeNode.setSelected(true);
         break;
-      case ' ':
-        if (treeNode.hasAttribute('expand')) {
-          const expanded = treeNode.getAttribute('expand') === 'true';
-          treeNode.setExpand(!expanded);
-        }
-        treeNode.setSelected(true);
-        break;
       default:
         break;
     }

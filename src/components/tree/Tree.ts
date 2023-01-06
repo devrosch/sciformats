@@ -222,13 +222,13 @@ export default class Tree extends HTMLElement {
     }
   }
 
-  onClick(e: Event) {
+  onClick = (e: Event) => {
     if (e.target instanceof TreeNode || e.target instanceof Tree) {
       // TODO: refactor to avoid code duplication and knowledge of TreeNode implementation
       const nameElement = this.querySelector(`span[url="${this.#selectedNodeUrl}"]`) as HTMLSpanElement;
       nameElement.focus({ focusVisible: false } as FocusOptions);
     }
-  }
+  };
 
   // #endregion user events
 
@@ -236,8 +236,8 @@ export default class Tree extends HTMLElement {
 
   connectedCallback() {
     console.log('Tree connectedCallback() called');
-    this.addEventListener('keydown', Tree.onKeyDown.bind(this));
-    this.addEventListener('click', this.onClick.bind(this));
+    this.addEventListener('keydown', Tree.onKeyDown);
+    this.addEventListener('click', this.onClick);
     const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
     const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
     const fileCloseAllHandle = this.#channel.addListener('sf-file-close-all-requested', this.handleFileCloseAllRequested.bind(this));
@@ -254,8 +254,8 @@ export default class Tree extends HTMLElement {
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
     // TODO: for bound functions, this does not work as each bind() call generates a new object
-    this.removeEventListener('keydown', Tree.onKeyDown.bind(this));
-    this.removeEventListener('click', this.onClick.bind(this));
+    this.removeEventListener('keydown', Tree.onKeyDown);
+    this.removeEventListener('click', this.onClick);
     for (const handle of this.#eventListeners) {
       this.#channel.removeListener(handle);
     }

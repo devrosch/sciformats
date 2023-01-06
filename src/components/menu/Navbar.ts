@@ -88,7 +88,7 @@ export default class Navbar extends HTMLElement {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  onClick(e: MouseEvent) {
+  onClick = (e: MouseEvent) => {
     console.log('Navbar item clicked.');
     if (!(e.target instanceof Element)) {
       return;
@@ -126,16 +126,16 @@ export default class Navbar extends HTMLElement {
         this.render();
         break;
     }
-  }
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleScreenChange(e: MediaQueryListEvent) {
+  handleScreenChange = (e: MediaQueryListEvent) => {
     // close menu including submenus whenever screen layout crosses threshold
     this.#showMenu = false;
     this.render();
-  }
+  };
 
-  handleOutsideSelection(e: MouseEvent) {
+  handleOutsideSelection = (e: MouseEvent) => {
     console.log('handleOutsideSelection() called');
     const node = e.target as Node;
     if (!this.contains(node)) {
@@ -143,7 +143,7 @@ export default class Navbar extends HTMLElement {
       this.#showMenu = false;
       this.render();
     }
-  }
+  };
 
   /* eslint-disable class-methods-use-this */
   onDragEnter = (e: DragEvent) => {
@@ -196,9 +196,9 @@ export default class Navbar extends HTMLElement {
     console.log('Navbar connectedCallback() called');
     const appSelector = this.getAttribute('app-selector');
     this.updateAppReference(appSelector);
-    this.addEventListener('click', this.onClick.bind(this));
-    mediaQuery.addEventListener('change', this.handleScreenChange.bind(this));
-    document.addEventListener('click', this.handleOutsideSelection.bind(this));
+    this.addEventListener('click', this.onClick);
+    mediaQuery.addEventListener('change', this.handleScreenChange);
+    document.addEventListener('click', this.handleOutsideSelection);
     this.#app?.addEventListener('dragenter', this.onDragEnter);
     this.#app?.addEventListener('dragover', this.onDragOver);
     this.#app?.addEventListener('drop', this.onFileDropped);
@@ -207,9 +207,9 @@ export default class Navbar extends HTMLElement {
 
   disconnectedCallback() {
     console.log('Navbar disconnectedCallback() called');
-    this.removeEventListener('click', this.onClick.bind(this));
-    mediaQuery.removeEventListener('change', this.handleScreenChange.bind(this));
-    document.removeEventListener('click', this.handleOutsideSelection.bind(this));
+    this.removeEventListener('click', this.onClick);
+    mediaQuery.removeEventListener('change', this.handleScreenChange);
+    document.removeEventListener('click', this.handleOutsideSelection);
     this.#app?.removeEventListener('dragenter', this.onDragEnter);
     this.#app?.removeEventListener('dragover', this.onDragOver);
     this.#app?.removeEventListener('drop', this.onFileDropped);

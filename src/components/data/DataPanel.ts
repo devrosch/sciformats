@@ -55,7 +55,7 @@ export default class DataPanel extends HTMLElement {
     }
   }
 
-  onClick(e: MouseEvent) {
+  onClick = (e: MouseEvent) => {
     console.log('DataPanel item clicked.');
     if (!(e.target instanceof Element)) {
       return;
@@ -76,17 +76,17 @@ export default class DataPanel extends HTMLElement {
       default:
         // noop
     }
-  }
+  };
 
   connectedCallback() {
     console.log('DataPanel connectedCallback() called');
-    this.addEventListener('click', this.onClick.bind(this));
+    this.addEventListener('click', this.onClick);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('DataPanel disconnectedCallback() called');
-    this.removeEventListener('click', this.onClick.bind(this));
+    this.removeEventListener('click', this.onClick);
   }
 
   adoptedCallback() {

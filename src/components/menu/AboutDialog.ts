@@ -49,7 +49,7 @@ export default class AboutDialog extends HTMLElement {
     this.render();
   }
 
-  onClick(e: MouseEvent) {
+  onClick = (e: MouseEvent) => {
     console.log('About dialog clicked.');
     if (!(e.target instanceof Element)) {
       return;
@@ -59,18 +59,18 @@ export default class AboutDialog extends HTMLElement {
     if (e.target.nodeName === 'DIALOG') {
       this.showModal(false);
     }
-  }
+  };
 
   connectedCallback() {
     console.log('AboutDialog connectedCallback() called');
     this.#open = this.hasAttribute('open');
-    this.addEventListener('click', this.onClick.bind(this));
+    this.addEventListener('click', this.onClick);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('AboutDialog disconnectedCallback() called');
-    this.removeEventListener('click', this.onClick.bind(this));
+    this.removeEventListener('click', this.onClick);
   }
 
   adoptedCallback() {

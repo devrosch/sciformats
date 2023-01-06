@@ -79,7 +79,7 @@ export default class Submenu extends HTMLElement {
     }
   }
 
-  onMouseEnter(e: Event) {
+  onMouseEnter = (e: Event) => {
     console.log(`onMouseEnter(): ${this.#key}`);
     // only take action if screen is small
     if (window.innerWidth > maxWidth) {
@@ -87,19 +87,19 @@ export default class Submenu extends HTMLElement {
       this.#expand = true;
       this.render();
     }
-  }
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onMouseLeave(e: Event) {
+  onMouseLeave = (e: Event) => {
     console.log(`onMouseLeave(): ${this.#key}`);
     // only take action if screen is small
     if (window.innerWidth > maxWidth) {
       this.#expand = false;
       this.render();
     }
-  }
+  };
 
-  onClick(e: MouseEvent) {
+  onClick = (e: MouseEvent) => {
     console.log(`onClick(): ${this.#key}`);
     if (!(e.target instanceof Element)) {
       return;
@@ -111,24 +111,24 @@ export default class Submenu extends HTMLElement {
       this.#expand = !this.#expand;
       this.render();
     }
-  }
+  };
 
   connectedCallback() {
     console.log('Submenu connectedCallback() called');
     this.#title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#key = this.hasAttribute('key') ? this.getAttribute('key') : '';
     this.#expand = this.hasAttribute('expand') ? this.getAttribute('key') === 'true' : false;
-    this.addEventListener('mouseenter', this.onMouseEnter.bind(this));
-    this.addEventListener('mouseleave', this.onMouseLeave.bind(this));
-    this.addEventListener('click', this.onClick.bind(this));
+    this.addEventListener('mouseenter', this.onMouseEnter);
+    this.addEventListener('mouseleave', this.onMouseLeave);
+    this.addEventListener('click', this.onClick);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Submenu disconnectedCallback() called');
-    this.removeEventListener('mouseenter', this.onMouseEnter.bind(this));
-    this.removeEventListener('mouseleave', this.onMouseLeave.bind(this));
-    this.removeEventListener('click', this.onClick.bind(this));
+    this.removeEventListener('mouseenter', this.onMouseEnter);
+    this.removeEventListener('mouseleave', this.onMouseLeave);
+    this.removeEventListener('click', this.onClick);
   }
 
   adoptedCallback() {

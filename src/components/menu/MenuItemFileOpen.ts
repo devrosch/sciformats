@@ -73,7 +73,7 @@ export default class MenuItemFileOpen extends HTMLElement {
     }
   }
 
-  onClick(e: MouseEvent) {
+  onClick = (e: MouseEvent) => {
     console.log('MenuItemFileOpen clicked.');
     if (!(e.target instanceof Element)) {
       return;
@@ -94,9 +94,9 @@ export default class MenuItemFileOpen extends HTMLElement {
       console.log('MenuItemFileOpen sf-file-open-input clicked.');
       e.stopPropagation();
     }
-  }
+  };
 
-  onChange(e: Event) {
+  onChange = (e: Event) => {
     console.log('MenuItemFileOpen onChange().');
     const input = e.target as HTMLInputElement;
     const selectedFiles = input.files;
@@ -111,22 +111,22 @@ export default class MenuItemFileOpen extends HTMLElement {
     this.#channel.dispatch('sf-file-open-requested', { files });
     // notify parents, so that menu might be closed
     this.click();
-  }
+  };
 
   connectedCallback() {
     console.log('MenuItemFileOpen connectedCallback() called');
     this.#title = this.getAttribute('title');
     this.#key = this.getAttribute('key');
     this.#shortcut = this.getAttribute('shortcut');
-    this.addEventListener('click', this.onClick.bind(this));
-    this.addEventListener('change', this.onChange.bind(this));
+    this.addEventListener('click', this.onClick);
+    this.addEventListener('change', this.onChange);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('MenuItemFileOpen disconnectedCallback() called');
-    this.removeEventListener('click', this.onClick.bind(this));
-    this.removeEventListener('change', this.onChange.bind(this));
+    this.removeEventListener('click', this.onClick);
+    this.removeEventListener('change', this.onChange);
   }
 
   adoptedCallback() {

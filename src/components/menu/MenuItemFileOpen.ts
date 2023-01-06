@@ -1,11 +1,14 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'util/CustomEventsChannel';
+import MenuItem from './MenuItem';
 import './MenuItemFileOpen.css';
+
+const menuItemKeyPostfix = 'input-menu-item';
 
 const template = `
   <input id="sf-file-open-input" class="sf-file-open-input" tabindex="-1" key="sf-file-open-input" type="file" multiple="true"/>
   <label for="sf-file-open-input" class="sf-file-input-label" accessKey="o">
-    <a href="#" key="sf-file-open-input-a"></a>
+    <sf-menu-item key="sf-file-open-${menuItemKeyPostfix}"></sf-menu-item>
   </label>  
 `;
 
@@ -15,6 +18,8 @@ export default class MenuItemFileOpen extends HTMLElement {
   #title: string | null = null;
 
   #key: string | null = null;
+
+  #shortcut: string | null = null;
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
@@ -50,18 +55,21 @@ export default class MenuItemFileOpen extends HTMLElement {
       label.setAttribute('key', `${this.#key}-input-label`);
     }
 
-    const a = this.querySelector('label > a') as HTMLAnchorElement;
-    const aKey = a.hasAttribute('key') ? a.getAttribute('key') as string : '';
-    if (aKey !== `${this.#key}-input-a`) {
-      a.setAttribute('key', `${this.#key}-input-a`);
+    const menuItem = this.querySelector('label > sf-menu-item') as MenuItem;
+    const menuItemKey = menuItem.hasAttribute('key') ? menuItem.getAttribute('key') as string : '';
+    if (menuItemKey !== `${this.#key}-${menuItemKeyPostfix}`) {
+      menuItem.setAttribute('key', `${this.#key}-${menuItemKeyPostfix}`);
     }
-    const aText = a.textContent;
-    if (aText !== this.#title) {
-      a.textContent = this.#title;
+
+    const menuItemText = menuItem.hasAttribute('title') ? menuItem.getAttribute('title') : '';
+    if (menuItemText !== this.#title) {
+      menuItem.setAttribute('title', this.#title !== null ? this.#title : '');
     }
-    const aRole = a.hasAttribute('role') ? a.getAttribute('role') : '';
-    if (aRole !== 'menuitem') {
-      a.setAttribute('role', 'menuitem');
+
+    const shortcut = this.hasAttribute('shortcut') ? this.getAttribute('shortcut') : '';
+    const menuItemShortcut = menuItem.hasAttribute('shortcut') ? menuItem.getAttribute('shortcut') : '';
+    if (menuItemShortcut !== shortcut) {
+      menuItem.setAttribute('shortcut', shortcut !== null ? shortcut : '');
     }
   }
 
@@ -75,8 +83,8 @@ export default class MenuItemFileOpen extends HTMLElement {
     if (!key) {
       return;
     }
-    if (key === `${this.#key}-input-a`) {
-      console.log('MenuItemFileOpen sf-file-open-input-a clicked.');
+    if (key === `${this.#key}-${menuItemKeyPostfix}`) {
+      console.log('MenuItemFileOpen sf-file-open-input-menu-item clicked.');
       e.stopPropagation();
       e.preventDefault();
       const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
@@ -109,6 +117,7 @@ export default class MenuItemFileOpen extends HTMLElement {
     console.log('MenuItemFileOpen connectedCallback() called');
     this.#title = this.getAttribute('title');
     this.#key = this.getAttribute('key');
+    this.#shortcut = this.getAttribute('shortcut');
     this.addEventListener('click', this.onClick.bind(this));
     this.addEventListener('change', this.onChange.bind(this));
     this.render();
@@ -131,6 +140,9 @@ export default class MenuItemFileOpen extends HTMLElement {
       this.render();
     } else if (name === 'key' && this.#key !== newValue) {
       this.#key = newValue;
+      this.render();
+    } else if (name === 'shortcut' && this.#shortcut !== newValue) {
+      this.#shortcut = newValue;
       this.render();
     }
   }

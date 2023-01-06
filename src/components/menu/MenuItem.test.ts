@@ -28,20 +28,23 @@ test('sf-menu-item renders and observes attribute changes', async () => {
 
   const a = menuItem.querySelector('a') as HTMLAnchorElement;
   expect(a).toBeTruthy();
-  expect(a.getAttribute(titleAttr)).toBe(title);
-  expect(a.getAttribute(keyAttr)).toBe(key);
   expect(a.getAttribute(roleAttr)).toBe(aRole);
+
+  const nameSpan = a.children.item(0) as HTMLSpanElement;
+  expect(nameSpan).toBeTruthy();
   // a.innerText not available in JSDOM
   // see: https://github.com/jsdom/jsdom/issues/1245
-  expect(a.textContent).toBe(title);
+  expect(nameSpan.textContent).toBe(title);
+
+  // TODO: add shortcut test
+  // const shortcutSpan = a.children.item(1) as HTMLSpanElement;
 
   menuItem.setAttribute(keyAttr, key2);
   expect(menuItem.getAttribute(keyAttr)).toBe(key2);
-  expect(a.getAttribute(keyAttr)).toBe(key2);
 
   menuItem.setAttribute(titleAttr, title2);
   expect(menuItem.getAttribute(titleAttr)).toBe(title2);
-  expect(a.getAttribute(titleAttr)).toBe(title2);
+  expect(nameSpan.textContent).toBe(title2);
 });
 
 test('sf-menu-item generates click events', async () => {

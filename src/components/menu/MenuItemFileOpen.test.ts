@@ -2,6 +2,7 @@
 import 'components/menu/MenuItemFileOpen'; // for side effects
 import MenuItemFileOpen from 'components/menu/MenuItemFileOpen';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import MenuItem from './MenuItem';
 
 const element = 'sf-menu-item-file-open';
 const keyAttr = 'key';
@@ -12,9 +13,8 @@ const title = 'def';
 const title2 = 'def2';
 const roleAttr = 'role';
 const role = 'none';
-const aRole = 'menuitem';
 const inputKeyPostfix = '-input';
-const aKeyPostfix = '-input-a';
+const aKeyPostfix = '-input-menu-item';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
@@ -32,20 +32,19 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   const input = menuItem.querySelector('input') as HTMLInputElement;
   expect(input).toBeTruthy();
   expect(input.getAttribute(keyAttr)).toBe(key + inputKeyPostfix);
-  const a = menuItem.querySelector('label > a') as HTMLAnchorElement;
-  expect(a).toBeTruthy();
-  expect(a.getAttribute(keyAttr)).toBe(key + aKeyPostfix);
-  expect(a.textContent).toBe(title);
-  expect(a.getAttribute(roleAttr)).toBe(aRole);
+  const labelMenuItem = menuItem.querySelector('label > sf-menu-item') as MenuItem;
+  expect(labelMenuItem).toBeTruthy();
+  expect(labelMenuItem.getAttribute(keyAttr)).toBe(key + aKeyPostfix);
+  expect(labelMenuItem.getAttribute(titleAttr)).toBe(title);
 
   menuItem.setAttribute(keyAttr, key2);
   expect(menuItem.getAttribute(keyAttr)).toBe(key2);
   expect(input.getAttribute(keyAttr)).toBe(key2 + inputKeyPostfix);
-  expect(a.getAttribute(keyAttr)).toBe(key2 + aKeyPostfix);
+  expect(labelMenuItem.getAttribute(keyAttr)).toBe(key2 + aKeyPostfix);
 
   menuItem.setAttribute(titleAttr, title2);
   expect(menuItem.getAttribute(titleAttr)).toBe(title2);
-  expect(a.textContent).toBe(title2);
+  expect(labelMenuItem.getAttribute(titleAttr)).toBe(title2);
 });
 
 test('sf-menu-item-file-open a click event results in input click event', async () => {
@@ -56,7 +55,7 @@ test('sf-menu-item-file-open a click event results in input click event', async 
   expect(input).toBeTruthy();
 
   const mockElement = document.createElement('a');
-  mockElement.setAttribute('key', `${key}-input-a`);
+  mockElement.setAttribute('key', `${key}${aKeyPostfix}`);
   const mouseEvent = {
     target: mockElement,
     stopPropagation: jest.fn(),

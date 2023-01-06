@@ -26,6 +26,7 @@ sf-app > .footer {
 
 sf-app > .content > .tree {
   background-color: aqua;
+  display: flex;
   flex: 0 0 20%;
   white-space: nowrap;
   overflow: auto;

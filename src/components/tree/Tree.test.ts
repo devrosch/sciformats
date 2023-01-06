@@ -26,10 +26,6 @@ const prepareFileOpenMessage = (fileNames: string[]) => {
   return message;
 };
 
-beforeAll(() => {
-  window.crypto.randomUUID = jest.fn(() => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
-});
-
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';

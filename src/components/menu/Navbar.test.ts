@@ -7,6 +7,7 @@ import './Navbar'; // for side effects
 import Navbar from './Navbar';
 import AboutDialog from './AboutDialog';
 
+const appElement = 'sf-app';
 const element = 'sf-navbar';
 
 const testEventDispatchedForClickedKey = (
@@ -41,10 +42,25 @@ const testEventDispatchedForClickedKey = (
   navbar.onClick(mouseEvent);
 };
 
+const file = new File(['dummy'], 'test.txt');
+const file2 = new File(['dummy2'], 'test2.txt');
+const item = {
+  webkitGetAsEntry() { return { isFile: true }; },
+};
+let dataTransfer: DataTransfer;
+
 beforeAll(() => {
   // see: https://github.com/jsdom/jsdom/issues/3294
   HTMLDialogElement.prototype.showModal = jest.fn();
   HTMLDialogElement.prototype.close = jest.fn();
+});
+
+beforeEach(() => {
+  dataTransfer = {
+    files: [file, file2],
+    items: [item, item],
+    dropEffect: 'none',
+  } as unknown as DataTransfer;
 });
 
 afterEach(() => {
@@ -181,10 +197,70 @@ test('sf-navbar - about click opens AboutDialog', async () => {
   expect(showModalMock).toHaveBeenCalledTimes(1);
 });
 
-test('close event dispatched when "file - close" is clicked', (done) => {
+test('sf-navbar - close event dispatched when "file - close" is clicked', (done) => {
   testEventDispatchedForClickedKey('sf-file-close', 'sf-file-close-requested', done);
 });
 
-test('close event dispatched when "file - close all" is clicked', (done) => {
+test('sf-navbar - close event dispatched when "file - close all" is clicked', (done) => {
   testEventDispatchedForClickedKey('sf-file-close-all', 'sf-file-close-all-requested', done);
+});
+
+test('sf-navbar dispatches custom event on file drop', () => {
+  document.body.innerHTML = `
+    <${appElement}>
+      <${element} app-selector="${appElement}"></${element}>
+    </${appElement}>`;
+  const app = document.body.querySelector(appElement) as Element;
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+
+  // simulate DragEvent, not supported by jsdom
+  const event = new Event('drop') as any;
+  event.dataTransfer = dataTransfer;
+
+  const customEventHandler = jest.fn((e) => e.detail.files);
+  const handle = channel.addListener('sf-file-open-requested', customEventHandler);
+  app.dispatchEvent(event as DragEvent);
+  expect(customEventHandler).toHaveBeenCalledTimes(1);
+  channel.removeListener(handle);
+
+  const receivedFiles = customEventHandler.mock.results[0];
+  expect(receivedFiles.value.length).toBe(2);
+  const receivedFile = receivedFiles.value[0] as File;
+  expect(receivedFile.name).toBe('test.txt');
+});
+
+test('sf-navbar prevents default and stops propagation on dragenter', () => {
+  document.body.innerHTML = `
+    <${appElement}>
+      <${element} app-selector="${appElement}"></${element}>
+    </${appElement}>`;
+  const app = document.body.querySelector(appElement) as Element;
+
+  // simulate DragEvent, not supported by jsdom
+  const event = new Event('dragenter') as any;
+  event.preventDefault = jest.fn();
+  event.stopPropagation = jest.fn();
+  app.dispatchEvent(event as DragEvent);
+
+  expect(event.preventDefault).toBeCalledTimes(1);
+  expect(event.stopPropagation).toBeCalledTimes(1);
+});
+
+test('sf-navbar shows copy symbol on dragover', () => {
+  document.body.innerHTML = `
+    <${appElement}>
+      <${element} app-selector="${appElement}"></${element}>
+    </${appElement}>`;
+  const app = document.body.querySelector(appElement) as Element;
+
+  // simulate DragEvent, not supported by jsdom
+  const event = new Event('dragover') as any;
+  event.dataTransfer = dataTransfer;
+  event.preventDefault = jest.fn();
+  event.stopPropagation = jest.fn();
+  app.dispatchEvent(event as DragEvent);
+
+  expect(event.preventDefault).toBeCalledTimes(1);
+  expect(event.stopPropagation).toBeCalledTimes(1);
+  expect(event.dataTransfer.dropEffect).toBe('copy');
 });

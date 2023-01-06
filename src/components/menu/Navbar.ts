@@ -46,7 +46,11 @@ const events = {
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 
 export default class Navbar extends HTMLElement {
+  static get observedAttributes() { return ['app-selector']; }
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
+
+  #app: HTMLElement | null = null;
 
   constructor() {
     super();
@@ -75,6 +79,12 @@ export default class Navbar extends HTMLElement {
   showAboutDialog() {
     const aboutDialog = this.querySelector('sf-about-dialog') as AboutDialog;
     aboutDialog.showModal(true);
+  }
+
+  updateAppReference(selector: string | null) {
+    if (selector !== null) {
+      this.#app = document.querySelector(selector);
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -135,11 +145,63 @@ export default class Navbar extends HTMLElement {
     }
   }
 
+  /* eslint-disable class-methods-use-this */
+  onDragEnter = (e: DragEvent) => {
+    // see https://www.quirksmode.org/blog/archives/2009/09/the_html5_drag.html for why this is necessary
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  /* eslint-disable class-methods-use-this */
+  onDragOver = (e: DragEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (e.dataTransfer !== null) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  onFileDropped = (e: DragEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (e.dataTransfer === null) {
+      return;
+    }
+    const selectedFiles = e.dataTransfer.files as FileList;
+    // filter out directories, if possible, for now
+    // this is only possible with a non-standardized function
+    // see: https://stackoverflow.com/questions/25016442/how-to-distinguish-if-a-file-or-folder-is-being-dragged-prior-to-it-being-droppe
+    // see: https://html5-demos.appspot.com/static/dnd/all_types_of_import.html
+    // see: https://developer.mozilla.org/en-US/docs/Web/API/DataTransferItem/webkitGetAsEntry
+    const items = e.dataTransfer.items;
+    let files: File[] = [];
+    for (let i = 0; i < items.length; i += 1) {
+      /* eslint-disable no-extra-boolean-cast */
+      if (!!items[i].webkitGetAsEntry) {
+        const entry = items[i].webkitGetAsEntry(); // non-standard
+        if (entry && entry.isFile) {
+          files.push(selectedFiles[i]);
+        }
+      } else {
+        // non-standard webkitGetAsEntry() not available
+        // => rely on error handling when trying to read the data
+        files = Array.from(selectedFiles);
+        break;
+      }
+    }
+    this.#channel.dispatch('sf-file-open-requested', { files });
+  };
+
   connectedCallback() {
     console.log('Navbar connectedCallback() called');
+    const appSelector = this.getAttribute('app-selector');
+    this.updateAppReference(appSelector);
     this.addEventListener('click', this.onClick.bind(this));
     mediaQuery.addEventListener('change', this.handleScreenChange.bind(this));
     document.addEventListener('click', this.handleOutsideSelection.bind(this));
+    this.#app?.addEventListener('dragenter', this.onDragEnter);
+    this.#app?.addEventListener('dragover', this.onDragOver);
+    this.#app?.addEventListener('drop', this.onFileDropped);
     this.render();
   }
 
@@ -148,6 +210,17 @@ export default class Navbar extends HTMLElement {
     this.removeEventListener('click', this.onClick.bind(this));
     mediaQuery.removeEventListener('change', this.handleScreenChange.bind(this));
     document.removeEventListener('click', this.handleOutsideSelection.bind(this));
+    this.#app?.removeEventListener('dragenter', this.onDragEnter);
+    this.#app?.removeEventListener('dragover', this.onDragOver);
+    this.#app?.removeEventListener('drop', this.onFileDropped);
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    console.log('Navbar attributeChangedCallback() called');
+    if (name === 'app-selector' && newValue !== oldValue) {
+      this.updateAppReference(newValue);
+      this.render();
+    }
   }
 }
 

@@ -135,13 +135,13 @@ export default class Navbar extends HTMLElement {
     const fileModifiersPressed = e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
     // const editModifiersPressed = e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
 
-    // cannot use same mechanism for fileOpen() due to browser security limitation => use "accessKey" property instead
+    // cannot use same mechanism for fileOpen() due to browser security limitations
+    // => use "accessKey" property instead
     if (fileModifiersPressed && e.key.toLowerCase() === 'c') {
       this.#channel.dispatch(events.fileCloseRequested, null);
       this.#showMenu = false;
       this.render();
-    }
-    else if (fileModifiersPressed && e.key.toLowerCase() === 'q') {
+    } else if (fileModifiersPressed && e.key.toLowerCase() === 'q') {
       this.#channel.dispatch(events.fileCloseAllRequested, null);
       this.#showMenu = false;
       this.render();

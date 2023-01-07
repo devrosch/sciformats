@@ -105,10 +105,11 @@ export default class Submenu extends HTMLElement {
       return;
     }
     const key = e?.target?.getAttribute('key');
-    if (key === this.#key) {
+    if (key === this.#key && !(e.target instanceof Submenu)) {
       e.stopPropagation();
       e.preventDefault();
       this.#expand = !this.#expand;
+      this.click();
       this.render();
     }
   };

@@ -225,8 +225,8 @@ export default class Tree extends HTMLElement {
   onClick = (e: Event) => {
     if (e.target instanceof TreeNode || e.target instanceof Tree) {
       // TODO: refactor to avoid code duplication and knowledge of TreeNode implementation
-      const nameElement = this.querySelector(`span[url="${this.#selectedNodeUrl}"]`) as HTMLSpanElement;
-      nameElement.focus({ focusVisible: false } as FocusOptions);
+      const nameElement = this.querySelector(`span[url="${this.#selectedNodeUrl}"]`) as HTMLSpanElement | null;
+      nameElement?.focus({ focusVisible: false } as FocusOptions);
     }
   };
 

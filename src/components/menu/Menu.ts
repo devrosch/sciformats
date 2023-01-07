@@ -2,6 +2,7 @@ import './MenuItem';
 import './MenuItemFileOpen';
 import './Submenu';
 import './Menu.css';
+import Submenu from './Submenu';
 
 export default class Menu extends HTMLElement {
   constructor() {
@@ -37,13 +38,32 @@ export default class Menu extends HTMLElement {
     }
   }
 
+  handleClick = (e: MouseEvent) => {
+    if (e.target instanceof Submenu) {
+      e.stopPropagation();
+      e.preventDefault();
+      const topLevelSubmenu = e.target.closest('sf-menu > sf-submenu');
+      // close all submenus that are not parents of the clicked submenu
+      for (const child of this.children) {
+        if (child instanceof Submenu && child !== topLevelSubmenu) {
+          if (child.hasAttribute('expand')
+            && child.getAttribute('expand') !== 'false') {
+            child.setAttribute('expand', 'false');
+          }
+        }
+      }
+    }
+  };
+
   connectedCallback() {
     console.log('Menu connectedCallback() called');
+    this.addEventListener('click', this.handleClick);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Menu disconnectedCallback() called');
+    this.removeEventListener('click', this.handleClick);
   }
 
   adoptedCallback() {

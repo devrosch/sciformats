@@ -18,7 +18,7 @@ const template = `
   <nav>
     <sf-menu>
       <sf-submenu key="sf-submenu-file" title="File">
-        <sf-menu-item-file-open key="sf-file-open" title="Open..." shortcut="Alt-Shift-N"></sf-menu-item-file-open>
+        <sf-menu-item-file-open key="sf-file-open" title="Open..." shortcut="Alt-Shift-O"></sf-menu-item-file-open>
         <sf-menu-item key="sf-file-close" title="Close" shortcut="Alt-Shift-C"></sf-menu-item>
         <sf-menu-item key="sf-file-close-all" title="Close All" shortcut="Alt-Shift-Q"></sf-menu-item>
       </sf-submenu>
@@ -128,6 +128,26 @@ export default class Navbar extends HTMLElement {
     }
   };
 
+  handleShortcuts = (e: KeyboardEvent) => {
+    // const fileModifiersPressed = isMacOs ?
+    //   e.shiftKey && e.ctrlKey && !e.altKey && !e.metaKey :
+    //   e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
+    const fileModifiersPressed = e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
+    // const editModifiersPressed = e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
+
+    // cannot use same mechanism for fileOpen() due to browser security limitation => use "accessKey" property instead
+    if (fileModifiersPressed && e.key.toLowerCase() === 'c') {
+      this.#channel.dispatch(events.fileCloseRequested, null);
+      this.#showMenu = false;
+      this.render();
+    }
+    else if (fileModifiersPressed && e.key.toLowerCase() === 'q') {
+      this.#channel.dispatch(events.fileCloseAllRequested, null);
+      this.#showMenu = false;
+      this.render();
+    }
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleScreenChange = (e: MediaQueryListEvent) => {
     // close menu including submenus whenever screen layout crosses threshold
@@ -197,6 +217,8 @@ export default class Navbar extends HTMLElement {
     const appSelector = this.getAttribute('app-selector');
     this.updateAppReference(appSelector);
     this.addEventListener('click', this.onClick);
+    // only document will reliably receive all keydown events
+    document.addEventListener('keydown', this.handleShortcuts);
     mediaQuery.addEventListener('change', this.handleScreenChange);
     document.addEventListener('click', this.handleOutsideSelection);
     this.#app?.addEventListener('dragenter', this.onDragEnter);
@@ -208,6 +230,7 @@ export default class Navbar extends HTMLElement {
   disconnectedCallback() {
     console.log('Navbar disconnectedCallback() called');
     this.removeEventListener('click', this.onClick);
+    document.removeEventListener('keydown', this.handleShortcuts);
     mediaQuery.removeEventListener('change', this.handleScreenChange);
     document.removeEventListener('click', this.handleOutsideSelection);
     this.#app?.removeEventListener('dragenter', this.onDragEnter);

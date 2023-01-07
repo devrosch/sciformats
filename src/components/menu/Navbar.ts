@@ -1,11 +1,17 @@
 /* eslint-disable import/no-duplicates */
 import Channel from 'model/Channel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import SysInfoProvider from 'util/SysInfoProvider';
 import './Menu'; // for side effects
 import Menu from './Menu';
 import './AboutDialog'; // for side effects
 import AboutDialog from './AboutDialog';
 import './Navbar.css';
+
+const isMacOs = SysInfoProvider.detectOS() === 'macOS';
+const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift-';
+const fileOpenShortcutModifierKeys = isMacOs ? '⌃ ⌥ ' : fileShortcutsModifierKeys;
+// const editShortcutsModifierKeys = isMacOs ? '⌃ ' : 'Ctrl-';
 
 // no template with slots required/possible
 // see: https://stackoverflow.com/a/67333433
@@ -18,9 +24,21 @@ const template = `
   <nav>
     <sf-menu>
       <sf-submenu key="sf-submenu-file" title="File">
-        <sf-menu-item-file-open key="sf-file-open" title="Open..." shortcut="Alt-Shift-O"></sf-menu-item-file-open>
-        <sf-menu-item key="sf-file-close" title="Close" shortcut="Alt-Shift-C"></sf-menu-item>
-        <sf-menu-item key="sf-file-close-all" title="Close All" shortcut="Alt-Shift-Q"></sf-menu-item>
+        <sf-menu-item-file-open
+          key="sf-file-open"
+          title="Open..."
+          shortcut="${fileOpenShortcutModifierKeys}-O">
+        </sf-menu-item-file-open>
+        <sf-menu-item
+          key="sf-file-close"
+          title="Close"
+          shortcut="${fileShortcutsModifierKeys}-C">
+        </sf-menu-item>
+        <sf-menu-item
+          key="sf-file-close-all"
+          title="Close All"
+          shortcut="${fileShortcutsModifierKeys}-Q">
+        </sf-menu-item>
       </sf-submenu>
       <sf-menu-item key="sf-menu-item-2" title="Menu Item 2"></sf-menu-item>
       <sf-submenu key="sf-submenu-1" title="Submenu 1">
@@ -129,10 +147,10 @@ export default class Navbar extends HTMLElement {
   };
 
   handleShortcuts = (e: KeyboardEvent) => {
-    // const fileModifiersPressed = isMacOs ?
-    //   e.shiftKey && e.ctrlKey && !e.altKey && !e.metaKey :
-    //   e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
-    const fileModifiersPressed = e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
+    const fileModifiersPressed = isMacOs
+      ? e.shiftKey && e.ctrlKey && !e.altKey && !e.metaKey
+      : e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
+    // const fileModifiersPressed = e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
     // const editModifiersPressed = e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
 
     // cannot use same mechanism for fileOpen() due to browser security limitations

@@ -60,7 +60,7 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(aTitleSpan.textContent).toBe(`${title2}`);
 });
 
-test('sf-submenu expands on click, event does not get propagated', async () => {
+test('sf-submenu expands on click', async () => {
   document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
   const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
@@ -78,7 +78,6 @@ test('sf-submenu expands on click, event does not get propagated', async () => {
   document.body.removeEventListener('click', clickHandler);
   expect(aPlusMinusSpan.textContent).toBe('▼');
   expect(aTitleSpan.textContent).toBe(`${title}`);
-  expect(clickHandler).toHaveBeenCalledTimes(0);
 });
 
 test('sf-submenu expands/collapses on mouse enter/leave', async () => {

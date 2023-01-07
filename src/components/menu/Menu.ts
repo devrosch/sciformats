@@ -1,8 +1,9 @@
+/* eslint-disable import/no-duplicates */
 import './MenuItem';
 import './MenuItemFileOpen';
 import './Submenu';
-import './Menu.css';
 import Submenu from './Submenu';
+import './Menu.css';
 
 export default class Menu extends HTMLElement {
   constructor() {

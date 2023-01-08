@@ -42,8 +42,9 @@ std::vector<std::pair<double, double>> sciformats::jdx::Data2D::parseXppYYData(
     uint64_t count = 0;
     for (auto yRaw : yData)
     {
-        auto x = firstX + nominator /
-            static_cast<double>(denominator) * static_cast<double>(count++);
+        auto x = firstX
+                 + nominator / static_cast<double>(denominator)
+                       * static_cast<double>(count++);
         auto y = yFactor * yRaw;
         xyData.emplace_back(x, y);
     }

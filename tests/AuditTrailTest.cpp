@@ -223,7 +223,8 @@ TEST_CASE("fails when unclosed audit trail entry parenthesis", "[AuditTrail]")
         = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(auditTrail.getData(),
-        Catch::Matchers::Contains("parenthesis", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains(
+            "No closing parenthesis found for", Catch::CaseSensitive::No));
 }
 
 TEST_CASE("fails when file ends unexpectedly", "[AuditTrail]")
@@ -247,5 +248,7 @@ TEST_CASE("fails when file ends unexpectedly", "[AuditTrail]")
         = sciformats::jdx::AuditTrail(label, variables, reader, nextLine);
 
     REQUIRE_THROWS_WITH(auditTrail.getData(),
-        Catch::Matchers::Contains("end", Catch::CaseSensitive::No));
+        Catch::Matchers::Contains("end", Catch::CaseSensitive::No)
+            && Catch::Matchers::Contains(
+                "parenthesis", Catch::CaseSensitive::No));
 }

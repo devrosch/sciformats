@@ -5,6 +5,8 @@
 #include "util/PeakTableParser.hpp"
 #include "util/StringUtils.hpp"
 
+#include <limits>
+
 sciformats::jdx::DataTable::DataTable(std::string label,
     std::string variableList, std::optional<std::string> plotDescriptor,
     const std::vector<StringLdr>& blockLdrs,

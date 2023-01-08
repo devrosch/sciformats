@@ -109,7 +109,9 @@ sciformats::jdx::util::DataParser::readXyXyData(TextReader& reader)
     return xyValues;
 }
 
+// TODO: refactor to reduce complexity
 std::pair<std::vector<double>, bool>
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 sciformats::jdx::util::DataParser::readValues(std::string& encodedValues)
 {
     // output
@@ -257,14 +259,20 @@ sciformats::jdx::util::DataParser::toAffn(std::string& token)
     {
         tokenType = TokenType::Missing;
     }
+    // TODO: refactor
+    // NOLINTNEXTLINE(bugprone-assignment-in-if-condition)
     else if ((firstDigit = getSqzDigitValue(c)))
     {
         tokenType = TokenType::Sqz;
     }
+    // TODO: refactor
+    // NOLINTNEXTLINE(bugprone-assignment-in-if-condition)
     else if ((firstDigit = getDifDigitValue(c)))
     {
         tokenType = TokenType::Dif;
     }
+    // TODO: refactor
+    // NOLINTNEXTLINE(bugprone-assignment-in-if-condition)
     else if ((firstDigit = getDupDigitValue(c)))
     {
         tokenType = TokenType::Dup;

@@ -3,6 +3,8 @@
 #include "util/LdrUtils.hpp"
 #include "util/StringUtils.hpp"
 
+#include <limits>
+
 sciformats::jdx::util::TuplesParser::TuplesParser(
     std::string variableList, std::string ldrName)
     : m_variableList{std::move(variableList)}

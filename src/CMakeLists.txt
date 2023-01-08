@@ -85,6 +85,11 @@ add_library(jdxparser
 
 # All users of this library will need at least C++17
 target_compile_features(jdxparser PUBLIC cxx_std_17)
+# For g++ 12 the above does not seem to suffice (e.g. does not recognize std::optional), hence additionally setting properties
+set_target_properties(jdxparser PROPERTIES
+    CXX_STANDARD 17
+    CXX_EXTENSIONS OFF
+)
 
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
     # make filesystem available

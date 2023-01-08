@@ -15,7 +15,7 @@ sciformats::jdx::LdrContainer::parseStringValue(
             return line;
         }
         auto [content, comment] = util::stripLineComment(line);
-        if (!content.empty() && value.back() == '=')
+        if (!content.empty() && !value.empty() && value.back() == '=')
         {
             // account for terminal "=" as non line breaking marker
             value.pop_back();

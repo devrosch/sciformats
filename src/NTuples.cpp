@@ -3,6 +3,8 @@
 #include "util/LdrUtils.hpp"
 #include "util/StringUtils.hpp"
 
+#include <utility>
+
 sciformats::jdx::NTuples::NTuples(const std::string& label,
     std::string dataForm, const std::vector<StringLdr>& blockLdrs,
     TextReader& reader, std::optional<std::string>& nextLine)

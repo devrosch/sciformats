@@ -3,6 +3,8 @@
 #include "util/DataParser.hpp"
 #include "util/LdrUtils.hpp"
 
+#include <limits>
+
 sciformats::jdx::XyBase::XyBase(const std::string& label,
     const std::string& variableList, const std::vector<StringLdr>& ldrs,
     const std::string& expectedLabel,

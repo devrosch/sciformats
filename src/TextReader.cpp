@@ -39,9 +39,9 @@ void sciformats::jdx::TextReader::seekg(
 
 std::ios::pos_type sciformats::jdx::TextReader::getLength()
 {
-    std::ios::pos_type current = m_streamPtr->tellg();
+    const std::ios::pos_type current = m_streamPtr->tellg();
     m_streamPtr->seekg(0, std::ios::end);
-    std::ios::pos_type length = m_streamPtr->tellg();
+    const std::ios::pos_type length = m_streamPtr->tellg();
     m_streamPtr->seekg(current, std::ios::beg);
     return length;
 }

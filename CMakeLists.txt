@@ -3,7 +3,7 @@
 # --------------------------------------------------------------
 
 # Works with 3.15 and tested through 3.18
-cmake_minimum_required(VERSION 3.15...3.18)
+cmake_minimum_required(VERSION 3.15...3.25)
 
 # Project name and a few useful settings. Other commands can pick up the results
 project(
@@ -42,17 +42,18 @@ endif()
 # clang-tidy rules to check
 # deactivate checks for magic-numbers as they are
 # too sensitive in bit oprations and sample data
+# bugprone-unchecked-optional-access, misc-const-correctness, readability-identifier-length deactivated for now as they generate to many warnings
 set(CLANG_TIDY_CHECKS
     "-*\
-    ,bugprone-*\
+    ,bugprone-*,-bugprone-unchecked-optional-access,-bugprone-easily-swappable-parameters\
     ,cert-*\
     ,clang-analyzer-*\
     ,cppcoreguidelines-*,-cppcoreguidelines-avoid-magic-numbers\
-    ,hicpp-*,misc-*\
+    ,hicpp-*,misc-*.-misc-const-correctness\
     ,modernize-*,-modernize-use-trailing-return-type\
     ,performance-*\
     ,portability-*\
-    ,readability-*,-readability-magic-numbers")
+    ,readability-*,-readability-magic-numbers,-readability-identifier-length")
 
 find_program(CLANG_TIDY_FOUND "clang-tidy")
 if(CLANG_TIDY_FOUND AND NOT EMSCRIPTEN)

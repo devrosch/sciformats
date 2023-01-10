@@ -7,6 +7,11 @@ import './Navbar'; // for side effects
 import Navbar from './Navbar';
 import AboutDialog from './AboutDialog';
 
+// make sure modifier keys for Linux are expected
+jest.mock('util/SysInfoProvider', () => ({
+  detectOS: () => 'Linux/Unix'
+}))
+
 const appElement = 'sf-app';
 const element = 'sf-navbar';
 
@@ -40,6 +45,30 @@ const testEventDispatchedForClickedKey = (
   channel.addListener(expectedEventName, listener);
 
   navbar.onClick(mouseEvent);
+};
+
+const testEventDispatchedForShortcut = (
+  key: string,
+  expectedEventName: string,
+  done: (error?: any) => any,
+) => {
+  document.body.innerHTML = `<${element}></${element}>`;
+
+  const event = new KeyboardEvent('keydown', { key,
+    // modifier keys for Linux, guaranteed to be used by mock at beginning of file
+    shiftKey: true, ctrlKey: false, altKey: true, metaKey: false });
+  const listener = (message: Message) => {
+    try {
+      expect(message.name).toBe(expectedEventName);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  };
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.addListener(expectedEventName, listener);
+
+  document.dispatchEvent(event);
 };
 
 const file = new File(['dummy'], 'test.txt');
@@ -263,4 +292,12 @@ test('sf-navbar shows copy symbol on dragover', () => {
   expect(event.preventDefault).toBeCalledTimes(1);
   expect(event.stopPropagation).toBeCalledTimes(1);
   expect(event.dataTransfer.dropEffect).toBe('copy');
+});
+
+test('sf-navbar handles file close shortcut', (done) => {
+  testEventDispatchedForShortcut('c', 'sf-file-close-requested', done);
+});
+
+test('sf-navbar handles file close all shortcut', (done) => {
+  testEventDispatchedForShortcut('q', 'sf-file-close-all-requested', done);
 });

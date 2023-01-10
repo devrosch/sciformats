@@ -54,3 +54,23 @@ test('sf-menu showMenu() sets CSS class and for "false" argument collapses all s
     expect(submenu.getAttribute('expand')).toBe('false');
   }
 });
+
+test('sf-menu submenu click closes other submenu hierarchies', async () => {
+  document.body.innerHTML = `
+  <${element}>
+    <sf-submenu key="sf-submenu-1" title="Submenu 1" expand="false"></sf-submenu>
+    <sf-submenu key="sf-submenu-2" title="Submenu 2" expand="true"></sf-submenu>
+  </${element}>
+  `;
+  const menu = document.body.querySelector(element) as Menu;
+  expect(menu).toBeTruthy();
+  const submenu1 = menu.querySelector('[key="sf-submenu-1"]') as HTMLElement;
+  expect(submenu1).toBeTruthy();
+  expect(submenu1?.getAttribute('expand')).toBe('false');
+  const submenu2 = menu.querySelector('[key="sf-submenu-2"]');
+  expect(submenu2).toBeTruthy();
+  expect(submenu2?.getAttribute('expand')).toBe('true');
+
+  submenu1.dispatchEvent(new Event('click', { bubbles: true }));
+  expect(submenu2?.getAttribute('expand')).toBe('false');
+});

@@ -118,7 +118,7 @@ export default class Submenu extends HTMLElement {
     console.log('Submenu connectedCallback() called');
     this.#title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#key = this.hasAttribute('key') ? this.getAttribute('key') : '';
-    this.#expand = this.hasAttribute('expand') ? this.getAttribute('key') === 'true' : false;
+    this.#expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
     this.addEventListener('mouseenter', this.onMouseEnter);
     this.addEventListener('mouseleave', this.onMouseLeave);
     this.addEventListener('click', this.onClick);

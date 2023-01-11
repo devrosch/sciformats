@@ -41,7 +41,7 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(a.children).toHaveLength(2);
   const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
   const aTitleSpan = a.children.item(1) as HTMLSpanElement;
-  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aPlusMinusSpan.textContent).toBe('▸');
   // HTMLElement.innerText not available in JSDOM
   // see: https://github.com/jsdom/jsdom/issues/1245
   expect(aTitleSpan.textContent).toBe(`${title}`);
@@ -56,7 +56,7 @@ test('sf-menu-item renders and observes attribute changes', async () => {
 
   submenu.setAttribute(expandAttr, `${expandTrue}`);
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandTrue}`);
-  expect(aPlusMinusSpan.textContent).toBe('▼');
+  expect(aPlusMinusSpan.textContent).toBe('▾');
   expect(aTitleSpan.textContent).toBe(`${title2}`);
 });
 
@@ -69,14 +69,14 @@ test('sf-submenu expands on click', async () => {
   expect(a.children).toHaveLength(2);
   const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
   const aTitleSpan = a.children.item(1) as HTMLSpanElement;
-  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aPlusMinusSpan.textContent).toBe('▸');
   expect(aTitleSpan.textContent).toBe(`${title}`);
 
   const clickHandler = jest.fn();
   document.body.addEventListener('click', clickHandler);
   a.click();
   document.body.removeEventListener('click', clickHandler);
-  expect(aPlusMinusSpan.textContent).toBe('▼');
+  expect(aPlusMinusSpan.textContent).toBe('▾');
   expect(aTitleSpan.textContent).toBe(`${title}`);
 });
 
@@ -89,15 +89,15 @@ test('sf-submenu expands/collapses on mouse enter/leave', async () => {
   expect(a.children).toHaveLength(2);
   const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
   const aTitleSpan = a.children.item(1) as HTMLSpanElement;
-  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aPlusMinusSpan.textContent).toBe('▸');
   expect(aTitleSpan.textContent).toBe(`${title}`);
 
   submenu.onMouseEnter(new Event('onmouseenter'));
-  expect(aPlusMinusSpan.textContent).toBe('▼');
+  expect(aPlusMinusSpan.textContent).toBe('▾');
   expect(aTitleSpan.textContent).toBe(`${title}`);
 
   submenu.onMouseLeave(new Event('onmouseleave'));
-  expect(aPlusMinusSpan.textContent).toBe('▶');
+  expect(aPlusMinusSpan.textContent).toBe('▸');
   expect(aTitleSpan.textContent).toBe(`${title}`);
 });
 

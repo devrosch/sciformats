@@ -9,8 +9,8 @@ import AboutDialog from './AboutDialog';
 
 // make sure modifier keys for Linux are expected
 jest.mock('util/SysInfoProvider', () => ({
-  detectOS: () => 'Linux/Unix'
-}))
+  detectOS: () => 'Linux/Unix',
+}));
 
 const appElement = 'sf-app';
 const element = 'sf-navbar';
@@ -54,9 +54,13 @@ const testEventDispatchedForShortcut = (
 ) => {
   document.body.innerHTML = `<${element}></${element}>`;
 
-  const event = new KeyboardEvent('keydown', { key,
+  const event = new KeyboardEvent(
+    'keydown',
     // modifier keys for Linux, guaranteed to be used by mock at beginning of file
-    shiftKey: true, ctrlKey: false, altKey: true, metaKey: false });
+    {
+      key, shiftKey: true, ctrlKey: false, altKey: true, metaKey: false,
+    },
+  );
   const listener = (message: Message) => {
     try {
       expect(message.name).toBe(expectedEventName);

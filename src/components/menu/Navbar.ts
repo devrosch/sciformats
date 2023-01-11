@@ -9,7 +9,7 @@ import AboutDialog from './AboutDialog';
 import './Navbar.css';
 
 const isMacOs = SysInfoProvider.detectOS() === 'macOS';
-const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift-';
+const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift';
 const fileOpenShortcutModifierKeys = isMacOs ? '⌃ ⌥ ' : fileShortcutsModifierKeys;
 // const editShortcutsModifierKeys = isMacOs ? '⌃ ' : 'Ctrl-';
 

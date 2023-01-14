@@ -1,7 +1,7 @@
 import LocalFileParser from './LocalFileParser';
 import Parser from './Parser';
 
-export default class ParserRepsoitory {
+export default class ParserRepository {
   async findParser(file: File): Promise<Parser> {
     // generate URL of type file:///UUID/fileName#/
     const uuid = crypto.randomUUID();

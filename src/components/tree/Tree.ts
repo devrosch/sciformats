@@ -181,7 +181,7 @@ export default class Tree extends HTMLElement {
     console.log(key);
 
     // event originates from span within TreeNode => parentElement
-    const treeNode = e.target.parentElement as TreeNode | null;
+    const treeNode = e.target instanceof TreeNode ? e.target : e.target.parentElement as TreeNode | null;
     if (treeNode === null) {
       return;
     }
@@ -197,14 +197,14 @@ export default class Tree extends HTMLElement {
         Tree.selectNode(next);
         break;
       }
-      case 'ArrowRight':
-        treeNode.setExpand(true);
+      case 'ArrowLeft':
+        treeNode.setExpand(false);
         treeNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
         break;
-      case 'ArrowLeft':
-        treeNode.setExpand(false);
+      case 'ArrowRight':
+        treeNode.setExpand(true);
         treeNode.setSelected(true);
         // do not scroll view
         e.preventDefault();

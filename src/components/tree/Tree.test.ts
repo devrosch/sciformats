@@ -1,20 +1,12 @@
 /* eslint-disable import/no-duplicates */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
-import './Tree'; // for side effects
-import Tree from './Tree';
-import TreeNode from './TreeNode';
 import Parser from 'model/Parser';
 import NodeData from 'model/NodeData';
 import 'model/ParserRepository';
-
-jest.mock('model/ParserRepository', () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      findParser: async (file: File) => new MockParser(file),
-    }
-  });
-});
+import './Tree'; // for side effects
+import Tree from './Tree';
+import TreeNode from './TreeNode';
 
 // a StubParser really, but jest requires the name to start with "Mock"
 // see: https://jestjs.io/docs/es6-class-mocks#calling-jestmock-with-the-module-factory-parameter
@@ -27,6 +19,7 @@ class MockParser implements Parser {
     this.rootUrl = new URL(`${this.prefix}${file.name}#/`);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   read(url: URL): Promise<NodeData> {
     const data: { x: number, y: number }[] = [];
     const parameters: { key: string, value: string }[] = [];
@@ -39,9 +32,13 @@ class MockParser implements Parser {
       children,
     };
 
-    return new Promise((resolve) => resolve(nodeData));
+    return new Promise((resolve) => { resolve(nodeData); });
   }
 }
+
+jest.mock('model/ParserRepository', () => jest.fn().mockImplementation(
+  () => ({ findParser: async (file: File) => new MockParser(file) }),
+));
 
 const element = 'sf-tree';
 const nodeElement = 'sf-tree-node';
@@ -64,12 +61,13 @@ const prepareFileOpenMessage = (fileNames: string[]) => {
   return message;
 };
 
-const waitForChildrenCount = async (element: HTMLElement, childrenCount: Number) => {
+const waitForChildrenCount = async (el: HTMLElement, childrenCount: Number) => {
   // wait for DOM change
-  while (element.children.length !== childrenCount) {
-    await new Promise((resolve) => setTimeout(resolve, 1));
+  while (el.children.length !== childrenCount) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => { setTimeout(resolve, 1); });
   }
-}
+};
 
 const prepareTreeStructure = async () => {
   // prepare structure
@@ -120,13 +118,13 @@ const prepareStubKeyDownEvent = (key: String, target: Element) => {
   const event = {
     key,
     target,
-    preventDefault: () => {},
+    preventDefault: () => { },
   };
   return event as unknown as KeyboardEvent;
 };
 
 const prepareListener = (done: (value: unknown) => void) => {
-  const listener = (message: Message) => {
+  const listener = () => {
     try {
       done('success');
     } catch (error) {
@@ -137,7 +135,6 @@ const prepareListener = (done: (value: unknown) => void) => {
   channel.addListener('sf-tree-node-selected', listener);
   return listener;
 };
-
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
@@ -188,7 +185,7 @@ test('sf-tree listenes to file close events', async () => {
   // no node selected => noop
   tree.handleFileCloseRequested();
   // allow for potential changes to take place
-  await new Promise((resolve) => setTimeout(resolve, 10));
+  await new Promise((resolve) => { setTimeout(resolve, 10); });
 
   expect(tree.children).toHaveLength(3);
 
@@ -223,7 +220,7 @@ test('sf-tree listenes to file close all events', async () => {
 test('sf-tree observes key down events', async () => {
   // workaround for using "done" in async method
   // see: https://github.com/facebook/jest/issues/11404
-  let done: (value: unknown) => void = () => {};
+  let done: (value: unknown) => void = () => { };
 
   const nodes = await prepareTreeStructure();
   const arrowDownEvent = prepareActualKeyDownEvent('ArrowDown');

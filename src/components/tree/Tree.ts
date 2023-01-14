@@ -1,9 +1,9 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
+import ParserRepository from 'model/ParserRepository';
 import TreeNode from './TreeNode';
 import './Tree.css';
-import ParserRepository from 'model/ParserRepository';
 
 const template = '';
 
@@ -68,9 +68,16 @@ export default class Tree extends HTMLElement {
 
   async handleFilesOpenRequested(message: Message) {
     const files = message.detail.files as File[];
+    // find parsers
+    const parserPromises = [];
     for (const file of files) {
       console.log(`Tree -> sf-file-open-requested received for: ${file.name}`);
-      const parser = await this.#parserRepository.findParser(file);
+      const parserPromise = this.#parserRepository.findParser(file);
+      parserPromises.push(parserPromise);
+    }
+    const parsers = await Promise.all(parserPromises);
+    // create tree nodes
+    for (const parser of parsers) {
       const rootNode = new TreeNode(parser, parser.rootUrl);
       this.#children.push(rootNode);
     }
@@ -181,7 +188,8 @@ export default class Tree extends HTMLElement {
     console.log(key);
 
     // event originates from span within TreeNode => parentElement
-    const treeNode = e.target instanceof TreeNode ? e.target : e.target.parentElement as TreeNode | null;
+    const treeNode = e.target instanceof TreeNode
+      ? e.target : e.target.parentElement as TreeNode | null;
     if (treeNode === null) {
       return;
     }

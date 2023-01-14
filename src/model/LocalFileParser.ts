@@ -1,5 +1,3 @@
-// disable one generally applicable eslint error for this until full implementation is done
-/* eslint-disable class-methods-use-this */
 import Parser from './Parser';
 
 export default class LocalFileParser implements Parser {

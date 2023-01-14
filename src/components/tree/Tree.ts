@@ -1,14 +1,16 @@
-import LocalFileParser from 'model/LocalFileParser';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
 import TreeNode from './TreeNode';
 import './Tree.css';
+import ParserRepository from 'model/ParserRepository';
 
 const template = '';
 
 export default class Tree extends HTMLElement {
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
+
+  #parserRepository = new ParserRepository();
 
   #eventListeners: any[] = [];
 
@@ -64,15 +66,12 @@ export default class Tree extends HTMLElement {
 
   // #region user events
 
-  handleFilesOpenRequested(message: Message) {
+  async handleFilesOpenRequested(message: Message) {
     const files = message.detail.files as File[];
     for (const file of files) {
       console.log(`Tree -> sf-file-open-requested received for: ${file.name}`);
-      // generate URL of type file:///UUID/fileName#/
-      const uuid = crypto.randomUUID();
-      const url = new URL(`file:///${uuid}/${file.name}#/`);
-      const repo = new LocalFileParser(url, file);
-      const rootNode = new TreeNode(repo, url);
+      const parser = await this.#parserRepository.findParser(file);
+      const rootNode = new TreeNode(parser, parser.rootUrl);
       this.#children.push(rootNode);
     }
     this.render();

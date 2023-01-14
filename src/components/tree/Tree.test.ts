@@ -26,6 +26,13 @@ const prepareFileOpenMessage = (fileNames: string[]) => {
   return message;
 };
 
+const waitForChildrenCount = async (element: HTMLElement, childrenCount: Number) => {
+  // wait for DOM change
+  while (element.children.length !== childrenCount) {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+}
+
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';
@@ -36,7 +43,7 @@ test('sf-tree renders', async () => {
   expect(document.body.innerHTML).toContain(element);
 });
 
-test('sf-tree listenes to file open events', () => {
+test('sf-tree listenes to file open events', async () => {
   document.body.innerHTML = `<${element}/>`;
 
   const tree = document.body.querySelector(element) as Tree;
@@ -47,6 +54,7 @@ test('sf-tree listenes to file open events', () => {
 
   const channel = CustomEventsMessageBus.getDefaultChannel();
   channel.dispatch(fileOpenedEvent, { files: [file] });
+  await waitForChildrenCount(tree, 1);
 
   expect(tree.children).toHaveLength(1);
   const treeNode = tree.querySelector(nodeElement) as TreeNode;
@@ -55,6 +63,8 @@ test('sf-tree listenes to file open events', () => {
   expect(treeNode.getAttribute(urlAttr)).toMatch(urlRegex);
 
   channel.dispatch(fileOpenedEvent, { files: [file] });
+  await waitForChildrenCount(tree, 2);
+
   expect(tree.children).toHaveLength(2);
 });
 
@@ -66,10 +76,13 @@ test('sf-tree listenes to file close events', async () => {
 
   const message = prepareFileOpenMessage([fileName, fileName2, fileName3]);
   tree.handleFilesOpenRequested(message);
+  await waitForChildrenCount(tree, 3);
 
   expect(tree.children).toHaveLength(3);
   // no node selected => noop
   tree.handleFileCloseRequested();
+  // allow for potential changes to take place
+  await new Promise((resolve) => setTimeout(resolve, 10));
 
   expect(tree.children).toHaveLength(3);
 
@@ -78,6 +91,7 @@ test('sf-tree listenes to file close events', async () => {
   const child2 = tree.children.item(2) as TreeNode;
   child1.setSelected(true);
   tree.handleFileCloseRequested();
+  await waitForChildrenCount(tree, 2);
 
   expect(tree.children).toHaveLength(2);
   expect(tree.children.item(0)).toBe(child0);
@@ -93,6 +107,7 @@ test('sf-tree listenes to file close all events', async () => {
 
   const message = prepareFileOpenMessage([fileName, fileName2, fileName3]);
   tree.handleFilesOpenRequested(message);
+  await waitForChildrenCount(tree, 3);
 
   expect(tree.children).toHaveLength(3);
   tree.handleFileCloseAllRequested();

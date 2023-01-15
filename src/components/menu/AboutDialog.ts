@@ -2,7 +2,31 @@ import './AboutDialog.css';
 
 const template = `
 <dialog>
-  <p>About dialog.</p>
+  <p>SciFormats</p>
+  <p>Copyright © 2021, 2022 Robert Schiwon</p>
+  <p>SciFormats is free software according to the terms of the GNU General Public License Version 3
+    (license: <a href="https://gitlab.com/devrosch/sf-ui/blob/master/COPYING">GPL</a>, source code:
+    <a href="https://gitlab.com/devrosch/sf-ui">GitLab</a>)
+    and makes use of the following third-party package that comes with its own license terms.
+  </p>
+  <ul>
+    <li>
+      <a
+        href="https://www.npmjs.com/package/plotly.js-dist-min">
+        plotly.js-dist-min</a>
+      (license:
+      <a
+        href="https://github.com/plotly/plotly.js/blob/master/LICENSE">MIT</a>,
+      source code:
+      <a
+        href="https://github.com/plotly/plotly.js">
+        GitHub</a>)
+    </li>
+  </ul>
+  <p>
+    See <a href="https://gitlab.com/devrosch/sf-ui/blob/master/package.json">package.json</a>
+    for details on additional dependencies for development.
+  </p>
   <form method="dialog">
     <button autofocus>OK</button>
   </form>

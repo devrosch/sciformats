@@ -1,3 +1,13 @@
+sf-about-dialog > dialog {
+  font-family: sans-serif;
+  font-size: 14px;
+  width: 50%;
+}
+
+sf-about-dialog > dialog button {
+  float: right;
+}
+
 sf-about-dialog > dialog::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
@@ -18,5 +28,11 @@ sf-about-dialog > dialog[open] {
   }
   to {
     opacity: 1;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  sf-about-dialog > dialog {
+    width: 80%;
   }
 }

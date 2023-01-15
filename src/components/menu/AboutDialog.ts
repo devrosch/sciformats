@@ -3,7 +3,7 @@ import './AboutDialog.css';
 const template = `
 <dialog>
   <p>SciFormats</p>
-  <p>Copyright © 2021, 2022 Robert Schiwon</p>
+  <p>Copyright © 2022, 2023 Robert Schiwon</p>
   <p>SciFormats is free software according to the terms of the GNU General Public License Version 3
     (license: <a href="https://gitlab.com/devrosch/sf-ui/blob/master/COPYING">GPL</a>, source code:
     <a href="https://gitlab.com/devrosch/sf-ui">GitLab</a>)

@@ -11,6 +11,9 @@ const key2 = 'abc2';
 const titleAttr = 'title';
 const title = 'def';
 const title2 = 'def2';
+const shortcutAttr = 'shortcut';
+const shortcut = 'Alt-Shift-O';
+const shortcut2 = 'Shift-Alt-O';
 const roleAttr = 'role';
 const role = 'none';
 const inputKeyPostfix = '-input';
@@ -22,7 +25,7 @@ afterEach(() => {
 });
 
 test('sf-menu-item-file-open renders and observes attribute changes', async () => {
-  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}" ${shortcutAttr}="${shortcut}"/>`;
   const menuItem = document.body.querySelector(element) as MenuItemFileOpen;
   expect(menuItem).toBeTruthy();
   expect(menuItem.getAttribute(titleAttr)).toBe(title);
@@ -36,6 +39,7 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   expect(labelMenuItem).toBeTruthy();
   expect(labelMenuItem.getAttribute(keyAttr)).toBe(key + aKeyPostfix);
   expect(labelMenuItem.getAttribute(titleAttr)).toBe(title);
+  expect(labelMenuItem.getAttribute(shortcutAttr)).toBe(shortcut);
 
   menuItem.setAttribute(keyAttr, key2);
   expect(menuItem.getAttribute(keyAttr)).toBe(key2);
@@ -45,6 +49,10 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   menuItem.setAttribute(titleAttr, title2);
   expect(menuItem.getAttribute(titleAttr)).toBe(title2);
   expect(labelMenuItem.getAttribute(titleAttr)).toBe(title2);
+
+  menuItem.setAttribute(shortcutAttr, shortcut2);
+  expect(menuItem.getAttribute(shortcutAttr)).toBe(shortcut2);
+  expect(labelMenuItem.getAttribute(shortcutAttr)).toBe(shortcut2);
 });
 
 test('sf-menu-item-file-open a click event results in input click event', async () => {

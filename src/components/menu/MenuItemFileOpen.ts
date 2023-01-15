@@ -13,7 +13,7 @@ const template = `
 `;
 
 export default class MenuItemFileOpen extends HTMLElement {
-  static get observedAttributes() { return ['title', 'key']; }
+  static get observedAttributes() { return ['title', 'key', 'shortcut']; }
 
   #title: string | null = null;
 

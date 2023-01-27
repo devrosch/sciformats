@@ -6,7 +6,7 @@ import './MenuItemFileOpen.css';
 const menuItemKeyPostfix = 'input-menu-item';
 
 const template = `
-  <input id="sf-file-open-input" class="sf-file-open-input" key="sf-file-open-input" type="file" multiple="true"/>
+  <input id="sf-file-open-input" class="sf-file-open-input" tabindex="-1" key="sf-file-open-input" type="file" multiple="true"/>
   <label for="sf-file-open-input" class="sf-file-input-label">
     <sf-menu-item key="sf-file-open-${menuItemKeyPostfix}" accesskey="o"></sf-menu-item>
   </label>  

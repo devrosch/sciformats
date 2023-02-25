@@ -9,6 +9,8 @@ const key2 = 'abc2';
 const titleAttr = 'title';
 const title = 'def';
 const title2 = 'def2';
+const shortcutAttr = 'shortcut';
+const shortcut = 'Ctrl-A';
 const roleAttr = 'role';
 const role = 'none';
 const aRole = 'menuitem';
@@ -19,7 +21,8 @@ afterEach(() => {
 });
 
 test('sf-menu-item renders and observes attribute changes', async () => {
-  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  document.body.innerHTML = `
+    <${element} ${keyAttr}="${key}" ${titleAttr}="${title}" ${shortcutAttr}="${shortcut}"/>`;
   const menuItem = document.body.querySelector(element) as MenuItem;
   expect(menuItem).toBeTruthy();
   expect(menuItem.getAttribute(titleAttr)).toBe(title);
@@ -36,8 +39,9 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   // see: https://github.com/jsdom/jsdom/issues/1245
   expect(nameSpan.textContent).toBe(title);
 
-  // TODO: add shortcut test
-  // const shortcutSpan = a.children.item(1) as HTMLSpanElement;
+  const shortcutSpan = a.children.item(1) as HTMLSpanElement;
+  expect(shortcutSpan).toBeTruthy();
+  expect(shortcutSpan.textContent).toBe(shortcut);
 
   menuItem.setAttribute(keyAttr, key2);
   expect(menuItem.getAttribute(keyAttr)).toBe(key2);

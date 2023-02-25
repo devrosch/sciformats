@@ -2,6 +2,7 @@ import Channel from 'model/Channel';
 import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import { isSameUrl } from 'util/UrlUtils';
+import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
 import './Footer.css';
 
 const template = `
@@ -30,15 +31,10 @@ export default class Footer extends HTMLElement {
   render() {
     this.init();
 
-    const span = this.querySelector('span');
-    if (this.#url === null && span !== null && span.textContent !== '') {
-      span.textContent = '';
-      span.removeAttribute('title');
-    } else if (this.#url !== null && span !== null && !isSameUrl(this.#url, span.textContent)) {
-      const url = this.#url.toString();
-      span.textContent = url;
-      span.setAttribute('title', url);
-    }
+    const span = this.querySelector('span') as HTMLSpanElement;
+    const url = this.#url === null ? null : this.#url.toString();
+    setElementAttribute(span, 'title', url);
+    setElementTextContent(span, url);
   }
 
   handleUrlChanged(message: Message) {

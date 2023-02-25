@@ -6,7 +6,8 @@
  * The attribute is only set if it does not already exist or does not have the value.
  * @param element HTML element to set the attribute on.
  * @param attributeName Attribute name.
- * @param attributeValue Attribute value. If the value is null and the attribute exists, it is removed.
+ * @param attributeValue Attribute value. If the value is null and the attribute exists,
+ * the attribute is removed.
  */
 export const setElementAttribute = (
   element: HTMLElement,
@@ -16,10 +17,26 @@ export const setElementAttribute = (
   const attr = element.getAttribute(attributeName);
   if (attributeValue === null) {
     if (attr !== null) {
-      element.removeAttribute(attributeName)
+      element.removeAttribute(attributeName);
     }
-  }
-  else if (attributeValue !== attr) {
+  } else if (attributeValue !== attr) {
     element.setAttribute(attributeName, attributeValue);
+  }
+};
+
+/**
+ * Sets the text content of an element.
+ * The text content is only set if it is different fromn the provided text.
+ * @param element HTML element to set the text content for.
+ * @param text Text content to set.
+ */
+export const setElementTextContent = (
+  element: HTMLElement,
+  text: string | null,
+) => {
+  const content = element.textContent;
+  if (content !== text) {
+    // eslint-disable-next-line no-param-reassign
+    element.textContent = text;
   }
 };

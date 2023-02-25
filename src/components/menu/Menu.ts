@@ -2,8 +2,8 @@
 import './MenuItem';
 import './MenuItemFileOpen';
 import './Submenu';
-import Submenu from './Submenu';
 import { setElementAttribute } from 'util/RenderUtils';
+import Submenu from './Submenu';
 import './Menu.css';
 
 export default class Menu extends HTMLElement {

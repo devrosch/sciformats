@@ -1,4 +1,4 @@
-import { setElementAttribute } from 'util/RenderUtils';
+import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
 import './MenuItem.css';
 
 const template = `
@@ -37,12 +37,8 @@ export default class MenuItem extends HTMLElement {
     const shortcutSpan = a.children.item(1) as HTMLSpanElement;
     setElementAttribute(this, 'role', 'none');
     setElementAttribute(a, 'role', 'menuitem');
-    if (nameSpan.textContent !== this.#title) {
-      nameSpan.textContent = this.#title;
-    }
-    if (shortcutSpan.textContent !== this.#shortcut) {
-      shortcutSpan.textContent = this.#shortcut;
-    }
+    setElementTextContent(nameSpan, this.#title);
+    setElementTextContent(shortcutSpan, this.#shortcut);
   }
 
   onClick = (e: Event) => {

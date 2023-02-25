@@ -1,4 +1,4 @@
-import { setElementAttribute } from 'util/RenderUtils';
+import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
 
 const elementName = 'div';
 const attributeName = 'test-attr';
@@ -56,4 +56,25 @@ test('setElementAttribute(null) removes existing attribute', async () => {
   expect(spySet).toHaveBeenCalledTimes(0);
   expect(spyRemove).toHaveBeenCalledTimes(1);
   expect(element.hasAttribute(attributeName)).toBeFalsy();
+});
+
+test('setTextContent() sets element text content', async () => {
+  document.body.innerHTML = `<${elementName}></${elementName}>`;
+  const element = document.body.querySelector(elementName) as HTMLElement;
+  expect(element).toBeTruthy();
+
+  const spySet = jest.spyOn(element, 'textContent', 'set');
+
+  expect(element.textContent).toBe('');
+  setElementTextContent(element, 'test');
+  expect(spySet).toHaveBeenCalledTimes(1);
+  expect(element.textContent).toBe('test');
+
+  setElementTextContent(element, 'test');
+  // not called again if text is already
+  expect(spySet).toHaveBeenCalledTimes(1);
+
+  setElementTextContent(element, null);
+  expect(spySet).toHaveBeenCalledTimes(2);
+  expect(element.textContent).toBe('');
 });

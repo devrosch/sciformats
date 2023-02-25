@@ -1,4 +1,4 @@
-import { setElementAttribute } from 'util/RenderUtils';
+import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
 import './Submenu.css';
 
 /**
@@ -46,13 +46,9 @@ export default class Submenu extends HTMLElement {
     setElementAttribute(this, 'role', 'menu');
     setElementAttribute(a, 'key', this.#key);
     setElementAttribute(a, 'title', this.#title);
-    if (aExpandCollapseSpan.textContent !== expandendChar) {
-      aExpandCollapseSpan.textContent = expandendChar;
-    }
+    setElementTextContent(aExpandCollapseSpan, expandendChar);
     setElementAttribute(aTitleSpan, 'key', this.#key);
-    if (aTitleSpan.textContent !== this.#title) {
-      aTitleSpan.textContent = this.#title;
-    }
+    setElementTextContent(aTitleSpan, this.#title);
     if (this.#expand) {
       this.setAttribute('expand', 'true');
       this.classList.add('sf-submenu-expand');

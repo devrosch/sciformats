@@ -1,7 +1,7 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'util/CustomEventsChannel';
-import MenuItem from './MenuItem';
 import { setElementAttribute } from 'util/RenderUtils';
+import MenuItem from './MenuItem';
 import './MenuItemFileOpen.css';
 
 const menuItemKeyPostfix = 'input-menu-item';

@@ -1,5 +1,6 @@
 import Parser from 'model/Parser';
 import { isSameUrl } from 'util/UrlUtils';
+import { setElementAttribute } from 'util/RenderUtils';
 import './TreeNode.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
@@ -44,13 +45,10 @@ export default class TreeNode extends HTMLElement {
 
   render() {
     this.init();
-    const urlAttr = this.getAttribute('url');
     const nameSpan = this.querySelector('.node-name') as HTMLSpanElement;
     const plusMinusSpan = this.querySelector('.plusminus') as HTMLSpanElement;
 
-    if (urlAttr !== this.#url.toString()) {
-      this.setAttribute('url', this.#url.toString());
-    }
+    setElementAttribute(this, 'url', this.#url.toString());
     // do not bind 'this' as that results in a new callable and thus multiple listeners
     nameSpan.addEventListener('click', this.onSelected);
 
@@ -62,10 +60,8 @@ export default class TreeNode extends HTMLElement {
     }
 
     // after data has been loaded ...
-    if (nameSpan.getAttribute('url') !== this.#url.toString()) {
-      // span is focusable and thus is keyboard event target and requires URL
-      nameSpan.setAttribute('url', this.#url.toString());
-    }
+    // span is focusable and thus is keyboard event target and requires URL
+    setElementAttribute(nameSpan, 'url', this.#url.toString());
     if (nameSpan.textContent !== this.name) {
       nameSpan.textContent = this.name;
     }

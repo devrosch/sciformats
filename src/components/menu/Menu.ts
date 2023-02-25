@@ -3,6 +3,7 @@ import './MenuItem';
 import './MenuItemFileOpen';
 import './Submenu';
 import Submenu from './Submenu';
+import { setElementAttribute } from 'util/RenderUtils';
 import './Menu.css';
 
 export default class Menu extends HTMLElement {
@@ -18,10 +19,7 @@ export default class Menu extends HTMLElement {
 
   render() {
     this.init();
-    const role = this.hasAttribute('role') ? this.getAttribute('role') : '';
-    if (role !== 'menu') {
-      this.setAttribute('role', 'menubar');
-    }
+    setElementAttribute(this, 'role', 'menubar');
   }
 
   showMenu(show: boolean) {

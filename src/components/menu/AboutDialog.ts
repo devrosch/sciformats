@@ -1,3 +1,4 @@
+import { setElementAttribute } from 'util/RenderUtils';
 import './AboutDialog.css';
 
 const template = `
@@ -55,16 +56,12 @@ export default class AboutDialog extends HTMLElement {
       if (!dialog.hasAttribute('open')) {
         dialog.showModal();
       }
-      if (!this.hasAttribute('open')) {
-        this.setAttribute('open', '');
-      }
+      setElementAttribute(this, 'open', '');
     } else {
       if (dialog.hasAttribute('open')) {
         dialog.close();
       }
-      if (this.hasAttribute('open')) {
-        this.removeAttribute('open');
-      }
+      setElementAttribute(this, 'open', null);
     }
   }
 

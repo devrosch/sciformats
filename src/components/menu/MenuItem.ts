@@ -1,3 +1,4 @@
+import { setElementAttribute } from 'util/RenderUtils';
 import './MenuItem.css';
 
 const template = `
@@ -31,17 +32,11 @@ export default class MenuItem extends HTMLElement {
 
   render() {
     this.init();
-    const role = this.hasAttribute('role') ? this.getAttribute('role') : '';
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aRole = a.hasAttribute('role') ? a.getAttribute('role') as string : '';
     const nameSpan = a.children.item(0) as HTMLSpanElement;
     const shortcutSpan = a.children.item(1) as HTMLSpanElement;
-    if (role !== 'none') {
-      this.setAttribute('role', 'none');
-    }
-    if (aRole !== 'menuitem') {
-      a.setAttribute('role', 'menuitem');
-    }
+    setElementAttribute(this, 'role', 'none');
+    setElementAttribute(a, 'role', 'menuitem');
     if (nameSpan.textContent !== this.#title) {
       nameSpan.textContent = this.#title;
     }

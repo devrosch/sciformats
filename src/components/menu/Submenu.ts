@@ -1,3 +1,4 @@
+import { setElementAttribute } from 'util/RenderUtils';
 import './Submenu.css';
 
 /**
@@ -37,29 +38,18 @@ export default class Submenu extends HTMLElement {
 
   render() {
     this.init();
-    const role = this.hasAttribute('role') ? this.getAttribute('role') as string : '';
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aKey = a.hasAttribute('key') ? a.getAttribute('key') as string : '';
-    const aTitle = a.hasAttribute('title') ? a.getAttribute('title') as string : '';
     const aExpandCollapseSpan = a.querySelector('.sf-expand-collapse-indicator') as HTMLSpanElement;
     const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
-    const aTitleSpanKey = aTitleSpan.hasAttribute('key') ? a.getAttribute('key') as string : '';
     const expandendChar = this.#expand ? '▾' : '▸';
-    if (role !== 'menu') {
-      this.setAttribute('role', 'menu');
-    }
-    if (aKey !== this.#key) {
-      a.setAttribute('key', this.#key ? this.#key : '');
-    }
-    if (aTitle !== this.#title) {
-      a.setAttribute('title', this.#title ? this.#title : '');
-    }
+
+    setElementAttribute(this, 'role', 'menu');
+    setElementAttribute(a, 'key', this.#key);
+    setElementAttribute(a, 'title', this.#title);
     if (aExpandCollapseSpan.textContent !== expandendChar) {
       aExpandCollapseSpan.textContent = expandendChar;
     }
-    if (aTitleSpanKey !== this.#key) {
-      aTitleSpan.setAttribute('key', this.#key ? this.#key : '');
-    }
+    setElementAttribute(aTitleSpan, 'key', this.#key);
     if (aTitleSpan.textContent !== this.#title) {
       aTitleSpan.textContent = this.#title;
     }

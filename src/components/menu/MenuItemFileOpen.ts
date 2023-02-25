@@ -1,6 +1,7 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'util/CustomEventsChannel';
 import MenuItem from './MenuItem';
+import { setElementAttribute } from 'util/RenderUtils';
 import './MenuItemFileOpen.css';
 
 const menuItemKeyPostfix = 'input-menu-item';
@@ -38,39 +39,19 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   render() {
     this.init();
-    const role = this.hasAttribute('role') ? this.getAttribute('role') : '';
-    if (role !== 'none') {
-      this.setAttribute('role', 'none');
-    }
+    setElementAttribute(this, 'role', 'none');
 
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
-    const inputKey = input.getAttribute('key') ? input.getAttribute('key') as string : '';
-    if (inputKey !== `${this.#key}-input`) {
-      input.setAttribute('key', `${this.#key}-input`);
-    }
+    setElementAttribute(input, 'key', `${this.#key}-input`);
 
     const label = this.querySelector('label') as HTMLLabelElement;
-    const labelKey = label.getAttribute('key') ? input.getAttribute('key') as string : '';
-    if (labelKey !== `${this.#key}-input-label`) {
-      label.setAttribute('key', `${this.#key}-input-label`);
-    }
+    setElementAttribute(label, 'key', `${this.#key}-input-label`);
 
     const menuItem = this.querySelector('label > sf-menu-item') as MenuItem;
-    const menuItemKey = menuItem.hasAttribute('key') ? menuItem.getAttribute('key') as string : '';
-    if (menuItemKey !== `${this.#key}-${menuItemKeyPostfix}`) {
-      menuItem.setAttribute('key', `${this.#key}-${menuItemKeyPostfix}`);
-    }
-
-    const menuItemText = menuItem.hasAttribute('title') ? menuItem.getAttribute('title') : '';
-    if (menuItemText !== this.#title) {
-      menuItem.setAttribute('title', this.#title !== null ? this.#title : '');
-    }
-
-    const shortcut = this.hasAttribute('shortcut') ? this.getAttribute('shortcut') : '';
-    const menuItemShortcut = menuItem.hasAttribute('shortcut') ? menuItem.getAttribute('shortcut') : '';
-    if (menuItemShortcut !== shortcut) {
-      menuItem.setAttribute('shortcut', shortcut !== null ? shortcut : '');
-    }
+    setElementAttribute(menuItem, 'key', `${this.#key}-${menuItemKeyPostfix}`);
+    setElementAttribute(menuItem, 'title', this.#title);
+    const shortcut = this.getAttribute('shortcut');
+    setElementAttribute(menuItem, 'shortcut', shortcut);
   }
 
   onClick = (e: MouseEvent) => {

@@ -260,7 +260,6 @@ export default class Tree extends HTMLElement {
 
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
-    // TODO: for bound functions, this does not work as each bind() call generates a new object
     this.removeEventListener('keydown', Tree.onKeyDown);
     this.removeEventListener('click', this.onClick);
     for (const handle of this.#eventListeners) {

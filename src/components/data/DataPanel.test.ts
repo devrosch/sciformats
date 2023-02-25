@@ -23,7 +23,9 @@ test('sf-data-panel renders', async () => {
   expect(tabs[0].nodeName).toBe('BUTTON');
   expect(tabs[1].nodeName).toBe('BUTTON');
 
-  // TODO: same for chart once implemented
+  const chart = panel.children[1].children;
+  expect(chart).toHaveLength(1);
+  expect(chart[0].nodeName).toBe('SF-DATA-CHART');
 
   const table = panel.children[2].children;
   expect(table).toHaveLength(1);

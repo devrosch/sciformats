@@ -64,6 +64,12 @@ test('sf-data-table reacts to sf-tree-node-(de)selected events', async () => {
     parameters: null,
   });
   checkDataIsRendered(data, document, true);
+  const tableData = table.data;
+  expect(tableData).toHaveLength(2);
+  expect(tableData[0].x).toBeCloseTo(1.1);
+  expect(tableData[0].y).toBeCloseTo(1.2);
+  expect(tableData[1].x).toBeCloseTo(2.1);
+  expect(tableData[1].y).toBeCloseTo(2.2);
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
   checkDataIsRendered(data, document, false);

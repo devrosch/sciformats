@@ -9,6 +9,8 @@ const maxWidth = 576;
 export default class Submenu extends HTMLElement {
   static get observedAttributes() { return ['title', 'key', 'expand']; }
 
+  #initialized = false;
+
   #title: string | null = null;
 
   #key: string | null = null;
@@ -20,6 +22,15 @@ export default class Submenu extends HTMLElement {
     console.log('Submenu constructor() called');
   }
 
+  preInit() {
+    if (!this.#initialized) {
+      this.#title = this.getAttribute('title');
+      this.#key = this.getAttribute('key');
+      this.#expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
+      this.#initialized = true;
+    }
+  }
+
   init() {
     if (this.children.length < 1
       || !(this.children.item(0) instanceof HTMLAnchorElement)) {
@@ -27,7 +38,7 @@ export default class Submenu extends HTMLElement {
       const innerHtml = this.innerHTML;
       this.innerHTML = `
         <a href="#" key="${this.#key}">
-          <span class="sf-expand-collapse-indicator"></span>&nbsp;<span id="sf-submenu-title">${this.#title}</span>
+          <span class="sf-expand-collapse-indicator">▸</span>&nbsp;<span id="sf-submenu-title">${this.#title}</span>
         </a>
         <div role="none">
           ${innerHtml}
@@ -50,10 +61,10 @@ export default class Submenu extends HTMLElement {
     setElementAttribute(aTitleSpan, 'key', this.#key);
     setElementTextContent(aTitleSpan, this.#title);
     if (this.#expand) {
-      this.setAttribute('expand', 'true');
+      setElementAttribute(this, 'expand', 'true');
       this.classList.add('sf-submenu-expand');
     } else {
-      this.setAttribute('expand', 'false');
+      setElementAttribute(this, 'expand', 'false');
       this.classList.remove('sf-submenu-expand');
       const subMenus = this.getElementsByClassName('sf-submenu-expand');
       for (const subMenu of subMenus) {
@@ -123,7 +134,11 @@ export default class Submenu extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Submenu attributeChangedCallback() called');
+    console.log('Submenu attributeChangedCallback() called', this.#key, name, this.#expand, oldValue, newValue, this.getAttribute('expand'));
+    if (!this.#initialized) {
+      // avoid flailing of expanded attribute
+      this.preInit();
+    }
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
       this.render();

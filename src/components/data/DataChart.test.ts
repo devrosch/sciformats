@@ -47,3 +47,38 @@ test('sf-data-chart reacts to sf-tree-node-(de)selected events', async () => {
   plotElement = document.body.querySelector('g.scatterlayer');
   expect(plotElement).toBeFalsy();
 });
+
+test('sf-data-chart reacts to sf-tree-node-data-updated events', async () => {
+  const chart = new DataChart();
+  document.body.append(chart);
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+
+  let plotElement = document.body.querySelector('g.scatterlayer');
+  expect(plotElement).toBeFalsy();
+
+  channel.dispatch('sf-tree-node-selected', {
+    url: urlChild2,
+    data: null,
+    parameters: null,
+  });
+
+  plotElement = document.body.querySelector('g.scatterlayer');
+  expect(plotElement).toBeFalsy();
+  let chartData = chart.data;
+  expect(chartData).toEqual([]);
+
+  channel.dispatch('sf-tree-node-data-updated', {
+    url: urlChild2,
+    data,
+    parameters: null,
+  });
+
+  plotElement = document.body.querySelector('g.scatterlayer');
+  expect(plotElement).toBeTruthy();
+  chartData = chart.data;
+  expect(chartData).toHaveLength(2);
+  expect(chartData[0].x).toBeCloseTo(1.1);
+  expect(chartData[0].y).toBeCloseTo(1.2);
+  expect(chartData[1].x).toBeCloseTo(2.1);
+  expect(chartData[1].y).toBeCloseTo(2.2);
+});

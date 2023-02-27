@@ -56,10 +56,7 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   onClick = (e: MouseEvent) => {
     console.log('MenuItemFileOpen clicked.');
-    if (!(e.target instanceof Element)) {
-      return;
-    }
-    const key = e?.target?.getAttribute('key');
+    const key = (e?.target as Element | null)?.getAttribute('key');
     console.log({ key });
     if (!key) {
       return;

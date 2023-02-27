@@ -74,3 +74,36 @@ test('sf-data-table reacts to sf-tree-node-(de)selected events', async () => {
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
   checkDataIsRendered(data, document, false);
 });
+
+test('sf-data-table reacts to sf-tree-node-data-updated events', async () => {
+  const table = new DataTable();
+  document.body.append(table);
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  checkDataIsRendered(data, document, false);
+
+  channel.dispatch('sf-tree-node-selected', {
+    url: urlChild2,
+    data: null,
+    parameters: null,
+  });
+  checkDataIsRendered([], document, true);
+  let tableData = table.data;
+  expect(tableData).toEqual([]);
+
+  channel.dispatch('sf-tree-node-data-updated', {
+    url: urlChild2,
+    data,
+    parameters: null,
+  });
+
+  checkDataIsRendered(data, document, true);
+  tableData = table.data;
+  expect(tableData).toHaveLength(2);
+  expect(tableData[0].x).toBeCloseTo(1.1);
+  expect(tableData[0].y).toBeCloseTo(1.2);
+  expect(tableData[1].x).toBeCloseTo(2.1);
+  expect(tableData[1].y).toBeCloseTo(2.2);
+
+  channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
+  checkDataIsRendered(data, document, false);
+});

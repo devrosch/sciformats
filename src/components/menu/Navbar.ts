@@ -106,12 +106,9 @@ export default class Navbar extends HTMLElement {
   // eslint-disable-next-line class-methods-use-this
   onClick = (e: MouseEvent) => {
     console.log('Navbar item clicked.');
-    if (!(e.target instanceof Element)) {
-      return;
-    }
     e.preventDefault();
     e.stopPropagation();
-    const key = e?.target?.getAttribute('key');
+    const key = (e?.target as Element | null)?.getAttribute('key');
     console.log({ key });
     if (!key) {
       return;

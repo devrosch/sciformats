@@ -104,9 +104,11 @@ export default class DataChart extends HTMLElement {
   static toXyArrays(data: { x: number, y: number }[]) {
     const xArray: number[] = [];
     const yArray: number[] = [];
-    for (const xyPair of data) {
-      xArray.push(xyPair.x);
-      yArray.push(xyPair.y);
+    if (data !== null) {
+      for (const xyPair of data) {
+        xArray.push(xyPair.x);
+        yArray.push(xyPair.y);
+      }
     }
     return { x: xArray, y: yArray };
   }

@@ -93,10 +93,7 @@ export default class Submenu extends HTMLElement {
 
   onClick = (e: MouseEvent) => {
     console.log(`onClick(): ${this.#key}`);
-    if (!(e.target instanceof Element)) {
-      return;
-    }
-    const key = e?.target?.getAttribute('key');
+    const key = (e?.target as Element | null)?.getAttribute('key');
     if (key === this.#key && !(e.target instanceof Submenu)) {
       e.stopPropagation();
       e.preventDefault();

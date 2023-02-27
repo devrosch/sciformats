@@ -183,15 +183,12 @@ export default class Tree extends HTMLElement {
 
   static onKeyDown(e: KeyboardEvent) {
     console.log('onKeyDown()');
-    if (!(e.target instanceof Element)) {
-      return;
-    }
     const key = e.key;
     console.log(key);
 
     // event originates from span within TreeNode => parentElement
     const treeNode = e.target instanceof TreeNode
-      ? e.target : e.target.parentElement as TreeNode | null;
+      ? e.target : (e?.target as Element | null)?.parentElement as TreeNode | null;
     if (treeNode === null) {
       return;
     }

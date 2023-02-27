@@ -73,12 +73,9 @@ export default class AboutDialog extends HTMLElement {
 
   onClick = (e: MouseEvent) => {
     console.log('About dialog clicked.');
-    if (!(e.target instanceof Element)) {
-      return;
-    }
     // make sure default action (e.g. close dialog) takes place
     e.stopPropagation();
-    if (e.target.nodeName === 'DIALOG') {
+    if ((e?.target as Element | null)?.nodeName === 'DIALOG') {
       this.showModal(false);
     }
   };

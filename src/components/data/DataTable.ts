@@ -38,6 +38,9 @@ export default class DataTable extends HTMLElement {
   }
 
   get data() {
+    if (this.#data === null) {
+      return [];
+    }
     return this.#data;
   }
 
@@ -57,7 +60,7 @@ export default class DataTable extends HTMLElement {
     const tBody = this.querySelector('table > tbody') as HTMLTableSectionElement;
     tBody.innerHTML = '';
 
-    for (const data of this.#data) {
+    for (const data of this.data) {
       const tr = document.createElement('tr');
       const tdX = document.createElement('td');
       tdX.textContent = String(data.x);

@@ -55,11 +55,8 @@ export default class DataPanel extends HTMLElement {
 
   onClick = (e: MouseEvent) => {
     console.log('DataPanel item clicked.');
-    if (!(e.target instanceof Element)) {
-      return;
-    }
     e.preventDefault();
-    const id = e?.target?.getAttribute('id');
+    const id = (e?.target as Element | null)?.getAttribute('id');
     console.log({ id });
 
     switch (id) {

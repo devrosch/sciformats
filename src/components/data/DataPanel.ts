@@ -17,25 +17,23 @@ const template = `
 `;
 
 export default class DataPanel extends HTMLElement {
+  #initialized = false;
+
+  #active = 'chart';
+
   constructor() {
     super();
     console.log('DataPanel constructor() called');
   }
 
-  #active = 'chart';
-
   init() {
-    if (this.children.length !== 3
-      || (this.children.item(0)?.id !== 'sf-data-tabs')
-      || (this.children.item(1)?.id !== 'sf-data-chart-panel')
-      || (this.children.item(2)?.id !== 'sf-data-table-panel')) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
-
     const tabLinks = this.querySelectorAll('#sf-data-tabs > button');
     for (const link of tabLinks) {
       if (link.id === `sf-data-${this.#active}-link`) {
@@ -80,6 +78,7 @@ export default class DataPanel extends HTMLElement {
 
   connectedCallback() {
     console.log('DataPanel connectedCallback() called');
+    this.init();
     this.addEventListener('click', this.onClick);
     this.render();
   }
@@ -96,6 +95,7 @@ export default class DataPanel extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('DataPanel attributeChangedCallback() called');
+    this.init();
   }
 }
 

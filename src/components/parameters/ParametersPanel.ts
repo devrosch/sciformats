@@ -17,6 +17,8 @@ const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 export default class ParametersPanel extends HTMLElement {
   static get observedAttributes() { return ['title']; }
 
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #handles: any = [];
@@ -39,6 +41,13 @@ export default class ParametersPanel extends HTMLElement {
   set data(data: { key: string, value: string }[]) {
     this.#data = data;
     this.render();
+  }
+
+  init() {
+    if (!this.#initialized) {
+      // noop
+      this.#initialized = true;
+    }
   }
 
   render() {
@@ -76,6 +85,7 @@ export default class ParametersPanel extends HTMLElement {
 
   connectedCallback() {
     console.log('ParametersPanel connectedCallback() called');
+    this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
       this.handleParametersChanged.bind(this),
@@ -107,6 +117,7 @@ export default class ParametersPanel extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('ParametersPanel attributeChangedCallback() called');
+    this.init();
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
       this.render();

@@ -14,6 +14,8 @@ const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 const template = '<span class="plusminus"></span><span class="node-name" tabindex="0"></span>';
 
 export default class TreeNode extends HTMLElement {
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #eventListener: any = null;
@@ -36,15 +38,13 @@ export default class TreeNode extends HTMLElement {
   }
 
   init() {
-    if (this.children.length < 2
-      || !(this.children.item(0) instanceof HTMLSpanElement)
-      || !(this.children.item(1) instanceof HTMLSpanElement)) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     const nameSpan = this.querySelector('.node-name') as HTMLSpanElement;
     const plusMinusSpan = this.querySelector('.plusminus') as HTMLSpanElement;
 
@@ -179,6 +179,7 @@ export default class TreeNode extends HTMLElement {
 
   connectedCallback() {
     console.log('TreeNode connectedCallback() called');
+    this.init();
     this.#eventListener = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
     this.#retrieveNodeData();
     this.render();
@@ -199,6 +200,7 @@ export default class TreeNode extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('TreeNode attributeChangedCallback() called');
+    this.init();
   }
 
   // #endregion lifecycle events

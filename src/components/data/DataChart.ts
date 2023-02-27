@@ -14,6 +14,8 @@ const nodeDeselectedEvent = 'sf-tree-node-deselected';
 const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 
 export default class DataChart extends HTMLElement {
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #handles: any = [];
@@ -77,9 +79,7 @@ export default class DataChart extends HTMLElement {
   }
 
   init() {
-    if (this.children.length !== 1
-      || (this.children.item(0)?.nodeName !== 'DIV')
-      || this.#chartContainer === null) {
+    if (!this.#initialized) {
       // avoid initial flash of incorrectly sized chart => hide
       this.classList.add('init');
 
@@ -93,6 +93,8 @@ export default class DataChart extends HTMLElement {
       );
       // initial resize to panel before 'responsive' config kicks in
       Plotly.Plots.resize(this.#chartContainer!);
+
+      this.#initialized = true;
 
       // unhide chart
       setTimeout(() => { this.classList.remove('init'); }, 100);
@@ -120,7 +122,6 @@ export default class DataChart extends HTMLElement {
   }
 
   render() {
-    this.init();
     const mode = this.#chartState.data.x.length > 1 ? 'lines' : 'markers';
     this.#chartState.data.mode = mode;
     Plotly.newPlot(
@@ -148,6 +149,7 @@ export default class DataChart extends HTMLElement {
 
   connectedCallback() {
     console.log('DataChart connectedCallback() called');
+    this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
       this.handleDataChanged.bind(this),
@@ -178,6 +180,7 @@ export default class DataChart extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('DataChart attributeChangedCallback() called');
+    this.init();
   }
 }
 

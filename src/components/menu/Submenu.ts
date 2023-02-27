@@ -22,18 +22,12 @@ export default class Submenu extends HTMLElement {
     console.log('Submenu constructor() called');
   }
 
-  preInit() {
+  init() {
     if (!this.#initialized) {
       this.#title = this.getAttribute('title');
       this.#key = this.getAttribute('key');
       this.#expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
-      this.#initialized = true;
-    }
-  }
 
-  init() {
-    if (this.children.length < 1
-      || !(this.children.item(0) instanceof HTMLAnchorElement)) {
       // add <a> at beginning
       const innerHtml = this.innerHTML;
       this.innerHTML = `
@@ -44,11 +38,12 @@ export default class Submenu extends HTMLElement {
           ${innerHtml}
         </div>
         `;
+
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const aExpandCollapseSpan = a.querySelector('.sf-expand-collapse-indicator') as HTMLSpanElement;
     const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
@@ -113,6 +108,7 @@ export default class Submenu extends HTMLElement {
 
   connectedCallback() {
     console.log('Submenu connectedCallback() called');
+    this.init();
     this.#title = this.hasAttribute('title') ? this.getAttribute('title') : '';
     this.#key = this.hasAttribute('key') ? this.getAttribute('key') : '';
     this.#expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
@@ -135,10 +131,7 @@ export default class Submenu extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Submenu attributeChangedCallback() called', this.#key, name, this.#expand, oldValue, newValue, this.getAttribute('expand'));
-    if (!this.#initialized) {
-      // avoid flailing of expanded attribute
-      this.preInit();
-    }
+    this.init();
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
       this.render();

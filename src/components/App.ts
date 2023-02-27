@@ -28,32 +28,40 @@ const template = `
 `;
 
 export default class App extends HTMLElement {
+  #initialized = false;
+
   constructor() {
     super();
     console.log('App constructor() called');
   }
 
   init() {
-    if (this.children.length !== 3
-      || !(this.children.item(0) instanceof HTMLDivElement)
-      || !(this.children.item(1) instanceof HTMLDivElement)
-      || !(this.children.item(2) instanceof HTMLDivElement)) {
+    if (!this.#initialized) {
       // init
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   render() {
-    this.init();
+    // noop
   }
 
   connectedCallback() {
     console.log('App connectedCallback() called');
+    this.init();
     this.render();
   }
 
   disconnectedCallback() {
     console.log('App disconnectedCallback() called');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    console.log('TreeNode attributeChangedCallback() called');
+    this.init();
   }
 }
 

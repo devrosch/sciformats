@@ -11,6 +11,8 @@ const template = `
 export default class MenuItem extends HTMLElement {
   static get observedAttributes() { return ['title', 'key', 'shortcut']; }
 
+  #initialized = false;
+
   #title: string | null = null;
 
   #key: string | null = null;
@@ -23,15 +25,14 @@ export default class MenuItem extends HTMLElement {
   }
 
   init() {
-    if (this.children.length !== 1
-      || !(this.children.item(0) instanceof HTMLAnchorElement)) {
+    if (!this.#initialized) {
       // add <a>
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const nameSpan = a.children.item(0) as HTMLSpanElement;
     const shortcutSpan = a.children.item(1) as HTMLSpanElement;
@@ -51,6 +52,7 @@ export default class MenuItem extends HTMLElement {
 
   connectedCallback() {
     console.log('MenuItem connectedCallback() called');
+    this.init();
     this.#title = this.getAttribute('title');
     this.#key = this.getAttribute('key');
     this.#shortcut = this.getAttribute('shortcut');
@@ -69,6 +71,7 @@ export default class MenuItem extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('MenuItem attributeChangedCallback() called');
+    this.init();
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
       this.render();

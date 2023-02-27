@@ -8,6 +8,8 @@ import './Tree.css';
 const template = '';
 
 export default class Tree extends HTMLElement {
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #parserRepository = new ParserRepository();
@@ -24,13 +26,13 @@ export default class Tree extends HTMLElement {
   }
 
   init() {
-    if (this.#children.length === 0 && this.children.length > 0) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     const rootNodes = this.#children;
     const children = this.children;
     let i = 0;
@@ -243,6 +245,7 @@ export default class Tree extends HTMLElement {
 
   connectedCallback() {
     console.log('Tree connectedCallback() called');
+    this.init();
     this.addEventListener('keydown', Tree.onKeyDown);
     this.addEventListener('click', this.onClick);
     const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
@@ -274,6 +277,7 @@ export default class Tree extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Tree attributeChangedCallback() called');
+    this.init();
   }
 
   // #endregion lifecycle events

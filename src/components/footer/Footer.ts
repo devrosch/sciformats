@@ -10,6 +10,8 @@ const template = `
 `;
 
 export default class Footer extends HTMLElement {
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #handles: any = [];
@@ -22,15 +24,13 @@ export default class Footer extends HTMLElement {
   }
 
   init() {
-    if (this.children.length !== 1
-      || (this.children.item(0)?.nodeName !== 'SPAN')) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
-
     const span = this.querySelector('span') as HTMLSpanElement;
     const url = this.#url === null ? null : this.#url.toString();
     setElementAttribute(span, 'title', url);
@@ -52,6 +52,7 @@ export default class Footer extends HTMLElement {
 
   connectedCallback() {
     console.log('Footer connectedCallback() called');
+    this.init();
     const handle0 = this.#channel.addListener('sf-tree-node-selected', this.handleUrlChanged.bind(this));
     const handle1 = this.#channel.addListener('sf-tree-node-deselected', this.handleUrlChanged.bind(this));
     this.#handles.push(handle0, handle1);
@@ -71,6 +72,7 @@ export default class Footer extends HTMLElement {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    this.init();
     console.log('Footer attributeChangedCallback() called');
   }
 }

@@ -33,9 +33,17 @@ UI components are implemented through custom elements ("web components"). As Saf
 
 For easier styling, only light DOM (no shadow DOM) is used in custom elements.
 
+### Structure
+
+Each custom element has a `template` constant that holds the HTML template for its child elements.
+
+Apart from the regular custom element lifecycle methods (connectedCallback, disconnectedCallback, adoptedCallback, attributeChangedCallback), each custom element has the following two methods:
+* `init()`: Performs initializations such as setting up the inner state of the component (e.g. based on set attributes) and to apply the template of child elements. Init needs to guard itself against making initializations multiple times, either by checking if the initialization outcome is already present or by holding info on whether initialization has been performed in the components state. init() must not be called in the components constructor. init() must be called at the start of both lifecycle methods connectedCallback() and attributeChangedCallback() as at least one of them is called at first use of the component.
+* `render()`: Performs any updates to the component's UI after initialization. Whenever any update needs to be performed, the state of the component needs to be set up accordingly and then a call to render() needs to be made.
+
 ### Menu
 
-Because extending `<li>` and `<ul>` elements is not supported by Safari, and the [ElementInternals](https://developer.mozilla.org/en-US/docs/Web/API/ElementInternals) API with `ARIAMixin` are not supported by Safaria and only partially supported by Firefox, a11y is implemented through automatically setting `role` attributes for menu elements (insipred by this [example](https://www.w3.org/WAI/ARIA/apg/example-index/menubar/menubar-navigation)). However, any explicitly set `role` attributes will be overwritten.
+Because extending `<li>` and `<ul>` elements is not supported by Safari, and the [ElementInternals](https://developer.mozilla.org/en-US/docs/Web/API/ElementInternals) API with `ARIAMixin` are not supported by Safari and only partially supported by Firefox, a11y is implemented through automatically setting `role` attributes for menu elements (insipred by this [example](https://www.w3.org/WAI/ARIA/apg/example-index/menubar/menubar-navigation)). However, any explicitly set `role` attributes will be overwritten.
 
 ## Events
 

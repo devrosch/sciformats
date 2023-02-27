@@ -16,6 +16,8 @@ const template = `
 export default class MenuItemFileOpen extends HTMLElement {
   static get observedAttributes() { return ['title', 'key', 'shortcut']; }
 
+  #initialized = false;
+
   #title: string | null = null;
 
   #key: string | null = null;
@@ -30,15 +32,13 @@ export default class MenuItemFileOpen extends HTMLElement {
   }
 
   init() {
-    if (this.children.length !== 2
-      || !(this.children.item(0) instanceof HTMLInputElement)
-      || !(this.children.item(1) instanceof HTMLLabelElement)) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     setElementAttribute(this, 'role', 'none');
 
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
@@ -96,6 +96,7 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   connectedCallback() {
     console.log('MenuItemFileOpen connectedCallback() called');
+    this.init();
     this.#title = this.getAttribute('title');
     this.#key = this.getAttribute('key');
     this.#shortcut = this.getAttribute('shortcut');
@@ -116,6 +117,7 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('MenuItemFileOpen attributeChangedCallback() called');
+    this.init();
     if (name === 'title' && this.#title !== newValue) {
       this.#title = newValue;
       this.render();

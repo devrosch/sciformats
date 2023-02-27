@@ -66,6 +66,8 @@ const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 export default class Navbar extends HTMLElement {
   static get observedAttributes() { return ['app-selector']; }
 
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #app: HTMLElement | null = null;
@@ -78,18 +80,14 @@ export default class Navbar extends HTMLElement {
   #showMenu: boolean = false;
 
   init() {
-    if (this.children.length !== 4
-      || !(this.children.item(0) instanceof HTMLAnchorElement)
-      || !(this.children.item(1) instanceof HTMLAnchorElement)
-      || this.children.item(2)?.nodeName !== 'NAV'
-      || !(this.children.item(3) instanceof AboutDialog)) {
+    if (!this.#initialized) {
       // init
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     const menu = this.querySelector('sf-menu') as Menu;
     menu.showMenu(this.#showMenu);
   }
@@ -232,6 +230,7 @@ export default class Navbar extends HTMLElement {
 
   connectedCallback() {
     console.log('Navbar connectedCallback() called');
+    this.init();
     const appSelector = this.getAttribute('app-selector');
     this.updateAppReference(appSelector);
     this.addEventListener('click', this.onClick);
@@ -258,6 +257,7 @@ export default class Navbar extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Navbar attributeChangedCallback() called');
+    this.init();
     if (name === 'app-selector' && newValue !== oldValue) {
       this.updateAppReference(newValue);
       this.render();

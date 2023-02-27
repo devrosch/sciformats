@@ -22,6 +22,8 @@ const nodeDeselectedEvent = 'sf-tree-node-deselected';
 const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 
 export default class DataTable extends HTMLElement {
+  #initialized = false;
+
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
   #handles: any = [];
@@ -45,15 +47,13 @@ export default class DataTable extends HTMLElement {
   }
 
   init() {
-    if (this.children.length !== 1
-      || (this.children.item(0)?.nodeName !== 'TABLE')) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
-
     const tBody = this.querySelector('table > tbody') as HTMLTableSectionElement;
     tBody.innerHTML = '';
 
@@ -86,6 +86,7 @@ export default class DataTable extends HTMLElement {
 
   connectedCallback() {
     console.log('DataTable connectedCallback() called');
+    this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
       this.handleDataChanged.bind(this),
@@ -116,6 +117,7 @@ export default class DataTable extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('DataTable attributeChangedCallback() called');
+    this.init();
   }
 }
 

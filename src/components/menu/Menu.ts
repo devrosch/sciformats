@@ -7,6 +7,8 @@ import Submenu from './Submenu';
 import './Menu.css';
 
 export default class Menu extends HTMLElement {
+  #initialized = false;
+
   constructor() {
     super();
     console.log('Menu constructor() called');
@@ -14,11 +16,13 @@ export default class Menu extends HTMLElement {
 
   /* eslint-disable class-methods-use-this */
   init() {
-    // noop, menu items should be inserted by parent
+    if (!this.#initialized) {
+      // noop, menu items should be inserted by parent
+      this.#initialized = true;
+    }
   }
 
   render() {
-    this.init();
     setElementAttribute(this, 'role', 'menubar');
   }
 
@@ -56,6 +60,7 @@ export default class Menu extends HTMLElement {
 
   connectedCallback() {
     console.log('Menu connectedCallback() called');
+    this.init();
     this.addEventListener('click', this.handleClick);
     this.render();
   }
@@ -72,6 +77,7 @@ export default class Menu extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Menu attributeChangedCallback() called');
+    this.init();
   }
 }
 

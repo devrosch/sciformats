@@ -35,6 +35,8 @@ const template = `
 `;
 
 export default class AboutDialog extends HTMLElement {
+  #initialized = false;
+
   #open: boolean = false;
 
   constructor() {
@@ -43,14 +45,13 @@ export default class AboutDialog extends HTMLElement {
   }
 
   init() {
-    if (this.children.length !== 1
-      || !(this.children.item(0) instanceof HTMLDialogElement)) {
+    if (!this.#initialized) {
       this.innerHTML = template;
+      this.#initialized = true;
     }
   }
 
   render() {
-    this.init();
     const dialog = this.getElementsByTagName('dialog').item(0) as HTMLDialogElement;
     if (this.#open) {
       if (!dialog.hasAttribute('open')) {
@@ -84,6 +85,7 @@ export default class AboutDialog extends HTMLElement {
 
   connectedCallback() {
     console.log('AboutDialog connectedCallback() called');
+    this.init();
     this.#open = this.hasAttribute('open');
     this.addEventListener('click', this.onClick);
     this.render();
@@ -101,6 +103,7 @@ export default class AboutDialog extends HTMLElement {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('AboutDialog attributeChangedCallback() called');
+    this.init();
   }
 }
 

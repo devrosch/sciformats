@@ -5,6 +5,8 @@ const template = `
 export default class Parameter extends HTMLElement {
   static get observedAttributes() { return ['key', 'value']; }
 
+  #initialized = false;
+
   #key = null as string | null;
 
   #value = null as string | null;
@@ -12,6 +14,13 @@ export default class Parameter extends HTMLElement {
   constructor() {
     super();
     console.log('Parameter constructor() called');
+  }
+
+  init() {
+    if (!this.#initialized) {
+      // noop
+      this.#initialized = true;
+    }
   }
 
   render() {
@@ -25,6 +34,7 @@ export default class Parameter extends HTMLElement {
 
   connectedCallback() {
     console.log('Parameter connectedCallback() called');
+    this.init();
     const key = this.getAttribute('key');
     const value = this.getAttribute('value');
     this.#key = key;
@@ -42,6 +52,7 @@ export default class Parameter extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Parameter attributeChangedCallback() called');
+    this.init();
     if (name === 'key') {
       this.#key = newValue;
     } else if (name === 'value') {

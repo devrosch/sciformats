@@ -2,12 +2,12 @@
 import Channel from 'model/Channel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import SysInfoProvider from 'util/SysInfoProvider';
+import Logo from 'assets/sf-ui.svg';
 import './Menu'; // for side effects
 import Menu from './Menu';
 import './AboutDialog'; // for side effects
 import AboutDialog from './AboutDialog';
 import './Navbar.css';
-import Logo from 'assets/sf-ui.svg';
 
 const isMacOs = SysInfoProvider.detectOS() === 'macOS';
 const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift';
@@ -85,7 +85,6 @@ export default class Navbar extends HTMLElement {
       // init
       this.innerHTML = template;
       this.#initialized = true;
-      console.log('logo URL: ', Logo);      
     }
   }
 

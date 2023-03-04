@@ -1,9 +1,10 @@
 import { setElementAttribute } from 'util/RenderUtils';
 import './AboutDialog.css';
+import Logo from 'assets/sf-ui.svg';
 
 const template = `
 <dialog>
-  <p>SciFormats</p>
+  <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>SciFormats</span></p>
   <p>Copyright © 2022, 2023 Robert Schiwon</p>
   <p>SciFormats is free software according to the terms of the GNU General Public License Version 3
     (license: <a href="https://gitlab.com/devrosch/sf-ui/blob/master/COPYING">GPL</a>, source code:
@@ -15,7 +16,8 @@ const template = `
       <a
         href="https://www.npmjs.com/package/plotly.js-dist-min">
         plotly.js-dist-min</a>
-      (license:
+      (Copyright © 2021 Plotly, Inc,
+      license:
       <a
         href="https://github.com/plotly/plotly.js/blob/master/LICENSE">MIT</a>,
       source code:

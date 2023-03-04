@@ -4,6 +4,12 @@ sf-about-dialog > dialog {
   width: 50%;
 }
 
+sf-about-dialog > dialog img.sf-logo {
+  height: 56px;
+  padding: 0em 0.5em 0em 0.5em;
+  vertical-align: middle;
+}
+
 sf-about-dialog > dialog button {
   float: right;
 }

@@ -12,12 +12,12 @@ sf-navbar a {
 
 /* logo */
 
-sf-navbar > a.sf-logo {
+sf-navbar > img.sf-logo {
   float: left;
   display: flex;
   align-items: center;
-  height: 100%;
-  padding: 0em 0.5em 0em 0.5em;
+  height: calc(100% - 1em);
+  padding: 0.5em 0.5em 0.5em 0.5em;
   text-decoration: none;
   outline-offset: -0.2em;
 }

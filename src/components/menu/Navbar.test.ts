@@ -107,7 +107,7 @@ test('sf-navbar renders', async () => {
   expect(navbar).toBeTruthy();
 
   expect(navbar.children).toHaveLength(4);
-  expect(navbar.children.item(0)?.nodeName).toBe('A');
+  expect(navbar.children.item(0)?.nodeName).toBe('IMG');
   expect(navbar.children.item(1)?.nodeName).toBe('A');
   expect(navbar.children.item(2)?.nodeName).toBe('NAV');
   expect(navbar.children.item(3)?.nodeName).toBe('SF-ABOUT-DIALOG');

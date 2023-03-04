@@ -15,7 +15,9 @@
       "^.+\\.[t|j]sx?$": "babel-jest"
     },
     "moduleNameMapper": {
-      "\\.(css|less|sass)$": "<rootDir>/src/styleMock.css",
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/src/assetMock.ts",
+      "\\.(css|less|sass)$": "<rootDir>/src/styleMock.ts",
+      "^assets/(.*)": "<rootDir>/src/assets/$1",
       "^components/(.*)": "<rootDir>/src/components/$1",
       "^model/(.*)": "<rootDir>/src/model/$1",
       "^util/(.*)": "<rootDir>/src/util/$1"

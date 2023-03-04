@@ -7,6 +7,7 @@ import Menu from './Menu';
 import './AboutDialog'; // for side effects
 import AboutDialog from './AboutDialog';
 import './Navbar.css';
+import Logo from 'assets/sf-ui.png';
 
 const isMacOs = SysInfoProvider.detectOS() === 'macOS';
 const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift';
@@ -19,7 +20,7 @@ const fileOpenShortcutModifierKeys = isMacOs ? '⌃ ⌥ ' : fileShortcutsModifie
 // https://stackoverflow.com/questions/37818401/importing-html-files-with-es6-template-string-loader
 // <div>s required for relative/absolute placement of child elements
 const template = `
-  <a href="#" class="sf-logo" key="sf-navbar-logo">Logo</a>
+  <img src="${Logo}" class="sf-logo" alt="Logo">
   <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
   <nav>
     <sf-menu>
@@ -84,6 +85,7 @@ export default class Navbar extends HTMLElement {
       // init
       this.innerHTML = template;
       this.#initialized = true;
+      console.log('logo URL: ', Logo);      
     }
   }
 

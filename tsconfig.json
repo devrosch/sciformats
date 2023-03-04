@@ -16,6 +16,7 @@
     // https://medium.com/@martin_hotell/type-safe-es2015-module-import-path-aliasing-with-webpack-typescript-and-jest-fe461347e010
     "baseUrl": "./",
     "paths": {
+      "assets/*": ["src/assets/*"],
       "components/*": ["src/components/*"],
       "model/*": ["src/model/*"],
       "util/*": ["src/util/*"],

@@ -7,7 +7,7 @@ import Menu from './Menu';
 import './AboutDialog'; // for side effects
 import AboutDialog from './AboutDialog';
 import './Navbar.css';
-import Logo from 'assets/sf-ui.png';
+import Logo from 'assets/sf-ui.svg';
 
 const isMacOs = SysInfoProvider.detectOS() === 'macOS';
 const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift';

@@ -2,6 +2,7 @@ import './Parameter';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import { updateStateAndRender } from 'util/RenderUtils';
 import { isSameUrl } from 'util/UrlUtils';
 import './ParametersPanel.css';
 
@@ -23,7 +24,7 @@ export default class ParametersPanel extends HTMLElement {
 
   #handles: any = [];
 
-  #title = '';
+  private _title: string | null = null;
 
   #url: URL | null = null;
 
@@ -53,9 +54,8 @@ export default class ParametersPanel extends HTMLElement {
   render() {
     this.innerHTML = html;
 
-    const text = this.hasAttribute('title') ? this.getAttribute('title') : '';
     const heading = this.querySelector('h1');
-    heading!.textContent = text;
+    heading!.textContent = this._title === null ? '' : this._title;
 
     const ul = this.querySelector('ul');
     for (const param of this.data) {
@@ -99,8 +99,7 @@ export default class ParametersPanel extends HTMLElement {
       this.handleParametersChanged.bind(this),
     );
     this.#handles.push(handle0, handle1, handle2);
-    const title = this.hasAttribute('title') ? this.getAttribute('title') : '';
-    this.#title = title === null ? '' : title;
+    this._title = this.getAttribute('title');
     this.render();
   }
 
@@ -118,10 +117,7 @@ export default class ParametersPanel extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('ParametersPanel attributeChangedCallback() called');
     this.init();
-    if (name === 'title' && this.#title !== newValue) {
-      this.#title = newValue;
-      this.render();
-    }
+    updateStateAndRender(this, 'title', '_title', name, newValue);
   }
 }
 

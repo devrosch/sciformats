@@ -1,5 +1,4 @@
-/* disable rule for now until more helpers are added */
-/* eslint-disable import/prefer-default-export */
+/* eslint no-param-reassign: ["error", { "props": false }] */
 
 /**
  * Set or remove the attribute of an HTML element.
@@ -36,7 +35,29 @@ export const setElementTextContent = (
 ) => {
   const content = element.textContent;
   if (content !== text) {
-    // eslint-disable-next-line no-param-reassign
     element.textContent = text;
+  }
+};
+
+/**
+ * Checks if an attribute value change should result in a component's state change.
+ * If so, the component's state is updated and its render() method called.
+ * @param instance The component holding state and exposing the attribute.
+ * @param expectedAttributeName The name of the attribute to observe.
+ * @param instanceFieldName The component's field corresponding to the attribute's state.
+ * @param attributeName The name of the attribute that changed.
+ * @param newAttributeValue The new value of the attribute.
+ */
+export const updateStateAndRender = (
+  instance: any,
+  expectedAttributeName: string,
+  instanceFieldName: string,
+  attributeName: string,
+  newAttributeValue: any,
+) => {
+  if (expectedAttributeName === attributeName
+    && instance[instanceFieldName] !== newAttributeValue) {
+    instance[instanceFieldName] = newAttributeValue;
+    instance.render();
   }
 };

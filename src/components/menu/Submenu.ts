@@ -1,4 +1,4 @@
-import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
+import { setElementAttribute, setElementTextContent, updateStateAndRender } from 'util/RenderUtils';
 import './Submenu.css';
 
 /**
@@ -11,11 +11,11 @@ export default class Submenu extends HTMLElement {
 
   #initialized = false;
 
-  #title: string | null = null;
+  private _title: string | null = null;
 
-  #key: string | null = null;
+  private _key: string | null = null;
 
-  #expand: boolean = false;
+  private _expand: boolean = false;
 
   constructor() {
     super();
@@ -24,15 +24,15 @@ export default class Submenu extends HTMLElement {
 
   init() {
     if (!this.#initialized) {
-      this.#title = this.getAttribute('title');
-      this.#key = this.getAttribute('key');
-      this.#expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
+      this._title = this.getAttribute('title');
+      this._key = this.getAttribute('key');
+      this._expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
 
       // add <a> at beginning
       const innerHtml = this.innerHTML;
       this.innerHTML = `
-        <a href="#" key="${this.#key}">
-          <span class="sf-expand-collapse-indicator">▸</span>&nbsp;<span id="sf-submenu-title">${this.#title}</span>
+        <a href="#" key="${this._key}">
+          <span class="sf-expand-collapse-indicator">▸</span>&nbsp;<span id="sf-submenu-title">${this._title}</span>
         </a>
         <div role="none">
           ${innerHtml}
@@ -47,15 +47,15 @@ export default class Submenu extends HTMLElement {
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
     const aExpandCollapseSpan = a.querySelector('.sf-expand-collapse-indicator') as HTMLSpanElement;
     const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
-    const expandendChar = this.#expand ? '▾' : '▸';
+    const expandendChar = this._expand ? '▾' : '▸';
 
     setElementAttribute(this, 'role', 'menu');
-    setElementAttribute(a, 'key', this.#key);
-    setElementAttribute(a, 'title', this.#title);
+    setElementAttribute(a, 'key', this._key);
+    setElementAttribute(a, 'title', this._title);
     setElementTextContent(aExpandCollapseSpan, expandendChar);
-    setElementAttribute(aTitleSpan, 'key', this.#key);
-    setElementTextContent(aTitleSpan, this.#title);
-    if (this.#expand) {
+    setElementAttribute(aTitleSpan, 'key', this._key);
+    setElementTextContent(aTitleSpan, this._title);
+    if (this._expand) {
       setElementAttribute(this, 'expand', 'true');
       this.classList.add('sf-submenu-expand');
     } else {
@@ -72,32 +72,32 @@ export default class Submenu extends HTMLElement {
   }
 
   onMouseEnter = (e: Event) => {
-    console.log(`onMouseEnter(): ${this.#key}`);
+    console.log(`onMouseEnter(): ${this._key}`);
     // only take action if screen is small
     if (window.innerWidth > maxWidth) {
       e.stopPropagation();
-      this.#expand = true;
+      this._expand = true;
       this.render();
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMouseLeave = (e: Event) => {
-    console.log(`onMouseLeave(): ${this.#key}`);
+    console.log(`onMouseLeave(): ${this._key}`);
     // only take action if screen is small
     if (window.innerWidth > maxWidth) {
-      this.#expand = false;
+      this._expand = false;
       this.render();
     }
   };
 
   onClick = (e: MouseEvent) => {
-    console.log(`onClick(): ${this.#key}`);
+    console.log(`onClick(): ${this._key}`);
     const key = (e?.target as Element | null)?.getAttribute('key');
-    if (key === this.#key && !(e.target instanceof Submenu)) {
+    if (key === this._key && !(e.target instanceof Submenu)) {
       e.stopPropagation();
       e.preventDefault();
-      this.#expand = !this.#expand;
+      this._expand = !this._expand;
       this.click();
       this.render();
     }
@@ -106,9 +106,9 @@ export default class Submenu extends HTMLElement {
   connectedCallback() {
     console.log('Submenu connectedCallback() called');
     this.init();
-    this.#title = this.hasAttribute('title') ? this.getAttribute('title') : '';
-    this.#key = this.hasAttribute('key') ? this.getAttribute('key') : '';
-    this.#expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
+    this._title = this.getAttribute('title');
+    this._key = this.getAttribute('key');
+    this._expand = this.getAttribute('expand') === 'true';
     this.addEventListener('mouseenter', this.onMouseEnter);
     this.addEventListener('mouseleave', this.onMouseLeave);
     this.addEventListener('click', this.onClick);
@@ -127,18 +127,11 @@ export default class Submenu extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Submenu attributeChangedCallback() called', this.#key, name, this.#expand, oldValue, newValue, this.getAttribute('expand'));
+    console.log('Submenu attributeChangedCallback() called', this._key, name, this._expand, oldValue, newValue, this.getAttribute('expand'));
     this.init();
-    if (name === 'title' && this.#title !== newValue) {
-      this.#title = newValue;
-      this.render();
-    } else if (name === 'key' && this.#key !== newValue) {
-      this.#key = newValue;
-      this.render();
-    } else if (name === 'expand' && (newValue === 'true') !== this.#expand) {
-      this.#expand = newValue === 'true';
-      this.render();
-    }
+    updateStateAndRender(this, 'title', '_title', name, newValue);
+    updateStateAndRender(this, 'key', '_key', name, newValue);
+    updateStateAndRender(this, 'expand', '_expand', name, newValue === 'true');
   }
 }
 

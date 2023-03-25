@@ -1,6 +1,6 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'util/CustomEventsChannel';
-import { setElementAttribute } from 'util/RenderUtils';
+import { setElementAttribute, updateStateAndRender } from 'util/RenderUtils';
 import MenuItem from './MenuItem';
 import './MenuItemFileOpen.css';
 
@@ -18,13 +18,13 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   #initialized = false;
 
-  #title: string | null = null;
-
-  #key: string | null = null;
-
-  #shortcut: string | null = null;
-
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
+
+  private _title: string | null = null;
+
+  private _key: string | null = null;
+
+  private _shortcut: string | null = null;
 
   constructor() {
     super();
@@ -42,16 +42,15 @@ export default class MenuItemFileOpen extends HTMLElement {
     setElementAttribute(this, 'role', 'none');
 
     const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
-    setElementAttribute(input, 'key', `${this.#key}-input`);
+    setElementAttribute(input, 'key', `${this._key}-input`);
 
     const label = this.querySelector('label') as HTMLLabelElement;
-    setElementAttribute(label, 'key', `${this.#key}-input-label`);
+    setElementAttribute(label, 'key', `${this._key}-input-label`);
 
     const menuItem = this.querySelector('label > sf-menu-item') as MenuItem;
-    setElementAttribute(menuItem, 'key', `${this.#key}-${menuItemKeyPostfix}`);
-    setElementAttribute(menuItem, 'title', this.#title);
-    const shortcut = this.getAttribute('shortcut');
-    setElementAttribute(menuItem, 'shortcut', shortcut);
+    setElementAttribute(menuItem, 'key', `${this._key}-${menuItemKeyPostfix}`);
+    setElementAttribute(menuItem, 'title', this._title);
+    setElementAttribute(menuItem, 'shortcut', this._shortcut);
   }
 
   onClick = (e: MouseEvent) => {
@@ -61,14 +60,14 @@ export default class MenuItemFileOpen extends HTMLElement {
     if (!key) {
       return;
     }
-    if (key === `${this.#key}-${menuItemKeyPostfix}`) {
+    if (key === `${this._key}-${menuItemKeyPostfix}`) {
       console.log('MenuItemFileOpen sf-file-open-input-menu-item clicked.');
       e.stopPropagation();
       e.preventDefault();
       const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
       input.click();
     }
-    if (key === `${this.#key}-input`) {
+    if (key === `${this._key}-input`) {
       console.log('MenuItemFileOpen sf-file-open-input clicked.');
       e.stopPropagation();
     }
@@ -94,9 +93,9 @@ export default class MenuItemFileOpen extends HTMLElement {
   connectedCallback() {
     console.log('MenuItemFileOpen connectedCallback() called');
     this.init();
-    this.#title = this.getAttribute('title');
-    this.#key = this.getAttribute('key');
-    this.#shortcut = this.getAttribute('shortcut');
+    this._title = this.getAttribute('title');
+    this._key = this.getAttribute('key');
+    this._shortcut = this.getAttribute('shortcut');
     this.addEventListener('click', this.onClick);
     this.addEventListener('change', this.onChange);
     this.render();
@@ -115,16 +114,9 @@ export default class MenuItemFileOpen extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('MenuItemFileOpen attributeChangedCallback() called');
     this.init();
-    if (name === 'title' && this.#title !== newValue) {
-      this.#title = newValue;
-      this.render();
-    } else if (name === 'key' && this.#key !== newValue) {
-      this.#key = newValue;
-      this.render();
-    } else if (name === 'shortcut' && this.#shortcut !== newValue) {
-      this.#shortcut = newValue;
-      this.render();
-    }
+    updateStateAndRender(this, 'title', '_title', name, newValue);
+    updateStateAndRender(this, 'key', '_key', name, newValue);
+    updateStateAndRender(this, 'shortcut', '_shortcut', name, newValue);
   }
 }
 

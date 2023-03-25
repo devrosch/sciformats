@@ -36,5 +36,11 @@ module.exports = {
       'WithStatement',
     ],
     'prefer-destructuring' : 'off',
+    'no-underscore-dangle': [
+      'error', {
+        'enforceInClassFields': false,
+        'allowAfterThis': true,
+      }
+    ],
   },
 }

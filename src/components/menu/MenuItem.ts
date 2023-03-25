@@ -1,4 +1,4 @@
-import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
+import { setElementAttribute, setElementTextContent, updateStateAndRender } from 'util/RenderUtils';
 import './MenuItem.css';
 
 const template = `
@@ -9,15 +9,13 @@ const template = `
 `;
 
 export default class MenuItem extends HTMLElement {
-  static get observedAttributes() { return ['title', 'key', 'shortcut']; }
+  static get observedAttributes() { return ['title', 'shortcut']; }
 
   #initialized = false;
 
-  #title: string | null = null;
+  private _title: string | null = null;
 
-  #key: string | null = null;
-
-  #shortcut: string | null = null;
+  private _shortcut: string | null = null;
 
   constructor() {
     super();
@@ -38,8 +36,8 @@ export default class MenuItem extends HTMLElement {
     const shortcutSpan = a.children.item(1) as HTMLSpanElement;
     setElementAttribute(this, 'role', 'none');
     setElementAttribute(a, 'role', 'menuitem');
-    setElementTextContent(nameSpan, this.#title);
-    setElementTextContent(shortcutSpan, this.#shortcut);
+    setElementTextContent(nameSpan, this._title);
+    setElementTextContent(shortcutSpan, this._shortcut);
   }
 
   onClick = (e: Event) => {
@@ -53,9 +51,8 @@ export default class MenuItem extends HTMLElement {
   connectedCallback() {
     console.log('MenuItem connectedCallback() called');
     this.init();
-    this.#title = this.getAttribute('title');
-    this.#key = this.getAttribute('key');
-    this.#shortcut = this.getAttribute('shortcut');
+    this._title = this.getAttribute('title');
+    this._shortcut = this.getAttribute('shortcut');
     this.addEventListener('click', this.onClick);
     this.render();
   }
@@ -72,16 +69,8 @@ export default class MenuItem extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('MenuItem attributeChangedCallback() called');
     this.init();
-    if (name === 'title' && this.#title !== newValue) {
-      this.#title = newValue;
-      this.render();
-    } else if (name === 'key' && this.#key !== newValue) {
-      this.#key = newValue;
-      this.render();
-    } else if (name === 'shortcut' && this.#shortcut !== newValue) {
-      this.#shortcut = newValue;
-      this.render();
-    }
+    updateStateAndRender(this, 'title', '_title', name, newValue);
+    updateStateAndRender(this, 'shortcut', '_shortcut', name, newValue);
   }
 }
 

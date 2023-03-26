@@ -1,0 +1,100 @@
+image: devrosch/cppcicdenv:2020-12-22
+
+stages:
+  - build
+  - test
+  - coverage
+  - publish
+
+build:linux_gcc:
+  stage: build
+  script:
+    - set -eo pipefail
+    - mkdir build && cd build
+    - cmake -DCMAKE_BUILD_TYPE=DEBUG -DCMAKE_CXX_COMPILER=g++ ..
+    - make
+  artifacts:
+    paths:
+      - build
+
+build:wasm_emcc:
+  stage: build
+  script:
+    - set -eo pipefail
+    - mkdir build && cd build
+    - emcmake cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+    - make
+  artifacts:
+    paths:
+      - build
+
+test:linux_gcc:
+  stage: test
+  script:
+    - cd build
+    - lcov --capture --initial --base-directory .. --directory . --output-file coverage_base.info
+    - ctest -VV
+  dependencies:
+    - build:linux_gcc
+  artifacts:
+    paths:
+      - build
+
+test:wasm_emcc:
+  stage: test
+  script:
+    - cd build
+    - ctest -VV
+  dependencies:
+    - build:wasm_emcc
+  artifacts:
+    paths:
+      - build
+
+format:
+  stage: test
+  script:
+    - cd build && make clang-format-check
+  dependencies:
+    - build:linux_gcc
+
+quality:
+  stage: test
+  script:
+    - cd build && make clang-tidy
+  dependencies:
+    - build:linux_gcc
+
+coverage:linux_gcc:
+  stage: coverage
+  script:
+    - cd build
+    - set -eo pipefail
+    - lcov --capture --base-directory .. --directory . --output-file coverage.info
+    - lcov --add-tracefile coverage_base.info --add-tracefile coverage.info --output-file coverage_total.info
+    - lcov --remove coverage_total.info '/usr/*' '*/lib/*' '*/tests/*' --output-file coverage_filtered.info
+    - "genhtml coverage_filtered.info --output-directory coverage
+      | tee /dev/stderr
+      | grep -E 'lines\\.{6,}:'
+      | awk -F': |%' '{print $2}'
+      | { read coverage; (( $(echo \"$coverage >= 95.0\" | bc -l) )); }"
+  dependencies:
+    - test:linux_gcc
+  coverage: '/lines\.+: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - build/coverage
+
+pages:
+  stage: publish
+  script:
+    - rm -rf public
+    - mv build/coverage public
+  dependencies:
+    - coverage:linux_gcc
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+

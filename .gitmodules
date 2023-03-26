@@ -1,4 +1,0 @@
-[submodule "lib/libjdx"]
-	path = lib/libjdx
-	url = ../libjdx
-	branch = master

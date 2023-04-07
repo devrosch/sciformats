@@ -3,7 +3,8 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/usr/local/opt/icu4c/include"
             ],
             "defines": [],
             "macFrameworkPath": [

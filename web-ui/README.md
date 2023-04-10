@@ -40,7 +40,7 @@ Build artifacts are placed into the `dist` directory.
 
 ## Documentation
 
-More detailed documentation can be found in the [doc](/doc) directory.
+More detailed documentation can be found in the [doc](doc) directory.
 
 ## Author
 

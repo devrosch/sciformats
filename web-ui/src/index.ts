@@ -14,7 +14,7 @@ worker.postMessage({
   question: 'bla',
 });
 setTimeout(() => {
-  worker.postMessage({question: 'bla2',});
+  worker.postMessage({ question: 'bla2' });
 }, 20000);
 
 console.log('index.ts executed');

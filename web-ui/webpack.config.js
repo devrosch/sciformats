@@ -50,6 +50,7 @@ module.exports = {
       components: path.resolve(__dirname, 'src/components/'),
       model: path.resolve(__dirname, 'src/model/'),
       util: path.resolve(__dirname, 'src/util/'),
+      worker: path.resolve(__dirname, 'src/worker/'),
     }
   },
   // optimization: {

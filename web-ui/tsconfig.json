@@ -2,8 +2,8 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "es6",
+    "module": "es2022",
+    "target": "es2022",
     "jsx": "react",
     "allowJs": true,
     "moduleResolution": "node",
@@ -20,6 +20,7 @@
       "components/*": ["src/components/*"],
       "model/*": ["src/model/*"],
       "util/*": ["src/util/*"],
+      "worker/*": ["src/worker/*"],
     }
   }
 }

@@ -4,6 +4,7 @@
   "description": "An HTML/CSS/JS UI for visualizing scientific data.",
   "private": true,
   "scripts": {
+    "import-wasm": "mkdir -p dist && cp ../lib-cpp/build-wasm/apps/libsf.* dist",
     "test": "APP_VERSION=$npm_package_version jest",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "start": "APP_VERSION=$npm_package_version webpack serve --open",
@@ -63,5 +64,11 @@
   },
   "dependencies": {
     "plotly.js-dist-min": "^2.20.0"
+  },
+  "browser": {
+    "crypto": false,
+    "path": false,
+    "fs": false,
+    "env": false
   }
 }

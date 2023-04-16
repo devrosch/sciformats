@@ -22,5 +22,6 @@
       "util/*": ["src/util/*"],
       "worker/*": ["src/worker/*"],
     }
-  }
+  },
+  //"exclude": ["src/**/libsf.js", "src/**/libsf.wasm"]
 }

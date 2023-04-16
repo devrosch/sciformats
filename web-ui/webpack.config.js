@@ -24,6 +24,14 @@ module.exports = {
   },
   module: {
     rules: [
+      // {
+      //   test: /\.libsf.js$/i,
+      //   type: 'asset/resource',
+      // },
+      // {
+      //   test: /\.libsf.wasm$/i,
+      //   type: 'asset/resource',
+      // },
       {
         test: /\.css$/i,
         use: ['style-loader', 'css-loader'],
@@ -55,5 +63,8 @@ module.exports = {
   },
   // optimization: {
   //   runtimeChunk: 'single',
+  // },
+  // experiments: {
+  //   asyncWebAssembly: true,
   // },
 };

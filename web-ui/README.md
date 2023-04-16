@@ -10,6 +10,11 @@ Node.js v14.17.0 (support for crypto.randomUUID()).
 
 ## Build
 
+First, build the WASM library as described in `lib-cpp` and then import it with:
+```
+npm import-wasm
+```
+
 To install the required packages run:
 ```
 npm install

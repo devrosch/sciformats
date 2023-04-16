@@ -6,10 +6,12 @@
 // import './libsf';
 // import('./libsf');
 
+// eslint-disable-next-line no-restricted-globals
 self.importScripts('libsf.js');
 
-let answer: number = 42;
+let answer: number = 41;
 
+// eslint-disable-next-line no-restricted-globals
 self.onmessage = ({ data: { question } }) => {
   console.log('Module:');
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -17,12 +19,14 @@ self.onmessage = ({ data: { question } }) => {
   console.log(Module);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  let sfr = new Module.StubFileParser();
-  console.log('StubFileParser: ' + sfr);
+  const sfr = new Module.StubFileParser();
+  console.log(`StubFileParser: ${sfr}`);
   sfr.delete();
 
+  answer += 1;
+  // eslint-disable-next-line no-restricted-globals
   self.postMessage({
-    answer: `${question} -> ${answer++}`,
+    answer: `${question} -> ${answer}`,
   });
 };
 

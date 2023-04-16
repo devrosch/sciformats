@@ -10,7 +10,7 @@ worker.onmessage = ({ data: { answer } }) => {
 //   question: 'bla',
 // });
 setTimeout(() => {
-  worker.postMessage({question: 'bla2',});
+  worker.postMessage({ question: 'bla2' });
 }, 5000);
 
 console.log('index.ts executed');

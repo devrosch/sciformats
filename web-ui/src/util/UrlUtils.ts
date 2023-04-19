@@ -27,3 +27,30 @@ export const isSameUrl = (
     return false;
   }
 };
+
+export const extractGroup = (url: URL | string, groupIndex: number, errorMessage: string) => {
+  const urlString = url instanceof URL ? url.toString() : url;
+  const regex = /^(file:\/\/\/|https?:\/\/)([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-xfA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/([^/]*)/g;
+  const matches = urlString.matchAll(regex);
+  const uuid = Array.from(matches, (match) => match[groupIndex]);
+  if (uuid !== null && uuid.length === 1) {
+    return uuid[0];
+  }
+  throw new Error(errorMessage);
+};
+
+/**
+ * Extract a UUID from a URL matching the patterns "file:///<uuid>/<filename>/#..." or "http(s)://<uuid>/<filename>/#...".
+ * @param url A URL.
+ * @returns The <uuid> from the URL.
+ * @example For "file:///aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/test.jdx/#" this function returns "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee".
+ */
+export const extractUuid = (url: URL | string) => extractGroup(url, 2, 'Cannot extract UUID from URL. URL does not match patterns "file:///<uuid>/<filename>/#..." or "http(s)://<uuid>/<filename>/#..."');
+
+/**
+ * Extract a filename from a URL matching the patterns "file:///<uuid>/<filename>/#..." or "http(s)://<uuid>/<filename>/#...".
+ * @param url A URL.
+ * @returns The <filename> from the URL.
+ * @example For "file:///aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/test.jdx/#" this function returns "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee".
+ */
+export const extractFilename = (url: URL | string) => extractGroup(url, 3, 'Cannot extract filename from URL. URL does not match patterns "file:///<uuid>/<filename>/#..." or "http(s)://<uuid>/<filename>/#..."');

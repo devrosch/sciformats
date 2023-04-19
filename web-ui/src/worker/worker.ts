@@ -6,20 +6,18 @@
 // import './libsf';
 // import('./libsf');
 
-import WorkerCommand from './WorkerCommand';
-import WorkerResult from './WorkerResult';
+import WorkerRequest from './WorkerRequest';
+import WorkerResponse from './WorkerResponse';
 
 // quench warnings for using "self", alternatively "globalThis" could be used instead
 /* eslint-disable no-restricted-globals */
 
 self.importScripts('libsf.js');
 
-const hasInitCompleted: () => boolean = () => {
-  // use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
-  // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
-  /* @ts-expect-error */
-  return !(typeof Module === 'undefined' || Module === null || typeof Module.FileParser === 'undefined');
-};
+// use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
+// to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
+/* @ts-expect-error */
+const hasInitCompleted: () => boolean = () => !(typeof Module === 'undefined' || Module === null || typeof Module.FileParser === 'undefined');
 
 const saveFileToFilesystem = (url: URL, file: File) => {
   const dir = '/work';
@@ -27,40 +25,43 @@ const saveFileToFilesystem = (url: URL, file: File) => {
   const filesystem = FS;
   const dirExists = filesystem.analyzePath(dir, false).exists;
   if (!dirExists) {
-      filesystem.mkdir(dir);
+    filesystem.mkdir(dir);
   }
   /* @ts-expect-error */
   const workerFS = WORKERFS;
   filesystem.mount(workerFS, { files: [file] }, dir);
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const isFileRecognized = (name: string, url: URL) => {
   /* @ts-expect-error */
   const parser = new Module.JdxFileParser();
   console.log(`Parser: ${parser}`);
-  const isFileRecognized = parser.isRecognized('/work/' + name);
+  const recognized = parser.isRecognized(`/work/${name}`);
   parser.delete();
-  return isFileRecognized;
+  return recognized;
 };
 
 // let answer: number = 41;
 
 self.onmessage = (event) => {
-  const command = event.data as WorkerCommand;
-  switch (command.name) {
-    case 'status':
+  const request = event.data as WorkerRequest;
+  switch (request.name) {
+    case 'status': {
       const initCompleted = hasInitCompleted() ? 'initialized' : 'initializing';
-      const result = new WorkerResult('state', initCompleted);
+      const result = new WorkerResponse('state', initCompleted);
       self.postMessage(result);
       break;
-    case 'scan':
-      const url = new URL(command.detail.url);
-      const file = command.detail.file;
+    }
+    case 'scan': {
+      const url = new URL(request.detail.url);
+      const file = request.detail.file;
       saveFileToFilesystem(url, file);
-      self.postMessage(new WorkerResult('recognized', isFileRecognized(file.name, url)));
+      self.postMessage(new WorkerResponse('recognized', isFileRecognized(file.name, url)));
       break;
+    }
     default:
-      self.postMessage(new WorkerResult('error', `Unknown command: ${command.name}`));
+      self.postMessage(new WorkerResponse('error', `Unknown command: ${request.name}`));
       break;
   }
 

@@ -1,4 +1,4 @@
-import { isSameUrl } from 'util/UrlUtils';
+import { extractFilename, extractUuid, isSameUrl } from 'util/UrlUtils';
 
 test('isSameURL() is false if any parameter is null or undefined', async () => {
   const url = new URL('https://valid.url1');
@@ -45,4 +45,58 @@ test('isSameURL() is false when comparing illegal URLs', async () => {
 
   expect(isSameUrl(url00, urlFragment)).toBe(false);
   expect(isSameUrl(url00, urlBlank)).toBe(false);
+});
+
+test('extractUuid() extracts UUID for well-formed file URL', async () => {
+  const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
+
+  expect(extractUuid(url)).toBe(uuid);
+});
+
+test('extractUuid() throws for malformed file URL', async () => {
+  // invalid uuid
+  const url = new URL('file:///aaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  expect(() => extractUuid(url)).toThrow(/Cannot extract UUID/i);
+});
+
+test('extractUuid() extracts UUID for well-formed http URL', async () => {
+  const url = new URL('http://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
+
+  expect(extractUuid(url)).toBe(uuid);
+});
+
+test('extractUuid() extracts UUID for well-formed https URL', async () => {
+  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
+
+  expect(extractUuid(url)).toBe(uuid);
+});
+
+test('extractFilename() extracts filename for well-formed file URL', async () => {
+  const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const filename = 'test.jdx';
+
+  expect(extractFilename(url)).toBe(filename);
+});
+
+test('extractFilename() throws for malformed file URL', async () => {
+  // invalid uuid
+  const url = new URL('file:///aaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  expect(() => extractFilename(url)).toThrow(/Cannot extract filename/i);
+});
+
+test('extractFilename() extracts UUID for well-formed http URL', async () => {
+  const url = new URL('http://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const filename = 'test.jdx';
+
+  expect(extractFilename(url)).toBe(filename);
+});
+
+test('extractFilename() extracts UUID for well-formed https URL', async () => {
+  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const filename = 'test.jdx';
+
+  expect(extractFilename(url)).toBe(filename);
 });

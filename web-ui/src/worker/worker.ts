@@ -6,6 +6,7 @@
 // import './libsf';
 // import('./libsf');
 
+import { extractFilename, extractUuid } from 'util/UrlUtils';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 
@@ -14,30 +15,49 @@ import WorkerResponse from './WorkerResponse';
 
 self.importScripts('libsf.js');
 
+const workingDir = '/work';
+
 // use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
 // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
 /* @ts-expect-error */
 const hasInitCompleted: () => boolean = () => !(typeof Module === 'undefined' || Module === null || typeof Module.FileParser === 'undefined');
 
-const saveFileToFilesystem = (url: URL, file: File) => {
-  const dir = '/work';
+/**
+ * Mounts the file in the filesystem's "work" directory.
+ * @param url The file URL from which UUID and file name are extracted.
+ * @param blob A Blob containing the file data.
+ */
+const mountFile = (url: URL, blob: Blob) => {
+  const uuid = extractUuid(url);
+  const filename = extractFilename(url);
   /* @ts-expect-error */
   const filesystem = FS;
-  const dirExists = filesystem.analyzePath(dir, false).exists;
-  if (!dirExists) {
-    filesystem.mkdir(dir);
+  const workingDirExists = filesystem.analyzePath(workingDir, false).exists;
+  if (!workingDirExists) {
+    filesystem.mkdir(workingDir);
+  }
+  const uuidDirPath = `${workingDir}/${uuid}`;
+  const uuidDirExists = filesystem.analyzePath(uuidDirPath, false).exists;
+  if (!uuidDirExists) {
+    filesystem.mkdir(uuidDirPath);
   }
   /* @ts-expect-error */
   const workerFS = WORKERFS;
-  filesystem.mount(workerFS, { files: [file] }, dir);
+  // filesystem.mount(workerFS, { files: [file] }, dir);
+  filesystem.mount(workerFS, {
+    blobs: [{ name: filename, data: blob }],
+  }, uuidDirPath);
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const isFileRecognized = (name: string, url: URL) => {
+const isFileRecognized = (url: URL) => {
+  const uuid = extractUuid(url);
+  const filename = extractFilename(url);
   /* @ts-expect-error */
   const parser = new Module.JdxFileParser();
   console.log(`Parser: ${parser}`);
-  const recognized = parser.isRecognized(`/work/${name}`);
+  const filePath = `${workingDir}/${uuid}/${filename}`;
+  const recognized = parser.isRecognized(filePath);
   parser.delete();
   return recognized;
 };
@@ -56,8 +76,8 @@ self.onmessage = (event) => {
     case 'scan': {
       const url = new URL(request.detail.url);
       const file = request.detail.file;
-      saveFileToFilesystem(url, file);
-      self.postMessage(new WorkerResponse('recognized', isFileRecognized(file.name, url)));
+      mountFile(url, file);
+      self.postMessage(new WorkerResponse('recognized', isFileRecognized(url)));
       break;
     }
     default:

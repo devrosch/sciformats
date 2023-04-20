@@ -23,7 +23,7 @@ const workingDir = '/work';
 const hasInitCompleted: () => boolean = () => !(typeof Module === 'undefined' || Module === null || typeof Module.FileParser === 'undefined');
 
 /**
- * Mounts the file in the filesystem's "work" directory.
+ * Mounts a file in the filesystem's "work" directory.
  * @param url The file URL from which UUID and file name are extracted.
  * @param blob A Blob containing the file data.
  */
@@ -47,6 +47,32 @@ const mountFile = (url: URL, blob: Blob) => {
   filesystem.mount(workerFS, {
     blobs: [{ name: filename, data: blob }],
   }, uuidDirPath);
+};
+
+/**
+ * Unmounts a file from the filesystem's "work" directory.
+ * @param url The file URL from which UUID and file name are extracted.
+ */
+const unmountFile = (url: URL) => {
+  const uuid = extractUuid(url);
+  const filename = extractFilename(url);
+  /* @ts-expect-error */
+  const filesystem = FS;
+  const workingDirExists = filesystem.analyzePath(workingDir, false).exists;
+  if (!workingDirExists) {
+    return;
+  }
+  const uuidDirPath = `${workingDir}/${uuid}`;
+  const uuidDirExists = filesystem.analyzePath(uuidDirPath, false).exists;
+  if (!uuidDirExists) {
+    return;
+  }
+  const filePath = `${uuidDirPath}/${filename}`;
+  const fileExists = filesystem.analyzePath(filePath, false).exists;
+  if (fileExists) {
+    filesystem.unmount(uuidDirPath);
+  }
+  filesystem.rmdir(uuidDirPath);
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
@@ -78,6 +104,7 @@ self.onmessage = (event) => {
       const file = request.detail.file;
       mountFile(url, file);
       self.postMessage(new WorkerResponse('recognized', isFileRecognized(url)));
+      unmountFile(url);
       break;
     }
     default:

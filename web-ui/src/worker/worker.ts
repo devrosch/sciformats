@@ -43,7 +43,6 @@ const mountFile = (url: URL, blob: Blob) => {
   }
   /* @ts-expect-error */
   const workerFS = WORKERFS;
-  // filesystem.mount(workerFS, { files: [file] }, dir);
   filesystem.mount(workerFS, {
     blobs: [{ name: filename, data: blob }],
   }, uuidDirPath);
@@ -75,7 +74,6 @@ const unmountFile = (url: URL) => {
   filesystem.rmdir(uuidDirPath);
 };
 
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 const isFileRecognized = (url: URL) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
@@ -88,7 +86,38 @@ const isFileRecognized = (url: URL) => {
   return recognized;
 };
 
+const parse = (url: URL) => {
+  const uuid = extractUuid(url);
+  const filename = extractFilename(url);
+  /* @ts-expect-error */
+  const parser = new Module.JdxFileParser();
+  const filePath = `${workingDir}/${uuid}/${filename}`;
+  try {
+    const node = parser.parse(filePath);
+    parser.delete();
+    return node;
+  } catch (error) {
+    parser.delete();
+    throw error;
+  }
+};
+
+/* @ts-expect-error */
+const nodeToJson = (node: Module.Node) => {
+  let json: any = {};
+  json['name'] = node.name;
+  // TODO:
+  // [[nodiscard]] virtual std::string getName() const = 0;
+  // virtual std::vector<KeyValueParam> getParams() = 0;
+  // virtual std::optional<std::vector<Point2D>> getData() = 0;
+  // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
+  return json;
+}
+
 // let answer: number = 41;
+
+/* @ts-expect-error */
+const openFiles = new Map<URL, Module.Node>();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
@@ -103,8 +132,42 @@ self.onmessage = (event) => {
       const url = new URL(request.detail.url);
       const file = request.detail.file;
       mountFile(url, file);
-      self.postMessage(new WorkerResponse('recognized', isFileRecognized(url)));
+      const recognized = isFileRecognized(url);
       unmountFile(url);
+      self.postMessage(new WorkerResponse('recognized', recognized));
+      break;
+    }
+    case 'open': {
+      const url = new URL(request.detail.url);
+      const file = request.detail.file;
+      const rootUrl = new URL(url.toString().split('#')[0]);
+      if (!openFiles.has(rootUrl)) {
+        mountFile(url, file);
+        try {
+          const node = parse(url);
+          openFiles.set(rootUrl, node);
+        } catch (error: any) {
+          const message = error.message;
+          unmountFile(url);
+          self.postMessage(new WorkerResponse('error', message));
+          break;
+        }
+      }
+      const node = openFiles.get(rootUrl);
+      const json = nodeToJson(node);
+      self.postMessage(new WorkerResponse('opened', json));
+      break;
+    }
+    case 'close': {
+      const url = new URL(request.detail.url);
+      const rootUrl = new URL(url.toString().split('#')[0]);
+      if (openFiles.has(rootUrl)) {
+        const node = openFiles.get(rootUrl);
+        openFiles.delete(rootUrl);
+        node.delete();
+      }
+      unmountFile(url);
+      self.postMessage(new WorkerResponse('closed', url.toString()));
       break;
     }
     default:

@@ -105,16 +105,51 @@ const parse = (url: URL) => {
 /* @ts-expect-error */
 const nodeToJson = (node: Module.Node) => {
   let json: any = {};
+
+  // [[nodiscard]] virtual std::string getName() const;
   json['name'] = node.name;
-  // TODO:
-  // [[nodiscard]] virtual std::string getName() const = 0;
-  // virtual std::vector<KeyValueParam> getParams() = 0;
-  // virtual std::optional<std::vector<Point2D>> getData() = 0;
+
+  // virtual std::vector<KeyValueParam> getParams();
+  const params = node.getParams();
+  const paramsSize = params.size();
+  const jsonParameters: any = {};
+  for (let index = 0; index < paramsSize; index++) {
+    const keyValuePair = params.get(index);
+    const key = keyValuePair.key;
+    const value = keyValuePair.value;
+    jsonParameters[key] = value;
+  }
+  json['parameters'] = jsonParameters;
+  params.delete();
+
+  // virtual std::optional<std::vector<Point2D>> getData();
+  // TODO: getData() returns a std::optional, but that is not supported by embind, see: https://github.com/emscripten-core/emscripten/issues/11139
+  // const data = node.getData();
+  // const dataSize = data.size();
+  // const jsonData = [];
+  // for (let index = 0; index < dataSize; index++) {
+  //   const point = data.get(index);
+  //   const x = point.x;
+  //   const y = point.y;
+  //   jsonData.push({'x': x, 'y': y});
+  // }
+  // json['data'] = jsonData;
+
   // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
+  const childNodes = node.getChildNodes();
+  const childNodesSize = childNodes.size();
+  const jsonChildNodes = [];
+  for (let index = 0; index < childNodesSize; index++) {
+    const childNode = childNodes.get(index);
+    const childNodeName = childNode.name;
+    jsonChildNodes.push(childNodeName);
+    childNode.delete();
+  }
+  json['children'] = jsonChildNodes;
+  childNodes.delete();
+
   return json;
 }
-
-// let answer: number = 41;
 
 /* @ts-expect-error */
 const openFiles = new Map<URL, Module.Node>();
@@ -174,23 +209,4 @@ self.onmessage = (event) => {
       self.postMessage(new WorkerResponse('error', `Unknown command: ${request.name}`));
       break;
   }
-
-  // console.log('Module:');
-  // /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-  // /* @ts-ignore */
-  // console.log(Module);
-  /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-  /* @ts-ignore */
-  // const sfr = new Module.StubFileParser();
-  // console.log(`StubFileParser: ${sfr}`);
-  // sfr.delete();
-
-  // answer += 1;
-  // /* eslint-disable-next-line no-restricted-globals */
-  // self.postMessage({
-  //   answer: `${command} -> ${answer}`,
-  // });
 };
-
-// self.importScripts('libsf.js');
-// self.importScripts(libsf);

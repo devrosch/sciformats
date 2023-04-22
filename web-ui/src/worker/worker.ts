@@ -209,3 +209,4 @@ self.onmessage = (event) => {
       break;
   }
 };
+/* eslint-enable no-restricted-globals, @typescript-eslint/no-unused-vars, no-plusplus */

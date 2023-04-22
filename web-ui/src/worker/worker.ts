@@ -122,18 +122,17 @@ const nodeToJson = (node: Module.Node) => {
   json['parameters'] = jsonParameters;
   params.delete();
 
-  // virtual std::optional<std::vector<Point2D>> getData();
-  // TODO: getData() returns a std::optional, but that is not supported by embind, see: https://github.com/emscripten-core/emscripten/issues/11139
-  // const data = node.getData();
-  // const dataSize = data.size();
-  // const jsonData = [];
-  // for (let index = 0; index < dataSize; index++) {
-  //   const point = data.get(index);
-  //   const x = point.x;
-  //   const y = point.y;
-  //   jsonData.push({'x': x, 'y': y});
-  // }
-  // json['data'] = jsonData;
+  // virtual std::vector<Point2D> getData();
+  const data = node.getData();
+  const dataSize = data.size();
+  const jsonData = [];
+  for (let index = 0; index < dataSize; index++) {
+    const point = data.get(index);
+    const x = point.x;
+    const y = point.y;
+    jsonData.push({'x': x, 'y': y});
+  }
+  json['data'] = jsonData;
 
   // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
   const childNodes = node.getChildNodes();

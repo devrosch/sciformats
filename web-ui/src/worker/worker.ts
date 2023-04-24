@@ -155,10 +155,11 @@ const openFiles = new Map<URL, Module.Node>();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
+  const correlationId = request.correlationId;
   switch (request.name) {
     case 'status': {
       const initCompleted = hasInitCompleted() ? 'initialized' : 'initializing';
-      const result = new WorkerResponse('state', initCompleted);
+      const result = new WorkerResponse('state', correlationId, initCompleted);
       self.postMessage(result);
       break;
     }
@@ -168,7 +169,7 @@ self.onmessage = (event) => {
       mountFile(url, file);
       const recognized = isFileRecognized(url);
       unmountFile(url);
-      self.postMessage(new WorkerResponse('recognized', recognized));
+      self.postMessage(new WorkerResponse('recognized', correlationId, recognized));
       break;
     }
     case 'open': {
@@ -183,13 +184,13 @@ self.onmessage = (event) => {
         } catch (error: any) {
           const message = error.message;
           unmountFile(url);
-          self.postMessage(new WorkerResponse('error', message));
+          self.postMessage(new WorkerResponse('error', correlationId, message));
           break;
         }
       }
       const node = openFiles.get(rootUrl);
       const json = nodeToJson(node);
-      self.postMessage(new WorkerResponse('opened', json));
+      self.postMessage(new WorkerResponse('opened', correlationId, json));
       break;
     }
     case 'close': {
@@ -201,12 +202,11 @@ self.onmessage = (event) => {
         node.delete();
       }
       unmountFile(url);
-      self.postMessage(new WorkerResponse('closed', url.toString()));
+      self.postMessage(new WorkerResponse('closed', correlationId, url.toString()));
       break;
     }
     default:
-      self.postMessage(new WorkerResponse('error', `Unknown command: ${request.name}`));
+      self.postMessage(new WorkerResponse('error', correlationId, `Unknown command: ${request.name}`));
       break;
   }
 };
-/* eslint-enable no-restricted-globals, @typescript-eslint/no-unused-vars, no-plusplus */

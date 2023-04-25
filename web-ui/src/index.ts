@@ -2,6 +2,7 @@ import 'components/App';
 import './style.css';
 import WorkerResponse from 'worker/WorkerResponse';
 import WorkerRequest from 'worker/WorkerRequest';
+import { postMessage } from 'util/WorkerUtils';
 
 // TODO: example code => remove
 const exampleJdx = `##TITLE= Data XYDATA (PAC) Block
@@ -55,28 +56,19 @@ setTimeout(() => {
 }, 10000);
 
 setTimeout(async () => {
+  console.log('------ Async Worker messaging through Promises ------');
+  
   const url = new URL('file:///aaaaaaa1-bbb2-ccc3-ddd4-eeeeeeeeeee5/test.jdx/#');
   const file = new File([exampleJdx], 'test.jdx');
-  const correlationId = crypto.randomUUID();
-  const promise = new Promise((resolve, reject) => {
-    // do not set worker.onmessage as this overwrites other such handlers
-    worker.addEventListener("message", (event) => {
-      const result = event.data as WorkerResponse;
-      console.log(`Promise received message from worker: ${result}`);
-      if (result.correlationId === correlationId) {
-        if (result.name === 'error') {
-          reject(result);
-        } else {
-          resolve(result);
-        }
-      }
-    });
-  });
+  const payload = { url: url.toString(), file };
 
-  worker.postMessage(new WorkerRequest('scan', correlationId, { url: url.toString(), file }));
-  const result = await promise;  
+  const promise = postMessage(worker, 'scan', payload);
+  const result = await promise;
   console.log(`result from promise: ${JSON.stringify(result)}`);
-  
+
+  const promise2 = postMessage(worker, 'scan', payload);
+  const result2 = await promise2;
+  console.log(`result2 from promise2: ${JSON.stringify(result2)}`);
 }, 12500);
 
 console.log('index.ts executed');

@@ -104,51 +104,51 @@ const parse = (url: URL) => {
 
 /* @ts-expect-error */
 const nodeToJson = (node: Module.Node) => {
-  let json: any = {};
+  const json: any = {};
 
   // [[nodiscard]] virtual std::string getName() const;
-  json['name'] = node.name;
+  json.name = node.name;
 
   // virtual std::vector<KeyValueParam> getParams();
   const params = node.getParams();
   const paramsSize = params.size();
   const jsonParameters: any = {};
-  for (let index = 0; index < paramsSize; index++) {
+  for (let index = 0; index < paramsSize; index += 1) {
     const keyValuePair = params.get(index);
     const key = keyValuePair.key;
     const value = keyValuePair.value;
     jsonParameters[key] = value;
   }
-  json['parameters'] = jsonParameters;
+  json.parameters = jsonParameters;
   params.delete();
 
   // virtual std::vector<Point2D> getData();
   const data = node.getData();
   const dataSize = data.size();
   const jsonData = [];
-  for (let index = 0; index < dataSize; index++) {
+  for (let index = 0; index < dataSize; index += 1) {
     const point = data.get(index);
     const x = point.x;
     const y = point.y;
-    jsonData.push({'x': x, 'y': y});
+    jsonData.push({ x, y });
   }
-  json['data'] = jsonData;
+  json.data = jsonData;
 
   // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
   const childNodes = node.getChildNodes();
   const childNodesSize = childNodes.size();
   const jsonChildNodes = [];
-  for (let index = 0; index < childNodesSize; index++) {
+  for (let index = 0; index < childNodesSize; index += 1) {
     const childNode = childNodes.get(index);
     const childNodeName = childNode.name;
     jsonChildNodes.push(childNodeName);
     childNode.delete();
   }
-  json['children'] = jsonChildNodes;
+  json.children = jsonChildNodes;
   childNodes.delete();
 
   return json;
-}
+};
 
 /* @ts-expect-error */
 const openFiles = new Map<URL, Module.Node>();

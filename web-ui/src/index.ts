@@ -57,7 +57,7 @@ setTimeout(() => {
 
 setTimeout(async () => {
   console.log('------ Async Worker messaging through Promises ------');
-  
+
   const url = new URL('file:///aaaaaaa1-bbb2-ccc3-ddd4-eeeeeeeeeee5/test.jdx/#');
   const file = new File([exampleJdx], 'test.jdx');
   const payload = { url: url.toString(), file };

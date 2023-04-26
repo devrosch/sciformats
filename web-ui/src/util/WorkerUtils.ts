@@ -1,5 +1,5 @@
-import WorkerRequest from "worker/WorkerRequest";
-import WorkerResponse from "worker/WorkerResponse";
+import WorkerRequest from 'worker/WorkerRequest';
+import WorkerResponse from 'worker/WorkerResponse';
 
 /**
  * Post message to web worker.
@@ -8,6 +8,7 @@ import WorkerResponse from "worker/WorkerResponse";
  * @param payload Payload to send to web worker.
  * @returns A promise for the web worker response.
  */
+/* eslint-disable-next-line import/prefer-default-export */
 export const postMessage = (worker: Worker, name: string, payload: any) => {
   const correlationId = crypto.randomUUID();
 

@@ -21,6 +21,9 @@ self.importScripts('libsf.js');
 
 const workingDir = '/work';
 
+/* @ts-expect-error */
+const openFiles = new Map<string, Module.Node>();
+
 // use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
 // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
 /* @ts-expect-error */
@@ -72,7 +75,7 @@ const storeRootNode = (url: URL) => {
   }
   parser.delete();
   return rootNode;
-}
+};
 
 /**
  * Unmounts a file from the filesystem's "work" directory.
@@ -130,7 +133,7 @@ const nodeToJson = (url: URL, node: Module.Node) => {
     const key = keyValuePair.key;
     const value = keyValuePair.value;
     // jsonParameters[key] = value;
-    jsonParameters.push({ key, value })
+    jsonParameters.push({ key, value });
   }
   json.parameters = jsonParameters;
   params.delete();
@@ -168,9 +171,9 @@ const readNodeData = (url: URL) => {
   if (!openFiles.has(rootUrl.toString())) {
     console.log(`root URL: ${rootUrl}`);
     console.log(`number of keys in openFiles: ${openFiles.keys.length}`);
-    for (const key in openFiles.keys) {
+    Object.keys(openFiles).forEach((key) => {
       console.log(`map key: ${key}`);
-    }
+    });
     throw new Error(`File not found: ${rootUrl}`);
   }
 
@@ -193,7 +196,7 @@ const readNodeData = (url: URL) => {
     // skip root
     hash = hash.substring(1);
   }
-  let pathSegments = hash.split('/');
+  const pathSegments = hash.split('/');
   for (let i = 0; i < pathSegments.length; i += 1) {
     pathSegments[i] = decodeURIComponent(pathSegments[i]);
   }
@@ -232,17 +235,15 @@ const readNodeData = (url: URL) => {
     parent.delete();
   }
   return json;
-}
-
-/* @ts-expect-error */
-const openFiles = new Map<string, Module.Node>();
+};
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
   const correlationId = request.correlationId;
   switch (request.name) {
     case 'status': {
-      const initCompleted = hasInitCompleted() ? WorkerStatus.Initialized : WorkerStatus.Initializing;
+      const initCompleted = hasInitCompleted() ? WorkerStatus.Initialized
+        : WorkerStatus.Initializing;
       const result = new WorkerResponse('status', correlationId, initCompleted);
       self.postMessage(result);
       break;

@@ -1,20 +1,13 @@
 import WorkerNodeData from 'worker/WorkerNodeData';
-import Parser from './Parser';
 import { postMessage } from 'util/WorkerUtils';
 import WorkerResponse from 'worker/WorkerResponse';
+import Parser from './Parser';
 
 export default class LocalFileParser2 implements Parser {
   #worker: Worker;
 
   #rootUrl: URL;
 
-  // #file: File;
-
-  // constructor(worker: Worker, rootUrl: URL, file: File) {
-  //   this.#worker = worker;
-  //   this.#rootUrl = rootUrl;
-  //   this.#file = file;
-  // }
   constructor(worker: Worker, rootUrl: URL) {
     this.#worker = worker;
     this.#rootUrl = rootUrl;

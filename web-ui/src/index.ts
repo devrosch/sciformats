@@ -30,12 +30,14 @@ setTimeout(async () => {
 
   let initialized = false;
   while (!initialized) {
+    /* eslint-disable-next-line no-await-in-loop */
     const statusResponse = await postMessage(worker, 'status', null) as WorkerResponse;
     const status = statusResponse.detail as WorkerStatus;
     console.log(`status after 1s: ${WorkerStatus[status]}`);
     initialized = status === WorkerStatus.Initialized;
     if (!initialized) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      /* eslint-disable-next-line no-await-in-loop */
+      await new Promise((resolve) => { setTimeout(resolve, 100); });
     }
   }
 

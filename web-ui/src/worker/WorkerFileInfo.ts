@@ -1,4 +1,4 @@
-import WorkerFileUrl from "./WorkerFileUrl";
+import WorkerFileUrl from './WorkerFileUrl';
 
 /**
  * Data representing a file.

@@ -2,9 +2,9 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
 // import ParserRepository from 'model/ParserRepository';
+import ParserRepository2 from 'model/ParserRepository2';
 import TreeNode from './TreeNode';
 import './Tree.css';
-import ParserRepository2 from 'model/ParserRepository2';
 
 const template = '';
 

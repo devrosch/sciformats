@@ -1,6 +1,6 @@
 import { postMessage } from 'util/WorkerUtils';
-import Parser from './Parser';
 import WorkerResponse from 'worker/WorkerResponse';
+import Parser from './Parser';
 import LocalFileParser2 from './LocalFileParser2';
 
 export default class ParserRepository {

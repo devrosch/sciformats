@@ -8,7 +8,9 @@ import './ParametersPanel.css';
 
 const html = `
   <h1>Heading 1</h1>
-  <ul></ul>
+  <div>
+    <ul></ul>
+  </div>
 `;
 
 const nodeSelectedEvent = 'sf-tree-node-selected';

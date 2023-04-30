@@ -1,8 +1,7 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
-// import ParserRepository from 'model/ParserRepository';
-import ParserRepository2 from 'model/ParserRepository2';
+import ParserRepository from 'model/ParserRepository';
 import TreeNode from './TreeNode';
 import './Tree.css';
 
@@ -24,8 +23,7 @@ export default class Tree extends HTMLElement {
 
   constructor() {
     super();
-    const worker = new Worker(new URL('worker/worker.ts', import.meta.url));
-    this.#parserRepository = new ParserRepository2(worker);
+    this.#parserRepository = new ParserRepository();
     console.log('Tree constructor() called');
   }
 

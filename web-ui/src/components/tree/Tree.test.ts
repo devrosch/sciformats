@@ -3,7 +3,6 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Parser from 'model/Parser';
 import NodeData from 'model/NodeData';
-import 'model/ParserRepository';
 import './Tree'; // for side effects
 import Tree from './Tree';
 import TreeNode from './TreeNode';

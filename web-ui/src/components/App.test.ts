@@ -3,6 +3,8 @@ import 'components/menu/NavbarMatchMediaMock'; // mock window.matchMedia()
 import './App'; // for side effects
 import App from './App';
 
+jest.mock('model/ParserRepository');
+
 const element = 'sf-app';
 
 afterEach(() => {

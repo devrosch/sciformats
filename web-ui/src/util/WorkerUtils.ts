@@ -15,9 +15,9 @@ export const postMessage = (worker: Worker, name: string, payload: any) => {
   const promise = new Promise((resolve, reject) => {
     const listener = (event: MessageEvent<any>) => {
       const result = event.data as WorkerResponse;
-      console.log(`Promise received message from worker: ${result}`);
+      // console.log(`Promise received message from worker: ${JSON.stringify(result)}`);
       if (result.correlationId === correlationId) {
-        console.log(`Promise correlationId matched: ${result.correlationId}`);
+        // console.log(`Promise correlationId matched: ${result.correlationId}`);
         worker.removeEventListener('message', listener);
         if (result.name === 'error') {
           reject(result);

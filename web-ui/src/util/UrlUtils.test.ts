@@ -47,8 +47,15 @@ test('isSameURL() is false when comparing illegal URLs', async () => {
   expect(isSameUrl(url00, urlBlank)).toBe(false);
 });
 
-test('extractUuid() extracts UUID for well-formed file URL', async () => {
+test('extractUuid() extracts UUID for well-formed file URL with slah before hash', async () => {
   const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
+
+  expect(extractUuid(url)).toBe(uuid);
+});
+
+test('extractUuid() extracts UUID for well-formed file URL without slah before hash', async () => {
+  const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx#');
   const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
 
   expect(extractUuid(url)).toBe(uuid);
@@ -74,8 +81,15 @@ test('extractUuid() extracts UUID for well-formed https URL', async () => {
   expect(extractUuid(url)).toBe(uuid);
 });
 
-test('extractFilename() extracts filename for well-formed file URL', async () => {
+test('extractFilename() extracts filename for well-formed file URL with slah before hash', async () => {
   const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const filename = 'test.jdx';
+
+  expect(extractFilename(url)).toBe(filename);
+});
+
+test('extractFilename() extracts filename for well-formed file URL without slah before hash', async () => {
+  const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx#');
   const filename = 'test.jdx';
 
   expect(extractFilename(url)).toBe(filename);

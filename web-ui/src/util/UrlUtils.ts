@@ -30,7 +30,7 @@ export const isSameUrl = (
 
 export const extractGroup = (url: URL | string, groupIndex: number, errorMessage: string) => {
   const urlString = url instanceof URL ? url.toString() : url;
-  const regex = /^(file:\/\/\/|https?:\/\/)([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-xfA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/([^/]*)/g;
+  const regex = /^(file:\/\/\/|https?:\/\/)([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-xfA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/([^#/]*)/g;
   const matches = urlString.matchAll(regex);
   const uuid = Array.from(matches, (match) => match[groupIndex]);
   if (uuid !== null && uuid.length === 1) {

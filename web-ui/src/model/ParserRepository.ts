@@ -22,7 +22,6 @@ export default class ParserRepository {
     if (scanReply.name === 'scanned' && (scanReply.detail as { recognized: boolean }).recognized === true) {
       const openReply: WorkerResponse = await postMessage(this.#worker, 'open', { url: url.toString(), file }) as any;
       if (openReply.name === 'opened') {
-        // const parser = new LocalFileParser2(this.#worker, url, file);
         const parser = new LocalFileParser(this.#worker, url);
         return parser;
       }

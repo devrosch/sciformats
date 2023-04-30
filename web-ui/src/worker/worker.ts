@@ -70,8 +70,8 @@ const storeRootNode = (url: URL) => {
     parser.delete();
     if (rootNode !== null) {
       rootNode.delete();
-      throw error;
     }
+    throw error;
   }
   parser.delete();
   return rootNode;
@@ -268,7 +268,7 @@ self.onmessage = (event) => {
           mountFile(url, blob);
           storeRootNode(url);
         } catch (error: any) {
-          const message = error.message;
+          const message = error.message ? error.message : error;
           self.postMessage(new WorkerResponse('error', correlationId, message));
           break;
         }
@@ -284,7 +284,7 @@ self.onmessage = (event) => {
         self.postMessage(new WorkerResponse('read', correlationId, nodeData));
         break;
       } catch (error: any) {
-        const message = error.message;
+        const message = error.message ? error.message : error;
         self.postMessage(new WorkerResponse('error', correlationId, message));
         break;
       }

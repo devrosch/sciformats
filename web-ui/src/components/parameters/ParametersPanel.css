@@ -3,7 +3,6 @@ sf-parameters-panel {
   display: inline-block;
   width: 100%;
   height: 100%;
-  background-color: blue;
 }
 
 sf-parameters-panel > h1 {
@@ -18,7 +17,6 @@ sf-parameters-panel > h1 {
 sf-parameters-panel div {
   height: calc(100% - 2em);
   overflow: auto;
-  background-color: palevioletred;
 }
 
 sf-parameters-panel div ul {
@@ -26,5 +24,4 @@ sf-parameters-panel div ul {
   margin: 0;
   list-style-position: inside;
   padding-left: 0;
-  background-color: violet;
 }

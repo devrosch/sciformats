@@ -211,7 +211,7 @@ const readNodeData = (url: URL) => {
   for (let i = 0; i < pathSegments.length; i += 1) {
     const pathSegment = pathSegments[i];
     // virtual std::vector<std::shared_ptr<Node>> getChildNodes();
-    const childNodes = rootNode.getChildNodes();
+    const childNodes = parent.getChildNodes();
     const childNodesSize = childNodes.size();
     for (let j = 0; j < childNodesSize; j += 1) {
       const childNode = childNodes.get(j);

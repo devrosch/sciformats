@@ -12,8 +12,7 @@ export default class Tree extends HTMLElement {
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
-  // #parserRepository = new ParserRepository();
-  #parserRepository;
+  #parserRepository = new ParserRepository();
 
   #eventListeners: any[] = [];
 
@@ -23,7 +22,6 @@ export default class Tree extends HTMLElement {
 
   constructor() {
     super();
-    this.#parserRepository = new ParserRepository();
     console.log('Tree constructor() called');
   }
 
@@ -87,13 +85,14 @@ export default class Tree extends HTMLElement {
     // create tree nodes
     for (let i = 0; i < parserPromises.length; i += 1) {
       try {
+        /* eslint-disable-next-line no-await-in-loop */
         const parser = await parserPromises[i];
         const rootNode = new TreeNode(parser, parser.rootUrl);
         this.#children.push(rootNode);
       } catch (error: any) {
-        const message = error.detail ? error.detail : error;
-        console.error(`Error opening file: "${files[i].name}". ${message}`);
-      }      
+        const detail = error.detail ? error.detail : error;
+        console.error(`Error opening file: "${files[i].name}". ${detail}`);
+      }
     }
     this.render();
   }
@@ -283,7 +282,7 @@ export default class Tree extends HTMLElement {
     console.log('Tree adoptedCallback() called');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Tree attributeChangedCallback() called');
     this.init();

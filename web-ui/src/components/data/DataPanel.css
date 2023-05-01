@@ -1,7 +1,7 @@
 sf-data-panel {
   background-color: darkcyan;
-  height: 100%;
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
 }
 

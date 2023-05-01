@@ -242,13 +242,14 @@ const getExceptionMessage = (exception: any) => {
     // C++/WASM exception
     /* @ts-expect-error */
     return Module.getExceptionMessage(exception);
-  } else if (exception.message) {
+  }
+  if (exception.message) {
     // JS Error
     return exception.message;
   }
   // something else
   return exception;
-}
+};
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;

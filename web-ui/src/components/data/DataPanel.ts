@@ -1,4 +1,6 @@
+/* eslint-disable import/no-duplicates */
 import './DataChart';
+import DataChart from './DataChart';
 import './DataTable';
 import './DataPanel.css';
 
@@ -47,6 +49,11 @@ export default class DataPanel extends HTMLElement {
     for (const panel of panels) {
       if (panel.id === `sf-data-${this.#active}-panel`) {
         panel.classList.add('active');
+        // make sure that chart exactly fits available space
+        const chart = panel.querySelector('sf-data-chart');
+        if (chart !== null) {
+          (chart as DataChart).resize();
+        }
       } else {
         panel.classList.remove('active');
       }

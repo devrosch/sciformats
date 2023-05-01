@@ -92,13 +92,17 @@ export default class DataChart extends HTMLElement {
         this.#chartState.config,
       );
       // initial resize to panel before 'responsive' config kicks in
-      Plotly.Plots.resize(this.#chartContainer!);
+      this.resize();
 
       this.#initialized = true;
 
       // unhide chart
       setTimeout(() => { this.classList.remove('init'); }, 100);
     }
+  }
+
+  resize() {
+    Plotly.Plots.resize(this.#chartContainer!);
   }
 
   static toXyArrays(data: { x: number, y: number }[]) {

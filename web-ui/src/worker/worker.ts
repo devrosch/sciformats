@@ -237,6 +237,19 @@ const readNodeData = (url: URL) => {
   return json;
 };
 
+const getExceptionMessage = (exception: any) => {
+  if (typeof exception === 'number') {
+    // C++/WASM exception
+    /* @ts-expect-error */
+    return Module.getExceptionMessage(exception);
+  } else if (exception.message) {
+    // JS Error
+    return exception.message;
+  }
+  // something else
+  return exception;
+}
+
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
   const correlationId = request.correlationId;
@@ -268,7 +281,7 @@ self.onmessage = (event) => {
           mountFile(url, blob);
           storeRootNode(url);
         } catch (error: any) {
-          const message = error.message ? error.message : error;
+          const message = getExceptionMessage(error);
           self.postMessage(new WorkerResponse('error', correlationId, message));
           break;
         }
@@ -284,7 +297,7 @@ self.onmessage = (event) => {
         self.postMessage(new WorkerResponse('read', correlationId, nodeData));
         break;
       } catch (error: any) {
-        const message = error.message ? error.message : error;
+        const message = getExceptionMessage(error);
         self.postMessage(new WorkerResponse('error', correlationId, message));
         break;
       }

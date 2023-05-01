@@ -25,8 +25,8 @@ export default class ParserRepository {
         const parser = new LocalFileParser(this.#worker, url);
         return parser;
       }
-      throw Error(`Could not open file: ${file.name}`);
+      throw Error(`Could not open file: "${file.name}"`);
     }
-    throw Error(`File not recognized: ${file.name}`);
+    throw Error(`File not recognized: "${file.name}"`);
   }
 }

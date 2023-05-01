@@ -79,11 +79,17 @@ export default class Tree extends HTMLElement {
       const parserPromise = this.#parserRepository.findParser(file);
       parserPromises.push(parserPromise);
     }
-    const parsers = await Promise.all(parserPromises);
+
     // create tree nodes
-    for (const parser of parsers) {
-      const rootNode = new TreeNode(parser, parser.rootUrl);
-      this.#children.push(rootNode);
+    for (let i = 0; i < parserPromises.length; i += 1) {
+      try {
+        const parser = await parserPromises[i];
+        const rootNode = new TreeNode(parser, parser.rootUrl);
+        this.#children.push(rootNode);
+      } catch (error: any) {
+        const message = error.detail ? error.detail : error;
+        console.error(`Error opening file: "${files[i].name}". ${message}`);
+      }      
     }
     this.render();
   }

@@ -80,6 +80,10 @@ export default class Tree extends HTMLElement {
       parserPromises.push(parserPromise);
     }
 
+    // just to avoid "Uncaught (in promise) Error" on console
+    // successes / errors will be treated in the loop below
+    Promise.allSettled(parserPromises);
+
     // create tree nodes
     for (let i = 0; i < parserPromises.length; i += 1) {
       try {

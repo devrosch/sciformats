@@ -208,25 +208,17 @@ const readNodeData = (url: URL) => {
   // walk down hierarchy to find child
   // TODO: implement in library to make more efficient
   let parent = rootNode;
-  for (let i = 0; i < pathSegments.length; i += 1) {
+  for (let i = 0; i < pathSegments.length; i += 1) {    
     const pathSegment = pathSegments[i];
+    const childIndex = parseInt(pathSegment.split('-')[0]);
     // virtual std::vector<std::shared_ptr<Node>> getChildNodes();
     const childNodes = parent.getChildNodes();
-    const childNodesSize = childNodes.size();
-    for (let j = 0; j < childNodesSize; j += 1) {
-      const childNode = childNodes.get(j);
-      const childNodeName = childNode.name;
-      if (childNodeName === pathSegment) {
-        // replace parent with child node
-        if (parent !== rootNode) {
-          parent.delete();
-        }
-        parent = childNode;
-        break;
-      } else {
-        childNode.delete();
-      }
+    const childNode = childNodes.get(childIndex);
+    // replace parent with child node
+    if (parent !== rootNode) {
+      parent.delete();
     }
+    parent = childNode;
     childNodes.delete();
   }
 

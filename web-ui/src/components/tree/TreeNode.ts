@@ -79,20 +79,21 @@ export default class TreeNode extends HTMLElement {
     if (hasChildren) {
       if (this.#expand) {
         // add child nodes
-        for (const childNodeName of this.#nodeData.children) {
+        for (let i = 0; i < this.#nodeData.children.length; i++) {
           const childUrl = new URL(this.#url);
           if (!this.#url.hash.endsWith('/')) {
             childUrl.hash += ('/');
           }
-          childUrl.hash += childNodeName;
+          const childNodeName = this.#nodeData.children[i];
+          childUrl.hash += `${i}-${encodeURIComponent(childNodeName)}`;
           const childNode = new TreeNode(this.#parser, childUrl);
           this.appendChild(childNode);
         }
       } else {
         // remove child nodes
         const numChildren = this.children.length;
-        for (let index = numChildren; index >= 0; index -= 1) {
-          const child = this.children[index];
+        for (let i = numChildren; i >= 0; i -= 1) {
+          const child = this.children[i];
           if (child instanceof TreeNode) {
             this.removeChild(child);
           }
@@ -125,7 +126,10 @@ export default class TreeNode extends HTMLElement {
     if (hash === '' || hash === '#' || hash === '#/') {
       return TreeNode.#extractName(this.#url.pathname);
     }
-    return TreeNode.#extractName(hash);
+    const prefixedName = TreeNode.#extractName(hash);
+    const hyphenIndex = prefixedName.indexOf('-');
+    // display name without prefixed index
+    return prefixedName.substring(hyphenIndex + 1);
   }
 
   async setSelected(selected: boolean) {

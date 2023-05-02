@@ -79,7 +79,7 @@ export default class TreeNode extends HTMLElement {
     if (hasChildren) {
       if (this.#expand) {
         // add child nodes
-        for (let i = 0; i < this.#nodeData.children.length; i++) {
+        for (let i = 0; i < this.#nodeData.children.length; i += 1) {
           const childUrl = new URL(this.#url);
           if (!this.#url.hash.endsWith('/')) {
             childUrl.hash += ('/');

@@ -157,6 +157,10 @@ export default class TreeNode extends HTMLElement {
     this.render();
   }
 
+  async close() {
+    this.#parser.close();
+  }
+
   // #region user events
 
   onToggleCollapsed = () => {

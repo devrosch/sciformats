@@ -71,29 +71,37 @@ export default class Tree extends HTMLElement {
   async handleFilesOpenRequested(message: Message) {
     const files = message.detail.files as File[];
     // find parsers
-    const parserPromises = [];
     for (const file of files) {
       console.log(`Tree -> sf-file-open-requested received for: ${file.name}`);
-      const parserPromise = this.#parserRepository.findParser(file);
-      parserPromises.push(parserPromise);
-    }
 
-    // just to avoid "Uncaught (in promise) Error" on console
-    // successes / errors will be treated in the loop below
-    Promise.allSettled(parserPromises);
-
-    // create tree nodes
-    for (let i = 0; i < parserPromises.length; i += 1) {
+      // find parser
+      let parser = null;
       try {
         /* eslint-disable-next-line no-await-in-loop */
-        const parser = await parserPromises[i];
-        const rootNode = new TreeNode(parser, parser.rootUrl);
-        this.#children.push(rootNode);
+        parser = await this.#parserRepository.findParser(file);
       } catch (error: any) {
         const detail = error.detail ? error.detail : error;
-        console.error(`Error opening file: "${files[i].name}". ${detail}`);
+        const warningMessage = `Could not find parser for file: "${file.name}". ${detail}`;
+        this.#channel.dispatch('sf-warning', warningMessage);
+        console.warn(warningMessage);
+        continue;
+      }
+
+      // open file
+      try {
+        /* eslint-disable-next-line no-await-in-loop */
+        await parser.open();
+        const rootNode = new TreeNode(parser, parser.rootUrl);
+        this.#children.push(rootNode);
+        this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
+      } catch (error: any) {
+        const detail = error.detail ? error.detail : error;
+        const errorMessage = `Error opening file: "${file.name}". ${detail}`;
+        this.#channel.dispatch('sf-error', errorMessage);
+        console.error(errorMessage);
       }
     }
+
     this.render();
   }
 
@@ -108,6 +116,10 @@ export default class Tree extends HTMLElement {
       if (childUrl !== null && selectedUrl.startsWith(childUrl)) {
         const index = this.#children.indexOf(child);
         this.#children.splice(index, 1);
+        child.close().then(() => {
+          console.log(`File closed: ${child.name}`);
+          this.#channel.dispatch('sf-file-closed', { url: new URL(childUrl) });
+        });
         this.render();
         return;
       }

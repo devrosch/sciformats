@@ -3,17 +3,16 @@ import Parser from '../Parser';
 export default class LocalFileParser implements Parser {
   #url: URL;
 
-  // #file: File;
-
-  // TODO: actually implement
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(url: URL, file: File) {
+  constructor(url: URL) {
     this.#url = url;
-    // this.#file = file;
   }
 
   get rootUrl(): URL {
     return this.#url;
+  }
+
+  async open() {
+    return;
   }
 
   async read(url: URL) {
@@ -55,5 +54,9 @@ export default class LocalFileParser implements Parser {
       parameters,
       children,
     };
+  }
+
+  async close() {
+    return;
   }
 }

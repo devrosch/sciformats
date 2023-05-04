@@ -7,7 +7,7 @@ export default class ParserRepository {
     // generate URL of type file:///UUID/fileName#/
     const uuid = crypto.randomUUID();
     const url = new URL(`file:///${uuid}/${file.name}#/`);
-    const parser = new LocalFileParser(url, file);
+    const parser = new LocalFileParser(url);
     return parser;
   }
 }

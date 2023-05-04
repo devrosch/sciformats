@@ -16,6 +16,10 @@ class StubParser implements Parser {
     return this.#url;
   }
 
+  async open() {
+    return;
+  }
+
   /* eslint-disable class-methods-use-this */
   async read(url: URL) {
     const hash = decodeURIComponent(url.hash);
@@ -46,6 +50,10 @@ class StubParser implements Parser {
       parameters,
       children,
     };
+  }
+
+  async close() {
+    return;
   }
 }
 

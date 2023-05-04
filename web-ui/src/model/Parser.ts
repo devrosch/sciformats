@@ -10,6 +10,14 @@ export default interface Parser {
   readonly rootUrl: URL;
 
   /**
+   * Open the data set for reading.
+   * This is a prerequisite for reading.
+   * @returns {void}
+   */
+  open(): Promise<void>;
+
+  /**
+   * Read the contents of the node at the given URL.
    * @param {URL} url URL to file including fragment. Should start with root URL.
    * @example
    * file:///local/path/to/file#/
@@ -18,4 +26,11 @@ export default interface Parser {
    * @returns {NodeData} An object representing the fragment.
    */
   read(url: URL): Promise<NodeData>;
+
+  /**
+   * Closes the data set.
+   * After closing it cannot be re-opened and no more reads are possible.
+   * @returns {void}
+   */
+   close(): Promise<void>;
 }

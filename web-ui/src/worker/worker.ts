@@ -257,7 +257,7 @@ self.onmessage = (event) => {
     case 'scan': {
       const fileInfo = request.detail as WorkerFileInfo;
       const url = new URL(fileInfo.url);
-      const blob = fileInfo.file;
+      const blob = fileInfo.blob;
       mountFile(url, blob);
       const recognized = isFileRecognized(url);
       unmountFile(url);
@@ -267,7 +267,7 @@ self.onmessage = (event) => {
     case 'open': {
       const fileInfo = request.detail as WorkerFileInfo;
       const url = new URL(fileInfo.url);
-      const blob = fileInfo.file;
+      const blob = fileInfo.blob;
       const rootUrl = new URL(url.toString().split('#')[0]);
       if (!openFiles.has(rootUrl.toString())) {
         try {

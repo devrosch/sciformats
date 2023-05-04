@@ -18,6 +18,10 @@ class MockParser implements Parser {
     this.rootUrl = new URL(`${this.prefix}${file.name}#/`);
   }
 
+  async open() {
+    return;
+  }
+
   // eslint-disable-next-line class-methods-use-this
   read(url: URL): Promise<NodeData> {
     const data: { x: number, y: number }[] = [];
@@ -32,6 +36,10 @@ class MockParser implements Parser {
     };
 
     return new Promise((resolve) => { resolve(nodeData); });
+  }
+
+  async close() {
+    return;
   }
 }
 

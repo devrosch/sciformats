@@ -1,13 +1,13 @@
 import WorkerFileUrl from './WorkerFileUrl';
 
 /**
- * Data representing a file.
+ * Data representing file content.
  */
 type WorkerFileInfo = WorkerFileUrl & {
   /**
    * File data.
    */
-  file: Blob,
+  blob: Blob,
 };
 
 export default WorkerFileInfo;

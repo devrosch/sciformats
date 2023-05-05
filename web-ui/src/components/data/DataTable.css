@@ -2,19 +2,10 @@ sf-data-table {
   flex: 0 0 100%;
 }
 
-sf-data-table table {
+sf-data-table textarea {  
   margin: 0.5em;
-  font-family: sans-serif;
-  font-size: 14px;
-}
-
-sf-data-table table, th, td {
-  border: 1px solid;
-  border-collapse: collapse;
-  min-width: 10%;
-}
-
-sf-data-table th {
-  background-color: #999;
-  text-align: left;
+  width: calc(100% - 1em);
+  height: calc(100% - 1em);
+  box-sizing: border-box;
+  resize: none;
 }

@@ -21,14 +21,16 @@ const checkDataIsRendered = (
   document: Document,
   expectRender: boolean,
 ) => {
-  const html = document.body.innerHTML;
+  const textarea = document.querySelector(`${element} textarea`) as HTMLTextAreaElement;
+  expect(textarea).not.toBeNull();
+  const value = textarea.value;
   for (const dataPoint of dataArray) {
     if (expectRender) {
-      expect(html).toContain(String(dataPoint.x));
-      expect(html).toContain(String(dataPoint.y));
+      expect(value).toContain(String(dataPoint.x));
+      expect(value).toContain(String(dataPoint.y));
     } else {
-      expect(html).not.toContain(String(dataPoint.x));
-      expect(html).not.toContain(String(dataPoint.y));
+      expect(value).not.toContain(String(dataPoint.x));
+      expect(value).not.toContain(String(dataPoint.y));
     }
   }
 };
@@ -40,15 +42,11 @@ afterEach(() => {
 
 test('sf-data-table renders', async () => {
   document.body.innerHTML = `<${element}/>`;
-  expect(document.body.innerHTML).toContain('table');
-  expect(document.body.innerHTML).toContain('thead');
+  expect(document.body.innerHTML).toContain('textarea');
 
   const table = document.body.querySelector(element) as DataTable;
   table.data = data;
-  expect(document.body.innerHTML).toContain('table');
-  expect(document.body.innerHTML).toContain('thead');
-  expect(document.body.innerHTML).toContain('tbody');
-  expect(document.body.innerHTML).toContain('td');
+  expect(document.body.innerHTML).toContain('textarea');
   checkDataIsRendered(data, document, true);
 });
 

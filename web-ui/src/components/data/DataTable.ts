@@ -5,16 +5,7 @@ import { isSameUrl } from 'util/UrlUtils';
 import './DataTable.css';
 
 const template = `
-  <table>
-  <thead>
-    <tr>
-      <th>x</th>
-      <th>y</th>
-    </tr>
-  </thead>
-  <tbody>
-  </tbody>
-  </table>
+  <textarea readonly></textarea>
 `;
 
 const nodeSelectedEvent = 'sf-tree-node-selected';
@@ -57,19 +48,16 @@ export default class DataTable extends HTMLElement {
   }
 
   render() {
-    const tBody = this.querySelector('table > tbody') as HTMLTableSectionElement;
-    tBody.innerHTML = '';
+    const textarea = this.querySelector('textarea') as HTMLTextAreaElement;
 
+    let text = '';
     for (const data of this.data) {
-      const tr = document.createElement('tr');
-      const tdX = document.createElement('td');
-      tdX.textContent = String(data.x);
-      tr.append(tdX);
-      const tdY = document.createElement('td');
-      tdY.textContent = String(data.y);
-      tr.append(tdY);
-      tBody.append(tr);
+      const x = String(data.x).padEnd(25);
+      const y = String(data.y);
+      const row = `${x}; ${y}\n`;
+      text += row;
     }
+    textarea.value = text;
   }
 
   handleDataChanged(message: Message) {

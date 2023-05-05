@@ -1,9 +1,9 @@
 import WorkerNodeData from 'worker/WorkerNodeData';
 import { postMessage } from 'util/WorkerUtils';
 import WorkerResponse from 'worker/WorkerResponse';
-import Parser from './Parser';
 import WorkerFileInfo from 'worker/WorkerFileInfo';
 import WorkerFileUrl from 'worker/WorkerFileUrl';
+import Parser from './Parser';
 
 export default class LocalFileParser implements Parser {
   #worker: Worker;

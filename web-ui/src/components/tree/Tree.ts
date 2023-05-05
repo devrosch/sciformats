@@ -84,21 +84,22 @@ export default class Tree extends HTMLElement {
         const warningMessage = `Could not find parser for file: "${file.name}". ${detail}`;
         this.#channel.dispatch('sf-warning', warningMessage);
         console.warn(warningMessage);
-        continue;
       }
 
-      // open file
-      try {
-        /* eslint-disable-next-line no-await-in-loop */
-        await parser.open();
-        const rootNode = new TreeNode(parser, parser.rootUrl);
-        this.#children.push(rootNode);
-        this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
-      } catch (error: any) {
-        const detail = error.detail ? error.detail : error;
-        const errorMessage = `Error opening file: "${file.name}". ${detail}`;
-        this.#channel.dispatch('sf-error', errorMessage);
-        console.error(errorMessage);
+      if (parser !== null) {
+        // open file
+        try {
+          /* eslint-disable-next-line no-await-in-loop */
+          await parser.open();
+          const rootNode = new TreeNode(parser, parser.rootUrl);
+          this.#children.push(rootNode);
+          this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
+        } catch (error: any) {
+          const detail = error.detail ? error.detail : error;
+          const errorMessage = `Error opening file: "${file.name}". ${detail}`;
+          this.#channel.dispatch('sf-error', errorMessage);
+          console.error(errorMessage);
+        }
       }
     }
 

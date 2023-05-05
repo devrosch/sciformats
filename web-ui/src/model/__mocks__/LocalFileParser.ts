@@ -11,8 +11,9 @@ export default class LocalFileParser implements Parser {
     return this.#url;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async open() {
-    return;
+    // noop
   }
 
   async read(url: URL) {
@@ -56,7 +57,8 @@ export default class LocalFileParser implements Parser {
     };
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async close() {
-    return;
+    // noop
   }
 }

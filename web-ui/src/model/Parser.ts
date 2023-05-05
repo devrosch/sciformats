@@ -32,5 +32,5 @@ export default interface Parser {
    * After closing it cannot be re-opened and no more reads are possible.
    * @returns {void}
    */
-   close(): Promise<void>;
+  close(): Promise<void>;
 }

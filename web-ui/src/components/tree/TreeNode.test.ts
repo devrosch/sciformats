@@ -16,8 +16,9 @@ class StubParser implements Parser {
     return this.#url;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async open() {
-    return;
+    // noop
   }
 
   /* eslint-disable class-methods-use-this */
@@ -52,8 +53,9 @@ class StubParser implements Parser {
     };
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async close() {
-    return;
+    // noop
   }
 }
 

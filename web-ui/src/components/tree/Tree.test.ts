@@ -18,8 +18,9 @@ class MockParser implements Parser {
     this.rootUrl = new URL(`${this.prefix}${file.name}#/`);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async open() {
-    return;
+    // noop
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -38,8 +39,9 @@ class MockParser implements Parser {
     return new Promise((resolve) => { resolve(nodeData); });
   }
 
+  // eslint-disable-next-line class-methods-use-this
   async close() {
-    return;
+    // noop
   }
 }
 

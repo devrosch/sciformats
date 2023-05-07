@@ -22,7 +22,7 @@ self.importScripts('libsf.js');
 const workingDir = '/work';
 
 /* @ts-expect-error */
-const openFiles = new Map<string, Module.Node>();
+const openFiles = new Map<string, Module.JdxDataMapper>();
 
 // use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
 // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
@@ -55,26 +55,22 @@ const mountFile = (url: URL, blob: Blob) => {
   }, uuidDirPath);
 };
 
-const storeRootNode = (url: URL) => {
+const storeMapper = (url: URL) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
-  /* @ts-expect-error */
-  const parser = new Module.JdxFileParser();
   const filePath = `${workingDir}/${uuid}/${filename}`;
   const rootUrl = new URL(url.toString().split('#')[0]);
-  let rootNode = null;
+  let mapper = null;
   try {
-    rootNode = parser.parse(filePath);
-    openFiles.set(rootUrl.toString(), rootNode);
+    /* @ts-expect-error */
+    mapper = new Module.JdxDataMapper(filePath);
+    openFiles.set(rootUrl.toString(), mapper);
   } catch (error) {
-    parser.delete();
-    if (rootNode !== null) {
-      rootNode.delete();
+    if (mapper !== null) {
+      mapper.delete();
     }
     throw error;
   }
-  parser.delete();
-  return rootNode;
 };
 
 /**
@@ -107,11 +103,10 @@ const isFileRecognized = (url: URL) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   /* @ts-expect-error */
-  const parser = new Module.JdxFileParser();
-  // console.log(`Parser: ${parser}`);
+  const scanner = new Module.JdxDataScanner();
   const filePath = `${workingDir}/${uuid}/${filename}`;
-  const recognized = parser.isRecognized(filePath);
-  parser.delete();
+  const recognized = scanner.isRecognized(filePath);
+  scanner.delete();
   return recognized;
 };
 
@@ -125,7 +120,7 @@ const nodeToJson = (url: URL, node: Module.Node) => {
   // json.name = node.name;
 
   // virtual std::vector<KeyValueParam> getParams();
-  const params = node.getParams();
+  const params = node.parameters;
   const paramsSize = params.size();
   const jsonParameters: any = [];
   for (let index = 0; index < paramsSize; index += 1) {
@@ -139,7 +134,7 @@ const nodeToJson = (url: URL, node: Module.Node) => {
   params.delete();
 
   // virtual std::vector<Point2D> getData();
-  const data = node.getData();
+  const data = node.data;
   const dataSize = data.size();
   const jsonData = [];
   for (let index = 0; index < dataSize; index += 1) {
@@ -151,17 +146,15 @@ const nodeToJson = (url: URL, node: Module.Node) => {
   json.data = jsonData;
 
   // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
-  const childNodes = node.getChildNodes();
-  const childNodesSize = childNodes.size();
+  const childNodeNames = node.childNodeNames;
+  const childNodesSize = childNodeNames.size();
   const jsonChildNodes = [];
   for (let index = 0; index < childNodesSize; index += 1) {
-    const childNode = childNodes.get(index);
-    const childNodeName = childNode.name;
+    const childNodeName = childNodeNames.get(index);
     jsonChildNodes.push(childNodeName);
-    childNode.delete();
   }
   json.children = jsonChildNodes;
-  childNodes.delete();
+  childNodeNames.delete();
 
   return json;
 };
@@ -178,11 +171,11 @@ const readNodeData = (url: URL) => {
   }
 
   let hash = url.hash;
-  if (hash.length > 0 && !hash.startsWith('#')) {
+  if (hash.length > 0 && !hash.startsWith('#/')) {
     throw new Error(`Unexpected URL hash: ${hash}`);
   }
 
-  const rootNode = openFiles.get(rootUrl.toString());
+  const mapper = openFiles.get(rootUrl.toString());
 
   // '', '#', '#/' all denote the root node
   // splitting by '/' results in:
@@ -192,41 +185,21 @@ const readNodeData = (url: URL) => {
   if (hash.startsWith('#')) {
     hash = hash.substring(1);
   }
-  if (hash.startsWith('/')) {
-    // skip root
-    hash = hash.substring(1);
-  }
-  const pathSegments = hash.split('/');
-  for (let i = 0; i < pathSegments.length; i += 1) {
-    pathSegments[i] = decodeURIComponent(pathSegments[i]);
-  }
-  if (pathSegments.length === 1 && pathSegments[0] === '') {
-    // only root is present in path
-    const json = nodeToJson(url, rootNode);
-    return json;
-  }
-  // walk down hierarchy to find child
-  // TODO: implement in library to make more efficient
-  let parent = rootNode;
-  for (let i = 0; i < pathSegments.length; i += 1) {
-    const pathSegment = pathSegments[i];
-    const childIndex = parseInt(pathSegment.split('-')[0], 10);
-    // virtual std::vector<std::shared_ptr<Node>> getChildNodes();
-    const childNodes = parent.getChildNodes();
-    const childNode = childNodes.get(childIndex);
-    // replace parent with child node
-    if (parent !== rootNode) {
-      parent.delete();
-    }
-    parent = childNode;
-    childNodes.delete();
+  if (hash.length === 0) {
+    hash = '/';
   }
 
-  const json = nodeToJson(url, parent);
-  if (parent !== rootNode) {
-    parent.delete();
+  let node = null;
+  try {
+    node = mapper.read(hash);
+    const json = nodeToJson(url, node);
+    return json;
+  } catch (error) {
+    if (node) {
+      node.delete();
+    }
+    throw error;
   }
-  return json;
 };
 
 const getExceptionMessage = (exception: any) => {
@@ -272,7 +245,7 @@ self.onmessage = (event) => {
       if (!openFiles.has(rootUrl.toString())) {
         try {
           mountFile(url, blob);
-          storeRootNode(url);
+          storeMapper(url);
         } catch (error: any) {
           const message = getExceptionMessage(error);
           self.postMessage(new WorkerResponse('error', correlationId, message));

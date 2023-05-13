@@ -9,8 +9,6 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/lib-cpp/build/tests/jdx/jdx_test",
-      // "args": ["[TextReader], [BufferedTextReader]"],
-      // "args": ["[BufferedTextReader]"],
       "args": [""],
       "stopAtEntry": false,
       // "cwd": "${fileDirname}",

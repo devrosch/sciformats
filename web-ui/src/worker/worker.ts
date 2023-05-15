@@ -144,6 +144,7 @@ const nodeToJson = (url: URL, node: Module.Node) => {
     jsonData.push({ x, y });
   }
   json.data = jsonData;
+  data.delete();
 
   // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
   const childNodeNames = node.childNodeNames;
@@ -189,17 +190,10 @@ const readNodeData = (url: URL) => {
     hash = '/';
   }
 
-  let node = null;
-  try {
-    node = mapper.read(hash);
-    const json = nodeToJson(url, node);
-    return json;
-  } catch (error) {
-    if (node) {
-      node.delete();
-    }
-    throw error;
-  }
+  // node is of type Node2 and bound as a value object, hence it has no delete() method
+  const node = mapper.read(hash);
+  const json = nodeToJson(url, node);
+  return json;
 };
 
 const getExceptionMessage = (exception: any) => {

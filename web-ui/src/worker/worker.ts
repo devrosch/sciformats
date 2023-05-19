@@ -200,21 +200,18 @@ const getExceptionMessage = (exception: any) => {
   if (typeof exception === 'number') {
     // JS wrapped C++/WASM exception
     /* @ts-expect-error */
-    return Module.getExceptionMessage(exception);
+    const msg = Module.getCppExceptionMessage(exception);
+    return msg;
   }
   /* @ts-expect-error */
   if (exception instanceof WebAssembly.Exception) {
     // native C++/WASM exception
     // see: https://github.com/emscripten-core/emscripten/issues/16033
+    // https://github.com/emscripten-core/emscripten/pull/17219
     /* @ts-expect-error */
-    const tag = Module.asm.__cpp_exception;
-    /* @ts-expect-error */
-    const isWasmCppException = exception.is(tag);
-    /* @ts-expect-error */
-    const exceptionPtr = exception.getArg(Module.asm.__cpp_exception, 0)
-    // const exceptionPtr = e.getArg(instantiatedWasm.instance.exports.__cpp_exception, 0)
-    /* @ts-expect-error */
-    return Module.getExceptionMessage(exceptionPtr);
+    const msgArray = Module.getExceptionMessage(exception);
+    const msg = Array.isArray(msgArray) ? msgArray.join(', ') : msgArray;
+    return msg;
   }
   if (exception.message) {
     // JS Error

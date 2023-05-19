@@ -198,9 +198,23 @@ const readNodeData = (url: URL) => {
 
 const getExceptionMessage = (exception: any) => {
   if (typeof exception === 'number') {
-    // C++/WASM exception
+    // JS wrapped C++/WASM exception
     /* @ts-expect-error */
     return Module.getExceptionMessage(exception);
+  }
+  /* @ts-expect-error */
+  if (exception instanceof WebAssembly.Exception) {
+    // native C++/WASM exception
+    // see: https://github.com/emscripten-core/emscripten/issues/16033
+    /* @ts-expect-error */
+    const tag = Module.asm.__cpp_exception;
+    /* @ts-expect-error */
+    const isWasmCppException = exception.is(tag);
+    /* @ts-expect-error */
+    const exceptionPtr = exception.getArg(Module.asm.__cpp_exception, 0)
+    // const exceptionPtr = e.getArg(instantiatedWasm.instance.exports.__cpp_exception, 0)
+    /* @ts-expect-error */
+    return Module.getExceptionMessage(exceptionPtr);
   }
   if (exception.message) {
     // JS Error

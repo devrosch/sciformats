@@ -3,9 +3,21 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Parser from 'model/Parser';
 import NodeData from 'model/NodeData';
+import ErrorParser from 'model/ErrorParser';
 import './Tree'; // for side effects
 import Tree from './Tree';
 import TreeNode from './TreeNode';
+
+const element = 'sf-tree';
+const nodeElement = 'sf-tree-node';
+const fileOpenedEvent = 'sf-file-open-requested';
+const fileContent = 'abc';
+const fileName = 'dummy.txt';
+const fileName2 = 'dummy2.txt';
+const fileName3 = 'dummy3.txt';
+const errorFileName = 'ErrorFile.txt';
+const urlAttr = 'url';
+const urlRegex = new RegExp(`file:///.*/${fileName}#/`);
 
 // a StubParser really, but jest requires the name to start with "Mock"
 // see: https://jestjs.io/docs/es6-class-mocks#calling-jestmock-with-the-module-factory-parameter
@@ -45,19 +57,13 @@ class MockParser implements Parser {
   }
 }
 
+const mockErrorParser = new ErrorParser(new URL('file:///error.txt'), 'Error message.');
 jest.mock('model/ParserRepository', () => jest.fn().mockImplementation(
-  () => ({ findParser: async (file: File) => new MockParser(file) }),
+  () => ({
+    findParser: async (file: File) => (file.name === errorFileName
+      ? mockErrorParser : new MockParser(file)),
+  }),
 ));
-
-const element = 'sf-tree';
-const nodeElement = 'sf-tree-node';
-const fileOpenedEvent = 'sf-file-open-requested';
-const fileContent = 'abc';
-const fileName = 'dummy.txt';
-const fileName2 = 'dummy2.txt';
-const fileName3 = 'dummy3.txt';
-const urlAttr = 'url';
-const urlRegex = new RegExp(`file:///.*/${fileName}#/`);
 
 const prepareFileOpenMessage = (fileNames: string[]) => {
   const blob = new Blob([fileContent]);
@@ -325,4 +331,31 @@ test('sf-tree tree click events result in selected tree node to receive focus', 
 
   nodes.tree.click();
   expect(document.activeElement).toBe(nameSpan);
+});
+
+test('sf-tree creates error node when file open fails', (done) => {
+  document.body.innerHTML = `<${element}/>`;
+  const tree = document.body.querySelector(element) as Tree;
+  expect(tree.children.length).toBe(0);
+
+  const blob = new Blob([fileContent]);
+  const file = new File([blob], errorFileName);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch(fileOpenedEvent, { files: [file] });
+
+  waitForChildrenCount(tree, 1).then(() => {
+    // wait for async parser.read() to execute
+    process.nextTick(() => {
+      try {
+        expect(tree.children).toHaveLength(1);
+        const treeNode = tree.querySelector(nodeElement) as TreeNode;
+        expect(treeNode).toBeTruthy();
+        expect(treeNode.textContent?.toLowerCase()).toContain('error');
+        done();
+      } catch (err) {
+        done(err);
+      }
+    });
+  });
 });

@@ -126,7 +126,7 @@ export default class TreeNode extends HTMLElement {
       this.#nodeData = data;
     } catch (error: any) {
       const detail = error.detail ? error.detail : error;
-      const errorMessage = `Error opening node: "${this.#url}". ${detail}`;
+      const errorMessage = `Error reading node: "${this.#url}". ${detail}`;
       this.#error = errorMessage;
       this.#nodeData = {
         url: this.#url,

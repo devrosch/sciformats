@@ -2,6 +2,7 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
 import ParserRepository from 'model/ParserRepository';
+import ErrorParser from 'model/ErrorParser';
 import TreeNode from './TreeNode';
 import './Tree.css';
 
@@ -99,6 +100,10 @@ export default class Tree extends HTMLElement {
           const errorMessage = `Error opening file: "${file.name}". ${detail}`;
           this.#channel.dispatch('sf-error', errorMessage);
           console.error(errorMessage);
+          // show node with error in tree
+          const errorParser = new ErrorParser(parser.rootUrl, errorMessage);
+          const rootNode = new TreeNode(errorParser, errorParser.rootUrl);
+          this.#children.push(rootNode);
         }
       }
     }

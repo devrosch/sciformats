@@ -221,11 +221,15 @@ export default class Tree extends HTMLElement {
       case 'ArrowUp': {
         const prev = Tree.#findPreviousTreeNode(treeNode);
         Tree.selectNode(prev);
+        // don't scroll
+        e.preventDefault();
         break;
       }
       case 'ArrowDown': {
         const next = Tree.#findNextTreeNode(treeNode);
         Tree.selectNode(next);
+        // don't scroll
+        e.preventDefault();
         break;
       }
       case 'ArrowLeft':

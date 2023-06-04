@@ -129,8 +129,8 @@ test('sf-tree-node generates sf-tree-node-data-updated events', (done) => {
   let handle: any;
   const listener = (message: Message) => {
     try {
-      expect(message.name).toBe(dataReadEvent);
       channel.removeListener(handle);
+      expect(message.name).toBe(dataReadEvent);
       done();
     } catch (error) {
       done(error);
@@ -140,4 +140,51 @@ test('sf-tree-node generates sf-tree-node-data-updated events', (done) => {
 
   treeNode = new TreeNode(parser, parser.rootUrl);
   document.body.append(treeNode);
+});
+
+test('sf-tree-node generates sf-error events in case of data loading error', (done) => {
+  const errorEvent = 'sf-error';
+  const mockParser = {
+    rootUrl: new URL('https://dummy#/'),
+    open: () => new Promise<void>(() => {}),
+    read: () => { throw Error('Test Error.'); },
+    close: () => new Promise<void>(() => {}),
+  } as Parser;
+  treeNode = new TreeNode(mockParser, mockParser.rootUrl);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  let handle: any;
+  const listener = (message: Message) => {
+    try {
+      channel.removeListener(handle);
+      expect(message.name).toBe(errorEvent);
+      done();
+    } catch (error) {
+      done(error);
+    }
+  };
+  handle = channel.addListener(errorEvent, listener);
+
+  document.body.append(treeNode);
+});
+
+test('sf-tree-node displays error in case of data loading error', (done) => {
+  const mockParser = {
+    rootUrl: new URL('https://dummy#/'),
+    open: () => new Promise<void>(() => {}),
+    read: () => { throw Error('Test Error.'); },
+    close: () => new Promise<void>(() => {}),
+  } as Parser;
+  treeNode = new TreeNode(mockParser, mockParser.rootUrl);
+  document.body.append(treeNode);
+
+  // wait for async parser.read() to execute
+  process.nextTick(() => {
+    try {
+      expect(treeNode.textContent?.toLowerCase()).toContain('error');
+      done();
+    } catch (err) {
+      done(err);
+    }
+  });
 });

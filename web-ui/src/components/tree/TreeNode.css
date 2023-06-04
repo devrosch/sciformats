@@ -18,3 +18,8 @@ sf-tree-node > .plusminus {
 sf-tree-node.selected > .node-name {
   background-color: darkorange;
 }
+
+sf-tree-node > .node-error {
+  color: red;
+  line-height: 100%;
+}

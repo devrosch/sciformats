@@ -11,7 +11,11 @@ const nodeSelectedEvent = 'sf-tree-node-selected';
 const nodeDeselectedEvent = 'sf-tree-node-deselected';
 const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 
-const template = '<span class="plusminus"></span><span class="node-name" tabindex="0"></span>';
+const template = `
+  <span class="plusminus"></span>
+  <span class="node-error">🅧</span>  
+  <span class="node-name" tabindex="0"></span>
+`;
 
 export default class TreeNode extends HTMLElement {
   #initialized = false;
@@ -30,6 +34,8 @@ export default class TreeNode extends HTMLElement {
 
   #selected: boolean = false;
 
+  #error: string | null = null;
+
   constructor(parser: Parser, url: URL) {
     super();
     console.log('TreeNode constructor() called');
@@ -45,8 +51,9 @@ export default class TreeNode extends HTMLElement {
   }
 
   render() {
-    const nameSpan = this.querySelector('.node-name') as HTMLSpanElement;
     const plusMinusSpan = this.querySelector('.plusminus') as HTMLSpanElement;
+    const errorSpan = this.querySelector('.node-error') as HTMLSpanElement;
+    const nameSpan = this.querySelector('.node-name') as HTMLSpanElement;
 
     setElementAttribute(this, 'url', this.#url.toString());
     // do not bind 'this' as that results in a new callable and thus multiple listeners
@@ -55,6 +62,7 @@ export default class TreeNode extends HTMLElement {
     if (this.#nodeData === null) {
       // while loading data ...
       plusMinusSpan.style.display = 'none';
+      errorSpan.style.display = 'none';
       nameSpan.textContent = 'Loading...';
       return;
     }
@@ -65,6 +73,16 @@ export default class TreeNode extends HTMLElement {
     setElementTextContent(nameSpan, this.name);
     if (this.#selected) {
       nameSpan.classList.add('selected');
+    }
+
+    // show error if any
+    if (this.#error !== null) {
+      errorSpan.style.display = '';
+      setElementTextContent(nameSpan, `ERROR: ${this.name}`);
+      nameSpan.setAttribute('title', this.#error);
+    } else {
+      errorSpan.style.display = 'none';
+      nameSpan.removeAttribute('title');
     }
 
     const numChildNodes = this.#nodeData.children.length;
@@ -103,8 +121,22 @@ export default class TreeNode extends HTMLElement {
   }
 
   async #retrieveNodeData() {
-    const data = await this.#parser.read(this.#url);
-    this.#nodeData = data;
+    try {
+      const data = await this.#parser.read(this.#url);
+      this.#nodeData = data;
+    } catch (error: any) {
+      const detail = error.detail ? error.detail : error;
+      const errorMessage = `Error opening node: "${this.#url}". ${detail}`;
+      this.#error = errorMessage;
+      this.#nodeData = {
+        url: this.#url,
+        data: [],
+        parameters: [{ key: 'Error', value: errorMessage }],
+        children: [],
+      };
+      this.#channel.dispatch('sf-error', errorMessage);
+      console.error(errorMessage);
+    }
     this.#channel.dispatch(nodeDataUpdatedEvent, this.#nodeData);
     this.render();
   }

@@ -48,14 +48,23 @@ export default class App extends HTMLElement {
     // noop
   }
 
+  /* eslint-disable class-methods-use-this */
+  onDragStart = (e: DragEvent) => {
+    // prevent UI elements from being draggable
+    e.preventDefault();
+    return false;
+  };
+
   connectedCallback() {
     console.log('App connectedCallback() called');
     this.init();
+    this.addEventListener('dragstart', this.onDragStart);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('App disconnectedCallback() called');
+    this.removeEventListener('dragstart', this.onDragStart);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

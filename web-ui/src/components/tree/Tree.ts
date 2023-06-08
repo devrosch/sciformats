@@ -13,7 +13,7 @@ export default class Tree extends HTMLElement {
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
-  #parserRepository = new ParserRepository();
+  #parserRepository: ParserRepository | null = null;
 
   #eventListeners: any[] = [];
 
@@ -67,6 +67,10 @@ export default class Tree extends HTMLElement {
     }
   }
 
+  setParserRepository(parserRepository: ParserRepository) {
+    this.#parserRepository = parserRepository;
+  }
+
   // #region user events
 
   async handleFilesOpenRequested(message: Message) {
@@ -79,7 +83,7 @@ export default class Tree extends HTMLElement {
       let parser = null;
       try {
         /* eslint-disable-next-line no-await-in-loop */
-        parser = await this.#parserRepository.findParser(file);
+        parser = await this.#parserRepository!.findParser(file);
       } catch (error: any) {
         const detail = error.detail ? error.detail : error;
         const warningMessage = `Could not find parser for file: "${file.name}". ${detail}`;

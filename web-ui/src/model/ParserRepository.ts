@@ -7,8 +7,7 @@ import Parser from './Parser';
 export default class ParserRepository {
   #worker: Worker;
 
-  constructor() {
-    const worker = new Worker(new URL('worker/worker.ts', import.meta.url));
+  constructor(worker: Worker) {
     this.#worker = worker;
   }
 

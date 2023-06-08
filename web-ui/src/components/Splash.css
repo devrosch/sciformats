@@ -1,0 +1,85 @@
+/* dialog */
+
+sf-splash > dialog {
+  width: 50%;
+}
+
+sf-splash > dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+sf-splash > dialog[open] {
+  animation: fadein 0.1s forwards;
+}
+
+/* this does not work, a class needs to be added manually for a closing animation */
+/* https://stackoverflow.com/a/71984473 */
+/* sf-splash > dialog::not([open]) {
+  animation: fadein 0.5s backwards;
+} */
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  sf-splash > dialog {
+    width: 80%;
+  }
+}
+
+/* content */
+
+sf-splash > dialog {
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+sf-splash .sf-title {
+  display: flex;
+  justify-content: center;
+}
+
+sf-splash img.sf-logo {
+  height: calc(5 * 14px);
+}
+
+sf-splash .sf-initializing {
+  font-weight: bold;
+  width: 100%;
+  text-align: center;
+}
+
+sf-splash .sf-initializing .sf-dots {
+  display: inline-block;
+}
+
+/* animation */
+
+sf-splash .sf-dots .sf-dot {
+  display: inline-block;
+  animation: wave 0.2s linear infinite;
+}
+
+sf-splash .sf-dots > .sf-dot:nth-child(2) {
+  animation-delay: -0.0666s;
+}
+
+sf-splash .sf-dots > .sf-dot:nth-child(3) {
+  animation-delay: -0.1333s;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: initial;
+  }
+  50% {
+    transform: translateY(-0.4em);
+  }
+}

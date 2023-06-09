@@ -241,9 +241,11 @@ test('sf-navbar - close event dispatched when "file - close all" is clicked', (d
 test('sf-navbar dispatches custom event on file drop', () => {
   document.body.innerHTML = `
     <${appElement}>
-      <${element} app-selector="${appElement}"></${element}>
+      <${element}></${element}>
     </${appElement}>`;
-  const app = document.body.querySelector(appElement) as Element;
+  const app = document.body.querySelector(appElement) as HTMLElement;
+  const navbar = document.body.querySelector(element) as Navbar;
+  navbar.activateDragAndDrop(app);
   const channel = CustomEventsMessageBus.getDefaultChannel();
 
   // simulate DragEvent, not supported by jsdom
@@ -265,9 +267,11 @@ test('sf-navbar dispatches custom event on file drop', () => {
 test('sf-navbar prevents default and stops propagation on dragenter', () => {
   document.body.innerHTML = `
     <${appElement}>
-      <${element} app-selector="${appElement}"></${element}>
+      <${element}></${element}>
     </${appElement}>`;
-  const app = document.body.querySelector(appElement) as Element;
+  const app = document.body.querySelector(appElement) as HTMLElement;
+  const navbar = document.body.querySelector(element) as Navbar;
+  navbar.activateDragAndDrop(app);
 
   // simulate DragEvent, not supported by jsdom
   const event = new Event('dragenter') as any;
@@ -282,9 +286,11 @@ test('sf-navbar prevents default and stops propagation on dragenter', () => {
 test('sf-navbar shows copy symbol on dragover', () => {
   document.body.innerHTML = `
     <${appElement}>
-      <${element} app-selector="${appElement}"></${element}>
+      <${element}></${element}>
     </${appElement}>`;
-  const app = document.body.querySelector(appElement) as Element;
+  const app = document.body.querySelector(appElement) as HTMLElement;
+  const navbar = document.body.querySelector(element) as Navbar;
+  navbar.activateDragAndDrop(app);
 
   // simulate DragEvent, not supported by jsdom
   const event = new Event('dragover') as any;

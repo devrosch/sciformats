@@ -10,11 +10,12 @@ import 'components/footer/Footer';
 import './App.css';
 import { initWorker } from 'util/WorkerUtils';
 import LocalParserRepository from 'model/LocalParserRepository';
+import Navbar from 'components/menu/Navbar';
 
 const template = `
   <sf-splash open></sf-splash>
   <div class="header">
-    <sf-navbar app-selector="sf-app"></sf-navbar>
+    <sf-navbar></sf-navbar>
   </div>
   <div class="content">
     <div class="tree">
@@ -58,7 +59,9 @@ export default class App extends HTMLElement {
     tree.setParserRepository(parserRepository);
     const splash = this.querySelector('sf-splash') as Splash;
     splash.showModal(false);
-    // TODO: only now activate drag'n'drop and shortcuts
+    const navbar = this.querySelector('sf-navbar') as Navbar;
+    navbar.activateDragAndDrop(this);
+    // TODO: also only now activate shortcuts
   }
 
   /* eslint-disable-next-line class-methods-use-this */

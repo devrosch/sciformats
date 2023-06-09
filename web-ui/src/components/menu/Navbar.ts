@@ -65,8 +65,6 @@ const events = {
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
 
 export default class Navbar extends HTMLElement {
-  static get observedAttributes() { return ['app-selector']; }
-
   #initialized = false;
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
@@ -98,10 +96,20 @@ export default class Navbar extends HTMLElement {
     aboutDialog.showModal(true);
   }
 
-  updateAppReference(selector: string | null) {
-    if (selector !== null) {
-      this.#app = document.querySelector(selector);
+  #removeDragAndDropListeners() {
+    if (this.#app) {
+      this.#app.removeEventListener('dragenter', this.onDragEnter);
+      this.#app.removeEventListener('dragover', this.onDragOver);
+      this.#app.removeEventListener('drop', this.onFileDropped);
     }
+  }
+
+  activateDragAndDrop(app: HTMLElement) {
+    this.#removeDragAndDropListeners();
+    this.#app = app;
+    this.#app.addEventListener('dragenter', this.onDragEnter);
+    this.#app.addEventListener('dragover', this.onDragOver);
+    this.#app.addEventListener('drop', this.onFileDropped);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -229,16 +237,11 @@ export default class Navbar extends HTMLElement {
   connectedCallback() {
     console.log('Navbar connectedCallback() called');
     this.init();
-    const appSelector = this.getAttribute('app-selector');
-    this.updateAppReference(appSelector);
     this.addEventListener('click', this.onClick);
     // only document will reliably receive all keydown events
     document.addEventListener('keydown', this.handleShortcuts);
     mediaQuery.addEventListener('change', this.handleScreenChange);
     document.addEventListener('click', this.handleOutsideSelection);
-    this.#app?.addEventListener('dragenter', this.onDragEnter);
-    this.#app?.addEventListener('dragover', this.onDragOver);
-    this.#app?.addEventListener('drop', this.onFileDropped);
     this.render();
   }
 
@@ -248,18 +251,13 @@ export default class Navbar extends HTMLElement {
     document.removeEventListener('keydown', this.handleShortcuts);
     mediaQuery.removeEventListener('change', this.handleScreenChange);
     document.removeEventListener('click', this.handleOutsideSelection);
-    this.#app?.removeEventListener('dragenter', this.onDragEnter);
-    this.#app?.removeEventListener('dragover', this.onDragOver);
-    this.#app?.removeEventListener('drop', this.onFileDropped);
+    this.#removeDragAndDropListeners();
   }
 
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log('Navbar attributeChangedCallback() called');
     this.init();
-    if (name === 'app-selector' && newValue !== oldValue) {
-      this.updateAppReference(newValue);
-      this.render();
-    }
   }
 }
 

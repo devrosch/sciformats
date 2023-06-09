@@ -1,5 +1,6 @@
 import WorkerRequest from 'worker/WorkerRequest';
 import WorkerResponse from 'worker/WorkerResponse';
+import WorkerStatus from 'worker/WorkerStatus';
 
 /**
  * Post message to web worker.
@@ -33,4 +34,24 @@ export const postMessage = (worker: Worker, name: string, payload: any) => {
   worker.postMessage(new WorkerRequest(name, correlationId, payload));
 
   return promise;
+};
+
+/**
+ * Initialize web worker.
+ * @returns Initialized web worker.
+ */
+export const initWorker = async () => {
+  const worker = new Worker(new URL('worker/worker.ts', import.meta.url));
+  let isWorkerInitialized = false;
+  while (!isWorkerInitialized) {
+    // eslint-disable-next-line no-await-in-loop
+    const scanReply: WorkerResponse = await postMessage(worker, 'status', null) as WorkerResponse;
+    if (scanReply.detail === WorkerStatus.Initialized) {
+      isWorkerInitialized = true;
+    } else {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => { setTimeout(resolve, 500); });
+    }
+  }
+  return worker;
 };

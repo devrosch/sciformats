@@ -7,6 +7,7 @@ import ErrorParser from 'model/ErrorParser';
 import './Tree'; // for side effects
 import Tree from './Tree';
 import TreeNode from './TreeNode';
+import ParserRepository from 'model/ParserRepository';
 
 const element = 'sf-tree';
 const nodeElement = 'sf-tree-node';
@@ -57,6 +58,19 @@ class MockParser implements Parser {
   }
 }
 
+class MockParserRepository implements ParserRepository {
+  findParser(file: File): Promise<Parser> {
+    return new Promise((resolve) => { resolve(new MockParser(file)); });
+  }
+}
+
+const prepareSimpleTree = () => {
+  document.body.innerHTML = `<${element}/>`;
+  const parserRepository = new MockParserRepository();
+  const tree = document.body.querySelector(element) as Tree;
+  tree.setParserRepository(parserRepository);
+};
+
 const mockErrorParser = new ErrorParser(new URL('file:///error.txt'), 'Error message.');
 jest.mock('model/ParserRepository', () => jest.fn().mockImplementation(
   () => ({
@@ -95,7 +109,7 @@ const prepareTreeStructure = async () => {
   //   |     +- child2
   //   |
   //   +- dummy2.txt
-  document.body.innerHTML = `<${element}/>`;
+  prepareSimpleTree();
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children).toHaveLength(0);
   const message = prepareFileOpenMessage([fileName, fileName2]);
@@ -157,13 +171,12 @@ afterEach(() => {
 });
 
 test('sf-tree renders', async () => {
-  document.body.innerHTML = `<${element}/>`;
+  prepareSimpleTree();
   expect(document.body.innerHTML).toContain(element);
 });
 
 test('sf-tree listenes to file open events', async () => {
-  document.body.innerHTML = `<${element}/>`;
-
+  prepareSimpleTree();
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
 
@@ -187,7 +200,7 @@ test('sf-tree listenes to file open events', async () => {
 });
 
 test('sf-tree listenes to file close events', async () => {
-  document.body.innerHTML = `<${element}/>`;
+  prepareSimpleTree();
 
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
@@ -218,7 +231,7 @@ test('sf-tree listenes to file close events', async () => {
 });
 
 test('sf-tree listenes to file close all events', async () => {
-  document.body.innerHTML = `<${element}/>`;
+  prepareSimpleTree();
 
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
@@ -334,7 +347,7 @@ test('sf-tree tree click events result in selected tree node to receive focus', 
 });
 
 test('sf-tree creates error node when file open fails', (done) => {
-  document.body.innerHTML = `<${element}/>`;
+  prepareSimpleTree();
   const tree = document.body.querySelector(element) as Tree;
   expect(tree.children.length).toBe(0);
 

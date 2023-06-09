@@ -8,10 +8,8 @@ import 'components/data/DataPanel';
 import 'components/parameters/ParametersPanel';
 import 'components/footer/Footer';
 import './App.css';
-import WorkerResponse from 'worker/WorkerResponse';
-import { postMessage } from 'util/WorkerUtils';
-import WorkerStatus from 'worker/WorkerStatus';
-import ParserRepository from 'model/ParserRepository';
+import { initWorker } from 'util/WorkerUtils';
+import LocalParserRepository from 'model/LocalParserRepository';
 
 const template = `
   <sf-splash open></sf-splash>
@@ -54,23 +52,13 @@ export default class App extends HTMLElement {
   }
 
   async initWorker() {
-    const worker = new Worker(new URL('worker/worker.ts', import.meta.url));
-    let isWorkerInitialized = false;
-    while (!isWorkerInitialized) {
-      // eslint-disable-next-line no-await-in-loop
-      const scanReply: WorkerResponse = await postMessage(worker, 'status', null) as WorkerResponse;
-      if (scanReply.detail === WorkerStatus.Initialized) {
-        isWorkerInitialized = true;
-      } else {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => { setTimeout(resolve, 500); });
-      }
-    }
-    const parserRepository = new ParserRepository(worker);
+    const worker = await initWorker();
+    const parserRepository = new LocalParserRepository(worker);
     const tree = this.querySelector('sf-tree') as Tree;
     tree.setParserRepository(parserRepository);
     const splash = this.querySelector('sf-splash') as Splash;
     splash.showModal(false);
+    // TODO: only now activate drag'n'drop and shortcuts
   }
 
   // eslint-disable-next-line class-methods-use-this

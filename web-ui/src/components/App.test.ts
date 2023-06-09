@@ -3,7 +3,23 @@ import 'components/menu/NavbarMatchMediaMock'; // mock window.matchMedia()
 import './App'; // for side effects
 import App from './App';
 
-jest.mock('model/ParserRepository');
+jest.mock('util/WorkerUtils');
+
+// TODO: put elsewhere (duplicate in AboutDialog)
+const showModal = jest.fn();
+const close = jest.fn();
+
+beforeAll(() => {
+  // see: https://github.com/jsdom/jsdom/issues/3294
+  HTMLDialogElement.prototype.showModal = showModal;
+  HTMLDialogElement.prototype.close = close;
+});
+
+beforeEach(() => {
+  // see: https://github.com/jsdom/jsdom/issues/3294
+  showModal.mockClear();
+  close.mockClear();
+});
 
 const element = 'sf-app';
 
@@ -17,8 +33,9 @@ test('sf-app renders', async () => {
   const app = document.body.querySelector('sf-app') as App;
   expect(app).toBeTruthy();
 
-  expect(app.children).toHaveLength(3);
-  expect(app.children.item(0)?.nodeName).toBe('DIV');
+  expect(app.children).toHaveLength(4);
+  expect(app.children.item(0)?.nodeName).toBe('SF-SPLASH');
   expect(app.children.item(1)?.nodeName).toBe('DIV');
   expect(app.children.item(2)?.nodeName).toBe('DIV');
+  expect(app.children.item(3)?.nodeName).toBe('DIV');
 });

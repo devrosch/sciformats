@@ -61,7 +61,7 @@ export default class App extends HTMLElement {
     splash.showModal(false);
     const navbar = this.querySelector('sf-navbar') as Navbar;
     navbar.activateDragAndDrop(this);
-    // TODO: also only now activate shortcuts
+    navbar.activateShortcuts();
   }
 
   /* eslint-disable-next-line class-methods-use-this */

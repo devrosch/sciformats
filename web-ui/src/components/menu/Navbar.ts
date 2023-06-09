@@ -8,6 +8,7 @@ import Menu from './Menu';
 import './AboutDialog'; // for side effects
 import AboutDialog from './AboutDialog';
 import './Navbar.css';
+import MenuItemFileOpen from './MenuItemFileOpen';
 
 const isMacOs = SysInfoProvider.detectOS() === 'macOS';
 const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift';
@@ -71,12 +72,14 @@ export default class Navbar extends HTMLElement {
 
   #app: HTMLElement | null = null;
 
+  #showMenu: boolean = false;
+
+  #shortcutsActive = false;
+
   constructor() {
     super();
     console.log('Navbar constructor() called');
   }
-
-  #showMenu: boolean = false;
 
   init() {
     if (!this.#initialized) {
@@ -110,6 +113,12 @@ export default class Navbar extends HTMLElement {
     this.#app.addEventListener('dragenter', this.onDragEnter);
     this.#app.addEventListener('dragover', this.onDragOver);
     this.#app.addEventListener('drop', this.onFileDropped);
+  }
+
+  activateShortcuts() {
+    this.#shortcutsActive = true;
+    const fileOpenMenuItems = this.querySelectorAll('sf-menu-item-file-open');
+    fileOpenMenuItems.forEach((item) => { (item as MenuItemFileOpen).activateShortcut(); });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -151,6 +160,9 @@ export default class Navbar extends HTMLElement {
   };
 
   handleShortcuts = (e: KeyboardEvent) => {
+    if (!this.#shortcutsActive) {
+      return;
+    }
     const fileModifiersPressed = isMacOs
       ? e.shiftKey && e.ctrlKey && !e.altKey && !e.metaKey
       : e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;

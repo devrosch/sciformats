@@ -53,6 +53,9 @@ const testEventDispatchedForShortcut = (
   done: (error?: any) => any,
 ) => {
   document.body.innerHTML = `<${element}></${element}>`;
+  const navbar = document.body.querySelector(element) as Navbar;
+  navbar.activateShortcuts();
+  expect(navbar).toBeTruthy();
 
   const event = new KeyboardEvent(
     'keydown',

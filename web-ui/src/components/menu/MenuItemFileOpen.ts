@@ -9,7 +9,7 @@ const menuItemKeyPostfix = 'input-menu-item';
 const template = `
   <input id="sf-file-open-input" class="sf-file-open-input" tabindex="-1" key="sf-file-open-input" type="file" multiple="true"/>
   <label for="sf-file-open-input" class="sf-file-input-label">
-    <sf-menu-item key="sf-file-open-${menuItemKeyPostfix}" accesskey="o"></sf-menu-item>
+    <sf-menu-item key="sf-file-open-${menuItemKeyPostfix}"></sf-menu-item>
   </label>  
 `;
 
@@ -25,6 +25,8 @@ export default class MenuItemFileOpen extends HTMLElement {
   private _key: string | null = null;
 
   private _shortcut: string | null = null;
+
+  #shortcutActive = false;
 
   constructor() {
     super();
@@ -51,6 +53,15 @@ export default class MenuItemFileOpen extends HTMLElement {
     setElementAttribute(menuItem, 'key', `${this._key}-${menuItemKeyPostfix}`);
     setElementAttribute(menuItem, 'title', this._title);
     setElementAttribute(menuItem, 'shortcut', this._shortcut);
+    if (this.#shortcutActive) {
+      menuItem.setAttribute('accesskey', 'o');
+    }
+  }
+
+  activateShortcut() {
+    this.#shortcutActive = true;
+    this.init();
+    this.render();
   }
 
   onClick = (e: MouseEvent) => {

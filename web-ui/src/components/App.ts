@@ -61,7 +61,7 @@ export default class App extends HTMLElement {
     // TODO: only now activate drag'n'drop and shortcuts
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  /* eslint-disable-next-line class-methods-use-this */
   render() {
     // noop
   }

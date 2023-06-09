@@ -1,13 +1,12 @@
 /* eslint-disable import/no-duplicates */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-import Message from 'model/Message';
-import Parser from 'model/Parser';
-import NodeData from 'model/NodeData';
 import ErrorParser from 'model/ErrorParser';
+import Message from 'model/Message';
+import MockParser from 'model/__mocks__/MockParser';
+import MockParserRepository from 'model/__mocks__/MockParserRepository';
 import './Tree'; // for side effects
 import Tree from './Tree';
 import TreeNode from './TreeNode';
-import ParserRepository from 'model/ParserRepository';
 
 const element = 'sf-tree';
 const nodeElement = 'sf-tree-node';
@@ -19,50 +18,6 @@ const fileName3 = 'dummy3.txt';
 const errorFileName = 'ErrorFile.txt';
 const urlAttr = 'url';
 const urlRegex = new RegExp(`file:///.*/${fileName}#/`);
-
-// a StubParser really, but jest requires the name to start with "Mock"
-// see: https://jestjs.io/docs/es6-class-mocks#calling-jestmock-with-the-module-factory-parameter
-class MockParser implements Parser {
-  readonly prefix = 'file:///dummy/path/';
-
-  rootUrl: URL;
-
-  constructor(file: File) {
-    this.rootUrl = new URL(`${this.prefix}${file.name}#/`);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async open() {
-    // noop
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  read(url: URL): Promise<NodeData> {
-    const data: { x: number, y: number }[] = [];
-    const parameters: { key: string, value: string }[] = [];
-    const children: string[] = ['child1', 'child2'];
-
-    const nodeData = {
-      url,
-      data,
-      parameters,
-      children,
-    };
-
-    return new Promise((resolve) => { resolve(nodeData); });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async close() {
-    // noop
-  }
-}
-
-class MockParserRepository implements ParserRepository {
-  findParser(file: File): Promise<Parser> {
-    return new Promise((resolve) => { resolve(new MockParser(file)); });
-  }
-}
 
 const prepareSimpleTree = () => {
   document.body.innerHTML = `<${element}/>`;

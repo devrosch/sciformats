@@ -1,8 +1,5 @@
-/* eslint-disable-next-line import/prefer-default-export */
-export const postMessage = (worker: Worker, name: string, payload: any) => {
-  return new Promise((resolve) => resolve(null));
-};
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+export const postMessage = (worker: Worker, name: string, payload: any) => (
+  new Promise((resolve) => { resolve(null); }));
 
-export const initWorker = async () => {
-  return {};
-};
+export const initWorker = async () => { };

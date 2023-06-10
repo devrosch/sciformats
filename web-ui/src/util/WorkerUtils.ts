@@ -41,7 +41,7 @@ export const postMessage = (worker: Worker, name: string, payload: any) => {
  * @returns Initialized web worker.
  */
 export const initWorker = async () => {
-  const worker = new Worker(new URL('worker/worker.ts', import.meta.url));
+  const worker = new Worker(new URL('worker/Worker.ts', import.meta.url));
   let isWorkerInitialized = false;
   while (!isWorkerInitialized) {
     // eslint-disable-next-line no-await-in-loop

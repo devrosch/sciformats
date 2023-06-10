@@ -27,7 +27,8 @@
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/index.ts",
-      "!src/model/LocalParserRepository.ts"
+      "!src/model/LocalParserRepository.ts",
+      "!src/util/WorkerUtils.ts"
     ],
     "setupFiles": [
       "<rootDir>/src/jest.stub.ts"

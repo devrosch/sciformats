@@ -1,10 +1,3 @@
-// import * as Module from "./libsf";
-// import "./libsf.wasm";
-// import libsf from './libsf.js';
-// import * as libsf from "./libsf";
-// import libsf from './libsf.js';
-// import './libsf';
-// import('./libsf');
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerStatus from './WorkerStatus';
@@ -13,7 +6,7 @@ import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
 import {
   hasInitCompleted, mountFile, unmountFile, isFileRecognized, readNode, nodeToJson,
-  getExceptionMessage, createConverter,
+  getExceptionMessage, createConverter, initConverterService,
 } from './WorkerInternalUtils';
 
 // quench warnings for using "self", alternatively "globalThis" could be used instead
@@ -24,16 +17,21 @@ self.importScripts('libsf.js');
 const workingDir = '/work';
 
 /* @ts-expect-error */
-const openFiles = new Map<string, Module.JdxConverter>();
+let converterService: Module.ConverterService | null = null;
+/* @ts-expect-error */
+const openFiles = new Map<string, Module.Converter>();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
   const correlationId = request.correlationId;
   switch (request.name) {
     case 'status': {
-      const initCompleted = hasInitCompleted() ? WorkerStatus.Initialized
+      const moduleInitCompleted = hasInitCompleted() ? WorkerStatus.Initialized
         : WorkerStatus.Initializing;
-      const result = new WorkerResponse('status', correlationId, initCompleted);
+      if (moduleInitCompleted === WorkerStatus.Initialized) {
+        converterService = initConverterService();
+      }
+      const result = new WorkerResponse('status', correlationId, moduleInitCompleted);
       self.postMessage(result);
       break;
     }
@@ -42,7 +40,7 @@ self.onmessage = (event) => {
       const url = new URL(fileInfo.url);
       const blob = fileInfo.blob;
       mountFile(url, blob, workingDir);
-      const recognized = isFileRecognized(url, workingDir);
+      const recognized = isFileRecognized(url, workingDir, converterService);
       unmountFile(url, workingDir);
       self.postMessage(new WorkerResponse('scanned', correlationId, { recognized }));
       break;
@@ -55,7 +53,7 @@ self.onmessage = (event) => {
       if (!openFiles.has(rootUrl.toString())) {
         try {
           mountFile(url, blob, workingDir);
-          const mappingParser = createConverter(url, workingDir);
+          const mappingParser = createConverter(url, workingDir, converterService);
           openFiles.set(rootUrl.toString(), mappingParser);
         } catch (error: any) {
           /* @ts-expect-error */

@@ -1,10 +1,31 @@
 import { extractFilename, extractUuid } from 'util/UrlUtils';
 
-// use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
-// to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
+/**
+ * Check if library module has been initialized.
+ * @returns True if initialized, otherwise false.
+ */
 export const hasInitCompleted: () => boolean = () => !(
+  // use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
+  // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
   /* @ts-expect-error */
   typeof Module === 'undefined' || Module === null || typeof Module.Scanner === 'undefined');
+
+  /**
+   * Initialized the converter service.
+   * @returns Initialized converter service.
+   */
+export const initConverterService = () => {
+  if (!hasInitCompleted()) {
+    throw Error('Cannot initialize converter service. Module initialization has not completed.');
+  }
+  /* @ts-expect-error */
+  const jdxScanner = new Module.JdxScanner();
+  /* @ts-expect-error */
+  let scanners = new Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
+  scanners.push_back(jdxScanner);
+  /* @ts-expect-error */
+  return new Module.ConverterService(scanners);
+};
 
 /**
  * Mounts a file in Emscripten's filesystem's "work" directory.
@@ -64,16 +85,15 @@ export const unmountFile = (url: URL, workingDir: string) => {
  * Performs a shallow check if any file parser can parse the file.
  * @param url The file URL from which UUID and file name are extracted.
  * @param workingDir The working directory in Emscripten's file system.
+ * @param scanner Scanner (e.g. ConverterService) to check if file is recognized.
  * @returns True if a file parser exists, false otherwise.
  */
-export const isFileRecognized = (url: URL, workingDir: string) => {
+/* @ts-expect-error */
+export const isFileRecognized = (url: URL, workingDir: string, scanner: Module.Scanner) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
-  /* @ts-expect-error */
-  const scanner = new Module.JdxScanner();
   const filePath = `${workingDir}/${uuid}/${filename}`;
   const recognized = scanner.isRecognized(filePath);
-  scanner.delete();
   return recognized;
 };
 
@@ -81,20 +101,21 @@ export const isFileRecognized = (url: URL, workingDir: string) => {
  * Creates a new mapping parser for the URL.
  * @param url URL to read.
  * @param workingDir The working directory in Emscripten's file system.
+ * @param scanner Scanner (e.g. ConverterService) to check if file is recognized.
  * @returns Mapping parser for URL.
  */
-export const createConverter = (url: URL, workingDir: string) => {
+/* @ts-expect-error */
+export const createConverter = (url: URL, workingDir: string, scanner: Module.Scanner) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   const filePath = `${workingDir}/${uuid}/${filename}`;
-  let mapper = null;
+  let converter = null;
   try {
-    /* @ts-expect-error */
-    mapper = new Module.JdxConverter(filePath);
-    return mapper;
+    converter = scanner.getConverter(filePath);
+    return converter;
   } catch (error) {
-    if (mapper !== null) {
-      mapper.delete();
+    if (converter !== null) {
+      converter.delete();
     }
     throw error;
   }
@@ -103,11 +124,11 @@ export const createConverter = (url: URL, workingDir: string) => {
 /**
  * Reads data from the URL representing a node in an opened file.
  * @param url URL to read.
- * @param openFiles Map of root URLs and corresponding mapping parsers.
+ * @param openFiles Map of root URLs and corresponding converters.
  * @returns The node corresponding to the URL.
  */
 /* @ts-expect-error */
-export const readNode = (url: URL, openFiles: Map<string, Module.JdxConverter>) => {
+export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => {
   const rootUrl = new URL(url.toString().split('#')[0]);
   if (!openFiles.has(rootUrl.toString())) {
     console.log(`root URL: ${rootUrl}`);
@@ -123,7 +144,7 @@ export const readNode = (url: URL, openFiles: Map<string, Module.JdxConverter>) 
     throw new Error(`Unexpected URL hash: ${hash}`);
   }
 
-  const mapper = openFiles.get(rootUrl.toString());
+  const converter = openFiles.get(rootUrl.toString());
 
   // '', '#', '#/' all denote the root node
   // splitting by '/' results in:
@@ -138,7 +159,7 @@ export const readNode = (url: URL, openFiles: Map<string, Module.JdxConverter>) 
   }
 
   // node is of type Node and bound as a value object, hence it has no delete() method
-  const node = mapper.read(hash);
+  const node = converter.read(hash);
   return node;
 };
 

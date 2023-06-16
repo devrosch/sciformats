@@ -13,7 +13,7 @@ import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
 import {
   hasInitCompleted, mountFile, unmountFile, isFileRecognized, readNode, nodeToJson,
-  getExceptionMessage, createMappingParser,
+  getExceptionMessage, createConverter,
 } from './WorkerInternalUtils';
 
 // quench warnings for using "self", alternatively "globalThis" could be used instead
@@ -24,7 +24,7 @@ self.importScripts('libsf.js');
 const workingDir = '/work';
 
 /* @ts-expect-error */
-const openFiles = new Map<string, Module.JdxDataMapper>();
+const openFiles = new Map<string, Module.JdxConverter>();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
@@ -55,7 +55,7 @@ self.onmessage = (event) => {
       if (!openFiles.has(rootUrl.toString())) {
         try {
           mountFile(url, blob, workingDir);
-          const mappingParser = createMappingParser(url, workingDir);
+          const mappingParser = createConverter(url, workingDir);
           openFiles.set(rootUrl.toString(), mappingParser);
         } catch (error: any) {
           /* @ts-expect-error */

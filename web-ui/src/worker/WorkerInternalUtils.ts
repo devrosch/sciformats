@@ -4,7 +4,7 @@ import { extractFilename, extractUuid } from 'util/UrlUtils';
 // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
 export const hasInitCompleted: () => boolean = () => !(
   /* @ts-expect-error */
-  typeof Module === 'undefined' || Module === null || typeof Module.FileParser === 'undefined');
+  typeof Module === 'undefined' || Module === null || typeof Module.Scanner === 'undefined');
 
 /**
  * Mounts a file in Emscripten's filesystem's "work" directory.
@@ -70,7 +70,7 @@ export const isFileRecognized = (url: URL, workingDir: string) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   /* @ts-expect-error */
-  const scanner = new Module.JdxDataScanner();
+  const scanner = new Module.JdxScanner();
   const filePath = `${workingDir}/${uuid}/${filename}`;
   const recognized = scanner.isRecognized(filePath);
   scanner.delete();
@@ -83,14 +83,14 @@ export const isFileRecognized = (url: URL, workingDir: string) => {
  * @param workingDir The working directory in Emscripten's file system.
  * @returns Mapping parser for URL.
  */
-export const createMappingParser = (url: URL, workingDir: string) => {
+export const createConverter = (url: URL, workingDir: string) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   const filePath = `${workingDir}/${uuid}/${filename}`;
   let mapper = null;
   try {
     /* @ts-expect-error */
-    mapper = new Module.JdxDataMapper(filePath);
+    mapper = new Module.JdxConverter(filePath);
     return mapper;
   } catch (error) {
     if (mapper !== null) {
@@ -107,7 +107,7 @@ export const createMappingParser = (url: URL, workingDir: string) => {
  * @returns The node corresponding to the URL.
  */
 /* @ts-expect-error */
-export const readNode = (url: URL, openFiles: Map<string, Module.JdxDataMapper>) => {
+export const readNode = (url: URL, openFiles: Map<string, Module.JdxConverter>) => {
   const rootUrl = new URL(url.toString().split('#')[0]);
   if (!openFiles.has(rootUrl.toString())) {
     console.log(`root URL: ${rootUrl}`);
@@ -137,7 +137,7 @@ export const readNode = (url: URL, openFiles: Map<string, Module.JdxDataMapper>)
     hash = '/';
   }
 
-  // node is of type Node2 and bound as a value object, hence it has no delete() method
+  // node is of type Node and bound as a value object, hence it has no delete() method
   const node = mapper.read(hash);
   return node;
 };

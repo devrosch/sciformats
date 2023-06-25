@@ -16,6 +16,7 @@ type WorkerNodeData = {
    * Meta data represented as key-value pairs.
    */
   parameters: { key: string, value: string }[],
+  // TODO: harmonize naming => childNodeNames
   /**
    * Child nodes/fragments.
    */

@@ -134,14 +134,8 @@ export const createConverter = (url: URL, workingDir: string, scanner: Module.Sc
 export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => {
   const rootUrl = new URL(url.toString().split('#')[0]);
   if (!openFiles.has(rootUrl.toString())) {
-    console.log(`root URL: ${rootUrl}`);
-    console.log(`number of keys in openFiles: ${openFiles.keys.length}`);
-    Object.keys(openFiles).forEach((key) => {
-      console.log(`map key: ${key}`);
-    });
     throw new Error(`File not found: ${rootUrl}`);
   }
-
   let hash = url.hash;
   if (hash.length > 0 && !hash.startsWith('#/')) {
     throw new Error(`Unexpected URL hash: ${hash}`);
@@ -178,10 +172,9 @@ export const nodeToJson = (url: URL, node: Module.Node) => {
 
   json.url = url.toString();
 
-  // // [[nodiscard]] virtual std::string getName() const;
-  // json.name = node.name;
+  // unused: json.name = node.name;
 
-  // virtual std::vector<KeyValueParam> getParams();
+  // parameters
   const params = node.parameters;
   const paramsSize = params.size();
   const jsonParameters: any = [];
@@ -189,13 +182,12 @@ export const nodeToJson = (url: URL, node: Module.Node) => {
     const keyValuePair = params.get(index);
     const key = keyValuePair.key;
     const value = keyValuePair.value;
-    // jsonParameters[key] = value;
     jsonParameters.push({ key, value });
   }
   json.parameters = jsonParameters;
   params.delete();
 
-  // virtual std::vector<Point2D> getData();
+  // data
   const data = node.data;
   const dataSize = data.size();
   const jsonData = [];
@@ -208,7 +200,7 @@ export const nodeToJson = (url: URL, node: Module.Node) => {
   json.data = jsonData;
   data.delete();
 
-  // virtual std::vector<std::shared_ptr<Node>> getChildNodes() = 0;
+  // child node names
   const childNodeNames = node.childNodeNames;
   const childNodesSize = childNodeNames.size();
   const jsonChildNodes = [];
@@ -216,6 +208,7 @@ export const nodeToJson = (url: URL, node: Module.Node) => {
     const childNodeName = childNodeNames.get(index);
     jsonChildNodes.push(childNodeName);
   }
+  // TODO: harmonize naming
   json.children = jsonChildNodes;
   childNodeNames.delete();
 

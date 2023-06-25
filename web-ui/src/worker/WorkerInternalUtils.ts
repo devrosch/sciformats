@@ -4,27 +4,24 @@ import { extractFilename, extractUuid } from 'util/UrlUtils';
  * Check if library module has been initialized.
  * @returns True if initialized, otherwise false.
  */
-export const hasInitCompleted: () => boolean = () => !(
-  // use @ts-expect-error instead of use @ts-ignore to make sure the issue occurs and
-  // to avoid need to avoind @typescript-eslint/ban-ts-comment linter warning
-  /* @ts-expect-error */
-  typeof Module === 'undefined' || Module === null || typeof Module.Scanner === 'undefined');
+const hasModuleInitCompleted: (workerNamespace: any) => boolean = (workerNamespace: any) => !(
+  typeof workerNamespace.Module === 'undefined' || workerNamespace.Module === null || typeof workerNamespace.Module.Scanner === 'undefined'
+);
 
-  /**
-   * Initialized the converter service.
-   * @returns Initialized converter service.
-   */
-export const initConverterService = () => {
-  if (!hasInitCompleted()) {
-    throw Error('Cannot initialize converter service. Module initialization has not completed.');
+/**
+ * Initialize the converter service.
+ * @returns Initialized converter service.
+ */
+export const initConverterService = async (workerNamespace: any) => {
+  while (!hasModuleInitCompleted(workerNamespace)) {
+    /* eslint-disable-next-line no-await-in-loop */
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
   }
-  /* @ts-expect-error */
-  const jdxScanner = new Module.JdxScanner();
-  /* @ts-expect-error */
-  let scanners = new Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
+  const jdxScanner = new workerNamespace.Module.JdxScanner();
+  /* eslint-disable-next-line new-cap */
+  const scanners = new workerNamespace.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
   scanners.push_back(jdxScanner);
-  /* @ts-expect-error */
-  return new Module.ConverterService(scanners);
+  return new workerNamespace.Module.ConverterService(scanners);
 };
 
 /**
@@ -32,12 +29,20 @@ export const initConverterService = () => {
  * @param url The file URL from which UUID and file name are extracted.
  * @param blob A Blob containing the file data.
  * @param workingDir The working directory in Emscripten's file system.
+ * @param filesystem Emscripten's file system (FS).
+ * @param workerFS Emscripten's WORKERFS.
  */
-export const mountFile = (url: URL, blob: Blob, workingDir: string) => {
+export const mountFile = (
+  url: URL,
+  blob: Blob,
+  workingDir: string,
+  /* @ts-expect-error */
+  filesystem: FS,
+  /* @ts-expect-error */
+  workerFS: WORKERFS,
+) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
-  /* @ts-expect-error */
-  const filesystem = FS;
   const workingDirExists = filesystem.analyzePath(workingDir, false).exists;
   if (!workingDirExists) {
     filesystem.mkdir(workingDir);
@@ -47,8 +52,6 @@ export const mountFile = (url: URL, blob: Blob, workingDir: string) => {
   if (!uuidDirExists) {
     filesystem.mkdir(uuidDirPath);
   }
-  /* @ts-expect-error */
-  const workerFS = WORKERFS;
   filesystem.mount(workerFS, {
     blobs: [{ name: filename, data: blob }],
   }, uuidDirPath);
@@ -58,12 +61,12 @@ export const mountFile = (url: URL, blob: Blob, workingDir: string) => {
  * Unmounts a file from the filesystem's "work" directory.
  * @param url The file URL from which UUID and file name are extracted.
  * @param workingDir The working directory in Emscripten's file system.
+ * @param filesystem Emscripten's file system (FS).
  */
-export const unmountFile = (url: URL, workingDir: string) => {
+/* @ts-expect-error */
+export const unmountFile = (url: URL, workingDir: string, filesystem: FS) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
-  /* @ts-expect-error */
-  const filesystem = FS;
   const workingDirExists = filesystem.analyzePath(workingDir, false).exists;
   if (!workingDirExists) {
     return;
@@ -112,13 +115,13 @@ export const createConverter = (url: URL, workingDir: string, scanner: Module.Sc
   let converter = null;
   try {
     converter = scanner.getConverter(filePath);
-    return converter;
   } catch (error) {
     if (converter !== null) {
       converter.delete();
     }
     throw error;
   }
+  return converter;
 };
 
 /**

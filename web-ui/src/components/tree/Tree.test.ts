@@ -48,7 +48,7 @@ const prepareFileOpenMessage = (fileNames: string[]) => {
 const waitForChildrenCount = async (el: HTMLElement, childrenCount: Number) => {
   // wait for DOM change
   while (el.children.length !== childrenCount) {
-    // eslint-disable-next-line no-await-in-loop
+    /* eslint-disable-next-line no-await-in-loop */
     await new Promise((resolve) => { setTimeout(resolve, 1); });
   }
 };

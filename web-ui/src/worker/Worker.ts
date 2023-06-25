@@ -5,7 +5,7 @@ import WorkerFileInfo from './WorkerFileInfo';
 import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
 import {
-  hasInitCompleted, mountFile, unmountFile, isFileRecognized, readNode, nodeToJson,
+  mountFile, unmountFile, isFileRecognized, readNode, nodeToJson,
   getExceptionMessage, createConverter, initConverterService,
 } from './WorkerInternalUtils';
 
@@ -26,11 +26,8 @@ self.onmessage = (event) => {
   const correlationId = request.correlationId;
   switch (request.name) {
     case 'status': {
-      const moduleInitCompleted = hasInitCompleted() ? WorkerStatus.Initialized
+      const moduleInitCompleted = converterService === null ? WorkerStatus.Initialized
         : WorkerStatus.Initializing;
-      if (moduleInitCompleted === WorkerStatus.Initialized) {
-        converterService = initConverterService();
-      }
       const result = new WorkerResponse('status', correlationId, moduleInitCompleted);
       self.postMessage(result);
       break;
@@ -39,9 +36,11 @@ self.onmessage = (event) => {
       const fileInfo = request.detail as WorkerFileInfo;
       const url = new URL(fileInfo.url);
       const blob = fileInfo.blob;
-      mountFile(url, blob, workingDir);
+      /* @ts-expect-error */
+      mountFile(url, blob, workingDir, FS, WORKERFS);
       const recognized = isFileRecognized(url, workingDir, converterService);
-      unmountFile(url, workingDir);
+      /* @ts-expect-error */
+      unmountFile(url, workingDir, FS);
       self.postMessage(new WorkerResponse('scanned', correlationId, { recognized }));
       break;
     }
@@ -52,7 +51,8 @@ self.onmessage = (event) => {
       const rootUrl = new URL(url.toString().split('#')[0]);
       if (!openFiles.has(rootUrl.toString())) {
         try {
-          mountFile(url, blob, workingDir);
+          /* @ts-expect-error */
+          mountFile(url, blob, workingDir, FS, WORKERFS);
           const mappingParser = createConverter(url, workingDir, converterService);
           openFiles.set(rootUrl.toString(), mappingParser);
         } catch (error: any) {
@@ -89,7 +89,8 @@ self.onmessage = (event) => {
         openFiles.delete(rootUrl.toString());
         node.delete();
       }
-      unmountFile(url, workingDir);
+      /* @ts-expect-error */
+      unmountFile(url, workingDir, FS);
       self.postMessage(new WorkerResponse('closed', correlationId, { url: url.toString() }));
       break;
     }
@@ -98,3 +99,5 @@ self.onmessage = (event) => {
       break;
   }
 };
+
+converterService = await initConverterService(self);

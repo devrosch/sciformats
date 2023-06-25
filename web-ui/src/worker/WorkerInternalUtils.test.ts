@@ -8,7 +8,7 @@ const filePath = `${workingDir}/${uuid}/${filename}`;
 
 test('initConverterService() waits for Module init and initializes ConverterService', async () => {
   const pushBackMock = jest.fn();
-  const workerNamespaceMock = {
+  const workerSelfMock = {
     Module: {
       Scanner: jest.fn(),
       JdxScanner: jest.fn(),
@@ -19,13 +19,13 @@ test('initConverterService() waits for Module init and initializes ConverterServ
     },
   };
 
-  await WorkerInternalUtils.initConverterService(workerNamespaceMock);
+  await WorkerInternalUtils.initConverterService(workerSelfMock);
 
-  expect(workerNamespaceMock.Module.JdxScanner).toHaveBeenCalledTimes(1);
-  expect(workerNamespaceMock.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$)
+  expect(workerSelfMock.Module.JdxScanner).toHaveBeenCalledTimes(1);
+  expect(workerSelfMock.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$)
     .toHaveBeenCalledTimes(1);
   expect(pushBackMock).toHaveBeenCalledTimes(1);
-  expect(workerNamespaceMock.Module.ConverterService).toHaveBeenCalledTimes(1);
+  expect(workerSelfMock.Module.ConverterService).toHaveBeenCalledTimes(1);
 });
 
 test('mountFile() creates workingDir and UUID directories and mounts WORKERFS', async () => {

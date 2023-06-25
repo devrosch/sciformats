@@ -1,27 +1,33 @@
 import { extractFilename, extractUuid } from 'util/UrlUtils';
+import WorkerStatus from './WorkerStatus';
+import WorkerResponse from './WorkerResponse';
+import WorkerFileInfo from './WorkerFileInfo';
+import WorkerNodeData from './WorkerNodeData';
+import WorkerRequest from './WorkerRequest';
+import WorkerFileUrl from './WorkerFileUrl';
 
 /**
  * Check if library module has been initialized.
  * @returns True if initialized, otherwise false.
  */
-const hasModuleInitCompleted: (workerNamespace: any) => boolean = (workerNamespace: any) => !(
-  typeof workerNamespace.Module === 'undefined' || workerNamespace.Module === null || typeof workerNamespace.Module.Scanner === 'undefined'
+const hasModuleInitCompleted: (workerSelf: any) => boolean = (workerSelf: any) => !(
+  typeof workerSelf.Module === 'undefined' || workerSelf.Module === null || typeof workerSelf.Module.Scanner === 'undefined'
 );
 
 /**
  * Initialize the converter service.
  * @returns Initialized converter service.
  */
-export const initConverterService = async (workerNamespace: any) => {
-  while (!hasModuleInitCompleted(workerNamespace)) {
+export const initConverterService = async (workerSelf: any) => {
+  while (!hasModuleInitCompleted(workerSelf)) {
     /* eslint-disable-next-line no-await-in-loop */
     await new Promise((resolve) => { setTimeout(resolve, 100); });
   }
-  const jdxScanner = new workerNamespace.Module.JdxScanner();
+  const jdxScanner = new workerSelf.Module.JdxScanner();
   /* eslint-disable-next-line new-cap */
-  const scanners = new workerNamespace.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
+  const scanners = new workerSelf.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
   scanners.push_back(jdxScanner);
-  return new workerNamespace.Module.ConverterService(scanners);
+  return new workerSelf.Module.ConverterService(scanners);
 };
 
 /**
@@ -246,4 +252,99 @@ export const getExceptionMessage = (exception: any, module: Module) => {
   }
   // something else
   return exception;
+};
+
+export const onMessageStatus = (
+  /* @ts-expect-error */
+  converterService: Module.ConverterService,
+  correlationId: string,
+) => {
+  const moduleInitCompleted = converterService === null ? WorkerStatus.Initialized
+    : WorkerStatus.Initializing;
+  return new WorkerResponse('status', correlationId, moduleInitCompleted);
+};
+
+export const onMessageScan = (
+  request: WorkerRequest,
+  workingDir: string,
+  /* @ts-expect-error */
+  converterService: Module.ConverterService,
+  correlationId: string,
+) => {
+  const fileInfo = request.detail as WorkerFileInfo;
+  const url = new URL(fileInfo.url);
+  const blob = fileInfo.blob;
+  /* @ts-expect-error */
+  mountFile(url, blob, workingDir, FS, WORKERFS);
+  const recognized = isFileRecognized(url, workingDir, converterService);
+  /* @ts-expect-error */
+  unmountFile(url, workingDir, FS);
+  return new WorkerResponse('scanned', correlationId, { recognized });
+};
+
+export const onMessageOpen = (
+  request: WorkerRequest,
+  workingDir: string,
+  /* @ts-expect-error */
+  openFiles: Map<string, Module.Converter>,
+  /* @ts-expect-error */
+  converterService: Module.ConverterService,
+  correlationId: string,
+) => {
+  const fileInfo = request.detail as WorkerFileInfo;
+  const url = new URL(fileInfo.url);
+  const blob = fileInfo.blob;
+  const rootUrl = new URL(url.toString().split('#')[0]);
+  if (!openFiles.has(rootUrl.toString())) {
+    try {
+      /* @ts-expect-error */
+      mountFile(url, blob, workingDir, FS, WORKERFS);
+      const mappingParser = createConverter(url, workingDir, converterService);
+      openFiles.set(rootUrl.toString(), mappingParser);
+    } catch (error: any) {
+      /* @ts-expect-error */
+      const message = getExceptionMessage(error, Module);
+      return new WorkerResponse('error', correlationId, message);
+    }
+  }
+  return new WorkerResponse('opened', correlationId, { url: rootUrl.toString() });
+};
+
+export const onMessageRead = (
+  request: WorkerRequest,
+  /* @ts-expect-error */
+  openFiles: Map<string, Module.Converter>,
+  correlationId: string,
+) => {
+  const fileUrl = request.detail as WorkerFileUrl;
+  const url = new URL(fileUrl.url);
+  try {
+    const node = readNode(url, openFiles);
+    const nodeData: WorkerNodeData = nodeToJson(url, node);
+    return new WorkerResponse('read', correlationId, nodeData);
+  } catch (error: any) {
+    /* @ts-expect-error */
+    const message = getExceptionMessage(error, Module);
+    return new WorkerResponse('error', correlationId, message);
+  }
+};
+
+export const onMessageClose = (
+  request: WorkerRequest,
+  workingDir: string,
+  /* @ts-expect-error */
+  openFiles: Map<string, Module.Converter>,
+  correlationId: string,
+) => {
+  const fileUrl = request.detail as WorkerFileUrl;
+  const url = new URL(fileUrl.url);
+  const rootUrl = new URL(url.toString().split('#')[0]);
+  if (openFiles.has(rootUrl.toString())) {
+    const node = openFiles.get(rootUrl.toString());
+    openFiles.delete(rootUrl.toString());
+    node.delete();
+  }
+  /* @ts-expect-error */
+  unmountFile(url, workingDir, FS);
+  return new WorkerResponse('closed', correlationId, { url: url.toString() });
 };

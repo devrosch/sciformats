@@ -259,8 +259,8 @@ export const onMessageStatus = (
   converterService: Module.ConverterService,
   correlationId: string,
 ) => {
-  const moduleInitCompleted = converterService === null ? WorkerStatus.Initialized
-    : WorkerStatus.Initializing;
+  const moduleInitCompleted = converterService === null ? WorkerStatus.Initializing
+    : WorkerStatus.Initialized;
   return new WorkerResponse('status', correlationId, moduleInitCompleted);
 };
 
@@ -269,17 +269,18 @@ export const onMessageScan = (
   workingDir: string,
   /* @ts-expect-error */
   converterService: Module.ConverterService,
-  correlationId: string,
+  /* @ts-expect-error */
+  filesystem: FS,
+  /* @ts-expect-error */
+  workerFs: WORKERFS,
 ) => {
   const fileInfo = request.detail as WorkerFileInfo;
   const url = new URL(fileInfo.url);
   const blob = fileInfo.blob;
-  /* @ts-expect-error */
-  mountFile(url, blob, workingDir, FS, WORKERFS);
+  mountFile(url, blob, workingDir, filesystem, workerFs);
   const recognized = isFileRecognized(url, workingDir, converterService);
-  /* @ts-expect-error */
-  unmountFile(url, workingDir, FS);
-  return new WorkerResponse('scanned', correlationId, { recognized });
+  unmountFile(url, workingDir, filesystem);
+  return new WorkerResponse('scanned', request.correlationId, { recognized });
 };
 
 export const onMessageOpen = (
@@ -289,21 +290,25 @@ export const onMessageOpen = (
   openFiles: Map<string, Module.Converter>,
   /* @ts-expect-error */
   converterService: Module.ConverterService,
-  correlationId: string,
+  /* @ts-expect-error */
+  filesystem: FS,
+  /* @ts-expect-error */
+  workerFs: WORKERFS,
+  /* @ts-expect-error */
+  module: Module,
 ) => {
+  const correlationId = request.correlationId;
   const fileInfo = request.detail as WorkerFileInfo;
   const url = new URL(fileInfo.url);
   const blob = fileInfo.blob;
   const rootUrl = new URL(url.toString().split('#')[0]);
   if (!openFiles.has(rootUrl.toString())) {
     try {
-      /* @ts-expect-error */
-      mountFile(url, blob, workingDir, FS, WORKERFS);
+      mountFile(url, blob, workingDir, filesystem, workerFs);
       const mappingParser = createConverter(url, workingDir, converterService);
       openFiles.set(rootUrl.toString(), mappingParser);
     } catch (error: any) {
-      /* @ts-expect-error */
-      const message = getExceptionMessage(error, Module);
+      const message = getExceptionMessage(error, module);
       return new WorkerResponse('error', correlationId, message);
     }
   }
@@ -314,8 +319,8 @@ export const onMessageRead = (
   request: WorkerRequest,
   /* @ts-expect-error */
   openFiles: Map<string, Module.Converter>,
-  correlationId: string,
 ) => {
+  const correlationId = request.correlationId;
   const fileUrl = request.detail as WorkerFileUrl;
   const url = new URL(fileUrl.url);
   try {
@@ -334,8 +339,8 @@ export const onMessageClose = (
   workingDir: string,
   /* @ts-expect-error */
   openFiles: Map<string, Module.Converter>,
-  correlationId: string,
 ) => {
+  const correlationId = request.correlationId;
   const fileUrl = request.detail as WorkerFileUrl;
   const url = new URL(fileUrl.url);
   const rootUrl = new URL(url.toString().split('#')[0]);

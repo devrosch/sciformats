@@ -1,4 +1,7 @@
+import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerInternalUtils from './WorkerInternalUtils';
+import WorkerRequest from './WorkerRequest';
+import WorkerStatus from './WorkerStatus';
 
 const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
 const filename = 'test.jdx';
@@ -197,4 +200,48 @@ test('getExceptionMessage() reads exception message from Module', async () => {
   // expect(wasmResult).toBe(wasmExceptionMessage);
   // expect(module.getExceptionMessage).toHaveBeenCalledTimes(1);
   // expect(jsResult).toBe(jsExceptionMessage);
+});
+
+test('onMessageStatus() checks for the existence of ConverterService for returning the status', async () => {
+  const initializingResponse = WorkerInternalUtils.onMessageStatus(null, '123');
+  expect(initializingResponse.name).toBe('status');
+  expect(initializingResponse.correlationId).toBe('123');
+  expect(initializingResponse.detail).toBe(WorkerStatus.Initializing);
+
+  const initializedResponse = WorkerInternalUtils.onMessageStatus({}, '123');
+  expect(initializedResponse.name).toBe('status');
+  expect(initializedResponse.correlationId).toBe('123');
+  expect(initializedResponse.detail).toBe(WorkerStatus.Initialized);
+});
+
+test('onMessageStatus() checks for the existence of ConverterService for returning the status', async () => {
+  const fileInfo: WorkerFileInfo = {
+    url: url.toString(),
+    blob: new Blob(),
+  };
+  const filesystemFileExistsMock = {
+    analyzePath: jest.fn(() => ({ exists: true })),
+    mkdir: jest.fn(),
+    rmdir: jest.fn(),
+    mount: jest.fn(),
+    unmount: jest.fn(),
+  };
+  const workerFs = {};
+  const converterService = {
+    isRecognized: jest.fn(() => true),
+  };
+  const requestStub = new WorkerRequest('scan', '123', fileInfo);
+
+  const scanResponse = WorkerInternalUtils.onMessageScan(
+    requestStub,
+    workingDir,
+    converterService,
+    filesystemFileExistsMock,
+    workerFs,
+  );
+  expect(scanResponse.name).toBe('scanned');
+  expect(scanResponse.correlationId).toBe(requestStub.correlationId);
+  expect(scanResponse.detail).toHaveProperty('recognized');
+  const responseDetail = scanResponse.detail as { recognized: true };
+  expect(responseDetail.recognized).toBe(true);
 });

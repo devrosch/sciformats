@@ -19,33 +19,34 @@ const openFiles = new Map<string, Module.Converter>();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
-  const correlationId = request.correlationId;
   switch (request.name) {
     case 'status': {
-      self.postMessage(onMessageStatus(converterService, correlationId));
+      self.postMessage(onMessageStatus(converterService, request.correlationId));
       break;
     }
     case 'scan': {
-      self.postMessage(onMessageScan(request, workingDir, converterService, correlationId));
+      /* @ts-expect-error */
+      self.postMessage(onMessageScan(request, workingDir, converterService, FS, WORKERFS));
       break;
     }
     case 'open': {
       self.postMessage(
-        onMessageOpen(request, workingDir, openFiles, converterService, correlationId),
+        /* @ts-expect-error */
+        onMessageOpen(request, workingDir, openFiles, converterService, FS, WORKERFS, Module),
       );
       break;
     }
     case 'read': {
-      self.postMessage(onMessageRead(request, openFiles, correlationId));
+      self.postMessage(onMessageRead(request, openFiles));
       break;
     }
     case 'close': {
-      self.postMessage(onMessageClose(request, workingDir, openFiles, correlationId));
+      self.postMessage(onMessageClose(request, workingDir, openFiles));
       break;
     }
     default:
       self.postMessage(
-        new WorkerResponse('error', correlationId, `Unknown command: ${request.name}`),
+        new WorkerResponse('error', request.correlationId, `Unknown command: ${request.name}`),
       );
       break;
   }

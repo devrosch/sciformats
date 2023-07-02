@@ -5,9 +5,40 @@ import WorkerStatus from './WorkerStatus';
 
 const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
 const filename = 'test.jdx';
-const url = new URL(`file:///${uuid}/${filename}/#`);
+const url = new URL(`file:///${uuid}/${filename}#`);
+const rootUrl = new URL(`file:///${uuid}/${filename}`);
 const workingDir = '/work';
 const filePath = `${workingDir}/${uuid}/${filename}`;
+
+const fileInfoStub: WorkerFileInfo = {
+  url: url.toString(),
+  blob: new Blob(),
+};
+const filesystemFileExistsMock = {
+  analyzePath: jest.fn(() => ({ exists: true })),
+  mkdir: jest.fn(),
+  rmdir: jest.fn(),
+  mount: jest.fn(),
+  unmount: jest.fn(),
+};
+const nodeStub = {
+  name: 'abc',
+  data: [],
+  parameters: [],
+  childNodeNames: ['def'],
+};
+const converterMock = {
+  read: jest.fn(() => nodeStub),
+};
+const converterServiceMock = {
+  isRecognized: jest.fn(() => true),
+  getConverter: jest.fn(() => converterMock),
+};
+const workerFsStub = {};
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
 
 test('initConverterService() waits for Module init and initializes ConverterService', async () => {
   const pushBackMock = jest.fn();
@@ -34,49 +65,36 @@ test('initConverterService() waits for Module init and initializes ConverterServ
 test('mountFile() creates workingDir and UUID directories and mounts WORKERFS', async () => {
   const blob = new Blob();
   const uuidPath = `${workingDir}/${uuid}`;
-  const analyzePath = jest.fn(() => ({ exists: false }));
-  const mkdir = jest.fn();
-  const mount = jest.fn();
   const filesystemMock = {
-    analyzePath,
-    mkdir,
-    mount,
+    analyzePath: jest.fn(() => ({ exists: false })),
+    mkdir: jest.fn(),
+    mount: jest.fn(),
   };
-  const workerFs = {};
 
-  WorkerInternalUtils.mountFile(url, blob, workingDir, filesystemMock, workerFs);
+  WorkerInternalUtils.mountFile(url, blob, workingDir, filesystemMock, workerFsStub);
 
-  expect(analyzePath).toHaveBeenCalledTimes(2);
-  expect(analyzePath).toHaveBeenCalledWith(workingDir, false);
-  expect(analyzePath).toHaveBeenCalledWith(uuidPath, false);
-  expect(mkdir).toHaveBeenCalledTimes(2);
-  expect(mkdir).toHaveBeenCalledWith(workingDir);
-  expect(mkdir).toHaveBeenCalledWith(uuidPath);
-  expect(mount).toHaveBeenCalledTimes(1);
-  expect(mount).toHaveBeenCalledWith(
-    workerFs,
+  expect(filesystemMock.analyzePath).toHaveBeenCalledTimes(2);
+  expect(filesystemMock.analyzePath).toHaveBeenCalledWith(workingDir, false);
+  expect(filesystemMock.analyzePath).toHaveBeenCalledWith(uuidPath, false);
+  expect(filesystemMock.mkdir).toHaveBeenCalledTimes(2);
+  expect(filesystemMock.mkdir).toHaveBeenCalledWith(workingDir);
+  expect(filesystemMock.mkdir).toHaveBeenCalledWith(uuidPath);
+  expect(filesystemMock.mount).toHaveBeenCalledTimes(1);
+  expect(filesystemMock.mount).toHaveBeenCalledWith(
+    workerFsStub,
     { blobs: [{ name: filename, data: blob }] },
     uuidPath,
   );
 });
 
 test('unmountFile() unmounts WORKERFS and deletes UUID directory', async () => {
-  const analyzePath = jest.fn(() => ({ exists: true }));
-  const rmdir = jest.fn();
-  const unmount = jest.fn();
-  const filesystem = {
-    analyzePath,
-    rmdir,
-    unmount,
-  };
+  WorkerInternalUtils.unmountFile(url, workingDir, filesystemFileExistsMock);
 
-  WorkerInternalUtils.unmountFile(url, workingDir, filesystem);
-
-  expect(analyzePath).toHaveBeenCalledTimes(3);
-  expect(unmount).toBeCalledTimes(1);
-  expect(unmount).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
-  expect(rmdir).toBeCalledTimes(1);
-  expect(rmdir).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
+  expect(filesystemFileExistsMock.analyzePath).toHaveBeenCalledTimes(3);
+  expect(filesystemFileExistsMock.unmount).toBeCalledTimes(1);
+  expect(filesystemFileExistsMock.unmount).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
+  expect(filesystemFileExistsMock.rmdir).toBeCalledTimes(1);
+  expect(filesystemFileExistsMock.rmdir).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
 });
 
 test('isRecognized() scans file', async () => {
@@ -94,34 +112,24 @@ test('isRecognized() scans file', async () => {
 
 test('createConverter() uses scanner to retrieve converter', async () => {
   const mockConverter = { prop: 'dummy' };
-  const getConverter = jest.fn(() => mockConverter);
   const scanner = {
-    getConverter,
+    getConverter: jest.fn(() => mockConverter),
   };
 
   const converter = WorkerInternalUtils.createConverter(url, workingDir, scanner);
 
-  expect(getConverter).toHaveBeenCalledTimes(1);
-  expect(getConverter).toHaveBeenCalledWith(filePath);
+  expect(scanner.getConverter).toHaveBeenCalledTimes(1);
+  expect(scanner.getConverter).toHaveBeenCalledWith(filePath);
   expect(converter).toBe(mockConverter);
 });
 
 test('readNode() uses converter to read node data', async () => {
-  const rootUrl = new URL(`file:///${uuid}/${filename}/`);
-  const nodeStub = {
-    name: 'abc',
-    data: [],
-    parameters: [],
-    childNodeNames: ['def'],
-  };
-  const readMock = jest.fn(() => nodeStub);
-  const converterMock = { read: readMock };
   const converterMapStub = new Map([[rootUrl.toString(), converterMock]]);
 
   const node = WorkerInternalUtils.readNode(url, converterMapStub);
 
-  expect(readMock).toHaveBeenCalledTimes(1);
-  expect(readMock).toHaveBeenCalledWith('/');
+  expect(converterMock.read).toHaveBeenCalledTimes(1);
+  expect(converterMock.read).toHaveBeenCalledWith('/');
   expect(node).toBe(nodeStub);
 });
 
@@ -214,34 +222,85 @@ test('onMessageStatus() checks for the existence of ConverterService for returni
   expect(initializedResponse.detail).toBe(WorkerStatus.Initialized);
 });
 
-test('onMessageStatus() checks for the existence of ConverterService for returning the status', async () => {
-  const fileInfo: WorkerFileInfo = {
-    url: url.toString(),
-    blob: new Blob(),
-  };
-  const filesystemFileExistsMock = {
-    analyzePath: jest.fn(() => ({ exists: true })),
-    mkdir: jest.fn(),
-    rmdir: jest.fn(),
-    mount: jest.fn(),
-    unmount: jest.fn(),
-  };
-  const workerFs = {};
-  const converterService = {
-    isRecognized: jest.fn(() => true),
-  };
-  const requestStub = new WorkerRequest('scan', '123', fileInfo);
+test('onMessageScan() uses ConverterService to scan if a file could be parsed', async () => {
+  const requestStub = new WorkerRequest('scan', '123', fileInfoStub);
 
   const scanResponse = WorkerInternalUtils.onMessageScan(
     requestStub,
     workingDir,
-    converterService,
+    converterServiceMock,
     filesystemFileExistsMock,
-    workerFs,
+    workerFsStub,
   );
+
   expect(scanResponse.name).toBe('scanned');
   expect(scanResponse.correlationId).toBe(requestStub.correlationId);
   expect(scanResponse.detail).toHaveProperty('recognized');
   const responseDetail = scanResponse.detail as { recognized: true };
   expect(responseDetail.recognized).toBe(true);
 });
+
+test('onMessageOpen() uses existing converter to parse data', async () => {
+  const requestStub = new WorkerRequest('open', '123', fileInfoStub);
+  /* @ts-expect-error */
+  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+  const module = {};
+
+  const openResponse = WorkerInternalUtils.onMessageOpen(
+    requestStub,
+    workingDir,
+    openFiles,
+    converterServiceMock,
+    filesystemFileExistsMock,
+    workerFsStub,
+    module,
+  );
+
+  expect(openResponse.name).toBe('opened');
+  expect(openResponse.correlationId).toBe(requestStub.correlationId);
+  expect(openResponse.detail).toHaveProperty('url');
+  const responseDetail = openResponse.detail as { url: string };
+  expect(responseDetail.url).toBe(rootUrl.toString());
+});
+
+test('onMessageOpen() creates new converter to parse data', async () => {
+  const requestStub = new WorkerRequest('open', '123', fileInfoStub);
+  /* @ts-expect-error */
+  const openFiles = new Map<string, Module.Converter>();
+  const module = {};
+
+  const openResponse = WorkerInternalUtils.onMessageOpen(
+    requestStub,
+    workingDir,
+    openFiles,
+    converterServiceMock,
+    filesystemFileExistsMock,
+    workerFsStub,
+    module,
+  );
+
+  expect(openResponse.name).toBe('opened');
+  expect(openResponse.correlationId).toBe(requestStub.correlationId);
+  expect(openResponse.detail).toHaveProperty('url');
+  const responseDetail = openResponse.detail as { url: string };
+  expect(responseDetail.url).toBe(rootUrl.toString());
+  expect(openFiles.size).toBe(1);
+});
+
+// TODO:
+// test('onMessageRead() reads node data', async () => {
+//   const requestStub = new WorkerRequest('read', '123', fileInfoStub);
+//   /* @ts-expect-error */
+//   const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+//   const module = {};
+
+//   const readResponse = WorkerInternalUtils.onMessageRead(
+//     requestStub,
+//     openFiles,
+//     module,
+//   );
+
+//   expect(readResponse.name).toBe('read');
+//   expect(readResponse.correlationId).toBe(requestStub.correlationId);
+//   expect(readResponse.detail).toBe(nodeStub);
+// });

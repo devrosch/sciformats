@@ -37,7 +37,8 @@ self.onmessage = (event) => {
       break;
     }
     case 'read': {
-      self.postMessage(onMessageRead(request, openFiles));
+      /* @ts-expect-error */
+      self.postMessage(onMessageRead(request, openFiles, Module));
       break;
     }
     case 'close': {

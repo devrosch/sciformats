@@ -2,7 +2,7 @@ import NodeData from './NodeData';
 import Parser from './Parser';
 
 /**
- * A parser implementation to indicate an error occured file open.
+ * A parser implementation to indicate an error occured during file open.
  */
 export default class ErrorParser implements Parser {
   #rootUrl: URL;

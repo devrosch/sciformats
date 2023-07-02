@@ -107,11 +107,11 @@ export const isFileRecognized = (url: URL, workingDir: string, scanner: Module.S
 };
 
 /**
- * Creates a new mapping parser for the URL.
+ * Creates a new converter for the URL.
  * @param url URL to read.
  * @param workingDir The working directory in Emscripten's file system.
  * @param scanner Scanner (e.g. ConverterService) to check if file is recognized.
- * @returns Mapping parser for URL.
+ * @returns Converter for URL.
  */
 /* @ts-expect-error */
 export const createConverter = (url: URL, workingDir: string, scanner: Module.Scanner) => {
@@ -139,6 +139,7 @@ export const createConverter = (url: URL, workingDir: string, scanner: Module.Sc
 /* @ts-expect-error */
 export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => {
   const rootUrl = new URL(url.toString().split('#')[0]);
+
   if (!openFiles.has(rootUrl.toString())) {
     throw new Error(`File not found: ${rootUrl}`);
   }
@@ -305,8 +306,8 @@ export const onMessageOpen = (
   if (!openFiles.has(rootUrl.toString())) {
     try {
       mountFile(url, blob, workingDir, filesystem, workerFs);
-      const mappingParser = createConverter(url, workingDir, converterService);
-      openFiles.set(rootUrl.toString(), mappingParser);
+      const converter = createConverter(url, workingDir, converterService);
+      openFiles.set(rootUrl.toString(), converter);
     } catch (error: any) {
       const message = getExceptionMessage(error, module);
       return new WorkerResponse('error', correlationId, message);
@@ -319,6 +320,8 @@ export const onMessageRead = (
   request: WorkerRequest,
   /* @ts-expect-error */
   openFiles: Map<string, Module.Converter>,
+  /* @ts-expect-error */
+  module: Module,
 ) => {
   const correlationId = request.correlationId;
   const fileUrl = request.detail as WorkerFileUrl;
@@ -328,8 +331,7 @@ export const onMessageRead = (
     const nodeData: WorkerNodeData = nodeToJson(url, node);
     return new WorkerResponse('read', correlationId, nodeData);
   } catch (error: any) {
-    /* @ts-expect-error */
-    const message = getExceptionMessage(error, Module);
+    const message = getExceptionMessage(error, module);
     return new WorkerResponse('error', correlationId, message);
   }
 };

@@ -1,5 +1,7 @@
 import WorkerFileInfo from './WorkerFileInfo';
+import WorkerFileUrl from './WorkerFileUrl';
 import * as WorkerInternalUtils from './WorkerInternalUtils';
+import WorkerNodeData from './WorkerNodeData';
 import WorkerRequest from './WorkerRequest';
 import WorkerStatus from './WorkerStatus';
 
@@ -21,20 +23,46 @@ const filesystemFileExistsMock = {
   mount: jest.fn(),
   unmount: jest.fn(),
 };
-const nodeStub = {
-  name: 'abc',
-  data: [],
-  parameters: [],
-  childNodeNames: ['def'],
+const parameters = {
+  size: jest.fn(() => 2),
+  get: jest.fn(() => ({ key: 'key value', value: 'value value' })),
+  delete: jest.fn(),
+};
+const data = {
+  size: jest.fn(() => 3),
+  get: jest.fn(() => ({ x: 1, y: 2 })),
+  delete: jest.fn(),
+};
+const childNodeNames = {
+  size: jest.fn(() => 1),
+  get: jest.fn(() => 'child node name'),
+  delete: jest.fn(),
+};
+const nodeDataMock = {
+  name: 'name value',
+  parameters,
+  data,
+  childNodeNames,
 };
 const converterMock = {
-  read: jest.fn(() => nodeStub),
+  read: jest.fn(() => nodeDataMock),
+  delete: jest.fn(),
 };
 const converterServiceMock = {
   isRecognized: jest.fn(() => true),
   getConverter: jest.fn(() => converterMock),
 };
 const workerFsStub = {};
+
+const checkWorkerNodeData = (workerNode: WorkerNodeData) => {
+  expect(workerNode.url).toBe(url.toString());
+  expect(workerNode.parameters).toHaveLength(2);
+  expect(workerNode.parameters[0]).toEqual({ key: 'key value', value: 'value value' });
+  expect(workerNode.data).toHaveLength(3);
+  expect(workerNode.data[0]).toEqual({ x: 1, y: 2 });
+  expect(workerNode.children).toHaveLength(1);
+  expect(workerNode.children[0]).toEqual('child node name');
+};
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -130,32 +158,10 @@ test('readNode() uses converter to read node data', async () => {
 
   expect(converterMock.read).toHaveBeenCalledTimes(1);
   expect(converterMock.read).toHaveBeenCalledWith('/');
-  expect(node).toBe(nodeStub);
+  expect(node).toBe(nodeDataMock);
 });
 
 test('nodeToJson() maps C++ node data to WorkerNode', async () => {
-  const parameters = {
-    size: jest.fn(() => 2),
-    get: jest.fn(() => ({ key: 'key value', value: 'value value' })),
-    delete: jest.fn(),
-  };
-  const data = {
-    size: jest.fn(() => 3),
-    get: jest.fn(() => ({ x: 1, y: 2 })),
-    delete: jest.fn(),
-  };
-  const childNodeNames = {
-    size: jest.fn(() => 1),
-    get: jest.fn(() => 'child node name'),
-    delete: jest.fn(),
-  };
-  const nodeDataMock = {
-    name: 'name value',
-    parameters,
-    data,
-    childNodeNames,
-  };
-
   const workerNode = WorkerInternalUtils.nodeToJson(url, nodeDataMock);
 
   expect(parameters.size).toHaveBeenCalledTimes(1);
@@ -176,13 +182,7 @@ test('nodeToJson() maps C++ node data to WorkerNode', async () => {
   expect(childNodeNames.get).toHaveBeenCalledWith(0);
   expect(childNodeNames.delete).toHaveBeenCalledTimes(1);
 
-  expect(workerNode.url).toBe(url.toString());
-  expect(workerNode.parameters).toHaveLength(2);
-  expect(workerNode.parameters[0]).toEqual({ key: 'key value', value: 'value value' });
-  expect(workerNode.data).toHaveLength(3);
-  expect(workerNode.data[0]).toEqual({ x: 1, y: 2 });
-  expect(workerNode.children).toHaveLength(1);
-  expect(workerNode.children[0]).toEqual('child node name');
+  checkWorkerNodeData(workerNode);
 });
 
 test('getExceptionMessage() reads exception message from Module', async () => {
@@ -259,7 +259,7 @@ test('onMessageOpen() uses existing converter to parse data', async () => {
   expect(openResponse.name).toBe('opened');
   expect(openResponse.correlationId).toBe(requestStub.correlationId);
   expect(openResponse.detail).toHaveProperty('url');
-  const responseDetail = openResponse.detail as { url: string };
+  const responseDetail = openResponse.detail as WorkerFileUrl;
   expect(responseDetail.url).toBe(rootUrl.toString());
 });
 
@@ -287,20 +287,39 @@ test('onMessageOpen() creates new converter to parse data', async () => {
   expect(openFiles.size).toBe(1);
 });
 
-// TODO:
-// test('onMessageRead() reads node data', async () => {
-//   const requestStub = new WorkerRequest('read', '123', fileInfoStub);
-//   /* @ts-expect-error */
-//   const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
-//   const module = {};
+test('onMessageRead() reads node data', async () => {
+  const requestStub = new WorkerRequest('read', '123', fileInfoStub);
+  /* @ts-expect-error */
+  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+  const module = {};
 
-//   const readResponse = WorkerInternalUtils.onMessageRead(
-//     requestStub,
-//     openFiles,
-//     module,
-//   );
+  const readResponse = WorkerInternalUtils.onMessageRead(
+    requestStub,
+    openFiles,
+    module,
+  );
 
-//   expect(readResponse.name).toBe('read');
-//   expect(readResponse.correlationId).toBe(requestStub.correlationId);
-//   expect(readResponse.detail).toBe(nodeStub);
-// });
+  expect(readResponse.name).toBe('read');
+  expect(readResponse.correlationId).toBe(requestStub.correlationId);
+  const workerNode = readResponse.detail as WorkerNodeData;
+  checkWorkerNodeData(workerNode);
+});
+
+test('onMessageClose() removes converter from open files map and deletes file in filesystem', async () => {
+  const requestStub = new WorkerRequest('close', '123', fileInfoStub);
+  /* @ts-expect-error */
+  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+
+  const closeResponse = WorkerInternalUtils.onMessageClose(
+    requestStub,
+    workingDir,
+    openFiles,
+    filesystemFileExistsMock,
+  );
+
+  expect(closeResponse.name).toBe('closed');
+  expect(closeResponse.correlationId).toBe(requestStub.correlationId);
+  expect(closeResponse.detail).toHaveProperty('url');
+  const responseDetail = closeResponse.detail as WorkerFileUrl;
+  expect(responseDetail.url).toBe(rootUrl.toString());
+});

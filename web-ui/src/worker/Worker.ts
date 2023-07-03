@@ -11,11 +11,10 @@ import {
 self.importScripts('libsf.js');
 
 const workingDir = '/work';
-
-/* @ts-expect-error */
-let converterService: Module.ConverterService | null = null;
 /* @ts-expect-error */
 const openFiles = new Map<string, Module.Converter>();
+/* @ts-expect-error */
+let converterService: Module.ConverterService | null = null;
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
@@ -42,7 +41,8 @@ self.onmessage = (event) => {
       break;
     }
     case 'close': {
-      self.postMessage(onMessageClose(request, workingDir, openFiles));
+      /* @ts-expect-error */
+      self.postMessage(onMessageClose(request, workingDir, openFiles, FS));
       break;
     }
     default:

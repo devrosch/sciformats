@@ -84,11 +84,11 @@ The correlationId can be used to match requests to responses. The worker sends e
 
 | Request Name   | Request Details                   | Response Name       | Response Details                  | Main Thread Object |
 | -------------- | --------------------------------- | ------------------- | --------------------------------- | ------------------ |
-| status         | null                              | status              | `WorkerStatus`                    | ???                |
+| status         | null                              | status              | `WorkerStatus`                    | WorkerUtils        |
 | scan           | `WorkerFileInfo`                  | scanned             | { recognized: `boolean` }         | ParserRepository   |
 | open           | `WorkerFileInfo`                  | opened              | `WorkerFileUrl`                   | ParserRepository   |
-| close          | `WorkerFileUrl`                   | closed              | `WorkerFileUrl`                   | ???                |
-| read           | `WorkerFileUrl`                   | read                | `WorkerNodeData`                  | Parser             |
+| close          | `WorkerFileUrl`                   | closed              | `WorkerFileUrl`                   | LocalFileParser    |
+| read           | `WorkerFileUrl`                   | read                | `WorkerNodeData`                  | LocalFileParser    |
 
 For any request, in case of error, an error message is sent instead of the response from above table.
 

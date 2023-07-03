@@ -341,6 +341,8 @@ export const onMessageClose = (
   workingDir: string,
   /* @ts-expect-error */
   openFiles: Map<string, Module.Converter>,
+  /* @ts-expect-error */
+  filesystem: FS,
 ) => {
   const correlationId = request.correlationId;
   const fileUrl = request.detail as WorkerFileUrl;
@@ -351,7 +353,6 @@ export const onMessageClose = (
     openFiles.delete(rootUrl.toString());
     node.delete();
   }
-  /* @ts-expect-error */
-  unmountFile(url, workingDir, FS);
-  return new WorkerResponse('closed', correlationId, { url: url.toString() });
+  unmountFile(url, workingDir, filesystem);
+  return new WorkerResponse('closed', correlationId, { url: rootUrl.toString() });
 };

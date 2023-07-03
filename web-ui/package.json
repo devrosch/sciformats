@@ -28,6 +28,7 @@
       "src/**/*.{js,jsx,ts,tsx}",
       "!src/index.ts",
       "!src/model/LocalParserRepository.ts",
+      "!src/worker/Worker.ts",
       "!src/util/WorkerUtils.ts"
     ],
     "setupFiles": [

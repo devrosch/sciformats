@@ -29,6 +29,6 @@ export default class ErrorParser implements Parser {
   }
 
   async close() {
-    throw Error(this.#error);
+    // noop
   }
 }

@@ -53,6 +53,7 @@ const converterServiceMock = {
   getConverter: jest.fn(() => converterMock),
 };
 const workerFsStub = {};
+const module = {};
 
 const checkWorkerNodeData = (workerNode: WorkerNodeData) => {
   expect(workerNode.url).toBe(url.toString());
@@ -188,7 +189,7 @@ test('nodeToJson() maps C++ node data to WorkerNode', async () => {
 test('getExceptionMessage() reads exception message from Module', async () => {
   const cppExceptionMessage = 'C++ Exception Message';
   const wasmExceptionMessage = 'WASM Exception Message';
-  // const jsExceptionMessage = 'JS Exception Message';
+  const jsExceptionMessage = 'JS Exception Message';
   const module = {
     getCppExceptionMessage: jest.fn(() => cppExceptionMessage),
     getExceptionMessage: jest.fn(() => ['type', wasmExceptionMessage]),
@@ -199,15 +200,15 @@ test('getExceptionMessage() reads exception message from Module', async () => {
   // const wasmResult = WorkerInternalUtils.getExceptionMessage(
   //   {} as WebAssembly.Exception, module
   // );
-  // const jsResult = WorkerInternalUtils.getExceptionMessage(
-  //   { message: jsExceptionMessage }, module
-  // );
+  const jsResult = WorkerInternalUtils.getExceptionMessage(
+    { message: jsExceptionMessage }, module
+  );
 
   expect(cppResult).toBe(cppExceptionMessage);
   expect(module.getCppExceptionMessage).toHaveBeenCalledTimes(1);
   // expect(wasmResult).toBe(wasmExceptionMessage);
   // expect(module.getExceptionMessage).toHaveBeenCalledTimes(1);
-  // expect(jsResult).toBe(jsExceptionMessage);
+  expect(jsResult).toBe(jsExceptionMessage);
 });
 
 test('onMessageStatus() checks for the existence of ConverterService for returning the status', async () => {
@@ -244,7 +245,6 @@ test('onMessageOpen() uses existing converter to parse data', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
   /* @ts-expect-error */
   const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
-  const module = {};
 
   const openResponse = WorkerInternalUtils.onMessageOpen(
     requestStub,
@@ -267,7 +267,6 @@ test('onMessageOpen() creates new converter to parse data', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
   /* @ts-expect-error */
   const openFiles = new Map<string, Module.Converter>();
-  const module = {};
 
   const openResponse = WorkerInternalUtils.onMessageOpen(
     requestStub,
@@ -287,11 +286,34 @@ test('onMessageOpen() creates new converter to parse data', async () => {
   expect(openFiles.size).toBe(1);
 });
 
+test('onMessageOpen() returns error response in case of error', async () => {
+  const requestStub = new WorkerRequest('open', '123', fileInfoStub);
+  /* @ts-expect-error */
+  const openFiles = new Map<string, Module.Converter>();
+  const errorConverterServiceMock = {
+    isRecognized: jest.fn(() => true),
+    getConverter: jest.fn(() => { throw Error('open error message'); }),
+  };
+
+  const openResponse = WorkerInternalUtils.onMessageOpen(
+    requestStub,
+    workingDir,
+    openFiles,
+    errorConverterServiceMock,
+    filesystemFileExistsMock,
+    workerFsStub,
+    module,
+  );
+
+  expect(openResponse.name).toBe('error');
+  expect(openResponse.correlationId).toBe(requestStub.correlationId);
+  expect(openResponse.detail).toBe('open error message');
+});
+
 test('onMessageRead() reads node data', async () => {
   const requestStub = new WorkerRequest('read', '123', fileInfoStub);
   /* @ts-expect-error */
   const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
-  const module = {};
 
   const readResponse = WorkerInternalUtils.onMessageRead(
     requestStub,
@@ -303,6 +325,25 @@ test('onMessageRead() reads node data', async () => {
   expect(readResponse.correlationId).toBe(requestStub.correlationId);
   const workerNode = readResponse.detail as WorkerNodeData;
   checkWorkerNodeData(workerNode);
+});
+
+test('onMessageRead() returns error response in case of error', async () => {
+  const requestStub = new WorkerRequest('read', '123', fileInfoStub);
+  const errorConverterMock = {
+    read: jest.fn(() => { throw Error('read error message'); }),
+  };
+  /* @ts-expect-error */
+  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), errorConverterMock]]);
+
+  const readResponse = WorkerInternalUtils.onMessageRead(
+    requestStub,
+    openFiles,
+    module,
+  );
+
+  expect(readResponse.name).toBe('error');
+  expect(readResponse.correlationId).toBe(requestStub.correlationId);
+  expect(readResponse.detail).toBe('read error message');
 });
 
 test('onMessageClose() removes converter from open files map and deletes file in filesystem', async () => {

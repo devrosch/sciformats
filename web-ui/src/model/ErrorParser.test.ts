@@ -24,9 +24,9 @@ test('reading throws with passed error message', async () => {
   await expect(parser.read()).rejects.toThrowError(errorMessage);
 });
 
-test('closing throws with passed error message', async () => {
+test('closing does not throw', async () => {
   const parser = new ErrorParser(rootUrl, errorMessage);
 
   // see: https://stackoverflow.com/a/47887098 for how to test throw of async function
-  await expect(parser.close()).rejects.toThrowError(errorMessage);
+  await expect(parser.close()).resolves.not.toThrowError();
 });

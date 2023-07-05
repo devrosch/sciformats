@@ -190,7 +190,11 @@ export default class TreeNode extends HTMLElement {
   }
 
   async close() {
-    this.#parser.close();
+    try {
+      await this.#parser.close();
+    } catch (error) {
+      console.warn(`Error closing file: ${this.#url}`);
+    }
   }
 
   // #region user events

@@ -118,16 +118,7 @@ export const createConverter = (url: URL, workingDir: string, scanner: Module.Sc
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   const filePath = `${workingDir}/${uuid}/${filename}`;
-  let converter = null;
-  try {
-    converter = scanner.getConverter(filePath);
-  } catch (error) {
-    if (converter !== null) {
-      converter.delete();
-    }
-    throw error;
-  }
-  return converter;
+  return scanner.getConverter(filePath);
 };
 
 /**
@@ -233,6 +224,10 @@ export const nodeToJson = (url: URL, node: Module.Node) => {
  */
 /* @ts-expect-error */
 export const getExceptionMessage = (exception: any, module: Module) => {
+  if (exception.message || exception instanceof Error) {
+    // JS Error
+    return exception.message;
+  }
   if (typeof exception === 'number') {
     // JS wrapped C++/WASM exception
     const msg = module.getCppExceptionMessage(exception);
@@ -246,10 +241,6 @@ export const getExceptionMessage = (exception: any, module: Module) => {
     const msgArray = module.getExceptionMessage(exception);
     const msg = Array.isArray(msgArray) ? msgArray.join(', ') : msgArray;
     return msg;
-  }
-  if (exception.message) {
-    // JS Error
-    return exception.message;
   }
   // something else
   return exception;

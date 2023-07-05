@@ -26,7 +26,7 @@ export default class LocalFileParser implements Parser {
     const payload: WorkerFileInfo = { url: this.#rootUrl.toString(), blob: this.#file };
     const openReply: WorkerResponse = await postMessage(this.#worker, 'open', payload) as any;
     if (openReply.name !== 'opened') {
-      throw Error(`Could not open file: "${this.#file}."`);
+      throw Error(`Could not open file: "${this.#file.name}."`);
     }
   }
 
@@ -53,7 +53,7 @@ export default class LocalFileParser implements Parser {
     const payload: WorkerFileUrl = { url: this.#rootUrl.toString() };
     const closeReply: WorkerResponse = await postMessage(this.#worker, 'close', payload) as any;
     if (closeReply.name !== 'closed') {
-      throw Error(`Could not close file: "${this.#file}."`);
+      throw Error(`Could not close file: "${this.#file.name}."`);
     }
   }
 }

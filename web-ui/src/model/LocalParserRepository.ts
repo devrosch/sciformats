@@ -3,8 +3,9 @@ import WorkerResponse from 'worker/WorkerResponse';
 import WorkerFileInfo from 'worker/WorkerFileInfo';
 import LocalFileParser from './LocalFileParser';
 import Parser from './Parser';
+import ParserRepository from './ParserRepository';
 
-export default class ParserRepository implements ParserRepository {
+export default class LocalParserRepository implements ParserRepository {
   #worker: Worker;
 
   constructor(worker: Worker) {

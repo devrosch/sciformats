@@ -1,5 +1,7 @@
 /* eslint-disable import/no-duplicates */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import ParserRepository from 'model/ParserRepository';
+import Parser from 'model/Parser';
 import ErrorParser from 'model/ErrorParser';
 import Message from 'model/Message';
 import MockParser from 'model/__mocks__/MockParser';
@@ -11,11 +13,14 @@ import TreeNode from './TreeNode';
 const element = 'sf-tree';
 const nodeElement = 'sf-tree-node';
 const fileOpenedEvent = 'sf-file-open-requested';
+const errorEvent = 'sf-error';
+const warningEvent = 'sf-warning';
 const fileContent = 'abc';
 const fileName = 'dummy.txt';
 const fileName2 = 'dummy2.txt';
 const fileName3 = 'dummy3.txt';
 const errorFileName = 'ErrorFile.txt';
+const errorMessage = 'Error message.';
 const urlAttr = 'url';
 const urlRegex = new RegExp(`file:///.*/${fileName}#/`);
 
@@ -26,8 +31,8 @@ const prepareSimpleTree = () => {
   tree.setParserRepository(parserRepository);
 };
 
-const mockErrorParser = new ErrorParser(new URL('file:///error.txt'), 'Error message.');
-jest.mock('model/ParserRepository', () => jest.fn().mockImplementation(
+const mockErrorParser = new ErrorParser(new URL(`file:///${errorFileName}`), errorMessage);
+jest.mock('model/LocalParserRepository', () => jest.fn().mockImplementation(
   () => ({
     findParser: async (file: File) => (file.name === errorFileName
       ? mockErrorParser : new MockParser(file)),
@@ -152,6 +157,71 @@ test('sf-tree listenes to file open events', async () => {
   await waitForChildrenCount(tree, 2);
 
   expect(tree.children).toHaveLength(2);
+});
+
+test('sf-tree dispatches warning event when finding a parser throws', (done) => {
+  prepareSimpleTree();
+  const tree = document.body.querySelector(element) as Tree;
+  expect(tree.children.length).toBe(0);
+
+  const stubParserRepository: ParserRepository = {
+    findParser(): Promise<Parser> {
+      throw new Error('findParser() error');
+    },
+  };
+  tree.setParserRepository(stubParserRepository);
+
+  const blob = new Blob([fileContent]);
+  const file = new File([blob], errorFileName);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  let handle: any;
+  const listener = (message: Message) => {
+    channel.removeListener(handle);
+    expect(message.name).toBe(warningEvent);
+    expect(tree.children).toHaveLength(0);
+    done();
+  };
+  handle = channel.addListener(warningEvent, listener);
+
+  channel.dispatch(fileOpenedEvent, { files: [file] });
+});
+
+test('sf-tree shows error and dispatches error event when file open fails', async () => {
+  prepareSimpleTree();
+  const tree = document.body.querySelector(element) as Tree;
+  expect(tree.children.length).toBe(0);
+
+  const stubParserRepository: ParserRepository = {
+    findParser(): Promise<Parser> {
+      return new Promise((resolve) => { resolve(mockErrorParser); });
+    },
+  };
+  tree.setParserRepository(stubParserRepository);
+
+  const blob = new Blob([fileContent]);
+  const file = new File([blob], errorFileName);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  let handle: any;
+  let errorMessageReceived = false;
+  const listener = (message: Message) => {
+    channel.removeListener(handle);
+    expect(message.name).toBe(errorEvent);
+    errorMessageReceived = true;
+  };
+  handle = channel.addListener(errorEvent, listener);
+
+  channel.dispatch(fileOpenedEvent, { files: [file] });
+  await waitForChildrenCount(tree, 1);
+
+  expect(tree.children).toHaveLength(1);
+  const treeNode = tree.querySelector(nodeElement) as TreeNode;
+  expect(treeNode).toBeTruthy();
+  expect(treeNode.hasAttribute(urlAttr)).toBeTruthy();
+  const errorUrlRegex = new RegExp(`file:///.*${errorFileName}.*`);
+  expect(treeNode.getAttribute(urlAttr)).toMatch(errorUrlRegex);
+  expect(errorMessageReceived).toBe(true);
 });
 
 test('sf-tree listenes to file close events', async () => {

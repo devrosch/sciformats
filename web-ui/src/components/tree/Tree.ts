@@ -86,7 +86,7 @@ export default class Tree extends HTMLElement {
         parser = await this.#parserRepository!.findParser(file);
       } catch (error: any) {
         const detail = error.detail ? error.detail : error;
-        const warningMessage = `Could not find parser for file: "${file.name}". ${detail}`;
+        const warningMessage = `Error while trying to find parser for file: "${file.name}". ${detail}`;
         this.#channel.dispatch('sf-warning', warningMessage);
         console.warn(warningMessage);
       }

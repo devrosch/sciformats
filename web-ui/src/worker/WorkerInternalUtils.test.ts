@@ -190,22 +190,23 @@ test('getExceptionMessage() reads exception message from Module', async () => {
   const cppExceptionMessage = 'C++ Exception Message';
   const wasmExceptionMessage = 'WASM Exception Message';
   const jsExceptionMessage = 'JS Exception Message';
-  const module = {
+  const moduleMock = {
     getCppExceptionMessage: jest.fn(() => cppExceptionMessage),
     getExceptionMessage: jest.fn(() => ['type', wasmExceptionMessage]),
   };
 
-  const cppResult = WorkerInternalUtils.getExceptionMessage(12345, module);
+  const cppResult = WorkerInternalUtils.getExceptionMessage(12345, moduleMock);
   // TODO: when WebAssembly.Exception gets added to TS, the commented out code should work
   // const wasmResult = WorkerInternalUtils.getExceptionMessage(
   //   {} as WebAssembly.Exception, module
   // );
   const jsResult = WorkerInternalUtils.getExceptionMessage(
-    { message: jsExceptionMessage }, module
+    { message: jsExceptionMessage },
+    moduleMock,
   );
 
   expect(cppResult).toBe(cppExceptionMessage);
-  expect(module.getCppExceptionMessage).toHaveBeenCalledTimes(1);
+  expect(moduleMock.getCppExceptionMessage).toHaveBeenCalledTimes(1);
   // expect(wasmResult).toBe(wasmExceptionMessage);
   // expect(module.getExceptionMessage).toHaveBeenCalledTimes(1);
   expect(jsResult).toBe(jsExceptionMessage);

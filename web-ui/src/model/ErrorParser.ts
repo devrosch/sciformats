@@ -28,6 +28,7 @@ export default class ErrorParser implements Parser {
     return {} as NodeData;
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   async close() {
     // noop
   }

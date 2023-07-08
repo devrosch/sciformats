@@ -124,6 +124,33 @@ test('unmountFile() unmounts WORKERFS and deletes UUID directory', async () => {
   expect(filesystemFileExistsMock.unmount).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
   expect(filesystemFileExistsMock.rmdir).toBeCalledTimes(1);
   expect(filesystemFileExistsMock.rmdir).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
+
+  const filesystemNoDirMock = {
+    analyzePath: jest.fn(() => ({ exists: false })),
+    rmdir: jest.fn(),
+    unmount: jest.fn(),
+  };
+
+  WorkerInternalUtils.unmountFile(url, workingDir, filesystemNoDirMock);
+
+  expect(filesystemNoDirMock.analyzePath).toHaveBeenCalledTimes(1);
+  expect(filesystemNoDirMock.unmount).toBeCalledTimes(0);
+  expect(filesystemNoDirMock.rmdir).toBeCalledTimes(0);
+
+  const filesystemNoUuidDirMock = {
+    analyzePath: jest
+      .fn()
+      .mockReturnValueOnce({ exists: true })
+      .mockReturnValue({ exists: false }),
+    rmdir: jest.fn(),
+    unmount: jest.fn(),
+  };
+
+  WorkerInternalUtils.unmountFile(url, workingDir, filesystemNoUuidDirMock);
+
+  expect(filesystemNoUuidDirMock.analyzePath).toHaveBeenCalledTimes(2);
+  expect(filesystemNoUuidDirMock.unmount).toBeCalledTimes(0);
+  expect(filesystemNoUuidDirMock.rmdir).toBeCalledTimes(0);
 });
 
 test('isRecognized() scans file', async () => {
@@ -160,6 +187,19 @@ test('readNode() uses converter to read node data', async () => {
   expect(converterMock.read).toHaveBeenCalledTimes(1);
   expect(converterMock.read).toHaveBeenCalledWith('/');
   expect(node).toBe(nodeDataMock);
+});
+
+test('readNode() throws if there is no converter for the URL', async () => {
+  const converterMapStub = new Map();
+
+  expect(() => WorkerInternalUtils.readNode(url, converterMapStub)).toThrow();
+});
+
+test('readNode() throws for illegal URL hash', async () => {
+  const converterMapStub = new Map([[rootUrl.toString(), converterMock]]);
+  const urlIllegalHash = new URL(`${rootUrl.toString()}#illegal`);
+
+  expect(() => WorkerInternalUtils.readNode(urlIllegalHash, converterMapStub)).toThrow();
 });
 
 test('nodeToJson() maps C++ node data to WorkerNode', async () => {

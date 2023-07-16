@@ -30,6 +30,9 @@ export default class DataChart extends HTMLElement {
       y: [] as number[],
       type: 'scatter',
       mode: 'lines',
+      line: {
+        width: 1,
+      }
     },
     layout: {
       // no title

@@ -22,6 +22,7 @@ sf-parameters-panel div {
 sf-parameters-panel div ul {
   font-size: 14px;
   margin: 0;
-  list-style-position: inside;
   padding-left: 0;
+  margin-left: 1em;
+  white-space: pre-wrap;
 }

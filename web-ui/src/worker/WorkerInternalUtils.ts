@@ -23,11 +23,24 @@ export const initConverterService = async (workerSelf: any) => {
     /* eslint-disable-next-line no-await-in-loop */
     await new Promise((resolve) => { setTimeout(resolve, 100); });
   }
-  const jdxScanner = new workerSelf.Module.JdxScanner();
-  /* eslint-disable-next-line new-cap */
-  const scanners = new workerSelf.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
-  scanners.push_back(jdxScanner);
-  return new workerSelf.Module.ConverterService(scanners);
+  let jdxScanner = null;
+  let scanners = null;
+  try {
+    jdxScanner = new workerSelf.Module.JdxScanner();
+    /* eslint-disable-next-line new-cap */
+    scanners = new workerSelf.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
+    scanners.push_back(jdxScanner);
+    jdxScanner.delete();
+  } catch (error) {
+    if (jdxScanner !== null) {
+      jdxScanner.delete();
+    }
+    if (scanners !== null) {
+      scanners.delete();
+    }
+    throw error;
+  }
+  return new workerSelf.Module.ConverterService(scanners);  
 };
 
 /**

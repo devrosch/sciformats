@@ -32,7 +32,7 @@ export default class DataChart extends HTMLElement {
       mode: 'lines',
       line: {
         width: 1,
-      }
+      },
     },
     layout: {
       // no title

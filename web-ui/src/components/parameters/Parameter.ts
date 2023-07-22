@@ -1,7 +1,7 @@
 import { updateStateAndRender } from 'util/RenderUtils';
 
-const keyValueTemplate = `<span></span>: <span></span>`;
-const valueOnlyTemplate = `<span></span>`;
+const keyValueTemplate = '<span></span>: <span></span>';
+const valueOnlyTemplate = '<span></span>';
 
 export default class Parameter extends HTMLElement {
   static get observedAttributes() { return ['key', 'value']; }
@@ -25,12 +25,11 @@ export default class Parameter extends HTMLElement {
   }
 
   render() {
-    if (this._key == '') {
+    if (this._key === '') {
       this.innerHTML = valueOnlyTemplate;
       const valueSpan = this.querySelector('span');
       valueSpan!.textContent = this._value;
-    }
-    else {
+    } else {
       this.innerHTML = keyValueTemplate;
       const spans = this.querySelectorAll('span');
       const keySpan = spans[0];

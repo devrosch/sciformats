@@ -40,7 +40,7 @@ export const initConverterService = async (workerSelf: any) => {
     }
     throw error;
   }
-  return new workerSelf.Module.ConverterService(scanners);  
+  return new workerSelf.Module.ConverterService(scanners);
 };
 
 /**

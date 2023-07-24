@@ -74,7 +74,7 @@ test('initConverterService() waits for Module init and initializes ConverterServ
   const workerSelfMock = {
     Module: {
       Scanner: jest.fn(),
-      JdxScanner: jest.fn(),
+      JdxScanner: jest.fn(() => ({ delete: jest.fn() })),
       vector$std$$shared_ptr$sciformats$$api$$Scanner$$: jest.fn(
         () => ({ push_back: pushBackMock }),
       ),

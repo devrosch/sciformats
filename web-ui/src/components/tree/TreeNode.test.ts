@@ -1,5 +1,6 @@
 /* eslint-disable import/no-duplicates */
 import Message from 'model/Message';
+import NodeData from 'model/NodeData';
 import Parser from 'model/Parser';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './TreeNode'; // for side effects
@@ -22,15 +23,15 @@ class StubParser implements Parser {
   }
 
   /* eslint-disable class-methods-use-this */
-  async read(url: URL) {
+  async read(url: URL): Promise<NodeData> {
     const hash = decodeURIComponent(url.hash);
-    let children: string[] = [];
+    let childNodeNames: string[] = [];
     let data: { x: number, y: number }[] = [];
     if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {
-      children = ['child 1', 'child 2', 'child 3'];
+      childNodeNames = ['child 1', 'child 2', 'child 3'];
     }
     if (hash.endsWith('/child 2')) {
-      children = ['child 1', 'child 2'];
+      childNodeNames = ['child 1', 'child 2'];
     }
 
     const parameters = [{ key: 'key 1', value: 'value 1' }];
@@ -49,7 +50,7 @@ class StubParser implements Parser {
       url,
       data,
       parameters,
-      children,
+      childNodeNames,
     };
   }
 

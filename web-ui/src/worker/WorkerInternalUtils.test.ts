@@ -61,8 +61,8 @@ const checkWorkerNodeData = (workerNode: WorkerNodeData) => {
   expect(workerNode.parameters[0]).toEqual({ key: 'key value', value: 'value value' });
   expect(workerNode.data).toHaveLength(3);
   expect(workerNode.data[0]).toEqual({ x: 1, y: 2 });
-  expect(workerNode.children).toHaveLength(1);
-  expect(workerNode.children[0]).toEqual('child node name');
+  expect(workerNode.childNodeNames).toHaveLength(1);
+  expect(workerNode.childNodeNames[0]).toEqual('child node name');
 };
 
 afterEach(() => {

@@ -1,4 +1,5 @@
 import WorkerFileInfo from 'worker/WorkerFileInfo';
+import WorkerNodeData from 'worker/WorkerNodeData';
 import WorkerResponse from 'worker/WorkerResponse';
 import LocalFileParser from './LocalFileParser';
 
@@ -10,11 +11,11 @@ const mockErrorUrl = `file:///${uuid}/error.txt#/`;
 const rootUrl = new URL(`file:///${uuid}/${filename}`);
 const file = new File(['dummy'], 'test.txt');
 const worker = {} as Worker;
-const workerNodeData = {
+const workerNodeData: WorkerNodeData = {
   url: url.toString(),
   data: [{ x: 1, y: 2 }, { x: 3, y: 4 }],
   parameters: [{ key: 'param 1', value: 'param value 1' }],
-  children: ['child 1', 'child 2'],
+  childNodeNames: ['child 1', 'child 2'],
 };
 
 const mockOpenedResponse = new WorkerResponse('opened', '123', { url: rootUrl.toString() });
@@ -84,7 +85,7 @@ test('reading a local file succeeds', async () => {
   expect(node.url).toEqual(new URL(workerNodeData.url));
   expect(node.data).toBe(workerNodeData.data);
   expect(node.parameters).toBe(workerNodeData.parameters);
-  expect(node.children).toBe(workerNodeData.children);
+  expect(node.childNodeNames).toBe(workerNodeData.childNodeNames);
 });
 
 test('reading an illegal URL throws', async () => {

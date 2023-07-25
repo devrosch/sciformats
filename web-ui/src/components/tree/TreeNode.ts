@@ -85,7 +85,7 @@ export default class TreeNode extends HTMLElement {
       nameSpan.removeAttribute('title');
     }
 
-    const numChildNodes = this.#nodeData.children.length;
+    const numChildNodes = this.#nodeData.childNodeNames.length;
     const hasChildren = numChildNodes > 0;
     if (hasChildren) {
       this.setAttribute('expand', `${this.#expand}`);
@@ -97,12 +97,12 @@ export default class TreeNode extends HTMLElement {
     if (hasChildren) {
       if (this.#expand) {
         // add child nodes
-        for (let i = 0; i < this.#nodeData.children.length; i += 1) {
+        for (let i = 0; i < this.#nodeData.childNodeNames.length; i += 1) {
           const childUrl = new URL(this.#url);
           if (!this.#url.hash.endsWith('/')) {
             childUrl.hash += ('/');
           }
-          const childNodeName = this.#nodeData.children[i];
+          const childNodeName = this.#nodeData.childNodeNames[i];
           childUrl.hash += `${i}-${encodeURIComponent(childNodeName)}`;
           const childNode = new TreeNode(this.#parser, childUrl);
           this.appendChild(childNode);
@@ -132,7 +132,7 @@ export default class TreeNode extends HTMLElement {
         url: this.#url,
         data: [],
         parameters: [{ key: 'Error', value: errorMessage }],
-        children: [],
+        childNodeNames: [],
       };
       this.#channel.dispatch('sf-error', errorMessage);
       console.error(errorMessage);
@@ -171,7 +171,7 @@ export default class TreeNode extends HTMLElement {
       let nodeData = this.#nodeData;
       if (nodeData == null) {
         nodeData = {
-          url: this.#url, data: [], parameters: [], children: [],
+          url: this.#url, data: [], parameters: [], childNodeNames: [],
         };
       }
       this.#channel.dispatch(nodeSelectedEvent, nodeData);

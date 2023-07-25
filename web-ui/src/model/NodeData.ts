@@ -17,7 +17,7 @@ type NodeData = {
   /**
    * Child nodes/fragments.
    */
-  children: string[],
+  childNodeNames: string[],
 };
 
 export default NodeData;

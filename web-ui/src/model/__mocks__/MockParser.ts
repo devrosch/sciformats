@@ -21,13 +21,13 @@ export default class MockParser implements Parser {
   read(url: URL): Promise<NodeData> {
     const data: { x: number, y: number }[] = [];
     const parameters: { key: string, value: string }[] = [];
-    const children: string[] = ['child1', 'child2'];
+    const childNodeNames: string[] = ['child1', 'child2'];
 
-    const nodeData = {
+    const nodeData: NodeData = {
       url,
       data,
       parameters,
-      children,
+      childNodeNames,
     };
 
     return new Promise((resolve) => { resolve(nodeData); });

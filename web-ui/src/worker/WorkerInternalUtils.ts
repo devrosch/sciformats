@@ -178,8 +178,8 @@ export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => 
  * @returns WorkerNodeData JSON.
  */
 /* @ts-expect-error */
-export const nodeToJson = (url: URL, node: Module.Node) => {
-  const json: any = {};
+export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
+  const json: WorkerNodeData = {} as WorkerNodeData;
 
   json.url = url.toString();
 
@@ -219,8 +219,7 @@ export const nodeToJson = (url: URL, node: Module.Node) => {
     const childNodeName = childNodeNames.get(index);
     jsonChildNodes.push(childNodeName);
   }
-  // TODO: harmonize naming
-  json.children = jsonChildNodes;
+  json.childNodeNames = jsonChildNodes;
   childNodeNames.delete();
 
   return json;

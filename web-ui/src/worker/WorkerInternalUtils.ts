@@ -1,3 +1,4 @@
+import PeakTable from 'model/PeakTable';
 import { extractFilename, extractUuid } from 'util/UrlUtils';
 import WorkerStatus from './WorkerStatus';
 import WorkerResponse from './WorkerResponse';
@@ -210,6 +211,40 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   }
   json.data = jsonData;
   data.delete();
+
+  // peak table
+  const jsonPeakTable: PeakTable = { columnNames: [], peaks: [] };
+
+  const peakTable = node.peakTable;
+  const peakTableColumnNames = peakTable.columnNames;
+  const peakColumnCount = peakTableColumnNames.size();
+  for (let index = 0; index < peakColumnCount; index += 1) {
+    const columnKeyValuePair = peakTableColumnNames.get(index);
+    jsonPeakTable.columnNames.push(
+      { key: columnKeyValuePair.first, value: columnKeyValuePair.second },
+    );
+    // columnKeyValuePair is value object => no delete()
+  }
+
+  const peaks = peakTable.peaks;
+  const peakCount = peaks.size();
+  for (let peakIndex = 0; peakIndex < peakCount; peakIndex += 1) {
+    const jsonPeak = new Map<string, string>();
+    const peak = peaks.get(peakIndex);
+    for (const column of jsonPeakTable.columnNames) {
+      const columnKey = column.key;
+      // TODO: what happens if no value for key?
+      const peakValue = peak.get(columnKey);
+      jsonPeak.set(columnKey, peakValue);
+    }
+    jsonPeakTable.peaks.push(jsonPeak);
+    peak.delete();
+  }
+  json.peakTable = jsonPeakTable;
+  peaks.delete();
+
+  console.log('jsonPeakTable: ');
+  console.log({ jsonPeakTable });
 
   // child node names
   const childNodeNames = node.childNodeNames;

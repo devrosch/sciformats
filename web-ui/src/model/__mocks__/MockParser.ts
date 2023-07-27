@@ -19,14 +19,19 @@ export default class MockParser implements Parser {
 
   // eslint-disable-next-line class-methods-use-this
   read(url: URL): Promise<NodeData> {
-    const data: { x: number, y: number }[] = [];
     const parameters: { key: string, value: string }[] = [];
+    const data: { x: number, y: number }[] = [];
+    const peakTable = {
+      columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],
+      peaks: [new Map([['col0', 'Cloumn 0 Value']])],
+    };
     const childNodeNames: string[] = ['child1', 'child2'];
 
     const nodeData: NodeData = {
       url,
-      data,
       parameters,
+      data,
+      peakTable,
       childNodeNames,
     };
 

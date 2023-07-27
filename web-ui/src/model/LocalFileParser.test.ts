@@ -13,8 +13,12 @@ const file = new File(['dummy'], 'test.txt');
 const worker = {} as Worker;
 const workerNodeData: WorkerNodeData = {
   url: url.toString(),
-  data: [{ x: 1, y: 2 }, { x: 3, y: 4 }],
   parameters: [{ key: 'param 1', value: 'param value 1' }],
+  data: [{ x: 1, y: 2 }, { x: 3, y: 4 }],
+  peakTable: {
+    columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],
+    peaks: [new Map([['col0', 'Cloumn 0 Value']])],
+  },
   childNodeNames: ['child 1', 'child 2'],
 };
 

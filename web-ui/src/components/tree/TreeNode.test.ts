@@ -25,16 +25,10 @@ class StubParser implements Parser {
   /* eslint-disable class-methods-use-this */
   async read(url: URL): Promise<NodeData> {
     const hash = decodeURIComponent(url.hash);
-    let childNodeNames: string[] = [];
-    let data: { x: number, y: number }[] = [];
-    if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {
-      childNodeNames = ['child 1', 'child 2', 'child 3'];
-    }
-    if (hash.endsWith('/child 2')) {
-      childNodeNames = ['child 1', 'child 2'];
-    }
 
     const parameters = [{ key: 'key 1', value: 'value 1' }];
+
+    let data: { x: number, y: number }[] = [];
     data = [{ x: 1, y: 2 }];
     if (hash.endsWith('/child 2')) {
       data = [{ x: 1, y: 2 }, { x: 2, y: 4 }];
@@ -46,10 +40,36 @@ class StubParser implements Parser {
       parameters.push({ key: 'key 3', value: 'value 3' });
     }
 
+    const peakTable: {
+      columnNames: { key: string, value: string }[],
+      peaks: Map<string, string>[],
+    } = { columnNames: [], peaks: [] };
+    if (hash.endsWith('/child 2')) {
+      peakTable.columnNames.push({ key: 'col0', value: 'Cloumn 0' });
+      peakTable.columnNames.push({ key: 'col1', value: 'Cloumn 1' });
+      const peak0 = new Map<string, string>();
+      peak0.set('col0', 'peak0col0value');
+      peak0.set('col1', 'peak0col1value');
+      peakTable.peaks.push(peak0);
+      const peak1 = new Map<string, string>();
+      peak1.set('col0', 'peak1col0value');
+      peak1.set('col1', 'peak1col1value');
+      peakTable.peaks.push(peak1);
+    }
+
+    let childNodeNames: string[] = [];
+    if (hash === '' || hash === '#' || hash === '/' || hash === '#/') {
+      childNodeNames = ['child 1', 'child 2', 'child 3'];
+    }
+    if (hash.endsWith('/child 2')) {
+      childNodeNames = ['child 1', 'child 2'];
+    }
+
     return {
       url,
-      data,
       parameters,
+      data,
+      peakTable,
       childNodeNames,
     };
   }
@@ -147,9 +167,9 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
   const errorEvent = 'sf-error';
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
-    open: () => new Promise<void>(() => {}),
+    open: () => new Promise<void>(() => { }),
     read: () => { throw Error('Test Error.'); },
-    close: () => new Promise<void>(() => {}),
+    close: () => new Promise<void>(() => { }),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
 
@@ -172,9 +192,9 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
 test('sf-tree-node displays error in case of data loading error', (done) => {
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
-    open: () => new Promise<void>(() => {}),
+    open: () => new Promise<void>(() => { }),
     read: () => { throw Error('Test Error.'); },
-    close: () => new Promise<void>(() => {}),
+    close: () => new Promise<void>(() => { }),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
   document.body.append(treeNode);

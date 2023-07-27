@@ -1,3 +1,5 @@
+import PeakTable from 'model/PeakTable';
+
 /**
  * Data representing a node/fragment in the data hierarchy as provided by a web worker.
  */
@@ -8,14 +10,22 @@ type WorkerNodeData = {
    * is not serializable for messages between a web worker and the main thread.
    */
   url: string,
-  /**
-   * XY data.
-   */
-  data: { x: number, y: number }[],
+
   /**
    * Meta data represented as key-value pairs.
    */
   parameters: { key: string, value: string }[],
+
+  /**
+   * XY data.
+   */
+  data: { x: number, y: number }[],
+
+  /**
+   * A peak table.
+   */
+  peakTable: PeakTable,
+
   /**
    * Child nodes/fragments.
    */

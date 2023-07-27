@@ -43,8 +43,9 @@ export default class LocalFileParser implements Parser {
     // TODO: harmonize?
     return {
       url: new URL(json.url),
-      data: json.data,
       parameters: json.parameters,
+      data: json.data,
+      peakTable: json.peakTable,
       childNodeNames: json.childNodeNames,
     };
   }

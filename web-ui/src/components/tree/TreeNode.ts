@@ -130,8 +130,9 @@ export default class TreeNode extends HTMLElement {
       this.#error = errorMessage;
       this.#nodeData = {
         url: this.#url,
-        data: [],
         parameters: [{ key: 'Error', value: errorMessage }],
+        data: [],
+        peakTable: { columnNames: [], peaks: [] },
         childNodeNames: [],
       };
       this.#channel.dispatch('sf-error', errorMessage);
@@ -171,7 +172,11 @@ export default class TreeNode extends HTMLElement {
       let nodeData = this.#nodeData;
       if (nodeData == null) {
         nodeData = {
-          url: this.#url, data: [], parameters: [], childNodeNames: [],
+          url: this.#url,
+          parameters: [],
+          data: [],
+          peakTable: { columnNames: [], peaks: [] },
+          childNodeNames: [],
         };
       }
       this.#channel.dispatch(nodeSelectedEvent, nodeData);

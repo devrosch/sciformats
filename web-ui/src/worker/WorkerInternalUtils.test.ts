@@ -112,6 +112,28 @@ test('initConverterService() waits for Module init and initializes ConverterServ
   expect(workerSelfMock.Module.ConverterService).toHaveBeenCalledTimes(1);
 });
 
+test('initConverterService() cleans up resources if init fails', async () => {
+  const pushBackMock = jest.fn(() => { throw new Error(); });
+  const jdxScannerDeleteMock = jest.fn();
+  const vectorDeleteMock = jest.fn();
+  const workerSelfMock = {
+    Module: {
+      Scanner: jest.fn(),
+      JdxScanner: jest.fn(() => ({ delete: jdxScannerDeleteMock })),
+      vector$std$$shared_ptr$sciformats$$api$$Scanner$$: jest.fn(
+        () => ({ push_back: pushBackMock, delete: vectorDeleteMock }),
+      ),
+      ConverterService: jest.fn(),
+    },
+  };
+
+  await expect(async () => { await WorkerInternalUtils.initConverterService(workerSelfMock); })
+    .rejects.toThrowError();
+
+  expect(jdxScannerDeleteMock).toHaveBeenCalledTimes(1);
+  expect(vectorDeleteMock).toHaveBeenCalledTimes(1);
+});
+
 test('mountFile() creates workingDir and UUID directories and mounts WORKERFS', async () => {
   const blob = new Blob();
   const uuidPath = `${workingDir}/${uuid}`;

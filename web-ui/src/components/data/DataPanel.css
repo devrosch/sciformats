@@ -3,6 +3,7 @@ sf-data-panel {
   display: flex;
   flex-grow: 1;
   flex-direction: column;
+  height: 100%;
 }
 
 .tabs {
@@ -16,7 +17,7 @@ sf-data-panel {
   border: none;
   cursor: pointer;
   line-height: 2em;
-  background-color: #eee;
+  background-color: #ccc;
   font-size: 1em;
   font-family: sans-serif;
   padding: 0 0.5em 0 0.5em;
@@ -28,12 +29,13 @@ sf-data-panel {
 }
 
 .tab-link.active {
-  background-color: #ccc;
+  background-color: #eee;
 }
 
 .tab-content {
   display: none;
   flex: 0 0 calc(100% - 2em);
+  overflow: auto;
 }
 
 .tab-content.active {

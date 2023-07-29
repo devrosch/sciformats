@@ -1,6 +1,7 @@
 /* eslint-disable import/no-duplicates */
 import './DataChart';
 import DataChart from './DataChart';
+import './DataPeaks';
 import './DataTable';
 import './DataPanel.css';
 
@@ -8,13 +9,17 @@ const template = `
   <div id="sf-data-tabs" class="tabs">
     <button id="sf-data-chart-link" class="tab-link">Chart</button>
     <button id="sf-data-table-link" class="tab-link">Table</button>
+    <button id="sf-data-peaks-link" class="tab-link">Peaks</button>
   </div>
 
   <div id="sf-data-chart-panel" class="tab-content">
-    <sf-data-chart/>
+    <sf-data-chart></sf-data-chart>
   </div>
   <div id="sf-data-table-panel" class="tab-content">
-    <sf-data-table/>
+    <sf-data-table></sf-data-table>
+  </div>
+  <div id="sf-data-peaks-panel" class="tab-content">
+    <sf-data-peaks></sf-data-peaks>
   </div>
 `;
 
@@ -73,6 +78,10 @@ export default class DataPanel extends HTMLElement {
         break;
       case 'sf-data-table-link':
         this.#active = 'table';
+        this.render();
+        break;
+      case 'sf-data-peaks-link':
+        this.#active = 'peaks';
         this.render();
         break;
       default:

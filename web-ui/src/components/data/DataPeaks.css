@@ -1,0 +1,12 @@
+sf-data-peaks {
+  flex: 0 0 100%;
+}
+
+sf-data-peaks > table {
+  margin: 0.5em;
+}
+
+sf-data-peaks > table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}

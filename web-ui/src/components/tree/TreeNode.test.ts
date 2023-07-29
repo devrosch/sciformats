@@ -1,8 +1,8 @@
 /* eslint-disable import/no-duplicates */
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import NodeData from 'model/NodeData';
 import Parser from 'model/Parser';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './TreeNode'; // for side effects
 import TreeNode from './TreeNode';
 

@@ -1,9 +1,9 @@
-import './Parameter';
-import Channel from 'model/Channel';
-import Message from 'model/Message';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import { updateStateAndRender } from 'util/RenderUtils';
 import { isSameUrl } from 'util/UrlUtils';
+import './Parameter';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Channel from 'model/Channel';
+import Message from 'model/Message';
 import './ParametersPanel.css';
 
 const html = `

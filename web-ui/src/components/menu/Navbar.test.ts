@@ -1,6 +1,6 @@
 /* eslint-disable import/no-duplicates */
-import Message from 'model/Message';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Message from 'model/Message';
 import Menu from './Menu';
 import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects

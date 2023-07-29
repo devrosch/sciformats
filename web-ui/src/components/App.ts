@@ -1,4 +1,5 @@
 /* eslint-disable import/no-duplicates */
+import { initWorker } from 'util/WorkerUtils';
 import 'components/Splash';
 import Splash from 'components/Splash';
 import 'components/menu/Navbar';
@@ -7,10 +8,9 @@ import Tree from 'components/tree/Tree';
 import 'components/data/DataPanel';
 import 'components/parameters/ParametersPanel';
 import 'components/footer/Footer';
-import './App.css';
-import { initWorker } from 'util/WorkerUtils';
 import LocalParserRepository from 'model/LocalParserRepository';
 import Navbar from 'components/menu/Navbar';
+import './App.css';
 
 const template = `
   <sf-splash open></sf-splash>

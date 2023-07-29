@@ -1,11 +1,10 @@
-import './DataChart.css';
-
+import { isSameUrl } from 'util/UrlUtils';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-import { isSameUrl } from 'util/UrlUtils';
 // import * as Plotly from 'plotly.js';
 import * as Plotly from 'plotly.js-dist-min';
+import './DataChart.css';
 
 const template = '<div id="sf-data-chart-placeholder"/>';
 

@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
-import Channel from 'model/Channel';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import SysInfoProvider from 'util/SysInfoProvider';
+import Channel from 'model/Channel';
 import Logo from 'assets/sf-ui.svg';
 import './Menu'; // for side effects
 import Menu from './Menu';

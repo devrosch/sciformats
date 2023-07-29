@@ -1,5 +1,5 @@
-import PeakTable from 'model/PeakTable';
 import { extractFilename, extractUuid } from 'util/UrlUtils';
+import PeakTable from 'model/PeakTable';
 import WorkerStatus from './WorkerStatus';
 import WorkerResponse from './WorkerResponse';
 import WorkerFileInfo from './WorkerFileInfo';

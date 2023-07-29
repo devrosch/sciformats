@@ -1,7 +1,7 @@
 /* eslint-disable import/no-duplicates */
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import 'components/menu/MenuItemFileOpen'; // for side effects
 import MenuItemFileOpen from 'components/menu/MenuItemFileOpen';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import MenuItem from './MenuItem';
 
 const element = 'sf-menu-item-file-open';

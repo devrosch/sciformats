@@ -1,8 +1,8 @@
-import Channel from 'model/Channel';
-import Message from 'model/Message';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import { isSameUrl } from 'util/UrlUtils';
 import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Channel from 'model/Channel';
+import Message from 'model/Message';
 import './Footer.css';
 
 const template = `

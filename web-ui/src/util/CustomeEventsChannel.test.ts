@@ -1,6 +1,6 @@
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
-import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 
 const checker = (eventType: string, payload: { test: string }, channel: Channel) => {
   const eventHandler = jest.fn((message: Message) => message.detail);

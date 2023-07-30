@@ -229,13 +229,13 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   const peaks = peakTable.peaks;
   const peakCount = peaks.size();
   for (let peakIndex = 0; peakIndex < peakCount; peakIndex += 1) {
-    const jsonPeak = new Map<string, string>();
+    const jsonPeak: { [key: string]: any } = {};
     const peak = peaks.get(peakIndex);
     for (const column of jsonPeakTable.columnNames) {
       const columnKey = column.key;
       // TODO: what happens if no value for key?
       const peakValue = peak.get(columnKey);
-      jsonPeak.set(columnKey, peakValue);
+      jsonPeak[columnKey] = peakValue;
     }
     jsonPeakTable.peaks.push(jsonPeak);
     peak.delete();

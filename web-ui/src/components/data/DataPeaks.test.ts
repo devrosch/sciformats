@@ -12,10 +12,26 @@ const peakTable: PeakTable = {
     { key: 'col2', value: 'Column 2' },
   ],
   peaks: [
-    new Map([['col0', 'Cell 00'], ['col1', 'Cell 01'], ['col2', 'Cell 02']]),
-    new Map([/* no col0 */['col1', 'Cell11'], ['col2', 'Cell 12']]),
-    new Map([['col0', 'Cell 20'], /* no col1 */['col2', 'Cell 22']]),
-    new Map([['col0', 'Cell 30'], ['col1', 'Cell 31']/* no col2 */]),
+    {
+      col0: 'Cell 00',
+      col1: 'Cell 01',
+      col2: 'Cell 02',
+    },
+    {
+      // no col0
+      col1: 'Cell 11',
+      col2: 'Cell 12',
+    },
+    {
+      col0: 'Cell 20',
+      // no col1
+      col2: 'Cell 22',
+    },
+    {
+      col0: 'Cell 30',
+      col1: 'Cell 31',
+      // no col2
+    },
   ],
 };
 const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
@@ -53,7 +69,8 @@ const checkDataIsRendered = (
       expect(cells.length).toBe(peakData.columnNames.length);
       for (let j = 0; j < peakData.columnNames.length; j += 1) {
         const columnKey = peakData.columnNames[j].key;
-        const expectedCellValue = peakData.peaks[i].has(columnKey) ? peakData.peaks[i].get(columnKey) : '';
+        const expectedCellValue = Object.prototype.hasOwnProperty.call(peakData.peaks[i], columnKey)
+          ? peakData.peaks[i][columnKey] : '';
         expect(cells[j].textContent).toBe(expectedCellValue);
       }
     }

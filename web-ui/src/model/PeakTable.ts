@@ -15,7 +15,7 @@ type PeakTable = {
    * also present as column name keys. May miss some column name key which the represents blank
    * cells.
    */
-  peaks: Map<string, string>[],
+  peaks: { [key: string]: any }[],
 };
 
 export default PeakTable;

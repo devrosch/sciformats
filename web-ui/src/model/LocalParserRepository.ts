@@ -24,6 +24,6 @@ export default class LocalParserRepository implements ParserRepository {
       const parser = new LocalFileParser(this.#worker, url, file);
       return parser;
     }
-    throw Error(`File not recognized: "${file.name}"`);
+    throw new Error(`File not recognized: "${file.name}"`);
   }
 }

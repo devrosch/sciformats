@@ -168,7 +168,7 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
     open: () => new Promise<void>(() => { }),
-    read: () => { throw Error('Test Error.'); },
+    read: () => { throw new Error('Test Error.'); },
     close: () => new Promise<void>(() => { }),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
@@ -193,7 +193,7 @@ test('sf-tree-node displays error in case of data loading error', (done) => {
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
     open: () => new Promise<void>(() => { }),
-    read: () => { throw Error('Test Error.'); },
+    read: () => { throw new Error('Test Error.'); },
     close: () => new Promise<void>(() => { }),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);

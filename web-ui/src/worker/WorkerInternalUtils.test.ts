@@ -376,7 +376,7 @@ test('onMessageOpen() returns error response in case of error', async () => {
   const openFiles = new Map<string, Module.Converter>();
   const errorConverterServiceMock = {
     isRecognized: jest.fn(() => true),
-    getConverter: jest.fn(() => { throw Error('open error message'); }),
+    getConverter: jest.fn(() => { throw new Error('open error message'); }),
   };
 
   const openResponse = WorkerInternalUtils.onMessageOpen(
@@ -414,7 +414,7 @@ test('onMessageRead() reads node data', async () => {
 test('onMessageRead() returns error response in case of error', async () => {
   const requestStub = new WorkerRequest('read', '123', fileInfoStub);
   const errorConverterMock = {
-    read: jest.fn(() => { throw Error('read error message'); }),
+    read: jest.fn(() => { throw new Error('read error message'); }),
   };
   /* @ts-expect-error */
   const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), errorConverterMock]]);

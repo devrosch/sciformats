@@ -19,11 +19,11 @@ export default class ErrorParser implements Parser {
   }
 
   async open() {
-    throw Error(this.#error);
+    throw new Error(this.#error);
   }
 
   async read() {
-    throw Error(this.#error);
+    throw new Error(this.#error);
     // somehow required so TS is satisfied
     return {} as NodeData;
   }

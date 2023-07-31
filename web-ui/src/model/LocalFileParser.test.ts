@@ -20,6 +20,7 @@ const workerNodeData: WorkerNodeData = {
     peaks: [new Map([['col0', 'Cloumn 0 Value']])],
   },
   childNodeNames: ['child 1', 'child 2'],
+  metadata: {},
 };
 
 const mockOpenedResponse = new WorkerResponse('opened', '123', { url: rootUrl.toString() });

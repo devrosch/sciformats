@@ -26,6 +26,7 @@ export default class MockParser implements Parser {
       peaks: [new Map([['col0', 'Cloumn 0 Value']])],
     };
     const childNodeNames: string[] = ['child1', 'child2'];
+    const metadata = {};
 
     const nodeData: NodeData = {
       url,
@@ -33,6 +34,7 @@ export default class MockParser implements Parser {
       data,
       peakTable,
       childNodeNames,
+      metadata,
     };
 
     return new Promise((resolve) => { resolve(nodeData); });

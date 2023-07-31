@@ -58,12 +58,23 @@ const childNodeNames = {
   get: jest.fn(() => 'child node name'),
   delete: jest.fn(),
 };
+const metadata = {
+  size: jest.fn(() => 1),
+  keys: jest.fn(() => ({
+    size: jest.fn(() => 1),
+    get: jest.fn(() => 'x.unit'),
+    delete: jest.fn(),
+  })),
+  get: jest.fn(() => '1/cm'),
+  delete: jest.fn(),
+};
 const nodeDataMock = {
   name: 'name value',
   parameters,
   data,
   peakTable,
   childNodeNames,
+  metadata,
 };
 const converterMock = {
   read: jest.fn(() => nodeDataMock),

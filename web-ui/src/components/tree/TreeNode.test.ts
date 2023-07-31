@@ -65,12 +65,18 @@ class StubParser implements Parser {
       childNodeNames = ['child 1', 'child 2'];
     }
 
+    let metadata = {};
+    if (hash.endsWith('/child 2')) {
+      metadata = { 'x.units': '1/cm', 'y.units': 'a.u.' };
+    }
+
     return {
       url,
       parameters,
       data,
       peakTable,
       childNodeNames,
+      metadata,
     };
   }
 

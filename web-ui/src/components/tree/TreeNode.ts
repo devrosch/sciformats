@@ -134,6 +134,7 @@ export default class TreeNode extends HTMLElement {
         data: [],
         peakTable: { columnNames: [], peaks: [] },
         childNodeNames: [],
+        metadata: {},
       };
       this.#channel.dispatch('sf-error', errorMessage);
       console.error(errorMessage);
@@ -177,6 +178,7 @@ export default class TreeNode extends HTMLElement {
           data: [],
           peakTable: { columnNames: [], peaks: [] },
           childNodeNames: [],
+          metadata: {},
         };
       }
       this.#channel.dispatch(nodeSelectedEvent, nodeData);

@@ -47,6 +47,7 @@ export default class LocalFileParser implements Parser {
       data: json.data,
       peakTable: json.peakTable,
       childNodeNames: json.childNodeNames,
+      metadata: json.metadata,
     };
   }
 

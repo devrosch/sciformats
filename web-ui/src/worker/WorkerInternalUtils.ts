@@ -229,7 +229,7 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   const peaks = peakTable.peaks;
   const peakCount = peaks.size();
   for (let peakIndex = 0; peakIndex < peakCount; peakIndex += 1) {
-    const jsonPeak: { [key: string]: any } = {};
+    const jsonPeak: { [key: string]: string } = {};
     const peak = peaks.get(peakIndex);
     for (const column of jsonPeakTable.columnNames) {
       const columnKey = column.key;
@@ -243,9 +243,6 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   json.peakTable = jsonPeakTable;
   peaks.delete();
 
-  console.log('jsonPeakTable: ');
-  console.log({ jsonPeakTable });
-
   // child node names
   const childNodeNames = node.childNodeNames;
   const childNodesSize = childNodeNames.size();
@@ -256,6 +253,20 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   }
   json.childNodeNames = jsonChildNodes;
   childNodeNames.delete();
+
+  // metadata
+  const metadata = node.metadata;
+  const metadataKeys = metadata.keys();
+  const jsonMetadata: { [key: string]: string } = {};
+  for (let i = 0; i < metadataKeys.size(); i += 1) {
+    const key = metadataKeys.get(i);
+    const value = metadata.get(key);
+    jsonMetadata[key] = value;
+  }
+  metadataKeys.delete();
+  metadata.delete();
+
+  json.metadata = jsonMetadata;
 
   return json;
 };

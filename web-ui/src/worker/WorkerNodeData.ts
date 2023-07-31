@@ -30,6 +30,11 @@ type WorkerNodeData = {
    * Child nodes/fragments.
    */
   childNodeNames: string[],
+
+  /**
+   * Metadata key/value pairs.
+   */
+  metadata: { [key: string]: string },
 };
 
 export default WorkerNodeData;

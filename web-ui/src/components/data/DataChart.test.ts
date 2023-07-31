@@ -95,3 +95,50 @@ test('sf-data-chart reacts to sf-tree-node-data-updated events', async () => {
   expect(chart.data.metadata.xTitle).toBe(`${metadata['x.label']} / ${metadata['x.unit']}`);
   expect(chart.data.metadata.yTitle).toBe(`${metadata['y.label']} / ${metadata['y.unit']}`);
 });
+
+test('sf-data-chart renders axes titles with (partially) missing labels or units', async () => {
+  const chart = new DataChart();
+  document.body.append(chart);
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+
+  channel.dispatch('sf-tree-node-selected', {
+    url: urlChild2,
+    data,
+    parameters: null,
+    metadata: {
+      'x.label': 'X Label',
+      'y.label': 'Y Label',
+      // no units
+    },
+  });
+
+  expect(chart.data.metadata.xTitle).toBe('X Label');
+  expect(chart.data.metadata.yTitle).toBe('Y Label');
+
+  channel.dispatch('sf-tree-node-data-updated', {
+    url: urlChild2,
+    data,
+    parameters: null,
+    metadata: {
+      'x.unit': 'X Unit',
+      'y.unit': 'Y Unit',
+      // no labels
+    },
+  });
+
+  expect(chart.data.metadata.xTitle).toBe('X Unit');
+  expect(chart.data.metadata.yTitle).toBe('Y Unit');
+
+  channel.dispatch('sf-tree-node-data-updated', {
+    url: urlChild2,
+    data,
+    parameters: null,
+    metadata: {
+      // no labels
+      // no units
+    },
+  });
+
+  expect(chart.data.metadata.xTitle).toBe('');
+  expect(chart.data.metadata.yTitle).toBe('');
+});

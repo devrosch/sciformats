@@ -37,7 +37,7 @@ export default class DataChart extends HTMLElement {
       // no title
       // smaller margins
       margin: {
-        l: 50,
+        l: 60,
         r: 20,
         b: 50,
         t: 30,
@@ -70,13 +70,30 @@ export default class DataChart extends HTMLElement {
   get data() {
     const x = this.#chartState.data.x;
     const y = this.#chartState.data.y;
-    return DataChart.fromXyArrays({ x, y });
+    const xyData = DataChart.fromXyArrays({ x, y });
+    // xaxis/yaxis.title properties do not return a string but an object with a text property
+    const xTitle = (this.#chartState.layout.xaxis.title as any).text as string;
+    const yTitle = (this.#chartState.layout.yaxis.title as any).text as string;
+    return {
+      xyData,
+      metadata: {
+        xTitle,
+        yTitle,
+      },
+    };
   }
 
-  set data(data: { x: number, y: number }[]) {
-    const xyData = DataChart.toXyArrays(data);
+  set data(
+    data: {
+      xyData: { x: number, y: number }[],
+      metadata: { xTitle: string, yTitle: string },
+    },
+  ) {
+    const xyData = DataChart.toXyArrays(data.xyData);
     this.#chartState.data.x = xyData.x;
     this.#chartState.data.y = xyData.y;
+    this.#chartState.layout.xaxis.title = data.metadata.xTitle;
+    this.#chartState.layout.yaxis.title = data.metadata.yTitle;
     this.render();
   }
 
@@ -110,7 +127,7 @@ export default class DataChart extends HTMLElement {
   static toXyArrays(data: { x: number, y: number }[]) {
     const xArray: number[] = [];
     const yArray: number[] = [];
-    if (data !== null) {
+    if (data !== null && typeof data !== 'undefined') {
       for (const xyPair of data) {
         xArray.push(xyPair.x);
         yArray.push(xyPair.y);
@@ -140,18 +157,58 @@ export default class DataChart extends HTMLElement {
     );
   }
 
+  static #extractAxisTitles(metadata: { [key: string]: string }) {
+    if (metadata === null || typeof metadata === 'undefined') {
+      return { xTitle: '', yTitle: '' };
+    }
+
+    const xLabel = Object.prototype.hasOwnProperty.call(metadata, 'x.label')
+      ? metadata['x.label'] : null;
+    const xUnit = Object.prototype.hasOwnProperty.call(metadata, 'x.unit')
+      ? metadata['x.unit'] : null;
+    const yLabel = Object.prototype.hasOwnProperty.call(metadata, 'y.label')
+      ? metadata['y.label'] : null;
+    const yUnit = Object.prototype.hasOwnProperty.call(metadata, 'y.unit')
+      ? metadata['y.unit'] : null;
+
+    let xTitle = '';
+    if (xLabel !== null && xUnit !== null) {
+      xTitle = `${xLabel} / ${xUnit}`;
+    } else if (xLabel === null && xUnit !== null) {
+      xTitle = `${xUnit}`;
+    } else if (xLabel !== null && xUnit === null) {
+      xTitle = `${xLabel}`;
+    }
+
+    let yTitle = '';
+    if (yLabel !== null && yUnit !== null) {
+      yTitle = `${yLabel} / ${yUnit}`;
+    } else if (yLabel === null && yUnit !== null) {
+      yTitle = `${yUnit}`;
+    } else if (yLabel !== null && yUnit === null) {
+      yTitle = `${yLabel}`;
+    }
+
+    return { xTitle, yTitle };
+  }
+
   handleDataChanged(message: Message) {
     console.log('DataChart handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
-    if (!sameUrl && message.name === nodeSelectedEvent) {
+    if ((!sameUrl && message.name === nodeSelectedEvent)
+      || (sameUrl && message.name === nodeDataUpdatedEvent)) {
       this.#url = url;
-      this.data = message.detail.data;
+      this.data = {
+        xyData: message.detail.data,
+        metadata: DataChart.#extractAxisTitles(message.detail.metadata),
+      };
     } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
-      this.data = [];
-    } else if (sameUrl && message.name === nodeDataUpdatedEvent) {
-      this.data = message.detail.data;
+      this.data = {
+        xyData: [],
+        metadata: DataChart.#extractAxisTitles({}),
+      };
     }
   }
 

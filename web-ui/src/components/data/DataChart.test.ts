@@ -8,6 +8,12 @@ const data = [
   { x: 1.1, y: 1.2 },
   { x: 2.1, y: 2.2 },
 ];
+const metadata = {
+  'x.label': 'X Label',
+  'x.unit': 'X Unit',
+  'y.label': 'Y Label',
+  'y.unit': 'Y Unit',
+};
 const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
 
 afterEach(() => {
@@ -32,16 +38,19 @@ test('sf-data-chart reacts to sf-tree-node-(de)selected events', async () => {
     url: urlChild2,
     data,
     parameters: null,
+    metadata,
   });
 
   plotElement = document.body.querySelector('g.scatterlayer');
   expect(plotElement).toBeTruthy();
-  const chartData = chart.data;
+  const chartData = chart.data.xyData;
   expect(chartData).toHaveLength(2);
   expect(chartData[0].x).toBeCloseTo(1.1);
   expect(chartData[0].y).toBeCloseTo(1.2);
   expect(chartData[1].x).toBeCloseTo(2.1);
   expect(chartData[1].y).toBeCloseTo(2.2);
+  expect(chart.data.metadata.xTitle).toBe(`${metadata['x.label']} / ${metadata['x.unit']}`);
+  expect(chart.data.metadata.yTitle).toBe(`${metadata['y.label']} / ${metadata['y.unit']}`);
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
   plotElement = document.body.querySelector('g.scatterlayer');
@@ -60,25 +69,29 @@ test('sf-data-chart reacts to sf-tree-node-data-updated events', async () => {
     url: urlChild2,
     data: null,
     parameters: null,
+    metadata: null,
   });
 
   plotElement = document.body.querySelector('g.scatterlayer');
   expect(plotElement).toBeFalsy();
-  let chartData = chart.data;
+  let chartData = chart.data.xyData;
   expect(chartData).toEqual([]);
 
   channel.dispatch('sf-tree-node-data-updated', {
     url: urlChild2,
     data,
     parameters: null,
+    metadata,
   });
 
   plotElement = document.body.querySelector('g.scatterlayer');
   expect(plotElement).toBeTruthy();
-  chartData = chart.data;
+  chartData = chart.data.xyData;
   expect(chartData).toHaveLength(2);
   expect(chartData[0].x).toBeCloseTo(1.1);
   expect(chartData[0].y).toBeCloseTo(1.2);
   expect(chartData[1].x).toBeCloseTo(2.1);
   expect(chartData[1].y).toBeCloseTo(2.2);
+  expect(chart.data.metadata.xTitle).toBe(`${metadata['x.label']} / ${metadata['x.unit']}`);
+  expect(chart.data.metadata.yTitle).toBe(`${metadata['y.label']} / ${metadata['y.unit']}`);
 });

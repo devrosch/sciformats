@@ -70,7 +70,9 @@ export default class TreeNode extends HTMLElement {
     // after data has been loaded ...
     // span is focusable and thus is keyboard event target and requires URL
     setElementAttribute(nameSpan, 'url', this.#url.toString());
-    setElementTextContent(nameSpan, this.name);
+    // render something as name even if name is blank
+    const renderName = this.name === '' || this.name === null ? '""' : this.name;
+    setElementTextContent(nameSpan, renderName);
     if (this.#selected) {
       nameSpan.classList.add('selected');
     }

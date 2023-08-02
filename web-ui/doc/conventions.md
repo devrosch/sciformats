@@ -95,3 +95,15 @@ For any request, in case of error, an error message is sent instead of the respo
 | Response Name       | Response Details                  |
 | ------------------- | --------------------------------- |
 | error               | `string`                          |
+
+## Metadata
+
+Metadata that may accompany data can provide additional information on how to render the data. The following values are observed.
+
+| Key                   | Values                  |
+| --------------------- | ----------------------- |
+| x.label               | `string`                |
+| x.unit                | `string`                |
+| x.reverse             | "true"                  |
+| y.label               | `string`                |
+| y.unit                | `string`                |

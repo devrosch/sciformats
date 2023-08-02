@@ -44,13 +44,14 @@ export default class DataChart extends HTMLElement {
         pad: 10,
       },
       xaxis: {
-        title: 'x',
+        title: '',
         showgrid: true,
         zeroline: false,
         showline: true,
+        autorange: true,
       },
       yaxis: {
-        title: 'y',
+        title: '',
         showgrid: true,
         zeroline: false,
         showline: true,
@@ -86,15 +87,68 @@ export default class DataChart extends HTMLElement {
   set data(
     data: {
       xyData: { x: number, y: number }[],
-      metadata: { xTitle: string, yTitle: string },
+      metadata: { [key: string]: string },
     },
   ) {
     const xyData = DataChart.toXyArrays(data.xyData);
     this.#chartState.data.x = xyData.x;
     this.#chartState.data.y = xyData.y;
-    this.#chartState.layout.xaxis.title = data.metadata.xTitle;
-    this.#chartState.layout.yaxis.title = data.metadata.yTitle;
+    this.#chartState.layout.xaxis.title = DataChart.#extractXAxisTitle(data.metadata);
+    this.#chartState.layout.yaxis.title = DataChart.#extractYAxisTitle(data.metadata);
+
+    if (data.metadata && data.metadata['x.reverse']) {
+      delete (this.#chartState.layout.xaxis as any).range;
+      // see: https://plotly.com/javascript/axes/#reversed-axes
+      (this.#chartState.layout.xaxis.autorange as any) = 'reversed';
+    } else {
+      delete (this.#chartState.layout.xaxis as any).range;
+      this.#chartState.layout.xaxis.autorange = true;
+    }
     this.render();
+  }
+
+  static #extractXAxisTitle(metadata: { [key: string]: string }) {
+    if (metadata === null || typeof metadata === 'undefined') {
+      return '';
+    }
+
+    const xLabel = Object.prototype.hasOwnProperty.call(metadata, 'x.label')
+      ? metadata['x.label'] : null;
+    const xUnit = Object.prototype.hasOwnProperty.call(metadata, 'x.unit')
+      ? metadata['x.unit'] : null;
+
+    let xTitle = '';
+    if (xLabel !== null && xUnit !== null) {
+      xTitle = `${xLabel} / ${xUnit}`;
+    } else if (xLabel === null && xUnit !== null) {
+      xTitle = `${xUnit}`;
+    } else if (xLabel !== null && xUnit === null) {
+      xTitle = `${xLabel}`;
+    }
+
+    return xTitle;
+  }
+
+  static #extractYAxisTitle(metadata: { [key: string]: string }) {
+    if (metadata === null || typeof metadata === 'undefined') {
+      return '';
+    }
+
+    const yLabel = Object.prototype.hasOwnProperty.call(metadata, 'y.label')
+      ? metadata['y.label'] : null;
+    const yUnit = Object.prototype.hasOwnProperty.call(metadata, 'y.unit')
+      ? metadata['y.unit'] : null;
+
+    let yTitle = '';
+    if (yLabel !== null && yUnit !== null) {
+      yTitle = `${yLabel} / ${yUnit}`;
+    } else if (yLabel === null && yUnit !== null) {
+      yTitle = `${yUnit}`;
+    } else if (yLabel !== null && yUnit === null) {
+      yTitle = `${yLabel}`;
+    }
+
+    return yTitle;
   }
 
   init() {
@@ -157,41 +211,6 @@ export default class DataChart extends HTMLElement {
     );
   }
 
-  static #extractAxisTitles(metadata: { [key: string]: string }) {
-    if (metadata === null || typeof metadata === 'undefined') {
-      return { xTitle: '', yTitle: '' };
-    }
-
-    const xLabel = Object.prototype.hasOwnProperty.call(metadata, 'x.label')
-      ? metadata['x.label'] : null;
-    const xUnit = Object.prototype.hasOwnProperty.call(metadata, 'x.unit')
-      ? metadata['x.unit'] : null;
-    const yLabel = Object.prototype.hasOwnProperty.call(metadata, 'y.label')
-      ? metadata['y.label'] : null;
-    const yUnit = Object.prototype.hasOwnProperty.call(metadata, 'y.unit')
-      ? metadata['y.unit'] : null;
-
-    let xTitle = '';
-    if (xLabel !== null && xUnit !== null) {
-      xTitle = `${xLabel} / ${xUnit}`;
-    } else if (xLabel === null && xUnit !== null) {
-      xTitle = `${xUnit}`;
-    } else if (xLabel !== null && xUnit === null) {
-      xTitle = `${xLabel}`;
-    }
-
-    let yTitle = '';
-    if (yLabel !== null && yUnit !== null) {
-      yTitle = `${yLabel} / ${yUnit}`;
-    } else if (yLabel === null && yUnit !== null) {
-      yTitle = `${yUnit}`;
-    } else if (yLabel !== null && yUnit === null) {
-      yTitle = `${yLabel}`;
-    }
-
-    return { xTitle, yTitle };
-  }
-
   handleDataChanged(message: Message) {
     console.log('DataChart handleDataChanged() called');
     const url = new URL(message.detail.url);
@@ -201,13 +220,13 @@ export default class DataChart extends HTMLElement {
       this.#url = url;
       this.data = {
         xyData: message.detail.data,
-        metadata: DataChart.#extractAxisTitles(message.detail.metadata),
+        metadata: message.detail.metadata,
       };
     } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
       this.data = {
         xyData: [],
-        metadata: DataChart.#extractAxisTitles({}),
+        metadata: {},
       };
     }
   }

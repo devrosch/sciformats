@@ -26,6 +26,34 @@ test('sf-data-chart renders', async () => {
   expect(document.body.innerHTML).toContain('svg');
 });
 
+test('sf-data-chart plots reversed x axis', async () => {
+  document.body.innerHTML = `<${element}/>`;
+  const chart = document.body.querySelector(element) as DataChart;
+  expect(chart).not.toBeNull();
+
+  chart.data = {
+    xyData: data,
+    metadata: { 'x.reverse': 'true' },
+  };
+
+  const reportedMetadata = chart.data.metadata;
+  expect(reportedMetadata['x.reverse']).toBe('true');
+});
+
+test('sf-data-chart plots sticks', async () => {
+  document.body.innerHTML = `<${element}/>`;
+  const chart = document.body.querySelector(element) as DataChart;
+  expect(chart).not.toBeNull();
+
+  chart.data = {
+    xyData: data,
+    metadata: { 'plot.style': 'sticks' },
+  };
+
+  const reportedMetadata = chart.data.metadata;
+  expect(reportedMetadata['plot.style']).toBe('sticks');
+});
+
 test('sf-data-chart reacts to sf-tree-node-(de)selected events', async () => {
   const chart = new DataChart();
   document.body.append(chart);

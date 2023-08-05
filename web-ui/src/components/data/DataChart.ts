@@ -76,11 +76,19 @@ export default class DataChart extends HTMLElement {
     // xaxis/yaxis.title properties do not return a string but an object with a text property
     const xTitle = (this.#chartState.layout.xaxis.title as any).text as string;
     const yTitle = (this.#chartState.layout.yaxis.title as any).text as string;
+    const range = (this.#chartState.layout.xaxis as any).range as [number];
+    let reversedX = false;
+    if (range.length > 1) {
+      reversedX = range[0] > range[range.length - 1];
+    }
+    const plotSticks = typeof (this.#chartState.data as any).error_y !== 'undefined';
     return {
       xyData,
       metadata: {
         xTitle,
         yTitle,
+        'x.reverse': `${reversedX}`,
+        'plot.style': plotSticks ? 'sticks' : 'line',
       },
     };
   }

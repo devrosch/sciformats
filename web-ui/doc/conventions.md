@@ -60,7 +60,7 @@ The following custom events are dispatched or listened to by components.
 | sf-file-opened              | { url: `URL` }        | Tree        |                                                               |
 | sf-file-close-requested     | `null`                | NavBar      | Tree                                                          |
 | sf-file-closed              | { url: `URL` }        | Tree        |                                                               |
-| sf-file-close-all-requested | `null`                | NavBar      | Tree                                                          |
+| sf-file-close-all-requested | null                  | NavBar      | Tree                                                          |
 | sf-warning                  | { message: `string` } | Tree        |                                                               |
 | sf-error                    | { message: `string` } | Tree        |                                                               |
 
@@ -98,12 +98,13 @@ For any request, in case of error, an error message is sent instead of the respo
 
 ## Metadata
 
-Metadata that may accompany data can provide additional information on how to render the data. The following values are observed.
+Metadata that may accompany any node data can provide additional information on how to render the data. The following values are observed.
 
-| Key                   | Values                  |
-| --------------------- | ----------------------- |
-| x.label               | `string`                |
-| x.unit                | `string`                |
-| x.reverse             | "true"                  |
-| y.label               | `string`                |
-| y.unit                | `string`                |
+| Key                   | Values                  | Comment                                                                           |
+| --------------------- | ----------------------- | --------------------------------------------------------------------------------- |
+| x.label               | `string`                |                                                                                   |
+| x.unit                | `string`                |                                                                                   |
+| x.reverse             | "true"                  | Plot x axis from large to small values. E.g. used for infrared spectroscopy data. |
+| y.label               | `string`                |                                                                                   |
+| y.unit                | `string`                |                                                                                   |
+| plot.style            | "sticks"                | Plot values as sticks. Relevant for mass spectrometry data.                       |

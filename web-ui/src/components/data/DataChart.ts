@@ -27,6 +27,7 @@ export default class DataChart extends HTMLElement {
     data: {
       x: [] as number[],
       y: [] as number[],
+      // alternatively, use scattergl for potentially better performance
       type: 'scatter',
       mode: 'lines',
       line: {
@@ -104,6 +105,32 @@ export default class DataChart extends HTMLElement {
       delete (this.#chartState.layout.xaxis as any).range;
       this.#chartState.layout.xaxis.autorange = true;
     }
+
+    if (data.metadata && data.metadata['plot.style'] && data.metadata['plot.style'] === 'sticks') {
+      // error bars as MS stick display, see:
+      // https://plotly.com/javascript/line-and-scatter/
+      // https://plotly.com/javascript/error-bars/
+      // https://plotly.com/javascript/reference/scatter/
+      // https://plotly.com/javascript/hover-text-and-formatting/
+      (this.#chartState.data as any).error_y = {
+        type: 'data',
+        symmetric: false,
+        array: new Array(xyData.y.length).fill(0),
+        arrayminus: xyData.y,
+        thickness: 1,
+        width: 0, // no marker on ends of error bar
+      };
+      // delete (this.#chartState.data as any).mode;
+      this.#chartState.data.mode = 'none';
+      (this.#chartState.data as any).marker = { size: 1 };
+      (this.#chartState.data as any).hovertemplate = '(%{x:.f}, %{y:.f})<extra></extra>';
+    } else {
+      delete (this.#chartState.data as any).error_y;
+      delete (this.#chartState.data as any).marker;
+      this.#chartState.data.mode = 'lines';
+      delete (this.#chartState.data as any).hovertemplate;
+    }
+
     this.render();
   }
 
@@ -201,7 +228,7 @@ export default class DataChart extends HTMLElement {
   }
 
   render() {
-    const mode = this.#chartState.data.x.length > 1 ? 'lines' : 'markers';
+    const mode = this.#chartState.data.mode !== 'none' && this.#chartState.data.x.length > 1 ? 'lines' : 'markers';
     this.#chartState.data.mode = mode;
     Plotly.newPlot(
       this.#chartContainer!,

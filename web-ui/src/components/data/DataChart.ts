@@ -120,15 +120,14 @@ export default class DataChart extends HTMLElement {
         thickness: 1,
         width: 0, // no marker on ends of error bar
       };
-      // delete (this.#chartState.data as any).mode;
-      this.#chartState.data.mode = 'none';
       (this.#chartState.data as any).marker = { size: 1 };
       (this.#chartState.data as any).hovertemplate = '(%{x:.f}, %{y:.f})<extra></extra>';
+      this.#chartState.data.mode = 'none';
     } else {
       delete (this.#chartState.data as any).error_y;
       delete (this.#chartState.data as any).marker;
-      this.#chartState.data.mode = 'lines';
       delete (this.#chartState.data as any).hovertemplate;
+      this.#chartState.data.mode = 'lines';
     }
 
     this.render();

@@ -1,5 +1,5 @@
 import { extractFilename, extractUuid } from 'util/UrlUtils';
-import PeakTable from 'model/PeakTable';
+import Table from 'model/Table';
 import WorkerStatus from './WorkerStatus';
 import WorkerResponse from './WorkerResponse';
 import WorkerFileInfo from './WorkerFileInfo';
@@ -212,36 +212,49 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   json.data = jsonData;
   data.delete();
 
-  // peak table
-  const jsonPeakTable: PeakTable = { columnNames: [], peaks: [] };
+  // metadata
+  const metadata = node.metadata;
+  const metadataKeys = metadata.keys();
+  const jsonMetadata: { [key: string]: string } = {};
+  for (let i = 0; i < metadataKeys.size(); i += 1) {
+    const key = metadataKeys.get(i);
+    const value = metadata.get(key);
+    jsonMetadata[key] = value;
+  }
+  json.metadata = jsonMetadata;
+  metadataKeys.delete();
+  metadata.delete();
 
-  const peakTable = node.peakTable;
-  const peakTableColumnNames = peakTable.columnNames;
-  const peakColumnCount = peakTableColumnNames.size();
+  // table
+  const jsonTable: Table = { columnNames: [], rows: [] };
+
+  const table = node.table;
+  const tableColumnNames = table.columnNames;
+  const peakColumnCount = tableColumnNames.size();
   for (let index = 0; index < peakColumnCount; index += 1) {
-    const columnKeyValuePair = peakTableColumnNames.get(index);
-    jsonPeakTable.columnNames.push(
+    const columnKeyValuePair = tableColumnNames.get(index);
+    jsonTable.columnNames.push(
       { key: columnKeyValuePair.first, value: columnKeyValuePair.second },
     );
     // columnKeyValuePair is value object => no delete()
   }
 
-  const peaks = peakTable.peaks;
-  const peakCount = peaks.size();
-  for (let peakIndex = 0; peakIndex < peakCount; peakIndex += 1) {
-    const jsonPeak: { [key: string]: string } = {};
-    const peak = peaks.get(peakIndex);
-    for (const column of jsonPeakTable.columnNames) {
+  const rows = table.rows;
+  const rowCount = rows.size();
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+    const jsonRow: { [key: string]: string } = {};
+    const row = rows.get(rowIndex);
+    for (const column of jsonTable.columnNames) {
       const columnKey = column.key;
       // TODO: what happens if no value for key?
-      const peakValue = peak.get(columnKey);
-      jsonPeak[columnKey] = peakValue;
+      const peakValue = row.get(columnKey);
+      jsonRow[columnKey] = peakValue;
     }
-    jsonPeakTable.peaks.push(jsonPeak);
-    peak.delete();
+    jsonTable.rows.push(jsonRow);
+    row.delete();
   }
-  json.peakTable = jsonPeakTable;
-  peaks.delete();
+  json.table = jsonTable;
+  rows.delete();
 
   // child node names
   const childNodeNames = node.childNodeNames;
@@ -253,20 +266,6 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   }
   json.childNodeNames = jsonChildNodes;
   childNodeNames.delete();
-
-  // metadata
-  const metadata = node.metadata;
-  const metadataKeys = metadata.keys();
-  const jsonMetadata: { [key: string]: string } = {};
-  for (let i = 0; i < metadataKeys.size(); i += 1) {
-    const key = metadataKeys.get(i);
-    const value = metadata.get(key);
-    jsonMetadata[key] = value;
-  }
-  metadataKeys.delete();
-  metadata.delete();
-
-  json.metadata = jsonMetadata;
 
   return json;
 };

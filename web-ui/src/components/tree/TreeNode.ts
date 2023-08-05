@@ -134,7 +134,7 @@ export default class TreeNode extends HTMLElement {
         url: this.#url,
         parameters: [{ key: 'Error', value: errorMessage }],
         data: [],
-        peakTable: { columnNames: [], peaks: [] },
+        table: { columnNames: [], rows: [] },
         childNodeNames: [],
         metadata: {},
       };
@@ -178,9 +178,9 @@ export default class TreeNode extends HTMLElement {
           url: this.#url,
           parameters: [],
           data: [],
-          peakTable: { columnNames: [], peaks: [] },
-          childNodeNames: [],
           metadata: {},
+          table: { columnNames: [], rows: [] },
+          childNodeNames: [],
         };
       }
       this.#channel.dispatch(nodeSelectedEvent, nodeData);

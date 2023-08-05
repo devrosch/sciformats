@@ -37,8 +37,8 @@ test('sf-data-chart reacts to sf-tree-node-(de)selected events', async () => {
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data,
-    parameters: null,
     metadata,
+    parameters: null,
   });
 
   plotElement = document.body.querySelector('g.scatterlayer');
@@ -68,8 +68,8 @@ test('sf-data-chart reacts to sf-tree-node-data-updated events', async () => {
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data: null,
-    parameters: null,
     metadata: null,
+    parameters: null,
   });
 
   plotElement = document.body.querySelector('g.scatterlayer');
@@ -80,8 +80,8 @@ test('sf-data-chart reacts to sf-tree-node-data-updated events', async () => {
   channel.dispatch('sf-tree-node-data-updated', {
     url: urlChild2,
     data,
-    parameters: null,
     metadata,
+    parameters: null,
   });
 
   plotElement = document.body.querySelector('g.scatterlayer');
@@ -104,12 +104,12 @@ test('sf-data-chart renders axes titles with (partially) missing labels or units
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data,
-    parameters: null,
     metadata: {
       'x.label': 'X Label',
       'y.label': 'Y Label',
       // no units
     },
+    parameters: null,
   });
 
   expect(chart.data.metadata.xTitle).toBe('X Label');
@@ -118,12 +118,12 @@ test('sf-data-chart renders axes titles with (partially) missing labels or units
   channel.dispatch('sf-tree-node-data-updated', {
     url: urlChild2,
     data,
-    parameters: null,
     metadata: {
       'x.unit': 'X Unit',
       'y.unit': 'Y Unit',
       // no labels
     },
+    parameters: null,
   });
 
   expect(chart.data.metadata.xTitle).toBe('X Unit');
@@ -132,11 +132,11 @@ test('sf-data-chart renders axes titles with (partially) missing labels or units
   channel.dispatch('sf-tree-node-data-updated', {
     url: urlChild2,
     data,
-    parameters: null,
     metadata: {
       // no labels
       // no units
     },
+    parameters: null,
   });
 
   expect(chart.data.metadata.xTitle).toBe('');

@@ -2,7 +2,7 @@ import { isSameUrl } from 'util/UrlUtils';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
-import PeakTable from 'model/PeakTable';
+import Table from 'model/Table';
 import './DataPeaks.css';
 
 const template = `
@@ -27,7 +27,7 @@ export default class DataPeaks extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: PeakTable | null = null;
+  #data: Table | null = null;
 
   constructor() {
     super();
@@ -38,7 +38,7 @@ export default class DataPeaks extends HTMLElement {
     return this.#data;
   }
 
-  set data(data: PeakTable | null) {
+  set data(data: Table | null) {
     this.#data = data;
     this.render();
   }
@@ -73,7 +73,7 @@ export default class DataPeaks extends HTMLElement {
       headerTr.append(th);
     });
 
-    const rows = this.#data.peaks;
+    const rows = this.#data.rows;
 
     rows.forEach((row) => {
       const tr = document.createElement('tr');
@@ -94,12 +94,12 @@ export default class DataPeaks extends HTMLElement {
     const sameUrl = isSameUrl(this.#url, url);
     if (!sameUrl && message.name === nodeSelectedEvent) {
       this.#url = url;
-      this.data = message.detail.peakTable;
+      this.data = message.detail.table;
     } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
       this.data = null;
     } else if (sameUrl && message.name === nodeDataUpdatedEvent) {
-      this.data = message.detail.peakTable;
+      this.data = message.detail.table;
     }
   }
 

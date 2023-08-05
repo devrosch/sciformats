@@ -3,6 +3,7 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import NodeData from 'model/NodeData';
 import Parser from 'model/Parser';
+import Table from 'model/Table';
 import './TreeNode'; // for side effects
 import TreeNode from './TreeNode';
 
@@ -40,21 +41,18 @@ class StubParser implements Parser {
       parameters.push({ key: 'key 3', value: 'value 3' });
     }
 
-    const peakTable: {
-      columnNames: { key: string, value: string }[],
-      peaks: Map<string, string>[],
-    } = { columnNames: [], peaks: [] };
+    const table: Table = { columnNames: [], rows: [] };
     if (hash.endsWith('/child 2')) {
-      peakTable.columnNames.push({ key: 'col0', value: 'Cloumn 0' });
-      peakTable.columnNames.push({ key: 'col1', value: 'Cloumn 1' });
+      table.columnNames.push({ key: 'col0', value: 'Cloumn 0' });
+      table.columnNames.push({ key: 'col1', value: 'Cloumn 1' });
       const peak0 = new Map<string, string>();
       peak0.set('col0', 'peak0col0value');
       peak0.set('col1', 'peak0col1value');
-      peakTable.peaks.push(peak0);
+      table.rows.push(peak0);
       const peak1 = new Map<string, string>();
       peak1.set('col0', 'peak1col0value');
       peak1.set('col1', 'peak1col1value');
-      peakTable.peaks.push(peak1);
+      table.rows.push(peak1);
     }
 
     let childNodeNames: string[] = [];
@@ -74,9 +72,9 @@ class StubParser implements Parser {
       url,
       parameters,
       data,
-      peakTable,
-      childNodeNames,
       metadata,
+      table,
+      childNodeNames,
     };
   }
 

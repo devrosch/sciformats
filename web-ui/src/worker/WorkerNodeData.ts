@@ -1,4 +1,4 @@
-import PeakTable from 'model/PeakTable';
+import Table from 'model/Table';
 
 /**
  * Data representing a node/fragment in the data hierarchy as provided by a web worker.
@@ -22,19 +22,19 @@ type WorkerNodeData = {
   data: { x: number, y: number }[],
 
   /**
-   * A peak table.
+   * Metadata key/value pairs.
    */
-  peakTable: PeakTable,
+  metadata: { [key: string]: string },
+
+  /**
+   * A table, e.g., a peak table.
+   */
+  table: Table,
 
   /**
    * Child nodes/fragments.
    */
   childNodeNames: string[],
-
-  /**
-   * Metadata key/value pairs.
-   */
-  metadata: { [key: string]: string },
 };
 
 export default WorkerNodeData;

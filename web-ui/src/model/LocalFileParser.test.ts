@@ -15,12 +15,12 @@ const workerNodeData: WorkerNodeData = {
   url: url.toString(),
   parameters: [{ key: 'param 1', value: 'param value 1' }],
   data: [{ x: 1, y: 2 }, { x: 3, y: 4 }],
-  peakTable: {
+  metadata: {},
+  table: {
     columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],
-    peaks: [new Map([['col0', 'Cloumn 0 Value']])],
+    rows: [new Map([['col0', 'Cloumn 0 Value']])],
   },
   childNodeNames: ['child 1', 'child 2'],
-  metadata: {},
 };
 
 const mockOpenedResponse = new WorkerResponse('opened', '123', { url: rootUrl.toString() });

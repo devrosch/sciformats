@@ -45,9 +45,9 @@ export default class LocalFileParser implements Parser {
       url: new URL(json.url),
       parameters: json.parameters,
       data: json.data,
-      peakTable: json.peakTable,
-      childNodeNames: json.childNodeNames,
       metadata: json.metadata,
+      table: json.table,
+      childNodeNames: json.childNodeNames,
     };
   }
 

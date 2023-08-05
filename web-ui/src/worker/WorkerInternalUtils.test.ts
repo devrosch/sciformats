@@ -33,7 +33,7 @@ const data = {
   get: jest.fn(() => ({ x: 1, y: 2 })),
   delete: jest.fn(),
 };
-const peakTable = {
+const table = {
   columnNames: {
     size: jest.fn(() => 2),
     get: jest.fn(() => ({
@@ -43,7 +43,7 @@ const peakTable = {
     })),
     delete: jest.fn(),
   },
-  peaks: {
+  rows: {
     size: jest.fn(() => 2),
     get: jest.fn(() => ({
       get: jest.fn((columnKey) => `${columnKey} Value`),
@@ -72,9 +72,9 @@ const nodeDataMock = {
   name: 'name value',
   parameters,
   data,
-  peakTable,
-  childNodeNames,
   metadata,
+  table,
+  childNodeNames,
 };
 const converterMock = {
   read: jest.fn(() => nodeDataMock),

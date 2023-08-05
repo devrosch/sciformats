@@ -1,17 +1,17 @@
 /* eslint-disable import/no-duplicates */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-import PeakTable from 'model/PeakTable';
+import Table from 'model/Table';
 import './DataPeaks'; // for side effects
 import DataPeaks from './DataPeaks';
 
 const element = 'sf-data-peaks';
-const peakTable: PeakTable = {
+const table: Table = {
   columnNames: [
     { key: 'col0', value: 'Column 0' },
     { key: 'col1', value: 'Column 1' },
     { key: 'col2', value: 'Column 2' },
   ],
-  peaks: [
+  rows: [
     {
       col0: 'Cell 00',
       col1: 'Cell 01',
@@ -43,15 +43,15 @@ const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
  * @param expectRender Whether the data should or should not have been rendered.
  */
 const checkDataIsRendered = (
-  peakData: PeakTable,
+  peakData: Table,
   document: Document,
   expectRender: boolean,
 ) => {
-  const table = document.querySelector(`${element} table`) as HTMLTableElement;
-  expect(table).not.toBeNull();
+  const htmlTable = document.querySelector(`${element} table`) as HTMLTableElement;
+  expect(htmlTable).not.toBeNull();
 
-  const header = table.querySelector('thead > tr') as HTMLElement;
-  const rows = table.querySelectorAll('tbody > tr');
+  const header = htmlTable.querySelector('thead > tr') as HTMLElement;
+  const rows = htmlTable.querySelectorAll('tbody > tr');
 
   if (expectRender) {
     // table header
@@ -63,14 +63,14 @@ const checkDataIsRendered = (
     }
 
     // table body
-    expect(rows.length).toBe(peakData.peaks.length);
-    for (let i = 0; i < peakData.peaks.length; i += 1) {
+    expect(rows.length).toBe(peakData.rows.length);
+    for (let i = 0; i < peakData.rows.length; i += 1) {
       const cells = rows[i].querySelectorAll('td');
       expect(cells.length).toBe(peakData.columnNames.length);
       for (let j = 0; j < peakData.columnNames.length; j += 1) {
         const columnKey = peakData.columnNames[j].key;
-        const expectedCellValue = Object.prototype.hasOwnProperty.call(peakData.peaks[i], columnKey)
-          ? peakData.peaks[i][columnKey] : '';
+        const expectedCellValue = Object.prototype.hasOwnProperty.call(peakData.rows[i], columnKey)
+          ? peakData.rows[i][columnKey] : '';
         expect(cells[j].textContent).toBe(expectedCellValue);
       }
     }
@@ -90,44 +90,44 @@ test('sf-data-peaks renders', async () => {
   expect(document.body.innerHTML).toContain('table');
 
   const peaks = document.body.querySelector(element) as DataPeaks;
-  peaks.data = peakTable;
-  checkDataIsRendered(peakTable, document, true);
+  peaks.data = table;
+  checkDataIsRendered(table, document, true);
 });
 
 test('sf-data-peaks reacts to sf-tree-node-(de)selected events', async () => {
   const dataPeaks = new DataPeaks();
   document.body.append(dataPeaks);
   const channel = CustomEventsMessageBus.getDefaultChannel();
-  checkDataIsRendered(peakTable, document, false);
+  checkDataIsRendered(table, document, false);
 
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data: null,
-    peakTable,
+    table,
     parameters: null,
   });
-  checkDataIsRendered(peakTable, document, true);
-  expect(dataPeaks.data).toEqual(peakTable);
+  checkDataIsRendered(table, document, true);
+  expect(dataPeaks.data).toEqual(table);
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
-  checkDataIsRendered(peakTable, document, false);
+  checkDataIsRendered(table, document, false);
 });
 
 test('sf-data-peaks reacts to sf-tree-node-data-updated events', async () => {
   const dataPeaks = new DataPeaks();
   document.body.append(dataPeaks);
   const channel = CustomEventsMessageBus.getDefaultChannel();
-  checkDataIsRendered(peakTable, document, false);
+  checkDataIsRendered(table, document, false);
 
-  const emptyPeakTable: PeakTable = {
+  const emptyPeakTable: Table = {
     columnNames: [],
-    peaks: [],
+    rows: [],
   };
 
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data: null,
-    peakTable: emptyPeakTable,
+    table: emptyPeakTable,
     parameters: null,
   });
   checkDataIsRendered(emptyPeakTable, document, true);
@@ -137,14 +137,14 @@ test('sf-data-peaks reacts to sf-tree-node-data-updated events', async () => {
   channel.dispatch('sf-tree-node-data-updated', {
     url: urlChild2,
     data: null,
-    peakTable,
+    table,
     parameters: null,
   });
 
-  checkDataIsRendered(peakTable, document, true);
+  checkDataIsRendered(table, document, true);
   peakData = dataPeaks.data;
-  expect(peakData).toEqual(peakTable);
+  expect(peakData).toEqual(table);
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
-  checkDataIsRendered(peakTable, document, false);
+  checkDataIsRendered(table, document, false);
 });

@@ -1,4 +1,4 @@
-import PeakTable from './PeakTable';
+import Table from './Table';
 
 /**
  * Data representing a node/fragment in the data hierarchy.
@@ -20,19 +20,19 @@ type NodeData = {
   data: { x: number, y: number }[],
 
   /**
+   * Metadata key/value pairs.
+   */
+  metadata: { [key: string]: string },
+
+  /**
    * A peak table.
    */
-  peakTable: PeakTable,
+  table: Table,
 
   /**
    * Child nodes/fragments.
    */
   childNodeNames: string[],
-
-  /**
-   * Metadata key/value pairs.
-   */
-  metadata: { [key: string]: string },
 };
 
 export default NodeData;

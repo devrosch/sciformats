@@ -2,10 +2,16 @@ import { isSameUrl } from 'util/UrlUtils';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
+import Table from 'model/Table';
 import './DataTable.css';
 
 const template = `
-  <textarea readonly></textarea>
+  <table>
+    <thead>
+    </thead>
+    <tbody>
+    </tbody>
+  </table> 
 `;
 
 const nodeSelectedEvent = 'sf-tree-node-selected';
@@ -21,7 +27,7 @@ export default class DataTable extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: { x: number, y: number }[] = [];
+  #data: Table | null = null;
 
   constructor() {
     super();
@@ -29,13 +35,10 @@ export default class DataTable extends HTMLElement {
   }
 
   get data() {
-    if (this.#data === null) {
-      return [];
-    }
     return this.#data;
   }
 
-  set data(data: { x: number, y: number }[]) {
+  set data(data: Table | null) {
     this.#data = data;
     this.render();
   }
@@ -48,16 +51,41 @@ export default class DataTable extends HTMLElement {
   }
 
   render() {
-    const textarea = this.querySelector('textarea') as HTMLTextAreaElement;
+    const table = this.querySelector('table') as HTMLTableElement;
+    const thead = table.querySelector('thead') as HTMLTableSectionElement;
+    const tbody = table.querySelector('tbody') as HTMLTableSectionElement;
 
-    let text = '';
-    for (const data of this.data) {
-      const x = String(data.x).padEnd(25);
-      const y = String(data.y);
-      const row = `${x}; ${y}\n`;
-      text += row;
+    // clear table
+    thead.textContent = null;
+    tbody.textContent = null;
+
+    if (this.#data === null) {
+      return;
     }
-    textarea.value = text;
+
+    const columns = this.#data.columnNames;
+
+    const headerTr = document.createElement('tr');
+    thead.append(headerTr);
+    columns.forEach((column) => {
+      const th = document.createElement('th');
+      th.textContent = column.value;
+      headerTr.append(th);
+    });
+
+    const rows = this.#data.rows;
+
+    rows.forEach((row) => {
+      const tr = document.createElement('tr');
+      columns.forEach((column) => {
+        const td = document.createElement('td');
+        const value: string = Object.prototype.hasOwnProperty.call(row, column.key)
+          ? row[column.key] as string : '';
+        td.textContent = value;
+        tr.append(td);
+      });
+      tbody.append(tr);
+    });
   }
 
   handleDataChanged(message: Message) {
@@ -66,12 +94,12 @@ export default class DataTable extends HTMLElement {
     const sameUrl = isSameUrl(this.#url, url);
     if (!sameUrl && message.name === nodeSelectedEvent) {
       this.#url = url;
-      this.data = message.detail.data;
+      this.data = message.detail.table;
     } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
-      this.data = [];
+      this.data = null;
     } else if (sameUrl && message.name === nodeDataUpdatedEvent) {
-      this.data = message.detail.data;
+      this.data = message.detail.table;
     }
   }
 

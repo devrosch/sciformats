@@ -1,0 +1,11 @@
+sf-data-data {
+  flex: 0 0 100%;
+}
+
+sf-data-data textarea {  
+  margin: 0.5em;
+  width: calc(100% - 1em);
+  height: calc(100% - 1em);
+  box-sizing: border-box;
+  resize: none;
+}

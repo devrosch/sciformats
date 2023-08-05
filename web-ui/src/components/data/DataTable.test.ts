@@ -1,13 +1,39 @@
 /* eslint-disable import/no-duplicates */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Table from 'model/Table';
 import './DataTable'; // for side effects
 import DataTable from './DataTable';
 
 const element = 'sf-data-table';
-const data = [
-  { x: 1.1, y: 1.2 },
-  { x: 2.1, y: 2.2 },
-];
+const table: Table = {
+  columnNames: [
+    { key: 'col0', value: 'Column 0' },
+    { key: 'col1', value: 'Column 1' },
+    { key: 'col2', value: 'Column 2' },
+  ],
+  rows: [
+    {
+      col0: 'Cell 00',
+      col1: 'Cell 01',
+      col2: 'Cell 02',
+    },
+    {
+      // no col0
+      col1: 'Cell 11',
+      col2: 'Cell 12',
+    },
+    {
+      col0: 'Cell 20',
+      // no col1
+      col2: 'Cell 22',
+    },
+    {
+      col0: 'Cell 30',
+      col1: 'Cell 31',
+      // no col2
+    },
+  ],
+};
 const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
 
 /**
@@ -17,21 +43,40 @@ const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
  * @param expectRender Whether the data should or should not have been rendered.
  */
 const checkDataIsRendered = (
-  dataArray: { x: number, y: number }[],
+  peakData: Table,
   document: Document,
   expectRender: boolean,
 ) => {
-  const textarea = document.querySelector(`${element} textarea`) as HTMLTextAreaElement;
-  expect(textarea).not.toBeNull();
-  const value = textarea.value;
-  for (const dataPoint of dataArray) {
-    if (expectRender) {
-      expect(value).toContain(String(dataPoint.x));
-      expect(value).toContain(String(dataPoint.y));
-    } else {
-      expect(value).not.toContain(String(dataPoint.x));
-      expect(value).not.toContain(String(dataPoint.y));
+  const htmlTable = document.querySelector(`${element} table`) as HTMLTableElement;
+  expect(htmlTable).not.toBeNull();
+
+  const header = htmlTable.querySelector('thead > tr') as HTMLElement;
+  const rows = htmlTable.querySelectorAll('tbody > tr');
+
+  if (expectRender) {
+    // table header
+    expect(header).not.toBeNull();
+    const columnHeaders = header.querySelectorAll('th');
+    expect(columnHeaders.length).toBe(peakData.columnNames.length);
+    for (let i = 0; i < peakData.columnNames.length; i += 1) {
+      expect(columnHeaders[i].textContent).toBe(peakData.columnNames[i].value);
     }
+
+    // table body
+    expect(rows.length).toBe(peakData.rows.length);
+    for (let i = 0; i < peakData.rows.length; i += 1) {
+      const cells = rows[i].querySelectorAll('td');
+      expect(cells.length).toBe(peakData.columnNames.length);
+      for (let j = 0; j < peakData.columnNames.length; j += 1) {
+        const columnKey = peakData.columnNames[j].key;
+        const expectedCellValue = Object.prototype.hasOwnProperty.call(peakData.rows[i], columnKey)
+          ? peakData.rows[i][columnKey] : '';
+        expect(cells[j].textContent).toBe(expectedCellValue);
+      }
+    }
+  } else {
+    expect(header).toBeNull();
+    expect(rows.length).toBe(0);
   }
 };
 
@@ -42,66 +87,64 @@ afterEach(() => {
 
 test('sf-data-table renders', async () => {
   document.body.innerHTML = `<${element}/>`;
-  expect(document.body.innerHTML).toContain('textarea');
+  expect(document.body.innerHTML).toContain('table');
 
-  const table = document.body.querySelector(element) as DataTable;
-  table.data = data;
-  expect(document.body.innerHTML).toContain('textarea');
-  checkDataIsRendered(data, document, true);
+  const peaks = document.body.querySelector(element) as DataTable;
+  peaks.data = table;
+  checkDataIsRendered(table, document, true);
 });
 
 test('sf-data-table reacts to sf-tree-node-(de)selected events', async () => {
-  const table = new DataTable();
-  document.body.append(table);
+  const dataTable = new DataTable();
+  document.body.append(dataTable);
   const channel = CustomEventsMessageBus.getDefaultChannel();
-  checkDataIsRendered(data, document, false);
-
-  channel.dispatch('sf-tree-node-selected', {
-    url: urlChild2,
-    data,
-    parameters: null,
-  });
-  checkDataIsRendered(data, document, true);
-  const tableData = table.data;
-  expect(tableData).toHaveLength(2);
-  expect(tableData[0].x).toBeCloseTo(1.1);
-  expect(tableData[0].y).toBeCloseTo(1.2);
-  expect(tableData[1].x).toBeCloseTo(2.1);
-  expect(tableData[1].y).toBeCloseTo(2.2);
-
-  channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
-  checkDataIsRendered(data, document, false);
-});
-
-test('sf-data-table reacts to sf-tree-node-data-updated events', async () => {
-  const table = new DataTable();
-  document.body.append(table);
-  const channel = CustomEventsMessageBus.getDefaultChannel();
-  checkDataIsRendered(data, document, false);
+  checkDataIsRendered(table, document, false);
 
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
     data: null,
+    table,
     parameters: null,
   });
-  checkDataIsRendered([], document, true);
-  let tableData = table.data;
-  expect(tableData).toEqual([]);
+  checkDataIsRendered(table, document, true);
+  expect(dataTable.data).toEqual(table);
+
+  channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
+  checkDataIsRendered(table, document, false);
+});
+
+test('sf-data-table reacts to sf-tree-node-data-updated events', async () => {
+  const dataTable = new DataTable();
+  document.body.append(dataTable);
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  checkDataIsRendered(table, document, false);
+
+  const emptyPeakTable: Table = {
+    columnNames: [],
+    rows: [],
+  };
+
+  channel.dispatch('sf-tree-node-selected', {
+    url: urlChild2,
+    data: null,
+    table: emptyPeakTable,
+    parameters: null,
+  });
+  checkDataIsRendered(emptyPeakTable, document, true);
+  let peakData = dataTable.data;
+  expect(peakData).toEqual(emptyPeakTable);
 
   channel.dispatch('sf-tree-node-data-updated', {
     url: urlChild2,
-    data,
+    data: null,
+    table,
     parameters: null,
   });
 
-  checkDataIsRendered(data, document, true);
-  tableData = table.data;
-  expect(tableData).toHaveLength(2);
-  expect(tableData[0].x).toBeCloseTo(1.1);
-  expect(tableData[0].y).toBeCloseTo(1.2);
-  expect(tableData[1].x).toBeCloseTo(2.1);
-  expect(tableData[1].y).toBeCloseTo(2.2);
+  checkDataIsRendered(table, document, true);
+  peakData = dataTable.data;
+  expect(peakData).toEqual(table);
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
-  checkDataIsRendered(data, document, false);
+  checkDataIsRendered(table, document, false);
 });

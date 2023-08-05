@@ -16,8 +16,8 @@ test('sf-data-panel renders', async () => {
   expect(panel.children).toHaveLength(4);
   expect(panel.children[0].id).toBe('sf-data-tabs');
   expect(panel.children[1].id).toBe('sf-data-chart-panel');
-  expect(panel.children[2].id).toBe('sf-data-table-panel');
-  expect(panel.children[3].id).toBe('sf-data-peaks-panel');
+  expect(panel.children[2].id).toBe('sf-data-data-panel');
+  expect(panel.children[3].id).toBe('sf-data-table-panel');
 
   const tabs = panel.children[0].children;
   expect(tabs).toHaveLength(3);
@@ -31,11 +31,11 @@ test('sf-data-panel renders', async () => {
 
   const table = panel.children[2].children;
   expect(table).toHaveLength(1);
-  expect(table[0].nodeName).toBe('SF-DATA-TABLE');
+  expect(table[0].nodeName).toBe('SF-DATA-DATA');
 
   const peaks = panel.children[3].children;
   expect(peaks).toHaveLength(1);
-  expect(peaks[0].nodeName).toBe('SF-DATA-PEAKS');
+  expect(peaks[0].nodeName).toBe('SF-DATA-TABLE');
 });
 
 test('sf-data-panel reacts to tab click events', async () => {

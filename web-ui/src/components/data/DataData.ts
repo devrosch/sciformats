@@ -2,23 +2,17 @@ import { isSameUrl } from 'util/UrlUtils';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
-import Table from 'model/Table';
-import './DataPeaks.css';
+import './DataData.css';
 
 const template = `
-  <table>
-    <thead>
-    </thead>
-    <tbody>
-    </tbody>
-  </table> 
+  <textarea readonly></textarea>
 `;
 
 const nodeSelectedEvent = 'sf-tree-node-selected';
 const nodeDeselectedEvent = 'sf-tree-node-deselected';
 const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 
-export default class DataPeaks extends HTMLElement {
+export default class DataData extends HTMLElement {
   #initialized = false;
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
@@ -27,18 +21,21 @@ export default class DataPeaks extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: Table | null = null;
+  #data: { x: number, y: number }[] = [];
 
   constructor() {
     super();
-    console.log('DataPeaks constructor() called');
+    console.log('DataData constructor() called');
   }
 
   get data() {
+    if (this.#data === null) {
+      return [];
+    }
     return this.#data;
   }
 
-  set data(data: Table | null) {
+  set data(data: { x: number, y: number }[]) {
     this.#data = data;
     this.render();
   }
@@ -51,60 +48,35 @@ export default class DataPeaks extends HTMLElement {
   }
 
   render() {
-    const table = this.querySelector('table') as HTMLTableElement;
-    const thead = table.querySelector('thead') as HTMLTableSectionElement;
-    const tbody = table.querySelector('tbody') as HTMLTableSectionElement;
+    const textarea = this.querySelector('textarea') as HTMLTextAreaElement;
 
-    // clear table
-    thead.textContent = null;
-    tbody.textContent = null;
-
-    if (this.#data === null) {
-      return;
+    let text = '';
+    for (const data of this.data) {
+      const x = String(data.x).padEnd(25);
+      const y = String(data.y);
+      const row = `${x}; ${y}\n`;
+      text += row;
     }
-
-    const columns = this.#data.columnNames;
-
-    const headerTr = document.createElement('tr');
-    thead.append(headerTr);
-    columns.forEach((column) => {
-      const th = document.createElement('th');
-      th.textContent = column.value;
-      headerTr.append(th);
-    });
-
-    const rows = this.#data.rows;
-
-    rows.forEach((row) => {
-      const tr = document.createElement('tr');
-      columns.forEach((column) => {
-        const td = document.createElement('td');
-        const value: string = Object.prototype.hasOwnProperty.call(row, column.key)
-          ? row[column.key] as string : '';
-        td.textContent = value;
-        tr.append(td);
-      });
-      tbody.append(tr);
-    });
+    textarea.value = text;
   }
 
   handleDataChanged(message: Message) {
-    console.log('DataPeaks handleDataChanged() called');
+    console.log('DataData handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (!sameUrl && message.name === nodeSelectedEvent) {
       this.#url = url;
-      this.data = message.detail.table;
+      this.data = message.detail.data;
     } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
-      this.data = null;
+      this.data = [];
     } else if (sameUrl && message.name === nodeDataUpdatedEvent) {
-      this.data = message.detail.table;
+      this.data = message.detail.data;
     }
   }
 
   connectedCallback() {
-    console.log('DataPeaks connectedCallback() called');
+    console.log('DataData connectedCallback() called');
     this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
@@ -123,22 +95,22 @@ export default class DataPeaks extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('DataPeaks disconnectedCallback() called');
+    console.log('DataData disconnectedCallback() called');
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
   adoptedCallback() {
-    console.log('DataPeaks adoptedCallback() called');
+    console.log('DataData adoptedCallback() called');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('DataPeaks attributeChangedCallback() called');
+    console.log('DataData attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-data-peaks"');
-customElements.define('sf-data-peaks', DataPeaks);
+console.log('define "sf-data-data"');
+customElements.define('sf-data-data', DataData);

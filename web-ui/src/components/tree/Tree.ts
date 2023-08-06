@@ -99,6 +99,7 @@ export default class Tree extends HTMLElement {
           const rootNode = new TreeNode(parser, parser.rootUrl);
           this.#children.push(rootNode);
           this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
+          this.render();
         } catch (error: any) {
           const detail = error.detail ? error.detail : error;
           const errorMessage = `Error opening file: "${file.name}". ${detail}`;
@@ -108,11 +109,10 @@ export default class Tree extends HTMLElement {
           const errorParser = new ErrorParser(parser.rootUrl, errorMessage);
           const rootNode = new TreeNode(errorParser, errorParser.rootUrl);
           this.#children.push(rootNode);
+          this.render();
         }
       }
     }
-
-    this.render();
   }
 
   handleFileCloseRequested() {

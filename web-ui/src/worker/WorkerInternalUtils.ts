@@ -159,7 +159,6 @@ export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => 
   // splitting by '/' results in:
   // '' => ['']
   // '/' => ['', '']
-  // TODO: implement util function for this
   if (hash.startsWith('#')) {
     hash = hash.substring(1);
   }

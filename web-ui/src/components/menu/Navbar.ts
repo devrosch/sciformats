@@ -36,21 +36,14 @@ const template = `
           title="Close"
           shortcut="${fileShortcutsModifierKeys}-C">
         </sf-menu-item>
+        <sf-submenu key="sf-export" title="Export...">
+          <sf-menu-item key="sf-export-json" title="JSON" shortcut="${fileShortcutsModifierKeys}-J"></sf-menu-item>
+        </sf-submenu>
         <sf-menu-item
           key="sf-file-close-all"
           title="Close All"
           shortcut="${fileShortcutsModifierKeys}-Q">
         </sf-menu-item>
-      </sf-submenu>
-      <sf-menu-item key="sf-menu-item-2" title="Menu Item 2"></sf-menu-item>
-      <sf-submenu key="sf-submenu-1" title="Submenu 1">
-        <sf-menu-item key="sf-menu-item-3" title="Menu Item 3" shortcut="Ctrl-3"></sf-menu-item>
-        <sf-submenu key="sf-submenu-2" title="Submenu 2">
-          <sf-menu-item key="sf-menu-item-5" title="Menu Item 5" shortcut="Ctrl-5"></sf-menu-item>
-          <sf-menu-item key="sf-menu-item-6" title="Menu Item 6" shortcut="Ctrl-6"></sf-menu-item>
-          <sf-menu-item key="sf-menu-item-7" title="Menu Item 7" shortcut="Ctrl-7"></sf-menu-item>
-        </sf-submenu>
-        <sf-menu-item key="sf-menu-item-4" title="Menu Item 4" shortcut="Ctrl-4"></sf-menu-item>
       </sf-submenu>
       <sf-menu-item key="sf-about" title="About..."></sf-menu-item>
     </sf-menu>
@@ -59,6 +52,7 @@ const template = `
 `;
 
 const events = {
+  fileExportRequested: 'sf-file-export-requested',
   fileCloseRequested: 'sf-file-close-requested',
   fileCloseAllRequested: 'sf-file-close-all-requested',
 };
@@ -137,6 +131,13 @@ export default class Navbar extends HTMLElement {
         this.#showMenu = !this.#showMenu;
         this.render();
         break;
+      case 'sf-export-json':
+        // TODO: add export feature
+        console.log('JSON export currently not supported.');
+        this.#channel.dispatch(events.fileExportRequested, 'json');
+        this.#showMenu = false;
+        this.render();
+        break;
       case 'sf-file-close':
         this.#channel.dispatch(events.fileCloseRequested, null);
         this.#showMenu = false;
@@ -171,7 +172,13 @@ export default class Navbar extends HTMLElement {
 
     // cannot use same mechanism for fileOpen() due to browser security limitations
     // => use "accessKey" property instead
-    if (fileModifiersPressed && e.key.toLowerCase() === 'c') {
+    if (fileModifiersPressed && e.key.toLowerCase() === 'j') {
+      // TODO: add export feature
+      console.log('JSON export currently not supported.');
+      this.#channel.dispatch(events.fileExportRequested, 'json');
+      this.#showMenu = false;
+      this.render();
+    } else if (fileModifiersPressed && e.key.toLowerCase() === 'c') {
       this.#channel.dispatch(events.fileCloseRequested, null);
       this.#showMenu = false;
       this.render();

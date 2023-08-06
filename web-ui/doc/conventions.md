@@ -59,6 +59,7 @@ The following custom events are dispatched or listened to by components.
 | sf-file-open-requested      | { files: `File[]` }   | NavBar      | Tree                                                          |
 | sf-file-opened              | { url: `URL` }        | Tree        |                                                               |
 | sf-file-close-requested     | `null`                | NavBar      | Tree                                                          |
+| sf-file-export-requested    | json                  | NavBar      | ?                                                             |
 | sf-file-closed              | { url: `URL` }        | Tree        |                                                               |
 | sf-file-close-all-requested | null                  | NavBar      | Tree                                                          |
 | sf-warning                  | { message: `string` } | Tree        |                                                               |

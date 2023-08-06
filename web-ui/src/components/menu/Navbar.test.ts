@@ -233,6 +233,10 @@ test('sf-navbar - about click opens AboutDialog', async () => {
   expect(showModalMock).toHaveBeenCalledTimes(1);
 });
 
+test('sf-navbar - file export event dispatched when "export - json" is clicked', (done) => {
+  testEventDispatchedForClickedKey('sf-export-json', 'sf-file-export-requested', done);
+});
+
 test('sf-navbar - close event dispatched when "file - close" is clicked', (done) => {
   testEventDispatchedForClickedKey('sf-file-close', 'sf-file-close-requested', done);
 });
@@ -305,6 +309,10 @@ test('sf-navbar shows copy symbol on dragover', () => {
   expect(event.preventDefault).toBeCalledTimes(1);
   expect(event.stopPropagation).toBeCalledTimes(1);
   expect(event.dataTransfer.dropEffect).toBe('copy');
+});
+
+test('sf-navbar handles json export shortcut', (done) => {
+  testEventDispatchedForShortcut('j', 'sf-file-export-requested', done);
 });
 
 test('sf-navbar handles file close shortcut', (done) => {

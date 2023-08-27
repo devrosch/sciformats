@@ -1,0 +1,16 @@
+[package]
+name = "libsf-rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.87"
+web-sys = { version = "0.3.64", features = ['console', 'File', 'Blob', 'FileReaderSync'] }
+js-sys = "0.3.64"
+netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"

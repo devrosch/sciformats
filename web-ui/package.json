@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "import-wasm": "mkdir -p dist && cp ../lib-cpp/build-wasm/apps/libsf.* dist",
+    "import-wasm-rs": "cp -avr ../lib-rs/pkg/ ./node_modules/libsf-rs",
     "test": "APP_VERSION=$npm_package_version jest",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "start": "APP_VERSION=$npm_package_version webpack serve --open",

@@ -100,9 +100,8 @@ pub fn parse_file(file: File) {
     let input_file = Box::new(file_wrapper);
     let res = FileReader::open_seek_read(&name, input_file);
     match res {
-        Ok(..) => {
+        Ok(reader) => {
             console::log_1(&"Rust parse_file(): parsing succeeded.".into());
-            let reader = res.unwrap();
             console::log_1(&"--- Rust parse_file(): attributes ---".into());
             for attr in reader.data_set().get_global_attrs().iter() {
                 console::log_3(

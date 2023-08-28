@@ -1,3 +1,6 @@
+pub mod api;
+pub mod andi_chrom_reader;
+
 use js_sys::Uint8Array;
 use netcdf3::FileReader;
 use std::io::{Error, Read, Seek, SeekFrom};

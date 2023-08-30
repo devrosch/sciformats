@@ -40,17 +40,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libsf-rs"
-version = "0.1.0"
-dependencies = [
- "js-sys",
- "netcdf3",
- "wasm-bindgen",
- "wasm-bindgen-test",
- "web-sys",
-]
-
-[[package]]
 name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -116,6 +105,17 @@ name = "scoped-tls"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1cf6437eb19a8f4a6cc0f7dca544973b0b78843adbfeb3683d1a94a0024a294"
+
+[[package]]
+name = "sf-rs"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "netcdf3",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
+ "web-sys",
+]
 
 [[package]]
 name = "syn"

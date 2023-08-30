@@ -99,7 +99,7 @@ impl fmt::Display for AndiDatasetCompleteness {
             .iter()
             .map(|cat| cat.to_string())
             .collect::<Vec<String>>()
-            .join(",");
+            .join("+");
         write!(f, "{}", out)
     }
 }
@@ -165,6 +165,11 @@ mod tests {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1 C3").unwrap_err(),
             AndiError::new("Illegal category: C1 C3")
+        );
+
+        assert_eq!(
+            AndiDatasetCompleteness::from_str("C1+C3+C2+C5+C4").unwrap().to_string(),
+            "C1+C2+C3+C4+C5"
         );
     }
 }

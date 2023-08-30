@@ -1,4 +1,6 @@
-use crate::api::{self, SciReader};
+use std::collections::BTreeSet;
+
+use crate::{api::{self, SciReader}, andi::AndiCategory};
 
 struct AndiChromReader {}
 
@@ -18,7 +20,26 @@ struct AndiChromFile {
   pub non_standard_attributes: AndiNonStandardAttributes,
 }
 
-struct AndiChromAdminData {}
+struct AndiChromAdminData {
+  dataset_completeness: BTreeSet<AndiCategory>, // required
+  protocol_template_revision: String,           // required
+  netcdf_revision: String,                      // required
+  languages: String,
+  administrative_comments: String,
+  dataset_origin: String,
+  dataset_owner: String,
+  dataset_date_time_stamp: String,
+  injection_date_time_stamp: String,            // required
+  experiment_title: String,
+  operator_name: String,
+  separation_experiment_type: String,
+  company_method_name: String,
+  company_method_id: String,
+  pre_expt_program_name: String,
+  post_expt_program_name: String,
+  source_file_reference: String,
+  error_log: Vec<String>,
+}
 
 struct AndiChromSampleDescription {}
 

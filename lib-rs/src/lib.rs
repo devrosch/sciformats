@@ -1,5 +1,6 @@
 pub mod api;
-pub mod andi_chrom_reader;
+pub mod andi;
+pub mod andi_chrom;
 
 use js_sys::Uint8Array;
 use netcdf3::FileReader;

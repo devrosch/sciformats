@@ -68,7 +68,7 @@ impl fmt::Display for AndiCategory {
 }
 
 #[derive(Debug, PartialEq)]
-struct AndiDatasetCompleteness {
+pub struct AndiDatasetCompleteness {
     categories: BTreeSet<AndiCategory>,
 }
 

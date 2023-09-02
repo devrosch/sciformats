@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{error::Error, str::FromStr};
 
 use netcdf3::DataType;
 
@@ -25,6 +25,7 @@ impl SciReader<FileWrapper, AndiChromFile> for AndiChromReader {
         let admin_data = AndiChromAdminData::new(&reader)?;
         let sample_description = AndiChromSampleDescription::new(&mut reader)?;
         let detection_method = AndiChromDetectionMethod::new(&mut reader)?;
+        let raw_data = AndiChromRawData::new(&mut reader)?;
         todo!()
     }
 }
@@ -61,7 +62,7 @@ pub struct AndiChromAdminData {
 }
 
 impl AndiChromAdminData {
-    pub fn new(reader: &netcdf3::FileReader) -> Result<AndiChromAdminData, AndiError> {
+    pub fn new(reader: &netcdf3::FileReader) -> Result<Self, AndiError> {
         let dataset_completeness_attr = reader
             .data_set()
             .get_global_attr_as_string("dataset_completeness")
@@ -115,7 +116,7 @@ impl AndiChromAdminData {
             .data_set()
             .get_global_attr_as_string("source_file_reference");
 
-        Ok(AndiChromAdminData {
+        Ok(Self {
             dataset_completeness,
             protocol_template_revision,
             netcdf_revision,
@@ -196,7 +197,7 @@ pub struct AndiChromSampleDescription {
 }
 
 impl AndiChromSampleDescription {
-    pub fn new(reader: &mut netcdf3::FileReader) -> Result<AndiChromSampleDescription, AndiError> {
+    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, AndiError> {
         let sample_id_comments = reader
             .data_set()
             .get_global_attr_as_string("sample_id_comments");
@@ -206,7 +207,7 @@ impl AndiChromSampleDescription {
         let sample_injection_volume = read_scalar_var_f32(reader, "sample_injection_volume")?;
         let sample_amount = read_scalar_var_f32(reader, "sample_amount")?;
 
-        Ok(AndiChromSampleDescription {
+        Ok(Self {
             sample_id_comments,
             sample_id,
             sample_name,
@@ -228,7 +229,7 @@ pub struct AndiChromDetectionMethod {
 }
 
 impl AndiChromDetectionMethod {
-    pub fn new(reader: &mut netcdf3::FileReader) -> Result<AndiChromDetectionMethod, AndiError> {
+    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, AndiError> {
         let detection_method_table_name = reader
             .data_set()
             .get_global_attr_as_string("detection_method_table_name");
@@ -244,7 +245,7 @@ impl AndiChromDetectionMethod {
         let detector_minimum_value = read_scalar_var_f32(reader, "detector_minimum_value")?;
         let detector_unit = reader.data_set().get_global_attr_as_string("detector_unit");
 
-        Ok(AndiChromDetectionMethod {
+        Ok(Self {
             detection_method_table_name,
             detector_method_comments,
             detection_method_name,
@@ -257,16 +258,86 @@ impl AndiChromDetectionMethod {
 }
 
 pub struct AndiChromRawData {
-    point_number: i32, // required
-    raw_data_table_name: String,
-    retention_unit: String,        // required
-    actual_run_time_length: f32,   // required
-    actual_sampling_interval: f32, // required
-    actual_delay_time: f32,        // required
-    ordinate_values: Vec<f32>,     // required
-    uniform_sampling_flag: bool,   // required?, default: true
-    raw_data_retention: Vec<f32>,  // required if uniformSamplingFlag==false
-    autosampler_position: String,
+    pub point_number: i32,                      // required
+    pub raw_data_table_name: Option<String>,
+    pub retention_unit: String,                 // required
+    pub actual_run_time_length: f32,            // required
+    pub actual_sampling_interval: f32,          // required
+    pub actual_delay_time: f32,                 // required
+    pub ordinate_values: Vec<f32>,              // required
+    pub uniform_sampling_flag: bool,            // required?, default: true
+    pub raw_data_retention: Option<Vec<f32>>,   // required if uniformSamplingFlag==false
+    pub autosampler_position: Option<String>,
+}
+
+impl AndiChromRawData {
+    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
+        let point_number_dim = reader
+            .data_set()
+            .get_dim("point_number")
+            .ok_or(AndiError::new("Missing dataset_completeness dimension."))?;
+        // TODO: usize?
+        let point_number = point_number_dim.size() as i32;
+        let raw_data_table_name = reader
+            .data_set()
+            .get_global_attr_as_string("raw_data_table_name");
+        let retention_unit = reader
+            .data_set()
+            .get_global_attr_as_string("retention_unit")
+            .ok_or(AndiError::new("Missing retention_unit attribute."))?;
+        let actual_run_time_length = read_scalar_var_f32(reader, "actual_run_time_length")?
+            .ok_or(AndiError::new("Missing actual_run_time_length variable."))?;
+        let actual_sampling_interval = read_scalar_var_f32(reader, "actual_sampling_interval")?
+            .ok_or(AndiError::new("Missing actual_sampling_interval variable."))?;
+        let actual_delay_time = read_scalar_var_f32(reader, "actual_delay_time")?
+            .ok_or(AndiError::new("Missing actual_delay_time variable."))?;
+        // TODO: lazy load values
+        let ordinate_values = reader
+            .read_var("ordinate_values")?
+            .get_f32()
+            .ok_or(AndiError::new("Missing ordinate_values variable."))?
+            .to_owned();
+
+        let mut uniform_sampling_flag_attr = reader
+            .data_set()
+            .get_var_attr("ordinate_values", "uniform_sampling_flag");
+        if uniform_sampling_flag_attr.is_none() {
+            uniform_sampling_flag_attr = reader.data_set().get_global_attr("uniform_sampling_flag");
+        }
+        let uniform_sampling_flag = match uniform_sampling_flag_attr {
+            Some(attr) => attr.get_as_string().unwrap_or("Y".to_owned()) == "Y",
+            None => true,
+        };
+        // TODO: lazy load values
+        let raw_data_retention = match uniform_sampling_flag {
+            true => None,
+            false => Some(
+                reader
+                    .read_var("raw_data_retention")?
+                    .get_f32()
+                    .ok_or(AndiError::new("Missing raw_data_retention variable."))?
+                    .to_owned(),
+            ),
+        };
+        let ordinate_values_var = reader.data_set().get_var("ordinate_values");
+        let autosampler_position = match ordinate_values_var {
+            None => None,
+            Some(var) => var.get_attr_as_string("autosampler_position"),
+        };
+
+        Ok(Self {
+            point_number,
+            raw_data_table_name,
+            retention_unit,
+            actual_run_time_length,
+            actual_sampling_interval,
+            actual_delay_time,
+            ordinate_values,
+            uniform_sampling_flag,
+            raw_data_retention,
+            autosampler_position,
+        })
+    }
 }
 
 pub struct AndiChromPeakProcessingResults {

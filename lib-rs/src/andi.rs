@@ -133,19 +133,14 @@ mod tests {
     fn test_dataset_completeness_mapping() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1").unwrap(),
-            AndiDatasetCompleteness::new(vec![
-                AndiCategory::C1,
-            ])
+            AndiDatasetCompleteness::new(vec![AndiCategory::C1,])
         );
 
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+C3").unwrap(),
-            AndiDatasetCompleteness::new(vec![
-                AndiCategory::C1,
-                AndiCategory::C3,
-            ])
+            AndiDatasetCompleteness::new(vec![AndiCategory::C1, AndiCategory::C3,])
         );
-        
+
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+C2+C3+C4+C5").unwrap(),
             AndiDatasetCompleteness::new(vec![
@@ -168,7 +163,9 @@ mod tests {
         );
 
         assert_eq!(
-            AndiDatasetCompleteness::from_str("C1+C3+C2+C5+C4").unwrap().to_string(),
+            AndiDatasetCompleteness::from_str("C1+C3+C2+C5+C4")
+                .unwrap()
+                .to_string(),
             "C1+C2+C3+C4+C5"
         );
     }

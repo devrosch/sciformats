@@ -1,6 +1,7 @@
-pub mod api;
 pub mod andi;
 pub mod andi_chrom;
+mod andi_utils;
+pub mod api;
 
 use andi_chrom::AndiChromReader;
 use api::SciReader;
@@ -88,7 +89,6 @@ impl Read for FileWrapper {
             }
             Err(js_error) => {
                 return to_io_error(js_error);
-
             }
         }
     }
@@ -133,7 +133,7 @@ pub fn parse_andi(file_name: &str, file: std::fs::File) {
         Ok(data) => {
             println!("netCDF revision: {}", data.admin_data.netcdf_revision);
             println!("{:?}", data);
-        },
+        }
     }
 }
 

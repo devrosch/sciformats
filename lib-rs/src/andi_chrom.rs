@@ -1,11 +1,10 @@
-use std::{error::Error, str::FromStr};
-
-use netcdf3::{DataType, DataVector};
-
+use super::andi_utils::{read_index_from_slice, read_index_from_var_f32, read_optional_var};
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
-    api::{SciReader, self},
+    api::{self, SciReader},
 };
+use netcdf3::DataType;
+use std::{error::Error, str::FromStr};
 
 pub struct AndiChromReader {}
 
@@ -17,7 +16,10 @@ pub struct AndiChromReader {}
 // }
 
 impl SciReader<Box<dyn api::SeekRead>, AndiChromFile> for AndiChromReader {
-    fn read(name: &str, input: Box<dyn api::SeekRead>) -> Result<AndiChromFile, Box<dyn std::error::Error>> {
+    fn read(
+        name: &str,
+        input: Box<dyn api::SeekRead>,
+    ) -> Result<AndiChromFile, Box<dyn std::error::Error>> {
         let input_seek_read = Box::new(input);
         let mut reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
 
@@ -30,7 +32,7 @@ impl SciReader<Box<dyn api::SeekRead>, AndiChromFile> for AndiChromReader {
             &raw_data.retention_unit,
             detection_method.detector_unit.as_deref(),
         )?;
-        
+
         Ok(AndiChromFile {
             admin_data,
             sample_description,
@@ -527,48 +529,6 @@ impl AndiChromPeakProcessingResults {
         }
 
         Ok(Some(peaks))
-    }
-}
-
-fn read_index_from_var_f32(
-    var: &Option<(&str, DataVector)>,
-    index: usize,
-) -> Result<Option<f32>, Box<dyn Error>> {
-    let res = read_index_from_slice(
-        var.as_ref().map(|(_, v)| v.get_f32()).flatten(),
-        var.as_ref().map(|(name, _)| *name).unwrap_or_default(),
-        index,
-    )?
-    .copied();
-
-    Ok(res)
-}
-
-fn read_index_from_slice<'a, T: 'a>(
-    slice: Option<&'a [T]>,
-    var_name: &str,
-    index: usize,
-) -> Result<Option<&'a T>, Box<dyn Error>> {
-    match slice {
-        None => Ok(None),
-        Some(sl) => match sl.get(index) {
-            None => Err(Box::new(AndiError::new(&format!(
-                "Index out of bounds for {}: {}",
-                var_name, index
-            )))),
-            Some(val) => Ok(Some(val)),
-        },
-    }
-}
-
-fn read_optional_var<'a>(
-    reader: &mut netcdf3::FileReader,
-    var_name: &'a str,
-) -> Result<Option<(&'a str, DataVector)>, Box<dyn Error>> {
-    if reader.data_set().get_var(var_name).is_some() {
-        Ok(Some((var_name, reader.read_var(var_name)?)))
-    } else {
-        Ok(Option::None)
     }
 }
 

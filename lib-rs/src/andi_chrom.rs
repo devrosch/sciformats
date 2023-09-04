@@ -4,25 +4,43 @@ use crate::{
     api::{self, SciReader},
 };
 use netcdf3::DataType;
-use std::{error::Error, str::FromStr};
+use std::{
+    error::Error,
+    // io::{Read, Seek},
+    str::FromStr,
+};
 
 pub struct AndiChromReader {}
 
-// impl SciReader<AndiChromFile> for AndiChromReader {
-//     fn read(input: Box<dyn api::SeekRead>) -> Result<AndiChromFile, Box<dyn std::error::Error>> {
-//         netcdf3::FileReader::open_seek_read("input_file_name", input);
-//         todo!()
-//     }
-// }
+// impl<T: Seek + Read + 'static> SciReader<T> for AndiChromReader {
+impl SciReader<Box<dyn api::SeekRead>> for AndiChromReader {
+    type R = AndiChromFile;
 
-impl SciReader<Box<dyn api::SeekRead>, AndiChromFile> for AndiChromReader {
+    // fn read(name: &str, input: T) -> Result<Self::R, Box<dyn std::error::Error>> {
     fn read(
         name: &str,
         input: Box<dyn api::SeekRead>,
-    ) -> Result<AndiChromFile, Box<dyn std::error::Error>> {
+    ) -> Result<Self::R, Box<dyn std::error::Error>> {
         let input_seek_read = Box::new(input);
         let mut reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
 
+        AndiChromFile::new(&mut reader)
+    }
+}
+
+#[derive(Debug)]
+pub struct AndiChromFile {
+    pub admin_data: AndiChromAdminData,
+    pub sample_description: AndiChromSampleDescription,
+    pub detection_method: AndiChromDetectionMethod,
+    pub raw_data: AndiChromRawData,
+    pub peak_processing_results: AndiChromPeakProcessingResults,
+    pub non_standard_variables: Vec<String>,
+    pub non_standard_attributes: Vec<String>,
+}
+
+impl AndiChromFile {
+    pub fn new(mut reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
         let admin_data = AndiChromAdminData::new(&reader)?;
         let sample_description = AndiChromSampleDescription::new(&mut reader)?;
         let detection_method = AndiChromDetectionMethod::new(&mut reader)?;
@@ -45,17 +63,6 @@ impl SciReader<Box<dyn api::SeekRead>, AndiChromFile> for AndiChromReader {
             non_standard_attributes: vec![],
         })
     }
-}
-
-#[derive(Debug)]
-pub struct AndiChromFile {
-    pub admin_data: AndiChromAdminData,
-    pub sample_description: AndiChromSampleDescription,
-    pub detection_method: AndiChromDetectionMethod,
-    pub raw_data: AndiChromRawData,
-    pub peak_processing_results: AndiChromPeakProcessingResults,
-    pub non_standard_variables: Vec<String>,
-    pub non_standard_attributes: Vec<String>,
 }
 
 #[derive(Debug)]

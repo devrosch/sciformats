@@ -4,8 +4,7 @@ use netcdf3::{DataType, DataVector};
 
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
-    api::SciReader,
-    FileWrapper,
+    api::{SciReader, self},
 };
 
 pub struct AndiChromReader {}
@@ -17,8 +16,8 @@ pub struct AndiChromReader {}
 //     }
 // }
 
-impl SciReader<FileWrapper, AndiChromFile> for AndiChromReader {
-    fn read(name: &str, input: FileWrapper) -> Result<AndiChromFile, Box<dyn std::error::Error>> {
+impl SciReader<Box<dyn api::SeekRead>, AndiChromFile> for AndiChromReader {
+    fn read(name: &str, input: Box<dyn api::SeekRead>) -> Result<AndiChromFile, Box<dyn std::error::Error>> {
         let input_seek_read = Box::new(input);
         let mut reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
 
@@ -46,6 +45,7 @@ impl SciReader<FileWrapper, AndiChromFile> for AndiChromReader {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiChromFile {
     pub admin_data: AndiChromAdminData,
     pub sample_description: AndiChromSampleDescription,
@@ -56,6 +56,7 @@ pub struct AndiChromFile {
     pub non_standard_attributes: Vec<String>,
 }
 
+#[derive(Debug)]
 pub struct AndiChromAdminData {
     pub dataset_completeness: AndiDatasetCompleteness, // required
     pub protocol_template_revision: String,            // required
@@ -203,6 +204,7 @@ fn read_scalar_var_f32(
     }
 }
 
+#[derive(Debug)]
 pub struct AndiChromSampleDescription {
     pub sample_id_comments: Option<String>,
     pub sample_id: Option<String>,
@@ -234,6 +236,7 @@ impl AndiChromSampleDescription {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiChromDetectionMethod {
     pub detection_method_table_name: Option<String>,
     pub detector_method_comments: Option<String>,
@@ -273,6 +276,7 @@ impl AndiChromDetectionMethod {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiChromRawData {
     pub point_number: i32, // required
     pub raw_data_table_name: Option<String>,
@@ -356,6 +360,7 @@ impl AndiChromRawData {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiChromPeakProcessingResults {
     pub peak_number: i32,
     pub peak_processing_results_table_name: Option<String>,
@@ -567,6 +572,7 @@ fn read_optional_var<'a>(
     }
 }
 
+#[derive(Debug)]
 pub struct AndiChromPeak {
     pub peak_retention_time: Option<f32>,
     pub peak_name: Option<String>,

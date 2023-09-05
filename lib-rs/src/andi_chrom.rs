@@ -1,6 +1,7 @@
 use super::andi_utils::{read_index_from_slice, read_index_from_var_f32, read_optional_var};
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
+    andi_utils::read_multi_string_var,
     api::{self, SciReader},
 };
 use netcdf3::DataType;
@@ -41,7 +42,7 @@ pub struct AndiChromFile {
 
 impl AndiChromFile {
     pub fn new(mut reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
-        let admin_data = AndiChromAdminData::new(&reader)?;
+        let admin_data = AndiChromAdminData::new(&mut reader)?;
         let sample_description = AndiChromSampleDescription::new(&mut reader)?;
         let detection_method = AndiChromDetectionMethod::new(&mut reader)?;
         let raw_data = AndiChromRawData::new(&mut reader)?;
@@ -88,7 +89,7 @@ pub struct AndiChromAdminData {
 }
 
 impl AndiChromAdminData {
-    pub fn new(reader: &netcdf3::FileReader) -> Result<Self, AndiError> {
+    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
         let dataset_completeness_attr = reader
             .data_set()
             .get_global_attr_as_string("dataset_completeness")
@@ -141,6 +142,7 @@ impl AndiChromAdminData {
         let source_file_reference = reader
             .data_set()
             .get_global_attr_as_string("source_file_reference");
+        let error_log = read_multi_string_var(reader, "error_log")?;
 
         Ok(Self {
             dataset_completeness,
@@ -160,32 +162,8 @@ impl AndiChromAdminData {
             pre_experiment_program_name,
             post_experiment_program_name,
             source_file_reference,
-            error_log: vec![], // TODO: read error_log
+            error_log,
         })
-
-        // TODO: read error_log
-
-        // let var = reader.data_set().get_var("error_log").unwrap();
-        // let dims = var.get_dims();
-        // let dim_0 = dims.get(0).unwrap();
-        // let dim_1 = dims.get(1).unwrap();
-        // var.use_dim("dim_name");
-        // let error_log_var = reader.read_var("error_log");
-        // let err_log = error_log_var.unwrap().get_u8().unwrap();
-
-        // Variable errorLog = file.findVariable(file.getRootGroup(), "error_log");
-        // if (errorLog == null) {
-        //     return null;
-        // }
-        // List<String> errorLogEntries = new ArrayList<>();
-        // int numberOfEntries = errorLog.getDimension(0).getLength();
-        // for (int i = 0; i < numberOfEntries; i++) {
-        //     String entry = readMultipleStringVariable(file, "error_log", i);
-        //     errorLogEntries.add(entry);
-        // }
-        // return errorLogEntries;
-
-        // this.errorLog = readErrorLog(file);
     }
 }
 

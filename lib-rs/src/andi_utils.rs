@@ -43,3 +43,57 @@ pub fn read_optional_var<'a>(
         Ok(Option::None)
     }
 }
+
+pub fn convert_utf8_cstr_to_str(bytes: &[u8]) -> String {
+    let len = bytes.iter().position(|&c| c == 0u8).unwrap_or(bytes.len());
+    String::from_utf8_lossy(&bytes[..len]).to_string()
+}
+
+pub fn convert_iso8859_1_cstr_to_str(bytes: &[u8]) -> String {
+    // see https://stackoverflow.com/a/28175593 for why this works
+    bytes
+        .iter()
+        .take_while(|&c| c != &0u8)
+        .map(|&c| c as char)
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    #[test]
+    #[wasm_bindgen_test]
+    fn test_utf8_bytes_to_string_conversion() {
+        let expect = "aäAÄ";
+        // "aäAÄ" UTF-8 encoded with zero terminator in different encodings
+        // no zero terminator
+        let utf8_data: [u8; 6] = [0x61, 0xc3, 0xa4, 0x41, 0xc3, 0x84];
+        // including zero terminator
+        let utf8_data_zt: [u8; 7] = [0x61, 0xc3, 0xa4, 0x41, 0xc3, 0x84, 0];
+        // additional bytes after zero terminator
+        let utf8_data_zt_plus: [u8; 9] = [0x61, 0xc3, 0xa4, 0x41, 0xc3, 0x84, 0, 0xc3, 0xa4];
+
+        assert_eq!(expect, convert_utf8_cstr_to_str(&utf8_data));
+        assert_eq!(expect, convert_utf8_cstr_to_str(&utf8_data_zt));
+        assert_eq!(expect, convert_utf8_cstr_to_str(&utf8_data_zt_plus));
+    }
+
+    #[test]
+    #[wasm_bindgen_test]
+    fn test_iso8859_1_bytes_to_string_conversion() {
+        let expect = "aäAÄ";
+        // "aäAÄ" ISO-8859-1 encoded
+        // no zero terminator
+        let iso8850_1_data: [u8; 4] = [0x61, 0xe4, 0x41, 0xc4];
+        // including zero terminator
+        let iso8850_1_data_zt: [u8; 5] = [0x61, 0xe4, 0x41, 0xc4, 0];
+        // additional bytes after zero terminator
+        let iso8850_1_data_zt_plus: [u8; 6] = [0x61, 0xe4, 0x41, 0xc4, 0, 0x62];
+
+        assert_eq!(expect, convert_iso8859_1_cstr_to_str(&iso8850_1_data));
+        assert_eq!(expect, convert_iso8859_1_cstr_to_str(&iso8850_1_data_zt));
+        assert_eq!(expect, convert_iso8859_1_cstr_to_str(&iso8850_1_data_zt_plus));
+    }
+}

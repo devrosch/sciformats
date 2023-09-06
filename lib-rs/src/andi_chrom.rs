@@ -2,26 +2,21 @@ use super::andi_utils::{read_index_from_slice, read_index_from_var_f32, read_opt
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
     andi_utils::{read_index_from_var_2d_string, read_multi_string_var},
-    api::{self, SciReader},
+    api::SciParser,
 };
 use netcdf3::DataType;
 use std::{
     error::Error,
-    // io::{Read, Seek},
+    io::{Read, Seek},
     str::FromStr,
 };
 
 pub struct AndiChromReader {}
 
-// impl<T: Seek + Read + 'static> SciReader<T> for AndiChromReader {
-impl SciReader<Box<dyn api::SeekRead>> for AndiChromReader {
+impl<T: Seek + Read + 'static> SciParser<T> for AndiChromReader {
     type R = AndiChromFile;
 
-    // fn read(name: &str, input: T) -> Result<Self::R, Box<dyn std::error::Error>> {
-    fn read(
-        name: &str,
-        input: Box<dyn api::SeekRead>,
-    ) -> Result<Self::R, Box<dyn std::error::Error>> {
+    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn std::error::Error>> {
         let input_seek_read = Box::new(input);
         let mut reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
 

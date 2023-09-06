@@ -3,11 +3,8 @@ use std::{
     io::{Read, Seek},
 };
 
-pub trait SeekRead: Seek + Read {}
-impl<T: Seek + Read> SeekRead for T {}
-
-pub trait SciReader<T: Read + Seek> {
+pub trait SciParser<T: Read + Seek> {
     type R;
 
-    fn read(name: &str, input: T) -> Result<Self::R, Box<dyn Error>>;
+    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>>;
 }

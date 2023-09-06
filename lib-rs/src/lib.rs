@@ -4,7 +4,7 @@ mod andi_utils;
 pub mod api;
 
 use andi_chrom::AndiChromReader;
-use api::SciReader;
+use api::SciParser;
 use js_sys::Uint8Array;
 use netcdf3::FileReader;
 use std::io::{Error, Read, Seek, SeekFrom};
@@ -127,7 +127,7 @@ pub fn parse_file(file: File) {
 }
 
 pub fn parse_andi(file_name: &str, file: std::fs::File) {
-    let chrom = AndiChromReader::read(file_name, Box::new(file));
+    let chrom = AndiChromReader::parse(file_name, Box::new(file));
     match chrom {
         Err(e) => println!("{:?}", e),
         Ok(data) => {

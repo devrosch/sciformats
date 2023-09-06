@@ -3,17 +3,72 @@ use netcdf3::DataVector;
 use std::error::Error;
 
 pub fn read_index_from_var_f32(
-    var: &Option<(&str, DataVector)>,
+    var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
 ) -> Result<Option<f32>, Box<dyn Error>> {
     let res = read_index_from_slice(
-        var.as_ref().map(|(_, v)| v.get_f32()).flatten(),
-        var.as_ref().map(|(name, _)| *name).unwrap_or_default(),
+        var.as_ref().map(|(_, _, v)| v.get_f32()).flatten(),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
         index,
     )?
     .copied();
 
     Ok(res)
+}
+
+fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), Box<dyn Error>> {
+    if dims.len() != 2 {
+        return Err(Box::new(AndiError::new(&format!(
+            "Unexpected number of dimensions for {}: {}",
+            var_name,
+            dims.len()
+        ))));
+    }
+    Ok(())
+}
+
+pub fn read_index_from_var_2d_string(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<String>, Box<dyn Error>> {
+    match var {
+        None => Ok(None),
+        Some((var_name, dims, data)) => {
+            check_var_is_2d(var_name, dims)?;
+
+            let row_length = dims.get(1).unwrap();
+            let bytes = data
+                .get_u8()
+                .ok_or(AndiError::new(&format!("Failed to read {}", var_name)))?;
+            let start_index = index * row_length;
+            let end_index = start_index + row_length;
+            let string_bytes = &bytes[start_index..end_index];
+            let s = convert_iso_8859_1_cstr_to_str(string_bytes);
+
+            Ok(Some(s))
+        }
+    }
+}
+
+pub fn read_multi_string_var(
+    reader: &mut netcdf3::FileReader,
+    var_name: &str,
+) -> Result<Vec<String>, Box<dyn Error>> {
+    let var_opt = read_optional_var(reader, var_name)?;
+    match var_opt {
+        None => Ok(vec![]),
+        Some((_, ref dims, _)) => {
+            check_var_is_2d(var_name, dims)?;
+
+            let mut vec = vec![];
+            for i in 0..dims[0] {
+                let value = read_index_from_var_2d_string(&var_opt, i)?
+                    .ok_or(AndiError::new(&format!("Failed to read {}", var_name)))?;
+                vec.push(value);
+            }
+            Ok(vec)
+        }
+    }
 }
 
 pub fn read_index_from_slice<'a, T: 'a>(
@@ -36,11 +91,15 @@ pub fn read_index_from_slice<'a, T: 'a>(
 pub fn read_optional_var<'a>(
     reader: &mut netcdf3::FileReader,
     var_name: &'a str,
-) -> Result<Option<(&'a str, DataVector)>, Box<dyn Error>> {
-    if reader.data_set().get_var(var_name).is_some() {
-        Ok(Some((var_name, reader.read_var(var_name)?)))
-    } else {
-        Ok(Option::None)
+) -> Result<Option<(&'a str, Vec<usize>, DataVector)>, Box<dyn Error>> {
+    let var = reader.data_set().get_var(var_name);
+    match var {
+        Some(var) => {
+            let dims: Vec<usize> = var.get_dims().iter().map(|dim| dim.size()).collect();
+            let vec = reader.read_var(var_name)?;
+            Ok(Some((var_name, dims, vec)))
+        }
+        None => Ok(None),
     }
 }
 
@@ -57,43 +116,6 @@ pub fn convert_iso_8859_1_cstr_to_str(bytes: &[u8]) -> String {
         .take_while(|&c| c != &0u8)
         .map(|&c| c as char)
         .collect()
-}
-
-pub fn read_multi_string_var(
-    reader: &mut netcdf3::FileReader,
-    var_name: &str,
-) -> Result<Vec<String>, Box<dyn Error>> {
-    let var_opt = reader.data_set().get_var(var_name);
-    match var_opt {
-        None => Ok(vec![]),
-        Some(var) => {
-            let dims = var.get_dims();
-            if dims.len() != 2 {
-                return Err(Box::new(AndiError::new(&format!(
-                    "Unexpected number of dimensions for {}: {}",
-                    var_name,
-                    dims.len()
-                ))));
-            }
-
-            let num_rows = dims.get(0).unwrap().size();
-            let row_length = dims.get(1).unwrap().size();
-            let data_vector = reader.read_var(var_name)?;
-            let bytes = data_vector
-                .get_u8()
-                .ok_or(AndiError::new(&format!("Failed to read {}", var_name)))?;
-
-            let mut out: Vec<String> = vec![];
-            for row_index in 0..num_rows {
-                let start_index = row_index * row_length;
-                let end_index = start_index + row_length;
-                let string_bytes = &bytes[start_index..end_index];
-                let s = convert_iso_8859_1_cstr_to_str(string_bytes);
-                out.push(s);
-            }
-            Ok(out)
-        }
-    }
 }
 
 #[cfg(test)]

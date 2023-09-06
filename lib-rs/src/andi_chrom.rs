@@ -1,7 +1,7 @@
 use super::andi_utils::{read_index_from_slice, read_index_from_var_f32, read_optional_var};
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
-    andi_utils::read_multi_string_var,
+    andi_utils::{read_index_from_var_2d_string, read_multi_string_var},
     api::{self, SciReader},
 };
 use netcdf3::DataType;
@@ -404,7 +404,6 @@ impl AndiChromPeakProcessingResults {
         })
     }
 
-    /// As the netcdf3 library (currently) does not support indexed reads, read underlying arrays as a whole and populate peak here instead of using a dedicated new().
     fn read_peaks(
         reader: &mut netcdf3::FileReader,
         peak_number: i32,
@@ -416,8 +415,11 @@ impl AndiChromPeakProcessingResults {
             return Ok(None);
         }
 
+        // As the netcdf3 library (currently) does not support indexed reads,
+        // read underlying arrays as a whole and populate peak here instead of using a dedicated new().
+
         let peak_retention_time_var = read_optional_var(reader, "peak_retention_time")?;
-        // TODO: peak_name
+        let peak_name_var = read_optional_var(reader, "peak_name")?;
         let peak_amount_var = read_optional_var(reader, "peak_amount")?;
         let peak_start_time_var = read_optional_var(reader, "peak_start_time")?;
         let peak_end_time_var = read_optional_var(reader, "peak_end_time")?;
@@ -430,8 +432,8 @@ impl AndiChromPeakProcessingResults {
         let baseline_start_value_var = read_optional_var(reader, "baseline_start_value")?;
         let baseline_stop_time_var = read_optional_var(reader, "baseline_stop_time")?;
         let baseline_stop_value_var = read_optional_var(reader, "baseline_stop_value")?;
-        // TODO: peak_start_detection_code
-        // TODO: peak_stop_detection_code
+        let peak_start_detection_code_var = read_optional_var(reader, "peak_start_detection_code")?;
+        let peak_stop_detection_code_var = read_optional_var(reader, "peak_stop_detection_code")?;
         let retention_index_var = read_optional_var(reader, "retention_index")?;
         let migration_time_var = read_optional_var(reader, "migration_time")?;
         let peak_asymmetry_var = read_optional_var(reader, "peak_asymmetry")?;
@@ -443,7 +445,7 @@ impl AndiChromPeakProcessingResults {
         let mut peaks = Vec::<AndiChromPeak>::new();
         for i in 0..peak_number as usize {
             let peak_retention_time = read_index_from_var_f32(&peak_retention_time_var, i)?;
-            // TODO: peak_name
+            let peak_name = read_index_from_var_2d_string(&peak_name_var, i)?;
             let peak_amount = read_index_from_var_f32(&peak_amount_var, i)?;
             let peak_start_time = read_index_from_var_f32(&peak_start_time_var, i)?;
             let peak_end_time = read_index_from_var_f32(&peak_end_time_var, i)?;
@@ -456,8 +458,10 @@ impl AndiChromPeakProcessingResults {
             let baseline_start_value = read_index_from_var_f32(&baseline_start_value_var, i)?;
             let baseline_stop_time = read_index_from_var_f32(&baseline_stop_time_var, i)?;
             let baseline_stop_value = read_index_from_var_f32(&baseline_stop_value_var, i)?;
-            // TODO: peak_start_detection_code
-            // TODO: peak_stop_detection_code
+            let peak_start_detection_code =
+                read_index_from_var_2d_string(&peak_start_detection_code_var, i)?;
+            let peak_stop_detection_code =
+                read_index_from_var_2d_string(&peak_stop_detection_code_var, i)?;
             let retention_index = read_index_from_var_f32(&retention_index_var, i)?;
             let migration_time = read_index_from_var_f32(&migration_time_var, i)?;
             let peak_asymmetry = read_index_from_var_f32(&peak_asymmetry_var, i)?;
@@ -467,11 +471,11 @@ impl AndiChromPeakProcessingResults {
             let manually_reintegrated_peaks = read_index_from_slice(
                 manually_reintegrated_peaks_var
                     .as_ref()
-                    .map(|(_, v)| v.get_i16())
+                    .map(|(_, _, v)| v.get_i16())
                     .flatten(),
                 manually_reintegrated_peaks_var
                     .as_ref()
-                    .map(|(name, _)| *name)
+                    .map(|(name, _, _)| *name)
                     .unwrap_or_default(),
                 i,
             )?
@@ -480,25 +484,21 @@ impl AndiChromPeakProcessingResults {
 
             let peak = AndiChromPeak {
                 peak_retention_time,
-                // TODO: fill
-                peak_name: None,
+                peak_name,
                 peak_amount,
                 peak_start_time,
                 peak_end_time,
                 peak_width,
                 peak_area,
                 peak_area_percent,
-
                 peak_height,
                 peak_height_percent,
                 baseline_start_time,
                 baseline_start_value,
                 baseline_stop_time,
                 baseline_stop_value,
-                // TODO: fill
-                peak_start_detection_code: None,
-                // TODO: fill
-                peak_stop_detection_code: None,
+                peak_start_detection_code,
+                peak_stop_detection_code,
                 retention_index,
                 migration_time,
                 peak_asymmetry,

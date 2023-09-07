@@ -1,4 +1,4 @@
-use sf_rs::parse_andi;
+use sf_rs::{andi_chrom::AndiChromParser, api::Parser};
 
 use std::{path::Path, fs::File};
 
@@ -16,5 +16,8 @@ fn test_andi_chrom_parsing_succeeds() {
         Ok(file) => file,
     };
 
-    parse_andi(path.to_str().unwrap(), file);
+    let chrom = AndiChromParser::parse(path.to_str().unwrap(), file).unwrap();
+    // TODO: actually test
+    println!("netCDF revision: {}", chrom.admin_data.netcdf_revision);
+    println!("{:?}", chrom);
 }

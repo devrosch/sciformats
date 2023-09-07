@@ -2,7 +2,7 @@ use super::andi_utils::{read_index_from_slice, read_index_from_var_f32, read_opt
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
     andi_utils::{read_index_from_var_2d_string, read_multi_string_var},
-    api::SciParser,
+    api::Parser,
 };
 use netcdf3::DataType;
 use std::{
@@ -11,9 +11,9 @@ use std::{
     str::FromStr,
 };
 
-pub struct AndiChromReader {}
+pub struct AndiChromParser {}
 
-impl<T: Seek + Read + 'static> SciParser<T> for AndiChromReader {
+impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     type R = AndiChromFile;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn std::error::Error>> {

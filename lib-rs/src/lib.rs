@@ -3,8 +3,6 @@ pub mod andi_chrom;
 mod andi_utils;
 pub mod api;
 
-use andi_chrom::AndiChromReader;
-use api::SciParser;
 use js_sys::Uint8Array;
 use netcdf3::FileReader;
 use std::io::{Error, Read, Seek, SeekFrom};
@@ -122,17 +120,6 @@ pub fn parse_file(file: File) {
         Err(err) => {
             console::log_1(&"Rust parse_file(): parsing failed.".into());
             console::log_1(&(err.to_string()).into());
-        }
-    }
-}
-
-pub fn parse_andi(file_name: &str, file: std::fs::File) {
-    let chrom = AndiChromReader::parse(file_name, Box::new(file));
-    match chrom {
-        Err(e) => println!("{:?}", e),
-        Ok(data) => {
-            println!("netCDF revision: {}", data.admin_data.netcdf_revision);
-            println!("{:?}", data);
         }
     }
 }

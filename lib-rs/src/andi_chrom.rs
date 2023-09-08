@@ -2,14 +2,61 @@ use super::andi_utils::{read_index_from_slice, read_index_from_var_f32, read_opt
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
     andi_utils::{read_index_from_var_2d_string, read_multi_string_var},
-    api::Parser,
+    api::{Parser, Scanner},
 };
 use netcdf3::DataType;
 use std::{
     error::Error,
     io::{Read, Seek},
+    path::Path,
     str::FromStr,
 };
+
+pub struct AndiChromScanner {}
+
+impl AndiChromScanner {
+    const ACCEPTED_EXTENSIONS: [&str; 2] = ["cdf", "nc"];
+    const MAGIC_BYTES: [u8; 3] = [0x43, 0x44, 0x46]; // "CDF"
+}
+
+impl<T: Seek + Read> Scanner<T> for AndiChromScanner {
+    fn is_recognized(&self, path: &str, input: &mut T) -> bool {
+        let p = Path::new(path);
+        let extension = p
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .and_then(|ext| Some(ext.to_lowercase()));
+        match extension {
+            None => return false,
+            Some(ext) => {
+                let is_recognized_extension = Self::ACCEPTED_EXTENSIONS
+                    .iter()
+                    .any(|accept_ext| *accept_ext == ext);
+                if !is_recognized_extension {
+                    return false;
+                }
+            }
+        }
+
+        // recognized extension => check first few bytes ("magic bytes")
+
+        let mut buf = [0u8; 3];
+        let read_success = input.read_exact(&mut buf);
+        if read_success.is_err() {
+            return false;
+        }
+
+        buf.as_slice() == Self::MAGIC_BYTES
+    }
+
+    fn get_converter(
+        &self,
+        _path: &str,
+        _input: T,
+    ) -> Result<Box<dyn crate::api::Reader>, Box<dyn Error>> {
+        todo!()
+    }
+}
 
 pub struct AndiChromParser {}
 
@@ -204,7 +251,9 @@ impl AndiChromSampleDescription {
         let sample_id = reader.data_set().get_global_attr_as_string("sample_id");
         let sample_name = reader.data_set().get_global_attr_as_string("sample_name");
         let sample_type = reader.data_set().get_global_attr_as_string("sample_type");
+        // TODO: if present in sample data, always stored as global attribute of either type string or float
         let sample_injection_volume = read_scalar_var_f32(reader, "sample_injection_volume")?;
+        // TODO: if present in sample data, always stored as global attribute of either type string or float
         let sample_amount = read_scalar_var_f32(reader, "sample_amount")?;
 
         Ok(Self {
@@ -234,7 +283,8 @@ impl AndiChromDetectionMethod {
         let detection_method_table_name = reader
             .data_set()
             .get_global_attr_as_string("detection_method_table_name");
-        // TODO: detector_method_comment or detector_method_comments?
+        // "detector_method_comment" or "detector_method_comments"?
+        // => sample files use "detector_method_comments"
         let detector_method_comments = reader
             .data_set()
             .get_global_attr_as_string("detector_method_comments");

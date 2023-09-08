@@ -4,12 +4,14 @@ use std::{
     io::{Read, Seek},
 };
 
+/// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
     type R;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>>;
 }
 
+/// Scans a data set and provides a reader for recognized formats.
 pub trait Scanner<T: Read + Seek> {
     /// Returns whether a data set is recognized. Shallow check.
     ///
@@ -24,9 +26,9 @@ pub trait Scanner<T: Read + Seek> {
     /// or just the file name, e.g. when run in a browser.
     /// 
     /// The cursor in `input` is not guaranteed to be reset upon return.
-    fn is_recognized(path: &str, input: &mut T) -> bool;
+    fn is_recognized(&self, path: &str, input: &mut T) -> bool;
 
-    /// Returns a converter that provides a harmonized view for reading a scientifc file.
+    /// Returns a reader for a recognized data set.
     ///
     /// # Arguments
     ///
@@ -39,10 +41,11 @@ pub trait Scanner<T: Read + Seek> {
     /// or just the file name, e.g. when run in a browser.
     /// 
     /// May fail even if `is_recognized()` returns true.
-    fn get_converter(path: &str, input: T) -> Result<Box<dyn Converter>, Box<dyn Error>>;
+    fn get_converter(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>>;
 }
 
-pub trait Converter {
+/// Provides a harmonized view for reading a scientifc data set.
+pub trait Reader {
     /// Returns a Node read from the data set.
     ///
     /// # Arguments
@@ -51,6 +54,7 @@ pub trait Converter {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
 }
 
+/// An harmonized abstraction for a part of a data set.
 pub struct Node {
     pub name: String,
     pub parameters: Vec<(String, String)>,

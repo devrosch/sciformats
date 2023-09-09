@@ -85,8 +85,8 @@ data:
 
  actual_delay_time = 0 ;
 
- ordinate_values = 10394, 111111.1, 10396, 122222.2, 10396, 133333.3, 
-    10394, 10395, 10396, 10398 ;
+ ordinate_values = 10000, 111111.1, 10000, 122222.2, 10000, 133333.3, 
+    10000, 10000, 10000, 10000 ;
 
  peak_retention_time = 10.111, 30.222, 50.333 ;
 
@@ -110,12 +110,12 @@ data:
  baseline_stop_value = 7, 6, 5 ;
 
  peak_start_detection_code =
-  "1",
-  "1",
-  "1" ;
+  "A",
+  "B",
+  "C" ;
 
  peak_stop_detection_code =
-  "1",
-  "1",
-  "1" ;
+  "X",
+  "Y",
+  "Z" ;
 }

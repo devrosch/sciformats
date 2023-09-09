@@ -1,20 +1,41 @@
-use sf_rs::{andi::AndiDatasetCompleteness, andi_chrom::AndiChromParser, api::Parser};
-
+use sf_rs::{
+    andi::AndiDatasetCompleteness,
+    andi_chrom::{AndiChromParser, AndiChromScanner},
+    api::{Parser, Scanner},
+};
 use std::{fs::File, path::PathBuf, str::FromStr};
+
+const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
+const ANDI_CHROM_INVALID_FILE_PATH: &str = "dummy.cdf";
 
 fn assert_eq_f32(left: f32, right: f32) {
     assert!(f32::abs(left - right) <= f32::EPSILON);
 }
 
-#[test]
-fn test_andi_chrom_parsing_succeeds() {
-    assert_eq!(5, 5);
-
+fn open_file(name: &str) -> (String, File) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("tests/resources/andi_chrom_valid.cdf");
+    path.push("tests/resources/");
+    path.push(name);
     let file = File::open(&path).unwrap();
 
-    let chrom = AndiChromParser::parse(path.to_str().unwrap(), file).unwrap();
+    (path.to_str().unwrap().to_owned(), file)
+}
+
+#[test]
+fn test_andi_chrom_recognition() {
+    let scanner = AndiChromScanner {};
+
+    let (valid_path, mut valid_file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
+    assert!(scanner.is_recognized(&valid_path, &mut valid_file));
+
+    let (invalid_path, mut invalid_file) = open_file(ANDI_CHROM_INVALID_FILE_PATH);
+    assert!(!scanner.is_recognized(&invalid_path, &mut invalid_file));
+}
+
+#[test]
+fn test_andi_chrom_parsing_succeeds() {
+    let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
+    let chrom = AndiChromParser::parse(&path, file).unwrap();
 
     let admin_data = chrom.admin_data;
     assert_eq!(

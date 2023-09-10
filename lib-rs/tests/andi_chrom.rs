@@ -22,18 +22,21 @@ fn open_file(name: &str) -> (String, File) {
 }
 
 #[test]
-fn test_andi_chrom_recognition() {
+fn andi_chrom_recognize_valid_succeeds() {
     let scanner = AndiChromScanner {};
-
     let (valid_path, mut valid_file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
     assert!(scanner.is_recognized(&valid_path, &mut valid_file));
+}
 
+#[test]
+fn andi_chrom_recognize_invalid_fails() {
+    let scanner = AndiChromScanner {};
     let (invalid_path, mut invalid_file) = open_file(ANDI_CHROM_INVALID_FILE_PATH);
     assert!(!scanner.is_recognized(&invalid_path, &mut invalid_file));
 }
 
 #[test]
-fn test_andi_chrom_parsing_succeeds() {
+fn andi_chrom_parse_valid_succeeds() {
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
@@ -234,4 +237,12 @@ fn test_andi_chrom_parsing_succeeds() {
     // TODO: add tests for non standard variables and attributes once available
 
     // println!("{:?}", chrom);
+}
+
+#[test]
+fn andi_chrom_parse_invalid_fails() {
+    let (path, file) = open_file(ANDI_CHROM_INVALID_FILE_PATH);
+    let chrom = AndiChromParser::parse(&path, file);
+
+    assert!(chrom.is_err());
 }

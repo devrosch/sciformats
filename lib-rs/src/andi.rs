@@ -110,27 +110,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_category_string_mapping() {
+    fn map_valid_strings_to_categories_succeeds() {
         assert_eq!(AndiCategory::from_str("C1").unwrap(), AndiCategory::C1);
         assert_eq!(AndiCategory::from_str("C2").unwrap(), AndiCategory::C2);
         assert_eq!(AndiCategory::from_str("C3").unwrap(), AndiCategory::C3);
         assert_eq!(AndiCategory::from_str("C4").unwrap(), AndiCategory::C4);
         assert_eq!(AndiCategory::from_str("C5").unwrap(), AndiCategory::C5);
+    }
 
+    #[test]
+    fn map_invalid_string_to_category_fails() {
         assert_eq!(
             AndiCategory::from_str("X9").unwrap_err(),
             AndiError::new("Illegal category: X9")
         );
+    }
 
+    #[test]
+    fn map_category_to_string_succeeds() {
         assert_eq!(AndiCategory::C1.to_string(), "C1");
         assert_eq!(AndiCategory::C2.to_string(), "C2");
         assert_eq!(AndiCategory::C3.to_string(), "C3");
         assert_eq!(AndiCategory::C4.to_string(), "C4");
         assert_eq!(AndiCategory::C5.to_string(), "C5");
     }
-
+    
     #[test]
-    fn test_dataset_completeness_mapping() {
+    fn map_valid_strimgs_to_dataset_completeness_succeeds() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1").unwrap(),
             AndiDatasetCompleteness::new(vec![AndiCategory::C1,])
@@ -151,7 +157,10 @@ mod tests {
                 AndiCategory::C5,
             ])
         );
+    }
 
+    #[test]
+    fn map_invalid_strimgs_to_dataset_completeness_fails() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+X2").unwrap_err(),
             AndiError::new("Illegal category: X2")
@@ -161,7 +170,10 @@ mod tests {
             AndiDatasetCompleteness::from_str("C1 C3").unwrap_err(),
             AndiError::new("Illegal category: C1 C3")
         );
+    }
 
+    #[test]
+    fn map_dataset_completeness_to_string_succeeds() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+C3+C2+C5+C4")
                 .unwrap()

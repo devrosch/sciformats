@@ -1,8 +1,4 @@
-use sf_rs::{
-    andi::AndiDatasetCompleteness,
-    andi_chrom::{AndiChromParser, AndiChromScanner},
-    api::{Parser, Scanner},
-};
+use sf_rs::{andi::AndiDatasetCompleteness, andi_chrom_parser::AndiChromParser, api::Parser};
 use std::{fs::File, path::PathBuf, str::FromStr};
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
@@ -19,20 +15,6 @@ fn open_file(name: &str) -> (String, File) {
     let file = File::open(&path).unwrap();
 
     (path.to_str().unwrap().to_owned(), file)
-}
-
-#[test]
-fn andi_chrom_recognize_valid_succeeds() {
-    let scanner = AndiChromScanner {};
-    let (valid_path, mut valid_file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
-    assert!(scanner.is_recognized(&valid_path, &mut valid_file));
-}
-
-#[test]
-fn andi_chrom_recognize_invalid_fails() {
-    let scanner = AndiChromScanner {};
-    let (invalid_path, mut invalid_file) = open_file(ANDI_CHROM_INVALID_FILE_PATH);
-    assert!(!scanner.is_recognized(&invalid_path, &mut invalid_file));
 }
 
 #[test]

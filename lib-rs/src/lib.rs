@@ -1,7 +1,9 @@
 pub mod andi;
-pub mod andi_chrom;
+pub mod andi_chrom_parser;
+pub mod andi_chrom_reader;
 mod andi_utils;
 pub mod api;
+pub mod andi_chrom_scanner;
 
 use js_sys::Uint8Array;
 use netcdf3::FileReader;

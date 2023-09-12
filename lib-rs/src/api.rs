@@ -41,7 +41,7 @@ pub trait Scanner<T: Read + Seek> {
     /// or just the file name, e.g. when run in a browser.
     /// 
     /// May fail even if `is_recognized()` returns true.
-    fn get_converter(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>>;
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>>;
 }
 
 /// Provides a harmonized view for reading a scientifc data set.
@@ -60,7 +60,7 @@ pub struct Node {
     pub parameters: Vec<(String, String)>,
     pub data: Vec<(f64, f64)>,
     pub metadata: Vec<(String, String)>,
-    pub table: Table,
+    pub table: Option<Table>,
     pub child_node_names: Vec<String>,
 }
 

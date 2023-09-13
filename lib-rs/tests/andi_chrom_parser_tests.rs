@@ -22,92 +22,101 @@ fn andi_chrom_parse_valid_succeeds() {
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
-    let admin_data = chrom.admin_data;
+    let admin_data = &chrom.admin_data;
     assert_eq!(
         AndiDatasetCompleteness::from_str("C1+C2").unwrap(),
         admin_data.dataset_completeness
     );
     assert_eq!("1.0", admin_data.protocol_template_revision);
     assert_eq!("2.0", admin_data.netcdf_revision);
-    assert_eq!("English", admin_data.languages.unwrap());
+    assert_eq!("English", admin_data.languages.as_ref().unwrap());
     assert_eq!(
         "dummy admin comment",
-        admin_data.administrative_comments.unwrap()
+        admin_data.administrative_comments.as_ref().unwrap()
     );
-    assert_eq!("sf_rs", admin_data.dataset_origin.unwrap());
-    assert_eq!("Robert", admin_data.dataset_owner.unwrap());
+    assert_eq!("sf_rs", admin_data.dataset_origin.as_ref().unwrap());
+    assert_eq!("Robert", admin_data.dataset_owner.as_ref().unwrap());
     assert_eq!(
         "20230908200501+0200",
-        admin_data.dataset_date_time_stamp.unwrap()
+        admin_data.dataset_date_time_stamp.as_ref().unwrap()
     );
     assert_eq!("20230908200501+0200", admin_data.injection_date_time_stamp);
-    assert_eq!("sf_rs sample file", admin_data.experiment_title.unwrap());
-    assert_eq!("Rob", admin_data.operator_name.unwrap());
+    assert_eq!(
+        "sf_rs sample file",
+        admin_data.experiment_title.as_ref().unwrap()
+    );
+    assert_eq!("Rob", admin_data.operator_name.as_ref().unwrap());
     assert_eq!(
         "liquid chromatography",
-        admin_data.separation_experiment_type.unwrap()
+        admin_data.separation_experiment_type.as_ref().unwrap()
     );
     assert_eq!(
         "dummy company method 1",
-        admin_data.company_method_name.unwrap()
+        admin_data.company_method_name.as_ref().unwrap()
     );
-    assert_eq!("1", admin_data.company_method_id.unwrap());
+    assert_eq!("1", admin_data.company_method_id.as_ref().unwrap());
     assert_eq!(
         "dummy pre exp prog name",
-        admin_data.pre_experiment_program_name.unwrap()
+        admin_data.pre_experiment_program_name.as_ref().unwrap()
     );
     assert_eq!(
         "dummy post exp prog name",
-        admin_data.post_experiment_program_name.unwrap()
+        admin_data.post_experiment_program_name.as_ref().unwrap()
     );
     assert_eq!(
         "dummy source file reference",
-        admin_data.source_file_reference.unwrap()
+        admin_data.source_file_reference.as_ref().unwrap()
     );
-    let error_log = admin_data.error_log;
+    let error_log = &admin_data.error_log;
     assert_eq!(2, error_log.len());
     assert_eq!("error 1", error_log.get(0).unwrap());
     assert_eq!("error 2", error_log.get(1).unwrap());
 
-    let sample_description = chrom.sample_description;
+    let sample_description = &chrom.sample_description;
     assert_eq!(
         "dummy sample id comments",
-        sample_description.sample_id_comments.unwrap()
+        sample_description.sample_id_comments.as_ref().unwrap()
     );
-    assert_eq!("12345", sample_description.sample_id.unwrap());
-    assert_eq!("dummy sample name", sample_description.sample_name.unwrap());
-    assert_eq!("test", sample_description.sample_type.unwrap());
+    assert_eq!("12345", sample_description.sample_id.as_ref().unwrap());
+    assert_eq!(
+        "dummy sample name",
+        sample_description.sample_name.as_ref().unwrap()
+    );
+    assert_eq!("test", sample_description.sample_type.as_ref().unwrap());
     // TODO: present in sample data as global attribute of type float
-    // assert_eq!(1.0, sample_description.sample_injection_volume.unwrap());
+    // assert_eq!(1.0, sample_description.sample_injection_volume.as_ref().unwrap());
     // TODO: present in sample data as global attribute of type float
-    // assert_eq!(2.2, sample_description.sample_amount.unwrap());
+    // assert_eq!(2.2, sample_description.sample_amount.as_ref().unwrap());
 
-    let detection_method = chrom.detection_method;
+    let detection_method = &chrom.detection_method;
     assert_eq!(
         "dummy method table name",
-        detection_method.detection_method_table_name.unwrap()
+        detection_method
+            .detection_method_table_name
+            .as_ref()
+            .unwrap()
     );
     assert_eq!(
         "dummy detector method comments",
-        detection_method.detector_method_comments.unwrap()
+        detection_method.detector_method_comments.as_ref().unwrap()
     );
     assert_eq!(
         "dummy detection method 1",
-        detection_method.detection_method_name.unwrap()
+        detection_method.detection_method_name.as_ref().unwrap()
     );
     assert_eq!(
         "dummy detector name",
-        detection_method.detector_name.unwrap()
+        detection_method.detector_name.as_ref().unwrap()
     );
     assert_eq_f32(999999.0, detection_method.detector_maximum_value.unwrap());
     assert_eq_f32(1.0, detection_method.detector_minimum_value.unwrap());
-    assert_eq!("au", detection_method.detector_unit.unwrap());
+    assert_eq!("au", detection_method.detector_unit.as_ref().unwrap());
 
-    let raw_data = chrom.raw_data;
+    let raw_data = &chrom.raw_data;
     assert_eq!(10, raw_data.point_number);
     assert_eq!(
         "dummy raw data table name",
-        raw_data.raw_data_table_name.unwrap()
+        raw_data.raw_data_table_name.as_ref().unwrap()
     );
     assert_eq!("seconds", raw_data.retention_unit);
     assert_eq_f32(100.0, raw_data.actual_run_time_length);
@@ -122,32 +131,41 @@ fn andi_chrom_parse_valid_succeeds() {
     );
     assert_eq!(true, raw_data.uniform_sampling_flag);
     assert!(raw_data.raw_data_retention.is_none());
-    assert_eq!("1:2", raw_data.autosampler_position.unwrap());
+    assert_eq!("1:2", raw_data.autosampler_position.as_ref().unwrap());
 
-    let peak_processing_results = chrom.peak_processing_results;
+    let peak_processing_results = &chrom.peak_processing_results;
     assert_eq!(
         "dummy pp res table name",
         peak_processing_results
             .peak_processing_results_table_name
+            .as_ref()
             .unwrap()
     );
     assert_eq!(
         "dummy pp res comments",
         peak_processing_results
             .peak_processing_results_comments
+            .as_ref()
             .unwrap()
     );
     assert_eq!(
         "dummy pp method name",
-        peak_processing_results.peak_processing_method_name.unwrap()
+        peak_processing_results
+            .peak_processing_method_name
+            .as_ref()
+            .unwrap()
     );
     assert_eq!(
         "20230908201502+0200",
         peak_processing_results
             .peak_processing_date_time_stamp
+            .as_ref()
             .unwrap()
     );
-    assert_eq!("ppm", peak_processing_results.peak_amount_unit.unwrap());
+    assert_eq!(
+        "ppm",
+        peak_processing_results.peak_amount_unit.as_ref().unwrap()
+    );
     assert_eq!(3, peak_processing_results.peaks.as_ref().unwrap().len());
 
     let peak_0 = peak_processing_results

@@ -55,6 +55,7 @@ pub trait Reader {
 }
 
 /// An harmonized abstraction for a part of a data set.
+#[derive(Debug, PartialEq)]
 pub struct Node {
     pub name: String,
     pub parameters: Vec<(String, String)>,
@@ -65,6 +66,7 @@ pub struct Node {
 }
 
 /// A data table.
+#[derive(Debug, PartialEq)]
 pub struct Table {
     /// A list of column keys and corresponding column names.
     pub column_names: Vec<(String, String)>,

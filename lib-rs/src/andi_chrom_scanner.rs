@@ -52,6 +52,6 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiChromScanner {
         input: T,
     ) -> Result<Box<dyn crate::api::Reader>, Box<dyn Error>> {
         let file = AndiChromParser::parse(path, input)?;
-        Ok(Box::new(AndiChromReader::new(file)))
+        Ok(Box::new(AndiChromReader::new(path, file)))
     }
 }

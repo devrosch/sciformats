@@ -6,6 +6,7 @@ use crate::{
 use std::{collections::HashMap, error::Error, path::Path};
 
 pub struct AndiChromReader {
+    path: String,
     file: AndiChromFile,
 }
 
@@ -15,7 +16,7 @@ impl Reader for AndiChromReader {
         match path_indices[..] {
             [] => {
                 // "", "/"
-                return self.read_root(path);
+                return self.read_root();
             }
             [0] => self.read_admin_data(),
             [1] => self.read_sample_description(),
@@ -31,12 +32,15 @@ impl Reader for AndiChromReader {
 }
 
 impl AndiChromReader {
-    pub fn new(file: AndiChromFile) -> Self {
-        AndiChromReader { file }
+    pub fn new(path: &str, file: AndiChromFile) -> Self {
+        AndiChromReader {
+            path: path.to_owned(),
+            file,
+        }
     }
 
-    fn read_root(&self, path: &str) -> Result<Node, Box<dyn Error>> {
-        let path = Path::new(path);
+    fn read_root(&self) -> Result<Node, Box<dyn Error>> {
+        let path = Path::new(&self.path);
         let file_name = path.file_name().map_or("", |f| f.to_str().unwrap_or(""));
         Ok(Node {
             name: file_name.to_owned(),
@@ -105,11 +109,6 @@ impl AndiChromReader {
             "Injection Date/Time Stamp".into(),
             admin_data.injection_date_time_stamp.clone(),
         ));
-        Self::push_opt_str(
-            "Dataset Date/Time Stamp",
-            &admin_data.dataset_date_time_stamp,
-            &mut parameters,
-        );
         Self::push_opt_str(
             "Experiment Title",
             &admin_data.experiment_title,
@@ -208,7 +207,7 @@ impl AndiChromReader {
             &mut parameters,
         );
         Self::push_opt_str(
-            "Detection Method Comments",
+            "Detector Method Comments",
             &detection_method.detector_method_comments,
             &mut parameters,
         );
@@ -608,20 +607,21 @@ impl AndiChromReader {
     fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, Box<dyn Error>> {
         let mut path_segments: Vec<&str> = path.split('/').collect();
         // remove blank start segment(s)
-        path_segments = match path_segments[..] {
-            // "/"
-            ["", ""] => path_segments.split_at(2).0.to_vec(),
-            // ""
-            [""] => path_segments.split_at(1).0.to_vec(),
-            _ => path_segments,
+        match path_segments[..] {
+            // "/" or ""
+            ["", ""] | [""] => path_segments = vec![],
+            // "/xyz"
+            ["", ..] => {
+                path_segments.remove(0);
+            }
+            _ => (),
         };
         // map segments to indices, expected segment structure is "n-some optional name"
         let mut indices: Vec<usize> = vec![];
         for seg in path_segments {
             let idx_str = seg
                 .split_once("-")
-                .ok_or(AndiError::new(&format!("Illegal node path: {}", path)))?
-                .0;
+                .map_or(seg, |p| p.0);
             let idx = idx_str.parse::<usize>()?;
             indices.push(idx);
         }

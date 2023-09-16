@@ -5,7 +5,9 @@ const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
 const ANDI_CHROM_INVALID_FILE_PATH: &str = "dummy.cdf";
 
 fn assert_eq_f32(left: f32, right: f32) {
-    assert!(f32::abs(left - right) <= f32::EPSILON);
+    let max = left.max(right);
+    let epsilon = f32::EPSILON * max;
+    assert!(f32::abs(left - right) <= epsilon)
 }
 
 fn open_file(name: &str) -> (String, File) {
@@ -134,6 +136,7 @@ fn andi_chrom_parse_valid_succeeds() {
     assert_eq!("1:2", raw_data.autosampler_position.as_ref().unwrap());
 
     let peak_processing_results = &chrom.peak_processing_results;
+    assert_eq!(3, peak_processing_results.peak_number);
     assert_eq!(
         "dummy pp res table name",
         peak_processing_results
@@ -235,8 +238,6 @@ fn andi_chrom_parse_valid_succeeds() {
     assert_eq!("au", peak_2.detector_unit.as_ref().unwrap());
 
     // TODO: add tests for non standard variables and attributes once available
-
-    // println!("{:?}", chrom);
 }
 
 #[test]

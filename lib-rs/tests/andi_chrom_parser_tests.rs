@@ -3,6 +3,7 @@ mod io;
 use crate::io::open_file;
 use sf_rs::{andi::AndiDatasetCompleteness, andi_chrom_parser::AndiChromParser, api::Parser};
 use std::str::FromStr;
+use wasm_bindgen_test::wasm_bindgen_test;
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
 const ANDI_CHROM_INVALID_FILE_PATH: &str = "dummy.cdf";
@@ -13,6 +14,7 @@ fn assert_eq_f32(left: f32, right: f32) {
     assert!(f32::abs(left - right) <= epsilon)
 }
 
+#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_valid_succeeds() {
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
@@ -234,6 +236,7 @@ fn andi_chrom_parse_valid_succeeds() {
     // TODO: add tests for non standard variables and attributes once available
 }
 
+#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_invalid_fails() {
     let (path, file) = open_file(ANDI_CHROM_INVALID_FILE_PATH);

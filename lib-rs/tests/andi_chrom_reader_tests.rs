@@ -6,6 +6,7 @@ use sf_rs::{
     andi_chrom_reader::AndiChromReader,
     api::{Parser, Reader},
 };
+use wasm_bindgen_test::wasm_bindgen_test;
 
 fn assert_eq_f64(left: f64, right: f64) {
     let max = left.max(right);
@@ -15,6 +16,7 @@ fn assert_eq_f64(left: f64, right: f64) {
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
 
+#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_valid_succeeds() {
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);

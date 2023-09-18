@@ -1,5 +1,8 @@
+mod io;
+
+use crate::io::open_file;
 use sf_rs::{andi::AndiDatasetCompleteness, andi_chrom_parser::AndiChromParser, api::Parser};
-use std::{fs::File, path::PathBuf, str::FromStr};
+use std::str::FromStr;
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
 const ANDI_CHROM_INVALID_FILE_PATH: &str = "dummy.cdf";
@@ -8,15 +11,6 @@ fn assert_eq_f32(left: f32, right: f32) {
     let max = left.max(right);
     let epsilon = f32::EPSILON * max;
     assert!(f32::abs(left - right) <= epsilon)
-}
-
-fn open_file(name: &str) -> (String, File) {
-    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("tests/resources/");
-    path.push(name);
-    let file = File::open(&path).unwrap();
-
-    (path.to_str().unwrap().to_owned(), file)
 }
 
 #[test]

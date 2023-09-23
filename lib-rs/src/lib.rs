@@ -11,11 +11,13 @@ use std::io::{Error, Read, Seek, SeekFrom};
 use wasm_bindgen::prelude::*;
 use web_sys::{File, FileReaderSync};
 
-struct FileWrapper {
+#[wasm_bindgen]
+pub struct FileWrapper {
     file: File,
     pos: u64,
 }
 
+#[wasm_bindgen]
 impl FileWrapper {
     fn new(file: File) -> FileWrapper {
         FileWrapper { file, pos: 0 }

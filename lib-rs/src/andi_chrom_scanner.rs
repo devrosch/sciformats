@@ -1,19 +1,59 @@
+use wasm_bindgen::prelude::wasm_bindgen;
+
 use crate::{
     andi_chrom_parser::AndiChromParser,
     andi_chrom_reader::AndiChromReader,
     api::{Parser, Scanner},
 };
+#[cfg(target_family = "wasm")]
+use crate::{api::Node, FileWrapper};
 use std::{
     error::Error,
     io::{Read, Seek},
     path::Path,
 };
 
+#[wasm_bindgen]
+#[cfg(target_family = "wasm")]
+pub struct JsReader {
+    reader: Box<dyn crate::api::Reader>,
+}
+
+#[cfg(target_family = "wasm")]
+impl JsReader {
+    pub fn new(reader: Box<dyn crate::api::Reader>) -> Self {
+        JsReader { reader }
+    }
+}
+
+#[wasm_bindgen]
+#[cfg(target_family = "wasm")]
+impl JsReader {
+    pub fn read(&self, path: &str) -> Node {
+        self.reader.read(path).unwrap()
+    }
+}
+
+#[wasm_bindgen]
 pub struct AndiChromScanner {}
 
 impl AndiChromScanner {
     const ACCEPTED_EXTENSIONS: [&str; 2] = ["cdf", "nc"];
     const MAGIC_BYTES: [u8; 3] = [0x43, 0x44, 0x46]; // "CDF"
+}
+
+#[wasm_bindgen]
+#[cfg(target_family = "wasm")]
+impl AndiChromScanner {
+    #[cfg(target_family = "wasm")]
+    pub fn js_is_recognized(&self, path: &str, input: &mut FileWrapper) -> bool {
+        Scanner::is_recognized(self, path, input)
+    }
+
+    pub fn js_get_reader(&self, path: &str, input: FileWrapper) -> JsReader {
+        let reader = self.get_reader(path, input).unwrap();
+        JsReader { reader }
+    }
 }
 
 impl<T: Seek + Read + 'static> Scanner<T> for AndiChromScanner {

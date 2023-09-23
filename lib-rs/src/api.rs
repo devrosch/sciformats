@@ -93,11 +93,41 @@ impl Node {
             let value = JsValue::from(&param.1);
             let js_param = js_sys::Object::new();
             let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
-            let set_val_ret = js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
+            let set_val_ret =
+                js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
             if !set_key_ret || !set_val_ret {
                 panic!("Could not convert parameter to JS Object.");
             }
             vec.push(js_param.into());
+        }
+        vec
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn data(&self) -> Vec<JsValue> {
+        let mut vec: Vec<JsValue> = vec![];
+        for xy in &self.data {
+            let x = JsValue::from_f64(xy.0);
+            let y = JsValue::from_f64(xy.1);
+            let js_xy = js_sys::Object::new();
+            let set_x_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("x"), &x).unwrap();
+            let set_y_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("y"), &y).unwrap();
+            if !set_x_ret || !set_y_ret {
+                panic!("Could not convert data point to JS Object.");
+            }
+            vec.push(js_xy.into());
+        }
+        vec
+    }
+
+    // TODO: add metadata
+    // TODO: add table
+
+    #[wasm_bindgen(getter)]
+    pub fn child_node_names(&self) -> Vec<JsValue> {
+        let mut vec: Vec<JsValue> = vec![];
+        for param in &self.child_node_names {
+            vec.push(param.into());
         }
         vec
     }

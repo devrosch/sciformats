@@ -4,6 +4,8 @@ import * as sf_rs from 'sf_rs';
 import WorkerStatus from './WorkerStatus';
 import WorkerFileInfo from './WorkerFileInfo';
 import { extractFilename } from 'util/UrlUtils';
+import WorkerNodeData from './WorkerNodeData';
+import WorkerFileUrl from './WorkerFileUrl';
 
 // quench warnings for using "self", alternatively "globalThis" could be used instead
 /* eslint-disable no-restricted-globals */
@@ -13,6 +15,7 @@ import { extractFilename } from 'util/UrlUtils';
 // /* @ts-expect-error */
 // let converterService: Module.ConverterService | null = null;
 
+let openFiles = new Map<string, sf_rs.JsReader>();
 let converterService = new sf_rs.AndiChromScanner();
 
 self.onmessage = (event) => {
@@ -28,7 +31,7 @@ self.onmessage = (event) => {
       const fileName = extractFilename(url);
       const file = fileInfo.blob as File;
       const fileWrapper = new sf_rs.FileWrapper(file);
-      
+
       console.log('Worker: JS: file name: ' + fileName);
       console.log('Worker: JS: file: ' + file);
       console.log('Worker: JS: file wrapper: ' + fileWrapper);
@@ -39,20 +42,87 @@ self.onmessage = (event) => {
       break;
     }
     case 'open': {
-      self.postMessage(
-        /* @ts-expect-error */
-        onMessageOpen(request, workingDir, openFiles, converterService, FS, WORKERFS, Module),
-      );
+      const fileInfo = request.detail as WorkerFileInfo;
+      const url = new URL(fileInfo.url);
+      const rootUrl = new URL(url.toString().split('#')[0]);
+      const fileName = extractFilename(url);
+      const file = fileInfo.blob as File;
+      const fileWrapper = new sf_rs.FileWrapper(file);
+
+      try {
+        const reader = converterService.js_get_reader(fileName, fileWrapper);
+        openFiles.set(rootUrl.toString(), reader);
+        self.postMessage(
+          new WorkerResponse('opened', request.correlationId, { url: rootUrl.toString() }),
+        );
+      } catch (error) {
+        self.postMessage(
+          new WorkerResponse('error', request.correlationId, `${error}`),
+        );
+      }
       break;
     }
     case 'read': {
-      /* @ts-expect-error */
-      self.postMessage(onMessageRead(request, openFiles, Module));
+      const fileInfo = request.detail as WorkerFileInfo;
+      const url = new URL(fileInfo.url);
+      const rootUrl = new URL(url.toString().split('#')[0]);
+      try {
+        const reader = openFiles.get(rootUrl.toString());
+        if (typeof reader === 'undefined') {
+          throw new Error(`No open file found for ${url.toString()}`);
+        }
+        let hash = url.hash;
+        if (hash.length > 0 && !hash.startsWith('#/')) {
+          throw new Error(`Unexpected URL hash: ${hash}`);
+        }
+      
+        // '', '#', '#/' all denote the root node
+        // splitting by '/' results in:
+        // '' => ['']
+        // '/' => ['', '']
+        if (hash.startsWith('#')) {
+          hash = hash.substring(1);
+        }
+        if (hash.length === 0) {
+          hash = '/';
+        }
+
+        const rawNode = reader.read(hash);
+
+        const node: WorkerNodeData = {
+          url: url.toString(),
+          parameters: rawNode.parameters,
+          data: rawNode.data,
+          // TODO: add metadata
+          metadata: {},
+          // TODO: add table
+          table: { columnNames: [], rows: [] },
+          childNodeNames: rawNode.child_node_names,
+        }
+
+        rawNode.free();
+
+        self.postMessage(
+          new WorkerResponse('read', request.correlationId, node),
+        );
+      } catch(error) {
+        self.postMessage(
+          new WorkerResponse('error', request.correlationId, `${error}`),
+        );
+      }
       break;
     }
     case 'close': {
-      /* @ts-expect-error */
-      self.postMessage(onMessageClose(request, workingDir, openFiles, FS));
+      const correlationId = request.correlationId;
+      const fileUrl = request.detail as WorkerFileUrl;
+      const url = new URL(fileUrl.url);
+      const rootUrl = new URL(url.toString().split('#')[0]);
+      if (openFiles.has(rootUrl.toString())) {
+        const reader = openFiles.get(rootUrl.toString());
+        openFiles.delete(rootUrl.toString());
+        reader?.free();
+      }
+      self.postMessage(new WorkerResponse('closed', correlationId, { url: rootUrl.toString() }));
       break;
     }
     default:

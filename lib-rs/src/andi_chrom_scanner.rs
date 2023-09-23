@@ -16,7 +16,7 @@ use std::{
 };
 
 #[wasm_bindgen]
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 pub struct JsReader {
     reader: Box<dyn crate::api::Reader>,
 }

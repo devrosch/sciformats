@@ -19,7 +19,8 @@ pub struct FileWrapper {
 
 #[wasm_bindgen]
 impl FileWrapper {
-    fn new(file: File) -> FileWrapper {
+    #[wasm_bindgen(constructor)]
+    pub fn new(file: File) -> FileWrapper {
         FileWrapper { file, pos: 0 }
     }
 }

@@ -12,6 +12,10 @@ import LocalParserRepository from 'model/LocalParserRepository';
 import Navbar from 'components/menu/Navbar';
 import './App.css';
 
+// Webpack requires a string literal with the worker path
+const workerCpp = new Worker(new URL('worker/Worker.ts', import.meta.url));
+const workerRs = new Worker(new URL('worker/WorkerRs.ts', import.meta.url));
+
 const template = `
   <sf-splash open></sf-splash>
   <div class="header">
@@ -53,8 +57,9 @@ export default class App extends HTMLElement {
   }
 
   async initWorker() {
-    const worker = await initWorker();
-    const parserRepository = new LocalParserRepository(worker);
+    await initWorker(workerCpp);
+    await initWorker(workerRs);
+    const parserRepository = new LocalParserRepository([workerCpp, workerRs]);
     const tree = this.querySelector('sf-tree') as Tree;
     tree.setParserRepository(parserRepository);
     const splash = this.querySelector('sf-splash') as Splash;

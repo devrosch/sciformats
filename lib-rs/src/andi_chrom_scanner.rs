@@ -16,7 +16,7 @@ use std::{
 };
 
 #[wasm_bindgen]
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 pub struct JsReader {
     reader: Box<dyn crate::api::Reader>,
 }
@@ -51,7 +51,27 @@ impl AndiChromScanner {
 #[wasm_bindgen]
 #[cfg(target_family = "wasm")]
 impl AndiChromScanner {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> AndiChromScanner {
+        AndiChromScanner {}
+    }
+
     pub fn js_is_recognized(&self, path: &str, input: &mut FileWrapper) -> bool {
+        use web_sys::console;
+
+        console::log_2(
+            &"AndiChromScanner.js_is_recognized() path:".into(),
+            &path.into(),
+        );
+        console::log_2(
+            &"AndiChromScanner.js_is_recognized() input pos:".into(),
+            &input.pos.into(),
+        );
+        console::log_2(
+            &"AndiChromScanner.js_is_recognized() input file:".into(),
+            &input.file,
+        );
+
         Scanner::is_recognized(self, path, input)
     }
 

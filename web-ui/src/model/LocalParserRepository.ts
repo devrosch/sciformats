@@ -6,10 +6,10 @@ import Parser from './Parser';
 import ParserRepository from './ParserRepository';
 
 export default class LocalParserRepository implements ParserRepository {
-  #worker: Worker;
+  #workers: Worker[];
 
-  constructor(worker: Worker) {
-    this.#worker = worker;
+  constructor(workers: Worker[]) {
+    this.#workers = workers;
   }
 
   async findParser(file: File): Promise<Parser> {
@@ -19,10 +19,12 @@ export default class LocalParserRepository implements ParserRepository {
     const url = new URL(`file:///${uuid}/${urlSafefileName}#/`);
 
     const payload: WorkerFileInfo = { url: url.toString(), blob: file };
-    const scanReply: WorkerResponse = await postMessage(this.#worker, 'scan', payload) as any;
-    if (scanReply.name === 'scanned' && (scanReply.detail as { recognized: boolean }).recognized === true) {
-      const parser = new LocalFileParser(this.#worker, url, file);
-      return parser;
+    for (const worker of this.#workers) {
+      const scanReply: WorkerResponse = await postMessage(worker, 'scan', payload) as any;
+      if (scanReply.name === 'scanned' && (scanReply.detail as { recognized: boolean }).recognized === true) {
+        const parser = new LocalFileParser(worker, url, file);
+        return parser;
+      }
     }
     throw new Error(`File not recognized: "${file.name}"`);
   }

@@ -1,4 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::JsValue;
 
 use crate::{
     andi::AndiError,
@@ -16,8 +18,12 @@ pub struct AndiChromReader {
 #[cfg(target_family = "wasm")]
 #[wasm_bindgen]
 impl AndiChromReader {
-    pub fn js_read(&self, path: &str) -> Node {
-        Reader::read(self, path).unwrap()
+    pub fn js_read(&self, path: &str) -> Result<Node, JsValue> {
+        let read_result = Reader::read(self, path);
+        match read_result {
+            Ok(node) => Ok(node),
+            Err(error) => Err(error.to_string().into()),
+        }
     }
 }
 
@@ -630,9 +636,7 @@ impl AndiChromReader {
         // map segments to indices, expected segment structure is "n-some optional name"
         let mut indices: Vec<usize> = vec![];
         for seg in path_segments {
-            let idx_str = seg
-                .split_once("-")
-                .map_or(seg, |p| p.0);
+            let idx_str = seg.split_once("-").map_or(seg, |p| p.0);
             let idx = idx_str.parse::<usize>()?;
             indices.push(idx);
         }

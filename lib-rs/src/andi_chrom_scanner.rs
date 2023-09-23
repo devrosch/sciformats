@@ -1,4 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::JsValue;
 
 use crate::{
     andi_chrom_parser::AndiChromParser,
@@ -29,8 +31,12 @@ impl JsReader {
 #[wasm_bindgen]
 #[cfg(target_family = "wasm")]
 impl JsReader {
-    pub fn read(&self, path: &str) -> Node {
-        self.reader.read(path).unwrap()
+    pub fn read(&self, path: &str) -> Result<Node, JsValue> {
+        let read_result = self.reader.read(path);
+        match read_result {
+            Ok(node) => Ok(node),
+            Err(error) => Err(error.to_string().into()),
+        }
     }
 }
 
@@ -45,14 +51,16 @@ impl AndiChromScanner {
 #[wasm_bindgen]
 #[cfg(target_family = "wasm")]
 impl AndiChromScanner {
-    #[cfg(target_family = "wasm")]
     pub fn js_is_recognized(&self, path: &str, input: &mut FileWrapper) -> bool {
         Scanner::is_recognized(self, path, input)
     }
 
-    pub fn js_get_reader(&self, path: &str, input: FileWrapper) -> JsReader {
-        let reader = self.get_reader(path, input).unwrap();
-        JsReader { reader }
+    pub fn js_get_reader(&self, path: &str, input: FileWrapper) -> Result<JsReader, JsValue> {
+        let reader_result = self.get_reader(path, input);
+        match reader_result {
+            Ok(reader) => Ok(JsReader { reader }),
+            Err(error) => Err(error.to_string().into()),
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::andi::AndiError;
-use netcdf3::DataVector;
+use netcdf3::{DataType, DataVector};
 use std::error::Error;
 
 pub fn read_index_from_var_f32(
@@ -101,6 +101,58 @@ pub fn read_optional_var<'a>(
         }
         None => Ok(None),
     }
+}
+
+pub fn read_scalar_var_f32(
+    reader: &mut netcdf3::FileReader,
+    var_name: &str,
+) -> Result<Option<f32>, AndiError> {
+    let var = reader.data_set().get_var(var_name);
+    match var {
+        Some(var) => {
+            if var.len() != 1 {
+                return Err(AndiError::new(&format!("{} not scalar", var_name)));
+            }
+            if var.data_type() != DataType::F32 {
+                return Err(AndiError::new(&format!(
+                    "{} unexpected data type: {}",
+                    var_name,
+                    var.data_type()
+                )));
+            }
+            let val = reader.read_var_f32(var_name).unwrap()[0];
+            Ok(Some(val))
+        }
+        None => Ok(None),
+    }
+}
+
+pub fn read_optional_var_or_attr_f32(
+    reader: &mut netcdf3::FileReader,
+    var_name: &str,
+) -> Result<Option<f32>, Box<dyn Error>> {
+    let mut value = read_scalar_var_f32(reader, "sample_injection_volume")?;
+    if value.is_none() {
+        let attr_opt = reader.data_set().get_global_attr(var_name);
+        if let Some(attr) = attr_opt {
+            if let Some(val) = attr.get_f32() {
+                match val {
+                    [single_val] => value = Some(single_val.to_owned()),
+                    _ => {
+                        return Err(Box::new(AndiError::new(
+                            "Unexpected content for sample_injection_volume.",
+                        )))
+                    }
+                }
+            } else if let Some(val) = attr.get_as_string() {
+                if !val.is_empty() {
+                    let v = val.parse::<f32>()?;
+                    value = Some(v);
+                }
+            }
+        }
+    }
+    Ok(value)
 }
 
 #[allow(dead_code)]

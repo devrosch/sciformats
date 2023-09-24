@@ -179,8 +179,14 @@ fn andi_chrom_read_valid_succeeds() {
         ("Sample Type".to_owned(), "test".to_owned()),
         sample_description.parameters[3]
     );
-    // TODO: sample_injection_volume present in sample data as global attribute of type float with value 1.0
-    // TODO: sample_amount present in sample data as global attribute of type float with value 2.2
+    assert_eq!(
+        ("Sample Injection Volume".to_owned(), "1".to_owned()),
+        sample_description.parameters[4]
+    );
+    assert_eq!(
+        ("Sample Amount".to_owned(), "2.2".to_owned()),
+        sample_description.parameters[5]
+    );
     assert!(sample_description.data.is_empty());
     assert!(sample_description.metadata.is_empty());
     assert_eq!(None, sample_description.table);
@@ -283,7 +289,10 @@ fn andi_chrom_read_valid_succeeds() {
         assert_eq_f64(expect_data[i].1, raw_data.data[i].1);
     }
     assert_eq!(2, raw_data.metadata.len());
-    assert_eq!(("x.unit".to_owned(), "seconds".to_owned()), raw_data.metadata[0]);
+    assert_eq!(
+        ("x.unit".to_owned(), "seconds".to_owned()),
+        raw_data.metadata[0]
+    );
     assert_eq!(("y.unit".to_owned(), "au".to_owned()), raw_data.metadata[1]);
     assert_eq!(None, raw_data.table);
     assert!(raw_data.child_node_names.is_empty());

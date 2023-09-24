@@ -81,10 +81,8 @@ fn andi_chrom_parse_valid_succeeds() {
         sample_description.sample_name.as_ref().unwrap()
     );
     assert_eq!("test", sample_description.sample_type.as_ref().unwrap());
-    // TODO: present in sample data as global attribute of type float
-    // assert_eq!(1.0, sample_description.sample_injection_volume.as_ref().unwrap());
-    // TODO: present in sample data as global attribute of type float
-    // assert_eq!(2.2, sample_description.sample_amount.as_ref().unwrap());
+    assert_eq!(1.0, sample_description.sample_injection_volume.unwrap());
+    assert_eq!(2.2, sample_description.sample_amount.unwrap());
 
     let detection_method = &chrom.detection_method;
     assert_eq!(

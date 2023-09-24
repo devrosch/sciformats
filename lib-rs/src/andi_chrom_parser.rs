@@ -4,9 +4,9 @@ use super::andi_utils::{
 };
 use crate::{
     andi::{AndiDatasetCompleteness, AndiError},
+    andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
     api::Parser,
 };
-use netcdf3::DataType;
 use std::{
     error::Error,
     io::{Read, Seek},
@@ -164,30 +164,6 @@ impl AndiChromAdminData {
     }
 }
 
-fn read_scalar_var_f32(
-    reader: &mut netcdf3::FileReader,
-    var_name: &str,
-) -> Result<Option<f32>, AndiError> {
-    let var = reader.data_set().get_var(var_name);
-    match var {
-        Some(var) => {
-            if var.len() != 1 {
-                return Err(AndiError::new(&format!("{} not scalar", var_name)));
-            }
-            if var.data_type() != DataType::F32 {
-                return Err(AndiError::new(&format!(
-                    "{} unexpected data type: {}",
-                    var_name,
-                    var.data_type()
-                )));
-            }
-            let val = reader.read_var_f32(var_name).unwrap()[0];
-            Ok(Some(val))
-        }
-        None => Ok(None),
-    }
-}
-
 #[derive(Debug)]
 pub struct AndiChromSampleDescription {
     pub sample_id_comments: Option<String>,
@@ -199,17 +175,18 @@ pub struct AndiChromSampleDescription {
 }
 
 impl AndiChromSampleDescription {
-    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, AndiError> {
+    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
         let sample_id_comments = reader
             .data_set()
             .get_global_attr_as_string("sample_id_comments");
         let sample_id = reader.data_set().get_global_attr_as_string("sample_id");
         let sample_name = reader.data_set().get_global_attr_as_string("sample_name");
         let sample_type = reader.data_set().get_global_attr_as_string("sample_type");
-        // TODO: if present in sample data, always stored as global attribute of either type string or float
-        let sample_injection_volume = read_scalar_var_f32(reader, "sample_injection_volume")?;
-        // TODO: if present in sample data, always stored as global attribute of either type string or float
-        let sample_amount = read_scalar_var_f32(reader, "sample_amount")?;
+        // if present in sample data, seems to be stored as global attribute of either type string (possibly blank) or float
+        let sample_injection_volume =
+            read_optional_var_or_attr_f32(reader, "sample_injection_volume")?;
+        // if present in sample data, seems to be stored as global attribute of either type string (possibly blank) or float
+        let sample_amount = read_optional_var_or_attr_f32(reader, "sample_amount")?;
 
         Ok(Self {
             sample_id_comments,

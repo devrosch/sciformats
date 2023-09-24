@@ -332,11 +332,18 @@ impl AndiChromReader {
             }
         };
 
+        let mut metadata: Vec<(String, String)> = vec![];
+        metadata.push(("x.unit".to_owned(), raw_data.retention_unit.to_owned()));
+        let y_unit = &self.file.detection_method.detector_unit;
+        if let Some(y_unit) = y_unit {
+            metadata.push(("y.unit".to_owned(), y_unit.to_owned()));
+        }
+
         Ok(Node {
             name: "Raw Data".to_owned(),
             parameters,
             data,
-            metadata: Vec::new(),
+            metadata,
             table: None,
             child_node_names: Vec::new(),
         })

@@ -10,11 +10,6 @@ import WorkerFileUrl from './WorkerFileUrl';
 // quench warnings for using "self", alternatively "globalThis" could be used instead
 /* eslint-disable no-restricted-globals */
 
-// /* @ts-expect-error */
-// const openFiles = new Map<string, Module.Converter>();
-// /* @ts-expect-error */
-// let converterService: Module.ConverterService | null = null;
-
 let openFiles = new Map<string, sf_rs.JsReader>();
 let converterService = new sf_rs.AndiChromScanner();
 
@@ -93,10 +88,8 @@ self.onmessage = (event) => {
           url: url.toString(),
           parameters: rawNode.parameters,
           data: rawNode.data,
-          // TODO: add metadata
-          metadata: {},
-          // TODO: add table
-          table: { columnNames: [], rows: [] },
+          metadata: rawNode.metadata as { [key: string]: string },
+          table: rawNode.table as { columnNames: [], rows: [] },
           childNodeNames: rawNode.child_node_names,
         }
 

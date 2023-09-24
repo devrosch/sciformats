@@ -120,8 +120,65 @@ impl Node {
         vec
     }
 
-    // TODO: add metadata
-    // TODO: add table
+    #[wasm_bindgen(getter)]
+    pub fn metadata(&self) -> js_sys::Object {
+        let meta = js_sys::Object::new();
+        for xy in &self.metadata {
+            let key = JsValue::from(&xy.0);
+            let value = JsValue::from(&xy.1);
+            let set_meta_ret = js_sys::Reflect::set(&meta, &key, &value).unwrap();
+            if !set_meta_ret {
+                panic!("Could not convert metadata to JS Object.");
+            }
+        }
+        meta
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn table(&self) -> js_sys::Object {
+        let js_table = js_sys::Object::new();
+        let js_column_names: js_sys::Array = js_sys::Array::new();
+        let js_rows: js_sys::Array = js_sys::Array::new();
+
+        if let Some(table) = &self.table {
+            let col_names = &table.column_names;
+            for col_name in col_names {
+                let key = JsValue::from(&col_name.0);
+                let value = JsValue::from(&col_name.1);
+                let column = js_sys::Object::new();
+                let set_col_key_ret =
+                    js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
+                let set_col_val_ret =
+                    js_sys::Reflect::set(&column, &JsValue::from("value"), &value).unwrap();
+                if !set_col_key_ret || !set_col_val_ret {
+                    panic!("Could not convert table column to JS Object.");
+                }
+                js_column_names.push(&column);
+            }
+
+            let rows = &table.rows;
+            for row in rows {
+                let js_row = js_sys::Object::new();
+                for cell in row {
+                    let key = JsValue::from(cell.0);
+                    let val = JsValue::from(cell.1);
+                    let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
+                    if !set_cell_ret {
+                        panic!("Could not convert table cell to JS Object.");
+                    }
+                }
+                js_rows.push(&js_row);
+            }
+        }
+
+        let set_col_names_ret = js_sys::Reflect::set(&js_table, &JsValue::from("columnNames"), &js_column_names).unwrap();
+        let set_rows_ret = js_sys::Reflect::set(&js_table, &JsValue::from("rows"), &js_rows).unwrap();
+        if !set_col_names_ret || !set_rows_ret {
+            panic!("Could not populate table JS Object.");
+        }
+
+        js_table
+    }
 
     #[wasm_bindgen(getter)]
     pub fn child_node_names(&self) -> Vec<JsValue> {

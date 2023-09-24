@@ -282,7 +282,9 @@ fn andi_chrom_read_valid_succeeds() {
         assert_eq_f64(expect_data[i].0, raw_data.data[i].0);
         assert_eq_f64(expect_data[i].1, raw_data.data[i].1);
     }
-    assert!(raw_data.metadata.is_empty());
+    assert_eq!(2, raw_data.metadata.len());
+    assert_eq!(("x.unit".to_owned(), "seconds".to_owned()), raw_data.metadata[0]);
+    assert_eq!(("y.unit".to_owned(), "au".to_owned()), raw_data.metadata[1]);
     assert_eq!(None, raw_data.table);
     assert!(raw_data.child_node_names.is_empty());
 

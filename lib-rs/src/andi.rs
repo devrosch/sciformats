@@ -85,7 +85,9 @@ impl FromStr for AndiDatasetCompleteness {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut categories: BTreeSet<AndiCategory> = BTreeSet::new();
         for cat_str in s.split("+") {
-            let cat = AndiCategory::from_str(cat_str)?;
+            // TODO: find better way to deal with zero terminated strings here and elsewhere
+            let non_zero_term_cat_str = cat_str.trim_end_matches(char::from(0));
+            let cat = AndiCategory::from_str(non_zero_term_cat_str)?;
             categories.insert(cat);
         }
         Ok(AndiDatasetCompleteness { categories })
@@ -136,7 +138,7 @@ mod tests {
     }
     
     #[test]
-    fn map_valid_strimgs_to_dataset_completeness_succeeds() {
+    fn map_valid_strings_to_dataset_completeness_succeeds() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1").unwrap(),
             AndiDatasetCompleteness::new(vec![AndiCategory::C1,])
@@ -160,7 +162,15 @@ mod tests {
     }
 
     #[test]
-    fn map_invalid_strimgs_to_dataset_completeness_fails() {
+    fn map_zero_terminated_string_to_dataset_completeness_succeeds() {
+        assert_eq!(
+            AndiDatasetCompleteness::from_str("C1+C2\0").unwrap(),
+            AndiDatasetCompleteness::new(vec![AndiCategory::C1, AndiCategory::C2,])
+        );
+    }
+
+    #[test]
+    fn map_invalid_strings_to_dataset_completeness_fails() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+X2").unwrap_err(),
             AndiError::new("Illegal category: X2")

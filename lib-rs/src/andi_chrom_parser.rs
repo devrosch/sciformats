@@ -8,8 +8,11 @@ use crate::{
     api::Parser,
 };
 use std::{
+    borrow::BorrowMut,
+    cell::RefCell,
     error::Error,
     io::{Read, Seek},
+    rc::Rc,
     str::FromStr,
 };
 
@@ -20,9 +23,9 @@ impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
 
     fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn std::error::Error>> {
         let input_seek_read = Box::new(input);
-        let mut reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
+        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
 
-        AndiChromFile::new(&mut reader)
+        AndiChromFile::new(reader)
     }
 }
 
@@ -38,13 +41,17 @@ pub struct AndiChromFile {
 }
 
 impl AndiChromFile {
-    pub fn new(mut reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
         let admin_data = AndiChromAdminData::new(&mut reader)?;
         let sample_description = AndiChromSampleDescription::new(&mut reader)?;
         let detection_method = AndiChromDetectionMethod::new(&mut reader)?;
-        let raw_data = AndiChromRawData::new(&mut reader)?;
+
+        let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
+        // let raw_data = AndiChromRawData::new(reader)?;
+        let raw_data = AndiChromRawData::new(Rc::clone(&reader_ref))?;
+
         let peak_processing_results = AndiChromPeakProcessingResults::new(
-            &mut reader,
+            reader_ref,
             &raw_data.retention_unit,
             detection_method.detector_unit.as_deref(),
         )?;
@@ -242,20 +249,24 @@ impl AndiChromDetectionMethod {
 
 #[derive(Debug)]
 pub struct AndiChromRawData {
+    reader_ref: Rc<RefCell<netcdf3::FileReader>>,
+
     pub point_number: i32, // required
     pub raw_data_table_name: Option<String>,
-    pub retention_unit: String,               // required
-    pub actual_run_time_length: f32,          // required
-    pub actual_sampling_interval: f32,        // required
-    pub actual_delay_time: f32,               // required
-    pub ordinate_values: Vec<f32>,            // required
-    pub uniform_sampling_flag: bool,          // required?, default: true
-    pub raw_data_retention: Option<Vec<f32>>, // required if uniformSamplingFlag==false
+    pub retention_unit: String,        // required
+    pub actual_run_time_length: f32,   // required
+    pub actual_sampling_interval: f32, // required
+    pub actual_delay_time: f32,        // required
+    // pub ordinate_values: Vec<f32>,            // required
+    pub uniform_sampling_flag: bool, // required?, default: true
+    // pub raw_data_retention: Option<Vec<f32>>, // required if uniformSamplingFlag==false
     pub autosampler_position: Option<String>,
 }
 
 impl AndiChromRawData {
-    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
+    pub fn new(reader_ref: Rc<RefCell<netcdf3::FileReader>>) -> Result<Self, Box<dyn Error>> {
+        let mut reader = reader_ref.as_ref().borrow_mut();
+
         let point_number_dim = reader
             .data_set()
             .get_dim("point_number")
@@ -269,18 +280,21 @@ impl AndiChromRawData {
             .data_set()
             .get_global_attr_as_string("retention_unit")
             .ok_or(AndiError::new("Missing retention_unit attribute."))?;
-        let actual_run_time_length = read_scalar_var_f32(reader, "actual_run_time_length")?
+        let actual_run_time_length = read_scalar_var_f32(&mut reader, "actual_run_time_length")?
             .ok_or(AndiError::new("Missing actual_run_time_length variable."))?;
-        let actual_sampling_interval = read_scalar_var_f32(reader, "actual_sampling_interval")?
-            .ok_or(AndiError::new("Missing actual_sampling_interval variable."))?;
-        let actual_delay_time = read_scalar_var_f32(reader, "actual_delay_time")?
+        let actual_sampling_interval =
+            read_scalar_var_f32(&mut reader, "actual_sampling_interval")?
+                .ok_or(AndiError::new("Missing actual_sampling_interval variable."))?;
+        let actual_delay_time = read_scalar_var_f32(&mut reader, "actual_delay_time")?
             .ok_or(AndiError::new("Missing actual_delay_time variable."))?;
-        // TODO: lazy load values
-        let ordinate_values = reader
-            .read_var("ordinate_values")?
-            .get_f32()
-            .ok_or(AndiError::new("Missing ordinate_values variable."))?
-            .to_owned();
+
+        // ordinate_values are lazily accessed through a method
+        // // TODO: lazy load values
+        // let ordinate_values = reader
+        //     .read_var("ordinate_values")?
+        //     .get_f32()
+        //     .ok_or(AndiError::new("Missing ordinate_values variable."))?
+        //     .to_owned();
 
         let mut uniform_sampling_flag_attr = reader
             .data_set()
@@ -292,8 +306,54 @@ impl AndiChromRawData {
             Some(attr) => attr.get_as_string().unwrap_or("Y".to_owned()) == "Y",
             None => true,
         };
-        // TODO: lazy load values
-        let raw_data_retention = match uniform_sampling_flag {
+
+        // raw_data_retention are lazily accessed through a method
+        // // TODO: lazy load values
+        // let raw_data_retention = match uniform_sampling_flag {
+        //     true => None,
+        //     false => Some(
+        //         reader
+        //             .read_var("raw_data_retention")?
+        //             .get_f32()
+        //             .ok_or(AndiError::new("Missing raw_data_retention variable."))?
+        //             .to_owned(),
+        //     ),
+        // };
+        let ordinate_values_var = reader.data_set().get_var("ordinate_values");
+        let autosampler_position = match ordinate_values_var {
+            None => None,
+            Some(var) => var.get_attr_as_string("autosampler_position"),
+        };
+
+        Ok(Self {
+            reader_ref: Rc::clone(&reader_ref),
+
+            point_number,
+            raw_data_table_name,
+            retention_unit,
+            actual_run_time_length,
+            actual_sampling_interval,
+            actual_delay_time,
+            // ordinate_values,
+            uniform_sampling_flag,
+            // raw_data_retention,
+            autosampler_position,
+        })
+    }
+
+    pub fn get_ordinate_values(&self) -> Result<Vec<f32>, Box<dyn Error>> {
+        let mut reader = self.reader_ref.as_ref().borrow_mut();
+        let ordinate_values = reader
+            .read_var("ordinate_values")?
+            .get_f32()
+            .ok_or(AndiError::new("Missing ordinate_values variable."))?
+            .to_owned();
+        Ok(ordinate_values)
+    }
+
+    pub fn get_raw_data_retention(&self) -> Result<Option<Vec<f32>>, Box<dyn Error>> {
+        let mut reader = self.reader_ref.as_ref().borrow_mut();
+        let raw_data_retention = match self.uniform_sampling_flag {
             true => None,
             false => Some(
                 reader
@@ -303,24 +363,7 @@ impl AndiChromRawData {
                     .to_owned(),
             ),
         };
-        let ordinate_values_var = reader.data_set().get_var("ordinate_values");
-        let autosampler_position = match ordinate_values_var {
-            None => None,
-            Some(var) => var.get_attr_as_string("autosampler_position"),
-        };
-
-        Ok(Self {
-            point_number,
-            raw_data_table_name,
-            retention_unit,
-            actual_run_time_length,
-            actual_sampling_interval,
-            actual_delay_time,
-            ordinate_values,
-            uniform_sampling_flag,
-            raw_data_retention,
-            autosampler_position,
-        })
+        Ok(raw_data_retention)
     }
 }
 
@@ -337,10 +380,12 @@ pub struct AndiChromPeakProcessingResults {
 
 impl AndiChromPeakProcessingResults {
     pub fn new(
-        reader: &mut netcdf3::FileReader,
+        reader_ref: Rc<RefCell<netcdf3::FileReader>>,
         peak_retention_unit: &str,
         detector_unit: Option<&str>,
     ) -> Result<Self, Box<dyn Error>> {
+        let mut reader = reader_ref.as_ref().borrow_mut();
+
         let peak_number_dim = reader.data_set().get_dim("peak_number");
         let peak_number = match peak_number_dim {
             // TODO: usize?
@@ -363,7 +408,7 @@ impl AndiChromPeakProcessingResults {
             .data_set()
             .get_global_attr_as_string("peak_amount_unit");
         let peaks = Self::read_peaks(
-            reader,
+            reader.borrow_mut(),
             peak_number,
             peak_retention_unit,
             peak_amount_unit.as_deref(),

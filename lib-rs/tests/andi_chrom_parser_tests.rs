@@ -123,10 +123,12 @@ fn andi_chrom_parse_valid_succeeds() {
             10000f32, 111111.1, 10000f32, 122222.2, 10000f32, 133333.3, 10000f32, 10000f32,
             10000f32, 10000f32,
         ],
-        raw_data.ordinate_values
+        // raw_data.ordinate_values
+        raw_data.get_ordinate_values().unwrap()
     );
     assert_eq!(true, raw_data.uniform_sampling_flag);
-    assert!(raw_data.raw_data_retention.is_none());
+    // assert!(raw_data.raw_data_retention.is_none());
+    assert!(raw_data.get_raw_data_retention().unwrap().is_none());
     assert_eq!("1:2", raw_data.autosampler_position.as_ref().unwrap());
 
     let peak_processing_results = &chrom.peak_processing_results;

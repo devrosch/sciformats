@@ -298,10 +298,12 @@ impl AndiChromReader {
         );
 
         // map to xy pairs
-        let data = match &raw_data.raw_data_retention {
+        let raw_data_retention = raw_data.get_raw_data_retention()?;
+        let data = match &raw_data_retention {
             Some(x_values) => {
                 // x values present
-                let y_values = &raw_data.ordinate_values;
+                let y_values = &raw_data.get_ordinate_values()?;
+                // let y_values = &ordinate_values;
                 if x_values.len() != y_values.len() {
                     return Err(Box::new(AndiError::new(
                         "Numbers of ordinate and retention values do not match.",
@@ -318,7 +320,8 @@ impl AndiChromReader {
                 // x values need to be calculated
                 let actual_delay_time = raw_data.actual_delay_time as f64;
                 let actual_sampling_interval = raw_data.actual_sampling_interval as f64;
-                let y_values = &raw_data.ordinate_values;
+                let y_values = &raw_data.get_ordinate_values()?;
+                // let y_values = &raw_data.ordinate_values;
                 let xy_values: Vec<(f64, f64)> = y_values
                     .iter()
                     .enumerate()

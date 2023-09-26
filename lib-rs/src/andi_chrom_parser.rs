@@ -8,7 +8,6 @@ use crate::{
     api::Parser,
 };
 use std::{
-    borrow::BorrowMut,
     cell::RefCell,
     error::Error,
     io::{Read, Seek},
@@ -47,9 +46,8 @@ impl AndiChromFile {
         let detection_method = AndiChromDetectionMethod::new(&mut reader)?;
 
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
-        // let raw_data = AndiChromRawData::new(reader)?;
-        let raw_data = AndiChromRawData::new(Rc::clone(&reader_ref))?;
 
+        let raw_data = AndiChromRawData::new(Rc::clone(&reader_ref))?;
         let peak_processing_results = AndiChromPeakProcessingResults::new(
             reader_ref,
             &raw_data.retention_unit,
@@ -257,8 +255,10 @@ pub struct AndiChromRawData {
     pub actual_run_time_length: f32,   // required
     pub actual_sampling_interval: f32, // required
     pub actual_delay_time: f32,        // required
-    // pub ordinate_values: Vec<f32>,            // required
+    // ordinate_values are lazily accessed through get_ordinate_values() method
+    // pub ordinate_values: Vec<f32>, // required
     pub uniform_sampling_flag: bool, // required?, default: true
+    // raw_data_retention are lazily accessed through raw_data_retention() method
     // pub raw_data_retention: Option<Vec<f32>>, // required if uniformSamplingFlag==false
     pub autosampler_position: Option<String>,
 }
@@ -287,15 +287,7 @@ impl AndiChromRawData {
                 .ok_or(AndiError::new("Missing actual_sampling_interval variable."))?;
         let actual_delay_time = read_scalar_var_f32(&mut reader, "actual_delay_time")?
             .ok_or(AndiError::new("Missing actual_delay_time variable."))?;
-
         // ordinate_values are lazily accessed through a method
-        // // TODO: lazy load values
-        // let ordinate_values = reader
-        //     .read_var("ordinate_values")?
-        //     .get_f32()
-        //     .ok_or(AndiError::new("Missing ordinate_values variable."))?
-        //     .to_owned();
-
         let mut uniform_sampling_flag_attr = reader
             .data_set()
             .get_var_attr("ordinate_values", "uniform_sampling_flag");
@@ -306,19 +298,7 @@ impl AndiChromRawData {
             Some(attr) => attr.get_as_string().unwrap_or("Y".to_owned()) == "Y",
             None => true,
         };
-
         // raw_data_retention are lazily accessed through a method
-        // // TODO: lazy load values
-        // let raw_data_retention = match uniform_sampling_flag {
-        //     true => None,
-        //     false => Some(
-        //         reader
-        //             .read_var("raw_data_retention")?
-        //             .get_f32()
-        //             .ok_or(AndiError::new("Missing raw_data_retention variable."))?
-        //             .to_owned(),
-        //     ),
-        // };
         let ordinate_values_var = reader.data_set().get_var("ordinate_values");
         let autosampler_position = match ordinate_values_var {
             None => None,
@@ -334,9 +314,7 @@ impl AndiChromRawData {
             actual_run_time_length,
             actual_sampling_interval,
             actual_delay_time,
-            // ordinate_values,
             uniform_sampling_flag,
-            // raw_data_retention,
             autosampler_position,
         })
     }
@@ -369,13 +347,18 @@ impl AndiChromRawData {
 
 #[derive(Debug)]
 pub struct AndiChromPeakProcessingResults {
+    reader_ref: Rc<RefCell<netcdf3::FileReader>>,
+    peak_retention_unit: String,
+    detector_unit: Option<String>,
+
     pub peak_number: i32,
     pub peak_processing_results_table_name: Option<String>,
     pub peak_processing_results_comments: Option<String>,
     pub peak_processing_method_name: Option<String>,
     pub peak_processing_date_time_stamp: Option<String>,
     pub peak_amount_unit: Option<String>,
-    pub peaks: Option<Vec<AndiChromPeak>>,
+    // peaks are lazily loaded through get_peaks() method
+    // pub peaks: Option<Vec<AndiChromPeak>>,
 }
 
 impl AndiChromPeakProcessingResults {
@@ -384,7 +367,7 @@ impl AndiChromPeakProcessingResults {
         peak_retention_unit: &str,
         detector_unit: Option<&str>,
     ) -> Result<Self, Box<dyn Error>> {
-        let mut reader = reader_ref.as_ref().borrow_mut();
+        let reader = reader_ref.as_ref().borrow_mut();
 
         let peak_number_dim = reader.data_set().get_dim("peak_number");
         let peak_number = match peak_number_dim {
@@ -407,35 +390,34 @@ impl AndiChromPeakProcessingResults {
         let peak_amount_unit = reader
             .data_set()
             .get_global_attr_as_string("peak_amount_unit");
-        let peaks = Self::read_peaks(
-            reader.borrow_mut(),
-            peak_number,
-            peak_retention_unit,
-            peak_amount_unit.as_deref(),
-            detector_unit,
-        )?;
+
+        drop(reader);
 
         Ok(Self {
+            reader_ref,
+            peak_retention_unit: peak_retention_unit.to_owned(),
+            detector_unit: detector_unit.map(|s| s.to_owned()),
+
             peak_number,
             peak_processing_results_table_name,
             peak_processing_results_comments,
             peak_processing_method_name,
             peak_processing_date_time_stamp,
             peak_amount_unit,
-            peaks,
         })
     }
 
-    fn read_peaks(
-        reader: &mut netcdf3::FileReader,
-        peak_number: i32,
-        peak_retention_unit: &str,
-        peak_amount_unit: Option<&str>,
-        detector_unit: Option<&str>,
-    ) -> Result<Option<Vec<AndiChromPeak>>, Box<dyn Error>> {
+    pub fn get_peaks(&self) -> Result<Option<Vec<AndiChromPeak>>, Box<dyn Error>> {
+        let reader = &mut self.reader_ref.as_ref().borrow_mut();
+
+        let peak_number = self.peak_number;
         if peak_number <= 0 {
             return Ok(None);
         }
+
+        let peak_retention_unit = &self.peak_retention_unit[..];
+        let peak_amount_unit = self.peak_amount_unit.as_deref();
+        let detector_unit = self.detector_unit.as_deref();
 
         // As the netcdf3 library (currently) does not support indexed reads,
         // read underlying arrays as a whole and populate peak here instead of using a dedicated new().

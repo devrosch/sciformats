@@ -303,7 +303,6 @@ impl AndiChromReader {
             Some(x_values) => {
                 // x values present
                 let y_values = &raw_data.get_ordinate_values()?;
-                // let y_values = &ordinate_values;
                 if x_values.len() != y_values.len() {
                     return Err(Box::new(AndiError::new(
                         "Numbers of ordinate and retention values do not match.",
@@ -321,7 +320,6 @@ impl AndiChromReader {
                 let actual_delay_time = raw_data.actual_delay_time as f64;
                 let actual_sampling_interval = raw_data.actual_sampling_interval as f64;
                 let y_values = &raw_data.get_ordinate_values()?;
-                // let y_values = &raw_data.ordinate_values;
                 let xy_values: Vec<(f64, f64)> = y_values
                     .iter()
                     .enumerate()
@@ -405,8 +403,9 @@ impl AndiChromReader {
         let peaks = self
             .file
             .peak_processing_results
-            .peaks
-            .as_ref()
+            .get_peaks()?
+            // .peaks
+            // .as_ref()
             .ok_or(AndiError::new(&format!(
                 "No peaks found but peak_number paramater not zero: {}",
                 num_peaks

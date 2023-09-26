@@ -123,11 +123,9 @@ fn andi_chrom_parse_valid_succeeds() {
             10000f32, 111111.1, 10000f32, 122222.2, 10000f32, 133333.3, 10000f32, 10000f32,
             10000f32, 10000f32,
         ],
-        // raw_data.ordinate_values
         raw_data.get_ordinate_values().unwrap()
     );
     assert_eq!(true, raw_data.uniform_sampling_flag);
-    // assert!(raw_data.raw_data_retention.is_none());
     assert!(raw_data.get_raw_data_retention().unwrap().is_none());
     assert_eq!("1:2", raw_data.autosampler_position.as_ref().unwrap());
 
@@ -165,14 +163,14 @@ fn andi_chrom_parse_valid_succeeds() {
         "ppm",
         peak_processing_results.peak_amount_unit.as_ref().unwrap()
     );
-    assert_eq!(3, peak_processing_results.peaks.as_ref().unwrap().len());
+    assert_eq!(
+        3,
+        peak_processing_results.get_peaks().unwrap().unwrap().len()
+    );
 
-    let peak_0 = peak_processing_results
-        .peaks
-        .as_ref()
-        .unwrap()
-        .get(0)
-        .unwrap();
+    let peaks = peak_processing_results.get_peaks().unwrap().unwrap();
+
+    let peak_0 = peaks.get(0).unwrap();
     assert_eq_f32(10.111, peak_0.peak_retention_time.unwrap());
     assert_eq!("ref", peak_0.peak_name.as_ref().unwrap());
     assert_eq_f32(110.1111, peak_0.peak_amount.unwrap());
@@ -201,12 +199,7 @@ fn andi_chrom_parse_valid_succeeds() {
 
     // skip peak 1
 
-    let peak_2 = peak_processing_results
-        .peaks
-        .as_ref()
-        .unwrap()
-        .get(2)
-        .unwrap();
+    let peak_2 = peaks.get(2).unwrap();
     assert_eq_f32(50.333, peak_2.peak_retention_time.unwrap());
     assert_eq!("peak name 2", peak_2.peak_name.as_ref().unwrap());
     assert_eq_f32(330.333, peak_2.peak_amount.unwrap());

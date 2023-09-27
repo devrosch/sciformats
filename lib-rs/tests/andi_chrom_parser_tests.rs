@@ -237,3 +237,13 @@ fn andi_chrom_parse_invalid_fails() {
 
     assert!(chrom.is_err());
 }
+
+#[wasm_bindgen_test]
+#[test]
+#[ignore]
+fn andi_chrom_parse_quirks() {
+    let (path, file) = open_file("andi_chrom_quirks.cdf");
+    let chrom = AndiChromParser::parse(&path, file);
+
+    assert!(chrom.is_ok());
+}

@@ -85,6 +85,7 @@ impl FromStr for AndiDatasetCompleteness {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut categories: BTreeSet<AndiCategory> = BTreeSet::new();
         for cat_str in s.split("+") {
+            // quirk: also accept zero terminated string for category
             // TODO: find better way to deal with zero terminated strings here and elsewhere
             let non_zero_term_cat_str = cat_str.trim_end_matches(char::from(0));
             let cat = AndiCategory::from_str(non_zero_term_cat_str)?;
@@ -136,7 +137,7 @@ mod tests {
         assert_eq!(AndiCategory::C4.to_string(), "C4");
         assert_eq!(AndiCategory::C5.to_string(), "C5");
     }
-    
+
     #[test]
     fn map_valid_strings_to_dataset_completeness_succeeds() {
         assert_eq!(

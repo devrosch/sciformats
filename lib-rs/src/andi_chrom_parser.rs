@@ -295,7 +295,11 @@ impl AndiChromRawData {
             uniform_sampling_flag_attr = reader.data_set().get_global_attr("uniform_sampling_flag");
         }
         let uniform_sampling_flag = match uniform_sampling_flag_attr {
-            Some(attr) => attr.get_as_string().unwrap_or("Y".to_owned()) == "Y",
+            Some(attr) => {
+                let str_val = attr.get_as_string().unwrap_or("Y".to_owned());
+                // quirk: make sure that "Y\0" is also accepted as uniform sampling
+                str_val == "Y" || str_val == "Y\0"
+            }
             None => true,
         };
         // raw_data_retention are lazily accessed through a method

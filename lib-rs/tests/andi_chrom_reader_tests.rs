@@ -465,3 +465,14 @@ fn andi_chrom_read_valid_succeeds() {
 
     // TODO: add tests for non standard variables and attributes once available
 }
+
+#[wasm_bindgen_test]
+#[test]
+fn andi_chrom_read_quirks() {
+    let (path, file) = open_file("andi_chrom_quirks.cdf");
+    let chrom = AndiChromParser::parse(&path, file).unwrap();
+    let reader = AndiChromReader::new(&path, chrom);
+
+    let raw_data = reader.read("/3");
+    assert!(raw_data.is_ok());
+}

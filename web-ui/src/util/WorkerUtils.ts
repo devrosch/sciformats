@@ -59,3 +59,17 @@ export const initWorker = async (worker: Worker) => {
   }
   return worker;
 };
+
+export const initWorkerCpp = async () => {
+  // Webpack requires a string literal with the worker path
+  const workerCpp = new Worker(new URL('worker/Worker.ts', import.meta.url));
+  await initWorker(workerCpp);
+  return workerCpp;
+};
+
+export const initWorkerRs = async () => {
+  // Webpack requires a string literal with the worker path
+  const workerRs = new Worker(new URL('worker/WorkerRs.ts', import.meta.url));
+  await initWorker(workerRs);
+  return workerRs;
+};

@@ -1,5 +1,5 @@
 /* eslint-disable import/no-duplicates */
-import { initWorker } from 'util/WorkerUtils';
+import { initWorkerCpp, initWorkerRs } from 'util/WorkerUtils';
 import 'components/Splash';
 import Splash from 'components/Splash';
 import 'components/menu/Navbar';
@@ -11,10 +11,6 @@ import 'components/footer/Footer';
 import LocalParserRepository from 'model/LocalParserRepository';
 import Navbar from 'components/menu/Navbar';
 import './App.css';
-
-// Webpack requires a string literal with the worker path
-const workerCpp = new Worker(new URL('worker/Worker.ts', import.meta.url));
-const workerRs = new Worker(new URL('worker/WorkerRs.ts', import.meta.url));
 
 const template = `
   <sf-splash open></sf-splash>
@@ -57,8 +53,8 @@ export default class App extends HTMLElement {
   }
 
   async initWorker() {
-    await initWorker(workerCpp);
-    await initWorker(workerRs);
+    let workerCpp = await initWorkerCpp();    
+    let workerRs = await initWorkerRs();
     const parserRepository = new LocalParserRepository([workerCpp, workerRs]);
     const tree = this.querySelector('sf-tree') as Tree;
     tree.setParserRepository(parserRepository);

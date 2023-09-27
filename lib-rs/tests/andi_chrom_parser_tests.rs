@@ -240,10 +240,14 @@ fn andi_chrom_parse_invalid_fails() {
 
 #[wasm_bindgen_test]
 #[test]
-#[ignore]
 fn andi_chrom_parse_quirks() {
     let (path, file) = open_file("andi_chrom_quirks.cdf");
-    let chrom = AndiChromParser::parse(&path, file);
+    let chrom = AndiChromParser::parse(&path, file).unwrap();
 
-    assert!(chrom.is_ok());
+    assert_eq!("au", chrom.detection_method.detector_unit.unwrap());
+    assert_eq!("seconds", chrom.raw_data.retention_unit);
+    assert_eq!(
+        "ppm",
+        chrom.peak_processing_results.peak_amount_unit.unwrap()
+    );
 }

@@ -231,7 +231,13 @@ impl AndiChromDetectionMethod {
         let detector_name = reader.data_set().get_global_attr_as_string("detector_name");
         let detector_maximum_value = read_scalar_var_f32(reader, "detector_maximum_value")?;
         let detector_minimum_value = read_scalar_var_f32(reader, "detector_minimum_value")?;
-        let detector_unit = reader.data_set().get_global_attr_as_string("detector_unit");
+        let mut detector_unit = reader.data_set().get_global_attr_as_string("detector_unit");
+        if detector_unit.is_none() {
+            // quirk: accomodate different naming found in some data
+            detector_unit = reader
+                .data_set()
+                .get_global_attr_as_string("detector_units");
+        }
 
         Ok(Self {
             detection_method_table_name,
@@ -276,10 +282,19 @@ impl AndiChromRawData {
         let raw_data_table_name = reader
             .data_set()
             .get_global_attr_as_string("raw_data_table_name");
-        let retention_unit = reader
+        let retention_unit = match reader
             .data_set()
             .get_global_attr_as_string("retention_unit")
-            .ok_or(AndiError::new("Missing retention_unit attribute."))?;
+        {
+            Some(unit) => unit,
+            None => {
+                // quirk: accomodate different naming found in some data
+                reader
+                    .data_set()
+                    .get_global_attr_as_string("retention_units")
+                    .ok_or(AndiError::new("Missing retention_unit attribute."))?
+            }
+        };
         let actual_run_time_length = read_scalar_var_f32(&mut reader, "actual_run_time_length")?
             .ok_or(AndiError::new("Missing actual_run_time_length variable."))?;
         let actual_sampling_interval =
@@ -391,9 +406,15 @@ impl AndiChromPeakProcessingResults {
         let peak_processing_date_time_stamp = reader
             .data_set()
             .get_global_attr_as_string("peak_processing_date_time_stamp");
-        let peak_amount_unit = reader
+        let mut peak_amount_unit = reader
             .data_set()
             .get_global_attr_as_string("peak_amount_unit");
+        if peak_amount_unit.is_none() {
+            // quirk: accomodate different naming found in some data
+            peak_amount_unit = reader
+                .data_set()
+                .get_global_attr_as_string("peak_amount_units");
+        }
 
         drop(reader);
 

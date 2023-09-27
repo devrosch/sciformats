@@ -63,14 +63,14 @@ variables:
 		:detector_method_comments = "dummy detector method comments" ;
 		:detection_method_name = "dummy detection method 1" ;
 		:detector_name = "dummy detector name" ;
-		:detector_unit = "au" ;
+		:detector_units = "au" ;
 		:raw_data_table_name = "dummy raw data table name" ;
-		:retention_unit = "seconds" ;
+		:retention_units = "seconds" ;
 		:peak_processing_results_table_name = "dummy pp res table name" ;
 		:peak_processing_results_comments = "dummy pp res comments" ;
 		:peak_processing_method_name = "dummy pp method name" ;
 		:peak_processing_date_time_stamp = "20230908201502+0200" ;
-		:peak_amount_unit = "ppm" ;
+		:peak_amount_units = "ppm" ;
 data:
 
  error_log =

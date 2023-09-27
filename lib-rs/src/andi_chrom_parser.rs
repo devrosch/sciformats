@@ -265,7 +265,7 @@ pub struct AndiChromRawData {
 
 impl AndiChromRawData {
     pub fn new(reader_ref: Rc<RefCell<netcdf3::FileReader>>) -> Result<Self, Box<dyn Error>> {
-        let mut reader = reader_ref.as_ref().borrow_mut();
+        let mut reader = reader_ref.borrow_mut();
 
         let point_number_dim = reader
             .data_set()
@@ -324,7 +324,7 @@ impl AndiChromRawData {
     }
 
     pub fn get_ordinate_values(&self) -> Result<Vec<f32>, Box<dyn Error>> {
-        let mut reader = self.reader_ref.as_ref().borrow_mut();
+        let mut reader = self.reader_ref.borrow_mut();
         let ordinate_values = reader
             .read_var("ordinate_values")?
             .get_f32()
@@ -334,7 +334,7 @@ impl AndiChromRawData {
     }
 
     pub fn get_raw_data_retention(&self) -> Result<Option<Vec<f32>>, Box<dyn Error>> {
-        let mut reader = self.reader_ref.as_ref().borrow_mut();
+        let mut reader = self.reader_ref.borrow_mut();
         let raw_data_retention = match self.uniform_sampling_flag {
             true => None,
             false => Some(
@@ -371,7 +371,7 @@ impl AndiChromPeakProcessingResults {
         peak_retention_unit: &str,
         detector_unit: Option<&str>,
     ) -> Result<Self, Box<dyn Error>> {
-        let reader = reader_ref.as_ref().borrow_mut();
+        let reader = reader_ref.borrow_mut();
 
         let peak_number_dim = reader.data_set().get_dim("peak_number");
         let peak_number = match peak_number_dim {
@@ -412,7 +412,7 @@ impl AndiChromPeakProcessingResults {
     }
 
     pub fn get_peaks(&self) -> Result<Option<Vec<AndiChromPeak>>, Box<dyn Error>> {
-        let reader = &mut self.reader_ref.as_ref().borrow_mut();
+        let reader = &mut self.reader_ref.borrow_mut();
 
         let peak_number = self.peak_number;
         if peak_number <= 0 {

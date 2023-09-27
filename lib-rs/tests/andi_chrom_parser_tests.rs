@@ -6,6 +6,7 @@ use std::str::FromStr;
 use wasm_bindgen_test::wasm_bindgen_test;
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
+const ANDI_CHROM_QUIRKS_FILE_PATH: &str = "andi_chrom_quirks.cdf";
 const ANDI_CHROM_INVALID_FILE_PATH: &str = "dummy.cdf";
 
 fn assert_eq_f32(left: f32, right: f32) {
@@ -241,7 +242,7 @@ fn andi_chrom_parse_invalid_fails() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_quirks() {
-    let (path, file) = open_file("andi_chrom_quirks.cdf");
+    let (path, file) = open_file(ANDI_CHROM_QUIRKS_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
     assert_eq!("au", chrom.detection_method.detector_unit.unwrap());

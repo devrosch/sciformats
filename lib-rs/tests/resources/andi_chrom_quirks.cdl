@@ -57,8 +57,8 @@ variables:
 		:sample_id = "12345" ;
 		:sample_name = "dummy sample name" ;
 		:sample_type = "test" ;
-		:sample_injection_volume = 1.f ;
-		:sample_amount = 2.2f ;
+		:sample_injection_volume = " \000\000" ;
+		:sample_amount = "2.2" ;
 		:detection_method_table_name = "dummy method table name" ;
 		:detector_method_comments = "dummy detector method comments" ;
 		:detection_method_name = "dummy detection method 1" ;

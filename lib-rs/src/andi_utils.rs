@@ -145,7 +145,10 @@ pub fn read_optional_var_or_attr_f32(
                     }
                 }
             } else if let Some(val) = attr.get_as_string() {
-                if !val.is_empty() {
+                // quirk: remove zero bytes from string
+                // TODO: find better way to deal with zero terminated strings here and elsewhere
+                let no_zero_bytes_val = val.trim_matches(char::from(0)).trim();
+                if !no_zero_bytes_val.is_empty() {
                     let v = val.parse::<f32>()?;
                     value = Some(v);
                 }

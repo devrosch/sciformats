@@ -1,17 +1,17 @@
+import * as sf_rs from 'sf_rs';
+import { extractFilename } from 'util/UrlUtils';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
-import * as sf_rs from 'sf_rs';
 import WorkerStatus from './WorkerStatus';
 import WorkerFileInfo from './WorkerFileInfo';
-import { extractFilename } from 'util/UrlUtils';
 import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
 
 // quench warnings for using "self", alternatively "globalThis" could be used instead
 /* eslint-disable no-restricted-globals */
 
-let openFiles = new Map<string, sf_rs.JsReader>();
-let converterService = new sf_rs.AndiChromScanner();
+const openFiles = new Map<string, sf_rs.JsReader>();
+const converterService = new sf_rs.AndiChromScanner();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
@@ -26,11 +26,6 @@ self.onmessage = (event) => {
       const fileName = extractFilename(url);
       const file = fileInfo.blob as File;
       const fileWrapper = new sf_rs.FileWrapper(file);
-
-      console.log('Worker: JS: file name: ' + fileName);
-      console.log('Worker: JS: file: ' + file);
-      console.log('Worker: JS: file wrapper: ' + fileWrapper);
-
       const recognized = converterService.js_is_recognized(fileName, fileWrapper);
       fileWrapper.free();
       self.postMessage(new WorkerResponse('scanned', request.correlationId, { recognized }));
@@ -70,7 +65,7 @@ self.onmessage = (event) => {
         if (hash.length > 0 && !hash.startsWith('#/')) {
           throw new Error(`Unexpected URL hash: ${hash}`);
         }
-      
+
         // '', '#', '#/' all denote the root node
         // splitting by '/' results in:
         // '' => ['']
@@ -91,14 +86,14 @@ self.onmessage = (event) => {
           metadata: rawNode.metadata as { [key: string]: string },
           table: rawNode.table as { columnNames: [], rows: [] },
           childNodeNames: rawNode.child_node_names,
-        }
+        };
 
         rawNode.free();
 
         self.postMessage(
           new WorkerResponse('read', request.correlationId, node),
         );
-      } catch(error) {
+      } catch (error) {
         self.postMessage(
           new WorkerResponse('error', request.correlationId, `${error}`),
         );

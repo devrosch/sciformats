@@ -53,8 +53,8 @@ export default class App extends HTMLElement {
   }
 
   async initWorker() {
-    let workerCpp = await initWorkerCpp();    
-    let workerRs = await initWorkerRs();
+    const workerCpp = await initWorkerCpp();
+    const workerRs = await initWorkerRs();
     const parserRepository = new LocalParserRepository([workerCpp, workerRs]);
     const tree = this.querySelector('sf-tree') as Tree;
     tree.setParserRepository(parserRepository);

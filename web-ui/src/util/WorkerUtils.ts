@@ -44,8 +44,8 @@ export const initWorker = async (worker: Worker) => {
   let isWorkerInitialized = false;
   while (!isWorkerInitialized) {
     const scanReply = postMessage(worker, 'status', null);
-    const timeout = new Promise(r => setTimeout(r, 500));
-    // eslint-disable-next-line no-await-in-loop
+    const timeout = new Promise((resolve) => { setTimeout(resolve, 500); });
+    /* eslint-disable-next-line no-await-in-loop */
     const response = await Promise.any([scanReply, timeout]) as any;
     if (response !== null && typeof response === 'object' && Object.hasOwn(response, 'correlationId')) {
       const statusResponse = response as WorkerResponse;
@@ -53,7 +53,7 @@ export const initWorker = async (worker: Worker) => {
         isWorkerInitialized = true;
       }
     } else {
-      // eslint-disable-next-line no-await-in-loop
+      /* eslint-disable-next-line no-await-in-loop */
       await new Promise((resolve) => { setTimeout(resolve, 500); });
     }
   }

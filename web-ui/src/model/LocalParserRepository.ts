@@ -20,6 +20,8 @@ export default class LocalParserRepository implements ParserRepository {
 
     const payload: WorkerFileInfo = { url: url.toString(), blob: file };
     for (const worker of this.#workers) {
+      // TODO: this could be turned into a promise all
+      /* eslint-disable-next-line no-await-in-loop */
       const scanReply: WorkerResponse = await postMessage(worker, 'scan', payload) as any;
       if (scanReply.name === 'scanned' && (scanReply.detail as { recognized: boolean }).recognized === true) {
         const parser = new LocalFileParser(worker, url, file);

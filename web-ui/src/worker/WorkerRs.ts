@@ -1,5 +1,5 @@
 import * as sf_rs from 'sf_rs';
-import { extractFilename } from 'util/UrlUtils';
+import { extractFilename, extractHashPath } from 'util/UrlUtils';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerStatus from './WorkerStatus';
@@ -61,24 +61,9 @@ self.onmessage = (event) => {
         if (typeof reader === 'undefined') {
           throw new Error(`No open file found for ${url.toString()}`);
         }
-        let hash = url.hash;
-        if (hash.length > 0 && !hash.startsWith('#/')) {
-          throw new Error(`Unexpected URL hash: ${hash}`);
-        }
-
-        // '', '#', '#/' all denote the root node
-        // splitting by '/' results in:
-        // '' => ['']
-        // '/' => ['', '']
-        if (hash.startsWith('#')) {
-          hash = hash.substring(1);
-        }
-        if (hash.length === 0) {
-          hash = '/';
-        }
+        const hash = extractHashPath(url);
 
         const rawNode = reader.read(hash);
-
         const node: WorkerNodeData = {
           url: url.toString(),
           parameters: rawNode.parameters,
@@ -87,7 +72,6 @@ self.onmessage = (event) => {
           table: rawNode.table as { columnNames: [], rows: [] },
           childNodeNames: rawNode.child_node_names,
         };
-
         rawNode.free();
 
         self.postMessage(

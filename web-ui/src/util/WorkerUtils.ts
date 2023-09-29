@@ -51,10 +51,10 @@ export const initWorker = async (worker: Worker) => {
       const statusResponse = response as WorkerResponse;
       if (statusResponse.detail === WorkerStatus.Initialized) {
         isWorkerInitialized = true;
+      } else {
+        /* eslint-disable-next-line no-await-in-loop */
+        await new Promise((resolve) => { setTimeout(resolve, 500); });
       }
-    } else {
-      /* eslint-disable-next-line no-await-in-loop */
-      await new Promise((resolve) => { setTimeout(resolve, 500); });
     }
   }
   return worker;

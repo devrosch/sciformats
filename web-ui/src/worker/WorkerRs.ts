@@ -1,100 +1,39 @@
 import * as sf_rs from 'sf_rs';
-import { extractFilename, extractHashPath } from 'util/UrlUtils';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerStatus from './WorkerStatus';
-import WorkerFileInfo from './WorkerFileInfo';
-import WorkerNodeData from './WorkerNodeData';
-import WorkerFileUrl from './WorkerFileUrl';
+import {
+  onClose, onOpen, onRead, onScan,
+} from './WorkerRsInternalUtils';
 
 // quench warnings for using "self", alternatively "globalThis" could be used instead
 /* eslint-disable no-restricted-globals */
 
 const openFiles = new Map<string, sf_rs.JsReader>();
-const converterService = new sf_rs.AndiChromScanner();
+const scanner = new sf_rs.AndiChromScanner();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
   switch (request.name) {
     case 'status': {
+      // library has been imported already when onmessage gets defined
       self.postMessage(new WorkerResponse('status', request.correlationId, WorkerStatus.Initialized));
       break;
     }
     case 'scan': {
-      const fileInfo = request.detail as WorkerFileInfo;
-      const url = new URL(fileInfo.url);
-      const fileName = extractFilename(url);
-      const file = fileInfo.blob as File;
-      const fileWrapper = new sf_rs.FileWrapper(file);
-      const recognized = converterService.js_is_recognized(fileName, fileWrapper);
-      fileWrapper.free();
-      self.postMessage(new WorkerResponse('scanned', request.correlationId, { recognized }));
+      self.postMessage(onScan(request, scanner));
       break;
     }
     case 'open': {
-      const fileInfo = request.detail as WorkerFileInfo;
-      const url = new URL(fileInfo.url);
-      const rootUrl = new URL(url.toString().split('#')[0]);
-      const fileName = extractFilename(url);
-      const file = fileInfo.blob as File;
-      const fileWrapper = new sf_rs.FileWrapper(file);
-
-      try {
-        const reader = converterService.js_get_reader(fileName, fileWrapper);
-        openFiles.set(rootUrl.toString(), reader);
-        self.postMessage(
-          new WorkerResponse('opened', request.correlationId, { url: rootUrl.toString() }),
-        );
-      } catch (error) {
-        self.postMessage(
-          new WorkerResponse('error', request.correlationId, `${error}`),
-        );
-      }
+      self.postMessage(onOpen(request, scanner, openFiles));
       break;
     }
     case 'read': {
-      const fileInfo = request.detail as WorkerFileInfo;
-      const url = new URL(fileInfo.url);
-      const rootUrl = new URL(url.toString().split('#')[0]);
-      try {
-        const reader = openFiles.get(rootUrl.toString());
-        if (typeof reader === 'undefined') {
-          throw new Error(`No open file found for ${url.toString()}`);
-        }
-        const hash = extractHashPath(url);
-
-        const rawNode = reader.read(hash);
-        const node: WorkerNodeData = {
-          url: url.toString(),
-          parameters: rawNode.parameters,
-          data: rawNode.data,
-          metadata: rawNode.metadata as { [key: string]: string },
-          table: rawNode.table as { columnNames: [], rows: [] },
-          childNodeNames: rawNode.child_node_names,
-        };
-        rawNode.free();
-
-        self.postMessage(
-          new WorkerResponse('read', request.correlationId, node),
-        );
-      } catch (error) {
-        self.postMessage(
-          new WorkerResponse('error', request.correlationId, `${error}`),
-        );
-      }
+      self.postMessage(onRead(request, openFiles));
       break;
     }
     case 'close': {
-      const correlationId = request.correlationId;
-      const fileUrl = request.detail as WorkerFileUrl;
-      const url = new URL(fileUrl.url);
-      const rootUrl = new URL(url.toString().split('#')[0]);
-      if (openFiles.has(rootUrl.toString())) {
-        const reader = openFiles.get(rootUrl.toString());
-        openFiles.delete(rootUrl.toString());
-        reader?.free();
-      }
-      self.postMessage(new WorkerResponse('closed', correlationId, { url: rootUrl.toString() }));
+      self.postMessage(onClose(request, openFiles));
       break;
     }
     default:

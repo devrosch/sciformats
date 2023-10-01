@@ -16,6 +16,7 @@
     "transform": {
       "^.+\\.[t|j]sx?$": "babel-jest"
     },
+    "modulePaths": ["<rootDir>/../lib-rs/pkg/"],
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/src/assetMock.ts",
       "\\.(css|less|sass)$": "<rootDir>/src/styleMock.ts",
@@ -30,6 +31,7 @@
       "!src/index.ts",
       "!src/model/LocalParserRepository.ts",
       "!src/worker/Worker.ts",
+      "!src/worker/WorkerRs.ts",
       "!src/util/WorkerUtils.ts"
     ],
     "setupFiles": [

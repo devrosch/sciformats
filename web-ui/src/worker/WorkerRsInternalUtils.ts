@@ -6,15 +6,13 @@ import WorkerResponse from './WorkerResponse';
 import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
 
-// const errorHandlingWrapper = (request: WorkerRequest, fn: () => WorkerResponse) => {
-//   return () => {
-//     try {
-//       return fn.apply(this);
-//     } catch (error) {
-//       return new WorkerResponse('error', request.correlationId, `${error}`);
-//     }
-//   };
-// };
+const errorHandlingWrapper = (request: WorkerRequest, fn: () => WorkerResponse) => {
+  try {
+    return fn.apply(this);
+  } catch (error) {
+    return new WorkerResponse('error', request.correlationId, `${error}`);
+  }
+};
 
 const extractFromRequest = (request: WorkerRequest) => {
   const fileInfo = request.detail as WorkerFileInfo;
@@ -22,7 +20,12 @@ const extractFromRequest = (request: WorkerRequest) => {
   const rootUrl = new URL(url.toString().split('#')[0]);
   const fileName = extractFilename(url);
 
-  return { fileInfo, url, rootUrl, fileName };
+  return {
+    fileInfo,
+    url,
+    rootUrl,
+    fileName,
+  };
 };
 
 export const onScan = (request: WorkerRequest, scanner: sf_rs.AndiChromScanner) => {
@@ -66,46 +69,38 @@ export const onOpen = (
 export const onRead = (
   request: WorkerRequest,
   openFiles: Map<string, sf_rs.JsReader>,
-) => {
-  try {
-    const { url, rootUrl } = extractFromRequest(request);
-    const reader = openFiles.get(rootUrl.toString());
-    if (typeof reader === 'undefined') {
-      throw new Error(`No open file found for ${url.toString()}`);
-    }
-    const hash = extractHashPath(url);
-    const rawNode = reader.read(hash);
-    const node: WorkerNodeData = {
-      url: url.toString(),
-      parameters: rawNode.parameters,
-      data: rawNode.data,
-      metadata: rawNode.metadata as { [key: string]: string },
-      table: rawNode.table as { columnNames: [], rows: [] },
-      childNodeNames: rawNode.child_node_names,
-    };
-    rawNode.free();
-
-    return new WorkerResponse('read', request.correlationId, node);
-  } catch (error) {
-    return new WorkerResponse('error', request.correlationId, `${error}`);
+) => errorHandlingWrapper(request, () => {
+  const { url, rootUrl } = extractFromRequest(request);
+  const reader = openFiles.get(rootUrl.toString());
+  if (typeof reader === 'undefined') {
+    throw new Error(`No open file found for ${url.toString()}`);
   }
-};
+  const hash = extractHashPath(url);
+  const rawNode = reader.read(hash);
+  const node: WorkerNodeData = {
+    url: url.toString(),
+    parameters: rawNode.parameters,
+    data: rawNode.data,
+    metadata: rawNode.metadata as { [key: string]: string },
+    table: rawNode.table as { columnNames: [], rows: [] },
+    childNodeNames: rawNode.child_node_names,
+  };
+  rawNode.free();
+
+  return new WorkerResponse('read', request.correlationId, node);
+});
 
 export const onClose = (
   request: WorkerRequest,
   openFiles: Map<string, sf_rs.JsReader>,
-) => {
-  try {
-    const fileUrl = request.detail as WorkerFileUrl;
-    const url = new URL(fileUrl.url);
-    const rootUrl = new URL(url.toString().split('#')[0]);
-    if (openFiles.has(rootUrl.toString())) {
-      const reader = openFiles.get(rootUrl.toString());
-      openFiles.delete(rootUrl.toString());
-      reader?.free();
-    }
-    return new WorkerResponse('closed', request.correlationId, { url: rootUrl.toString() });
-  } catch (error) {
-    return new WorkerResponse('error', request.correlationId, `${error}`);
+) => errorHandlingWrapper(request, () => {
+  const fileUrl = request.detail as WorkerFileUrl;
+  const url = new URL(fileUrl.url);
+  const rootUrl = new URL(url.toString().split('#')[0]);
+  if (openFiles.has(rootUrl.toString())) {
+    const reader = openFiles.get(rootUrl.toString());
+    openFiles.delete(rootUrl.toString());
+    reader?.free();
   }
-};
+  return new WorkerResponse('closed', request.correlationId, { url: rootUrl.toString() });
+});

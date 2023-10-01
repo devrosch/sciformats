@@ -16,12 +16,19 @@ import WorkerFileUrl from './WorkerFileUrl';
 //   };
 // };
 
+const extractFromRequest = (request: WorkerRequest) => {
+  const fileInfo = request.detail as WorkerFileInfo;
+  const url = new URL(fileInfo.url);
+  const rootUrl = new URL(url.toString().split('#')[0]);
+  const fileName = extractFilename(url);
+
+  return { fileInfo, url, rootUrl, fileName };
+};
+
 export const onScan = (request: WorkerRequest, scanner: sf_rs.AndiChromScanner) => {
   let fileWrapper = null;
   try {
-    const fileInfo = request.detail as WorkerFileInfo;
-    const url = new URL(fileInfo.url);
-    const fileName = extractFilename(url);
+    const { fileInfo, fileName } = extractFromRequest(request);
     const file = fileInfo.blob as File;
     fileWrapper = new sf_rs.FileWrapper(file);
     const recognized = scanner.js_is_recognized(fileName, fileWrapper);
@@ -42,12 +49,9 @@ export const onOpen = (
 ) => {
   let fileWrapper = null;
   try {
-    const fileInfo = request.detail as WorkerFileInfo;
-    const url = new URL(fileInfo.url);
-    const fileName = extractFilename(url);
+    const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
     const file = fileInfo.blob as File;
     fileWrapper = new sf_rs.FileWrapper(file);
-    const rootUrl = new URL(url.toString().split('#')[0]);
     const reader = scanner.js_get_reader(fileName, fileWrapper);
     openFiles.set(rootUrl.toString(), reader);
     return new WorkerResponse('opened', request.correlationId, { url: rootUrl.toString() });
@@ -64,9 +68,7 @@ export const onRead = (
   openFiles: Map<string, sf_rs.JsReader>,
 ) => {
   try {
-    const fileInfo = request.detail as WorkerFileInfo;
-    const url = new URL(fileInfo.url);
-    const rootUrl = new URL(url.toString().split('#')[0]);
+    const { url, rootUrl } = extractFromRequest(request);
     const reader = openFiles.get(rootUrl.toString());
     if (typeof reader === 'undefined') {
       throw new Error(`No open file found for ${url.toString()}`);
@@ -94,7 +96,6 @@ export const onClose = (
   openFiles: Map<string, sf_rs.JsReader>,
 ) => {
   try {
-    const correlationId = request.correlationId;
     const fileUrl = request.detail as WorkerFileUrl;
     const url = new URL(fileUrl.url);
     const rootUrl = new URL(url.toString().split('#')[0]);
@@ -103,7 +104,7 @@ export const onClose = (
       openFiles.delete(rootUrl.toString());
       reader?.free();
     }
-    return new WorkerResponse('closed', correlationId, { url: rootUrl.toString() });
+    return new WorkerResponse('closed', request.correlationId, { url: rootUrl.toString() });
   } catch (error) {
     return new WorkerResponse('error', request.correlationId, `${error}`);
   }

@@ -2,15 +2,25 @@ import { AndiChromScanner, JsReader } from 'sf_rs';
 import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerRsInternalUtils from './WorkerRsInternalUtils';
 import WorkerRequest from './WorkerRequest';
+import WorkerFileUrl from './WorkerFileUrl';
+import WorkerNodeData from './WorkerNodeData';
 
 const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
 const filename = 'test.cdf';
-const url = new URL(`file:///${uuid}/${filename}#`);
-// const rootUrl = new URL(`file:///${uuid}/${filename}`);
-// const filePath = `${workingDir}/${uuid}/${filename}`;
+const rootUrl = new URL(`file:///${uuid}/${filename}`);
+const nodeName = 'x';
+const url = new URL(`file:///${uuid}/${filename}#/${nodeName}`);
 
 const mockReader: JsReader = {
-  read: jest.fn(),
+  read: jest.fn(() => ({
+    name: nodeName,
+    parameters: [],
+    data: [],
+    metadata: {},
+    table: {},
+    child_node_names: [],
+    free: jest.fn(),
+  })),
   free: jest.fn(),
 };
 
@@ -24,8 +34,12 @@ jest.mock('sf_rs', () => ({
 }));
 
 const fileInfoStub: WorkerFileInfo = {
-  url: url.toString(),
+  url: rootUrl.toString(),
   blob: new Blob(),
+};
+
+const workerFileUrlStub: WorkerFileUrl = {
+  url: url.toString(),
 };
 
 afterEach(() => {
@@ -36,7 +50,7 @@ test('onScan() uses Scanner to scan if a file could be parsed', async () => {
   const requestStub = new WorkerRequest('scan', '123', fileInfoStub);
   const mockScanner = new AndiChromScanner();
 
-  const scanResponse = WorkerRsInternalUtils.onScan(
+  const response = WorkerRsInternalUtils.onScan(
     requestStub,
     mockScanner,
   );
@@ -45,9 +59,132 @@ test('onScan() uses Scanner to scan if a file could be parsed', async () => {
   expect(mockScanner.js_get_reader).toHaveBeenCalledTimes(0);
   expect(mockScanner.free).toHaveBeenCalledTimes(0);
 
-  expect(scanResponse.name).toBe('scanned');
-  expect(scanResponse.correlationId).toBe(requestStub.correlationId);
-  expect(scanResponse.detail).toHaveProperty('recognized');
-  const responseDetail = scanResponse.detail as { recognized: true };
+  expect(response.name).toBe('scanned');
+  expect(response.correlationId).toBe(requestStub.correlationId);
+  expect(response.detail).toHaveProperty('recognized');
+  const responseDetail = response.detail as { recognized: boolean };
   expect(responseDetail.recognized).toBe(true);
+});
+
+test('onScan() returns error for illegal input', async () => {
+  const illegalFileInfoStub: WorkerFileInfo = {
+    url: 'notavalidurl',
+    blob: new Blob(),
+  };
+  const requestStub = new WorkerRequest('scan', '123', illegalFileInfoStub);
+  const mockScanner = new AndiChromScanner();
+
+  const response = WorkerRsInternalUtils.onScan(
+    requestStub,
+    mockScanner,
+  );
+
+  expect(mockScanner.js_is_recognized).toHaveBeenCalledTimes(0);
+  expect(response.name).toBe('error');
+});
+
+test('onOpen() uses Scanner to populate openFiles map', async () => {
+  const requestStub = new WorkerRequest('open', '123', fileInfoStub);
+  const mockScanner = new AndiChromScanner();
+  const openFiles = new Map<string, JsReader>();
+
+  const response = WorkerRsInternalUtils.onOpen(
+    requestStub,
+    mockScanner,
+    openFiles,
+  );
+
+  expect(mockScanner.js_is_recognized).toHaveBeenCalledTimes(0);
+  expect(mockScanner.js_get_reader).toHaveBeenCalledTimes(1);
+  expect(mockScanner.free).toHaveBeenCalledTimes(0);
+
+  expect(response.name).toBe('opened');
+  expect(response.correlationId).toBe(requestStub.correlationId);
+  expect(response.detail).toHaveProperty('url');
+  const responseDetail = response.detail as WorkerFileUrl;
+  expect(responseDetail.url).toEqual(rootUrl.toString());
+  expect(openFiles.size).toBe(1);
+  expect(openFiles.keys().next().value).toEqual(rootUrl.toString());
+});
+
+test('onOpen() returns error if exception occurs', async () => {
+  const requestStub = new WorkerRequest('open', '123', fileInfoStub);
+  const mockScanner = {
+    js_is_recognized: jest.fn(() => true),
+    js_get_reader: jest.fn(() => { throw new Error('getReader() error'); }),
+    free: jest.fn(),
+  };
+  const openFiles = new Map<string, JsReader>();
+
+  const response = WorkerRsInternalUtils.onOpen(
+    requestStub,
+    mockScanner,
+    openFiles,
+  );
+
+  expect(mockScanner.js_get_reader).toHaveBeenCalledTimes(1);
+  expect(response.name).toBe('error');
+});
+
+test('onRead() uses openFiles to read node', async () => {
+  const requestStub = new WorkerRequest('read', '123', workerFileUrlStub);
+  const openFiles = new Map<string, JsReader>();
+  openFiles.set(rootUrl.toString(), mockReader);
+
+  const response = WorkerRsInternalUtils.onRead(
+    requestStub,
+    openFiles,
+  );
+
+  expect(response.name).toBe('read');
+  expect(response.correlationId).toBe(requestStub.correlationId);
+  const responseDetail = response.detail as WorkerNodeData;
+  expect(responseDetail.url).toEqual(url.toString());
+  expect(mockReader.read).toHaveBeenCalledTimes(1);
+});
+
+test('onRead() returns error if file not open', async () => {
+  const requestStub = new WorkerRequest('read', '123', workerFileUrlStub);
+  const openFiles = new Map<string, JsReader>();
+
+  const response = WorkerRsInternalUtils.onRead(
+    requestStub,
+    openFiles,
+  );
+
+  expect(response.name).toBe('error');
+  expect(response.correlationId).toBe(requestStub.correlationId);
+});
+
+test('onClose() removes file from openFiles map', async () => {
+  const requestStub = new WorkerRequest('close', '123', workerFileUrlStub);
+  const openFiles = new Map<string, JsReader>();
+  openFiles.set(rootUrl.toString(), mockReader);
+
+  const response = WorkerRsInternalUtils.onClose(
+    requestStub,
+    openFiles,
+  );
+
+  expect(mockReader.read).toHaveBeenCalledTimes(0);
+  expect(mockReader.free).toHaveBeenCalledTimes(1);
+
+  expect(response.name).toBe('closed');
+  expect(response.correlationId).toBe(requestStub.correlationId);
+  expect(response.detail).toHaveProperty('url');
+  const responseDetail = response.detail as WorkerFileUrl;
+  expect(responseDetail.url).toEqual(rootUrl.toString());
+  expect(openFiles.size).toBe(0);
+});
+
+test('onClose() also succeeds if file not open', async () => {
+  const requestStub = new WorkerRequest('close', '123', workerFileUrlStub);
+  const openFiles = new Map<string, JsReader>();
+
+  const response = WorkerRsInternalUtils.onClose(
+    requestStub,
+    openFiles,
+  );
+
+  expect(response.name).toBe('closed');
 });

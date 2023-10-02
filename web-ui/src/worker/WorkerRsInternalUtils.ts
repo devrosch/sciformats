@@ -28,43 +28,25 @@ const extractFromRequest = (request: WorkerRequest) => {
   };
 };
 
-export const onScan = (request: WorkerRequest, scanner: sf_rs.AndiChromScanner) => {
-  let fileWrapper = null;
-  try {
-    const { fileInfo, fileName } = extractFromRequest(request);
-    const file = fileInfo.blob as File;
-    fileWrapper = new sf_rs.FileWrapper(file);
-    const recognized = scanner.js_is_recognized(fileName, fileWrapper);
-    fileWrapper.free();
-    return new WorkerResponse('scanned', request.correlationId, { recognized });
-  } catch (error) {
-    if (fileWrapper !== null) {
-      fileWrapper.free();
-    }
-    return new WorkerResponse('error', request.correlationId, `${error}`);
-  }
-};
+export const onScan = (
+  request: WorkerRequest,
+  scanner: sf_rs.AndiChromScanner,
+) => errorHandlingWrapper(request, () => {
+  const { fileInfo, fileName } = extractFromRequest(request);
+  const recognized = scanner.js_is_recognized(fileName, fileInfo.blob);
+  return new WorkerResponse('scanned', request.correlationId, { recognized });
+});
 
 export const onOpen = (
   request: WorkerRequest,
   scanner: sf_rs.AndiChromScanner,
   openFiles: Map<string, sf_rs.JsReader>,
-) => {
-  let fileWrapper = null;
-  try {
-    const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
-    const file = fileInfo.blob as File;
-    fileWrapper = new sf_rs.FileWrapper(file);
-    const reader = scanner.js_get_reader(fileName, fileWrapper);
-    openFiles.set(rootUrl.toString(), reader);
-    return new WorkerResponse('opened', request.correlationId, { url: rootUrl.toString() });
-  } catch (error) {
-    if (fileWrapper !== null) {
-      fileWrapper.free();
-    }
-    return new WorkerResponse('error', request.correlationId, `${error}`);
-  }
-};
+) => errorHandlingWrapper(request, () => {
+  const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
+  const reader = scanner.js_get_reader(fileName, fileInfo.blob);
+  openFiles.set(rootUrl.toString(), reader);
+  return new WorkerResponse('opened', request.correlationId, { url: rootUrl.toString() });
+});
 
 export const onRead = (
   request: WorkerRequest,

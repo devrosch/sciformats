@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsValue;
 
 use crate::{
@@ -15,7 +15,7 @@ pub struct AndiChromReader {
     file: AndiChromFile,
 }
 
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 #[wasm_bindgen]
 impl AndiChromReader {
     pub fn js_read(&self, path: &str) -> Result<Node, JsValue> {

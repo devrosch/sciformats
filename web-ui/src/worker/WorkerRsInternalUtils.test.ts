@@ -30,7 +30,6 @@ jest.mock('sf_rs', () => ({
     js_get_reader: jest.fn(() => mockReader),
     free: jest.fn(),
   })),
-  FileWrapper: jest.fn(() => ({ free: jest.fn() })),
 }));
 
 const fileInfoStub: WorkerFileInfo = {

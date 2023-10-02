@@ -1,44 +1,19 @@
 use wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsValue;
+use web_sys::Blob;
 
 use crate::{
     andi_chrom_parser::AndiChromParser,
     andi_chrom_reader::AndiChromReader,
-    api::{Parser, Scanner},
+    api::{BlobWrapper, JsReader, Parser, Scanner},
 };
-#[cfg(target_family = "wasm")]
-use crate::{api::Node, FileWrapper};
+// #[cfg(target_family = "wasm")]
 use std::{
     error::Error,
     io::{Read, Seek},
     path::Path,
 };
-
-#[wasm_bindgen]
-#[cfg(target_family = "wasm")]
-pub struct JsReader {
-    reader: Box<dyn crate::api::Reader>,
-}
-
-#[cfg(target_family = "wasm")]
-impl JsReader {
-    pub fn new(reader: Box<dyn crate::api::Reader>) -> Self {
-        JsReader { reader }
-    }
-}
-
-#[wasm_bindgen]
-#[cfg(target_family = "wasm")]
-impl JsReader {
-    pub fn read(&self, path: &str) -> Result<Node, JsValue> {
-        let read_result = self.reader.read(path);
-        match read_result {
-            Ok(node) => Ok(node),
-            Err(error) => Err(error.to_string().into()),
-        }
-    }
-}
 
 #[wasm_bindgen]
 pub struct AndiChromScanner {}
@@ -49,15 +24,17 @@ impl AndiChromScanner {
 }
 
 #[wasm_bindgen]
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 impl AndiChromScanner {
     #[wasm_bindgen(constructor)]
     pub fn new() -> AndiChromScanner {
         AndiChromScanner {}
     }
 
-    pub fn js_is_recognized(&self, path: &str, input: &mut FileWrapper) -> bool {
+    pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
         use web_sys::console;
+
+        let mut blob = BlobWrapper::new(input.clone());
 
         console::log_2(
             &"AndiChromScanner.js_is_recognized() path:".into(),
@@ -65,20 +42,17 @@ impl AndiChromScanner {
         );
         console::log_2(
             &"AndiChromScanner.js_is_recognized() input pos:".into(),
-            &input.pos.into(),
-        );
-        console::log_2(
-            &"AndiChromScanner.js_is_recognized() input file:".into(),
-            &input.file,
+            &blob.get_pos().into(),
         );
 
-        Scanner::is_recognized(self, path, input)
+        Scanner::is_recognized(self, path, &mut blob)
     }
 
-    pub fn js_get_reader(&self, path: &str, input: FileWrapper) -> Result<JsReader, JsValue> {
-        let reader_result = self.get_reader(path, input);
+    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsValue> {
+        let blob = BlobWrapper::new(input.clone());
+        let reader_result = self.get_reader(path, blob);
         match reader_result {
-            Ok(reader) => Ok(JsReader { reader }),
+            Ok(reader) => Ok(JsReader::new(reader)),
             Err(error) => Err(error.to_string().into()),
         }
     }

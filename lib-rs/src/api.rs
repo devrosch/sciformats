@@ -1,12 +1,12 @@
 use std::{
     collections::HashMap,
     error::Error,
-    io::{Read, Seek},
+    io::{Read, Seek, SeekFrom},
 };
 
-// use js_sys::{Object, JsString};
-// use serde::{Deserialize, Serialize};
+use js_sys::Uint8Array;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use web_sys::{Blob, FileReaderSync};
 
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
@@ -59,8 +59,6 @@ pub trait Reader {
 }
 
 #[wasm_bindgen]
-// #[wasm_bindgen(getter_with_clone)]
-// #[derive(Debug, PartialEq, Serialize, Deserialize)]
 /// An harmonized abstraction for a part of a data set.
 #[derive(Debug, PartialEq)]
 pub struct Node {
@@ -191,7 +189,6 @@ impl Node {
 }
 
 /// A data table.
-// #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[derive(Debug, PartialEq)]
 pub struct Table {
     /// A list of column keys and corresponding column names.
@@ -204,6 +201,129 @@ pub struct Table {
     /// Only keys from the coulmn_names may occur but not all keys from
     /// that list need to occur as there may be missing values for cells.
     pub rows: Vec<HashMap<String, String>>,
+}
+
+// -------------------------------------------------
+// WASM specific
+// -------------------------------------------------
+
+#[wasm_bindgen]
+// #[cfg(target_family = "wasm")]
+pub struct BlobWrapper {
+    blob: Blob,
+    pos: u64,
+}
+
+#[wasm_bindgen]
+// #[cfg(target_family = "wasm")]
+impl BlobWrapper {
+    #[wasm_bindgen(constructor)]
+    pub fn new(blob: Blob) -> BlobWrapper {
+        BlobWrapper { blob, pos: 0 }
+    }
+
+    pub fn get_pos(&self) -> u64 {
+        self.pos
+    }
+}
+
+// #[cfg(target_family = "wasm")]
+impl Seek for BlobWrapper {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Seek position out of bounds: {pos}"),
+            ))
+        }
+
+        let file_size = self.blob.size() as u64;
+        match pos {
+            SeekFrom::Start(seek_pos) => {
+                if seek_pos > file_size {
+                    return to_oob_error(seek_pos as i64);
+                }
+                self.pos = seek_pos;
+            }
+            SeekFrom::End(seek_pos) => {
+                let new_pos = file_size as i64 + seek_pos;
+                if new_pos < 0 || new_pos as u64 > file_size {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+            SeekFrom::Current(seek_pos) => {
+                let new_pos = self.pos as i64 + seek_pos;
+                if new_pos < 0 || new_pos as u64 > file_size {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+        }
+        Ok(self.pos)
+    }
+}
+
+// #[cfg(target_family = "wasm")]
+impl Read for BlobWrapper {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                js_error.as_string().unwrap_or_default(),
+            ))
+        }
+
+        let end_pos = self.pos + buf.len() as u64;
+        let result = self
+            .blob
+            .slice_with_f64_and_f64(self.pos as f64, end_pos as f64);
+        match result {
+            Ok(slice) => {
+                self.pos = self.pos + slice.size() as u64;
+                let reader = match FileReaderSync::new() {
+                    Ok(frs) => frs,
+                    Err(err) => return to_io_error(err),
+                };
+                let array_buffer = match reader.read_as_array_buffer(&slice) {
+                    Ok(buf) => buf,
+                    Err(err) => return to_io_error(err),
+                };
+                // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
+                let uint8_array = Uint8Array::new(&array_buffer);
+                uint8_array.copy_to(buf);
+                return Ok(slice.size() as usize);
+            }
+            Err(js_error) => {
+                return to_io_error(js_error);
+            }
+        }
+    }
+}
+
+#[wasm_bindgen]
+// #[cfg(target_family = "wasm")]
+pub struct JsReader {
+    reader: Box<dyn crate::api::Reader>,
+}
+
+// #[cfg(target_family = "wasm")]
+impl JsReader {
+    pub fn new(reader: Box<dyn crate::api::Reader>) -> Self {
+        JsReader { reader }
+    }
+}
+
+#[wasm_bindgen]
+// #[cfg(target_family = "wasm")]
+impl JsReader {
+    pub fn read(&self, path: &str) -> Result<Node, JsValue> {
+        let read_result = self.reader.read(path);
+        match read_result {
+            Ok(node) => Ok(node),
+            Err(error) => Err(error.to_string().into()),
+        }
+    }
 }
 
 #[cfg(test)]

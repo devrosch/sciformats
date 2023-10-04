@@ -1,11 +1,12 @@
+use crate::api::Parser;
+
 use super::andi_utils::{
     read_index_from_slice, read_index_from_var_2d_string, read_index_from_var_f32,
     read_multi_string_var, read_optional_var,
 };
-use crate::{
-    andi::{AndiDatasetCompleteness, AndiError},
+use super::{
+    AndiDatasetCompleteness, AndiError,
     andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
-    api::Parser,
 };
 use std::{
     cell::RefCell,

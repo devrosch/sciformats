@@ -4,8 +4,7 @@ wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use crate::io::open_file;
 use sf_rs::{
-    andi_chrom_parser::AndiChromParser,
-    andi_chrom_reader::AndiChromReader,
+    andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
     api::{Parser, Reader},
 };
 use wasm_bindgen_test::wasm_bindgen_test;

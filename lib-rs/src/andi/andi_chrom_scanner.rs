@@ -3,17 +3,15 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::JsError;
 use web_sys::Blob;
 
-use crate::{
-    andi_chrom_parser::AndiChromParser,
-    andi_chrom_reader::AndiChromReader,
-    api::{BlobWrapper, JsReader, Parser, Scanner},
-};
+use crate::api::{BlobWrapper, JsReader, Parser, Scanner};
 // #[cfg(target_family = "wasm")]
 use std::{
     error::Error,
     io::{Read, Seek},
     path::Path,
 };
+
+use super::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader};
 
 #[wasm_bindgen]
 pub struct AndiChromScanner {}

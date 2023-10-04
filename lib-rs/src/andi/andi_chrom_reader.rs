@@ -4,10 +4,11 @@ use wasm_bindgen::JsError;
 
 use crate::{
     andi::AndiError,
-    andi_chrom_parser::AndiChromFile,
     api::{Node, Reader, Table},
 };
 use std::{collections::HashMap, error::Error, path::Path};
+
+use super::andi_chrom_parser::AndiChromFile;
 
 #[wasm_bindgen]
 pub struct AndiChromReader {

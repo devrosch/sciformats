@@ -1,3 +1,8 @@
+pub mod andi_chrom_parser;
+pub mod andi_chrom_reader;
+pub mod andi_chrom_scanner;
+mod andi_utils;
+
 use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::{error::Error, fmt};
@@ -12,14 +17,6 @@ impl AndiError {
         AndiError {
             message: msg.into(),
         }
-    }
-}
-
-impl FromStr for AndiError {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(AndiError { message: s.into() })
     }
 }
 

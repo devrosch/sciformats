@@ -3,7 +3,10 @@ mod io;
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use crate::io::open_file;
-use sf_rs::{andi::AndiDatasetCompleteness, andi_chrom_parser::AndiChromParser, api::Parser};
+use sf_rs::{
+    andi::{andi_chrom_parser::AndiChromParser, AndiDatasetCompleteness},
+    api::Parser,
+};
 use std::str::FromStr;
 use wasm_bindgen_test::wasm_bindgen_test;
 

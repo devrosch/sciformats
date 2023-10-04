@@ -3,7 +3,7 @@ mod io;
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use crate::io::open_file;
-use sf_rs::{andi_chrom_scanner::AndiChromScanner, api::Scanner};
+use sf_rs::{andi::andi_chrom_scanner::AndiChromScanner, api::Scanner};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";

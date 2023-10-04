@@ -43,5 +43,3 @@ self.onmessage = (event) => {
       break;
   }
 };
-
-console.log('JS: sf_rs worker loaded');

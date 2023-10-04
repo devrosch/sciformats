@@ -281,7 +281,7 @@ impl Read for BlobWrapper {
             .slice_with_f64_and_f64(self.pos as f64, end_pos as f64);
         match result {
             Ok(slice) => {
-                self.pos = self.pos + slice.size() as u64;
+                self.pos += slice.size() as u64;
                 let reader = match FileReaderSync::new() {
                     Ok(frs) => frs,
                     Err(err) => return to_io_error(err),
@@ -293,10 +293,10 @@ impl Read for BlobWrapper {
                 // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
                 let uint8_array = Uint8Array::new(&array_buffer);
                 uint8_array.copy_to(buf);
-                return Ok(slice.size() as usize);
+                Ok(slice.size() as usize)
             }
             Err(js_error) => {
-                return to_io_error(js_error);
+                to_io_error(js_error)
             }
         }
     }

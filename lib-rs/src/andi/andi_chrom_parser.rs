@@ -5,8 +5,8 @@ use super::andi_utils::{
     read_multi_string_var, read_optional_var,
 };
 use super::{
-    AndiDatasetCompleteness, AndiError,
     andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
+    AndiDatasetCompleteness, AndiError,
 };
 use std::{
     cell::RefCell,
@@ -501,8 +501,7 @@ impl AndiChromPeakProcessingResults {
             let manually_reintegrated_peaks = read_index_from_slice(
                 manually_reintegrated_peaks_var
                     .as_ref()
-                    .map(|(_, _, v)| v.get_i16())
-                    .flatten(),
+                    .and_then(|(_, _, v)| v.get_i16()),
                 manually_reintegrated_peaks_var
                     .as_ref()
                     .map(|(name, _, _)| *name)

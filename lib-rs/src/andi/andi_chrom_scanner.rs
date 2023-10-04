@@ -21,6 +21,12 @@ impl AndiChromScanner {
     const MAGIC_BYTES: [u8; 3] = [0x43, 0x44, 0x46]; // "CDF"
 }
 
+impl Default for AndiChromScanner {
+    fn default() -> Self {
+        AndiChromScanner::new()
+    }
+}
+
 #[wasm_bindgen]
 // #[cfg(target_family = "wasm")]
 impl AndiChromScanner {
@@ -64,7 +70,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiChromScanner {
         let extension = p
             .extension()
             .and_then(|ext| ext.to_str())
-            .and_then(|ext| Some(ext.to_lowercase()));
+            .map(|ext| ext.to_lowercase());
         match extension {
             None => return false,
             Some(ext) => {

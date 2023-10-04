@@ -7,7 +7,7 @@ pub fn read_index_from_var_f32(
     index: usize,
 ) -> Result<Option<f32>, Box<dyn Error>> {
     let res = read_index_from_slice(
-        var.as_ref().map(|(_, _, v)| v.get_f32()).flatten(),
+        var.as_ref().and_then(|(_, _, v)| v.get_f32()),
         var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
         index,
     )?
@@ -88,10 +88,12 @@ pub fn read_index_from_slice<'a, T: 'a>(
     }
 }
 
+type NcVariable<'a> = (&'a str, Vec<usize>, DataVector);
+
 pub fn read_optional_var<'a>(
     reader: &mut netcdf3::FileReader,
     var_name: &'a str,
-) -> Result<Option<(&'a str, Vec<usize>, DataVector)>, Box<dyn Error>> {
+) -> Result<Option<NcVariable<'a>>, Box<dyn Error>> {
     let var = reader.data_set().get_var(var_name);
     match var {
         Some(var) => {

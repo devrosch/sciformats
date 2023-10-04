@@ -33,19 +33,14 @@ impl Reader for AndiChromReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
         let path_indices = Self::convert_path_to_node_indices(path)?;
         match path_indices[..] {
-            [] => {
-                // "", "/"
-                return self.read_root();
-            }
+            [] => self.read_root(), // "", "/"
             [0] => self.read_admin_data(),
             [1] => self.read_sample_description(),
             [2] => self.read_detection_method(),
             [3] => self.read_raw_data(),
             [4] => self.read_peak_processing_results(),
-            [0, 0] => {
-                return self.read_error_log();
-            }
-            _ => return Err(AndiError::new(&format!("Illegal node path: {}", path)).into()),
+            [0, 0] => self.read_error_log(),
+            _ => Err(AndiError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
 }
@@ -77,14 +72,14 @@ impl AndiChromReader {
         })
     }
 
-    fn push_opt_str(key: &str, val: &Option<String>, vec: &mut Vec<(String, String)>) -> () {
+    fn push_opt_str(key: &str, val: &Option<String>, vec: &mut Vec<(String, String)>) {
         match val {
             None => (),
             Some(s) => vec.push((key.into(), s.into())),
         }
     }
 
-    fn push_opt_f32(key: &str, val: &Option<f32>, vec: &mut Vec<(String, String)>) -> () {
+    fn push_opt_f32(key: &str, val: &Option<f32>, vec: &mut Vec<(String, String)>) {
         match val {
             None => (),
             Some(f) => vec.push((key.into(), f.to_string())),
@@ -647,7 +642,7 @@ impl AndiChromReader {
         // map segments to indices, expected segment structure is "n-some optional name"
         let mut indices: Vec<usize> = vec![];
         for seg in path_segments {
-            let idx_str = seg.split_once("-").map_or(seg, |p| p.0);
+            let idx_str = seg.split_once('-').map_or(seg, |p| p.0);
             let idx = idx_str.parse::<usize>()?;
             indices.push(idx);
         }

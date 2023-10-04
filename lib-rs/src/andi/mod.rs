@@ -81,7 +81,7 @@ impl FromStr for AndiDatasetCompleteness {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut categories: BTreeSet<AndiCategory> = BTreeSet::new();
-        for cat_str in s.split("+") {
+        for cat_str in s.split('+') {
             // quirk: also accept zero terminated string for category
             // TODO: find better way to deal with zero terminated strings here and elsewhere
             let non_zero_term_cat_str = cat_str.trim_end_matches(char::from(0));

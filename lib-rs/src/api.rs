@@ -295,9 +295,7 @@ impl Read for BlobWrapper {
                 uint8_array.copy_to(buf);
                 Ok(slice.size() as usize)
             }
-            Err(js_error) => {
-                to_io_error(js_error)
-            }
+            Err(js_error) => to_io_error(js_error),
         }
     }
 }

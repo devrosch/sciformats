@@ -1,11 +1,16 @@
+#[cfg(target_family = "wasm")]
+use js_sys::Uint8Array;
+#[cfg(target_family = "wasm")]
+use std::io::SeekFrom;
 use std::{
     collections::HashMap,
     error::Error,
-    io::{Read, Seek, SeekFrom},
+    io::{Read, Seek},
 };
-
-use js_sys::Uint8Array;
-use wasm_bindgen::{prelude::wasm_bindgen, JsError, JsValue};
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::JsError;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+#[cfg(target_family = "wasm")]
 use web_sys::{Blob, FileReaderSync};
 
 /// Parses a (readonly) data set.
@@ -211,13 +216,13 @@ pub struct Table {
 // WASM specific
 // -------------------------------------------------
 
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 pub struct BlobWrapper {
     blob: Blob,
     pos: u64,
 }
 
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 impl BlobWrapper {
     pub fn new(blob: Blob) -> BlobWrapper {
         BlobWrapper { blob, pos: 0 }
@@ -228,7 +233,7 @@ impl BlobWrapper {
     }
 }
 
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 impl Seek for BlobWrapper {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
         fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
@@ -265,7 +270,7 @@ impl Seek for BlobWrapper {
     }
 }
 
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 impl Read for BlobWrapper {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
@@ -301,12 +306,12 @@ impl Read for BlobWrapper {
 }
 
 #[wasm_bindgen]
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 pub struct JsReader {
     reader: Box<dyn crate::api::Reader>,
 }
 
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 impl JsReader {
     pub fn new(reader: Box<dyn crate::api::Reader>) -> Self {
         JsReader { reader }
@@ -314,7 +319,7 @@ impl JsReader {
 }
 
 #[wasm_bindgen]
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 impl JsReader {
     pub fn read(&self, path: &str) -> Result<Node, JsError> {
         let read_result = self.reader.read(path);

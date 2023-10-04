@@ -1,15 +1,16 @@
-use wasm_bindgen::prelude::wasm_bindgen;
-// #[cfg(target_family = "wasm")]
-use wasm_bindgen::JsError;
-use web_sys::Blob;
-
-use crate::api::{BlobWrapper, JsReader, Parser, Scanner};
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
+use crate::api::{BlobWrapper, JsReader};
+use crate::api::{Parser, Scanner};
 use std::{
     error::Error,
     io::{Read, Seek},
     path::Path,
 };
+use wasm_bindgen::prelude::wasm_bindgen;
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::JsError;
+#[cfg(target_family = "wasm")]
+use web_sys::Blob;
 
 use super::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader};
 
@@ -28,13 +29,13 @@ impl Default for AndiChromScanner {
 }
 
 #[wasm_bindgen]
-// #[cfg(target_family = "wasm")]
 impl AndiChromScanner {
     #[wasm_bindgen(constructor)]
     pub fn new() -> AndiChromScanner {
         AndiChromScanner {}
     }
 
+    #[cfg(target_family = "wasm")]
     #[wasm_bindgen(js_name = isRecognized)]
     pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
         use web_sys::console;
@@ -53,6 +54,7 @@ impl AndiChromScanner {
         Scanner::is_recognized(self, path, &mut blob)
     }
 
+    #[cfg(target_family = "wasm")]
     #[wasm_bindgen(js_name = getReader)]
     pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
         let blob = BlobWrapper::new(input.clone());

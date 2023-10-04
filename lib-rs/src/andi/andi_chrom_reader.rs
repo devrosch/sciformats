@@ -1,14 +1,12 @@
-use wasm_bindgen::prelude::wasm_bindgen;
-// #[cfg(target_family = "wasm")]
-use wasm_bindgen::JsError;
-
+use super::andi_chrom_parser::AndiChromFile;
 use crate::{
     andi::AndiError,
     api::{Node, Reader, Table},
 };
 use std::{collections::HashMap, error::Error, path::Path};
-
-use super::andi_chrom_parser::AndiChromFile;
+use wasm_bindgen::prelude::wasm_bindgen;
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::JsError;
 
 #[wasm_bindgen]
 pub struct AndiChromReader {
@@ -16,7 +14,7 @@ pub struct AndiChromReader {
     file: AndiChromFile,
 }
 
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 #[wasm_bindgen]
 impl AndiChromReader {
     #[wasm_bindgen(js_name = read)]

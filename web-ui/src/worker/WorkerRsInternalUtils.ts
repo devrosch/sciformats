@@ -33,7 +33,7 @@ export const onScan = (
   scanner: sf_rs.AndiChromScanner,
 ) => errorHandlingWrapper(request, () => {
   const { fileInfo, fileName } = extractFromRequest(request);
-  const recognized = scanner.js_is_recognized(fileName, fileInfo.blob);
+  const recognized = scanner.isRecognized(fileName, fileInfo.blob);
   return new WorkerResponse('scanned', request.correlationId, { recognized });
 });
 
@@ -43,7 +43,7 @@ export const onOpen = (
   openFiles: Map<string, sf_rs.JsReader>,
 ) => errorHandlingWrapper(request, () => {
   const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
-  const reader = scanner.js_get_reader(fileName, fileInfo.blob);
+  const reader = scanner.getReader(fileName, fileInfo.blob);
   openFiles.set(rootUrl.toString(), reader);
   return new WorkerResponse('opened', request.correlationId, { url: rootUrl.toString() });
 });
@@ -65,7 +65,7 @@ export const onRead = (
     data: rawNode.data,
     metadata: rawNode.metadata as { [key: string]: string },
     table: rawNode.table as { columnNames: [], rows: [] },
-    childNodeNames: rawNode.child_node_names,
+    childNodeNames: rawNode.childNodeNames,
   };
   rawNode.free();
 

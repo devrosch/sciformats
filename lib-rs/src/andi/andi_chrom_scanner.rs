@@ -29,6 +29,7 @@ impl AndiChromScanner {
         AndiChromScanner {}
     }
 
+    #[wasm_bindgen(js_name = isRecognized)]
     pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
         use web_sys::console;
 
@@ -46,6 +47,7 @@ impl AndiChromScanner {
         Scanner::is_recognized(self, path, &mut blob)
     }
 
+    #[wasm_bindgen(js_name = getReader)]
     pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
         let blob = BlobWrapper::new(input.clone());
         let reader_result = self.get_reader(path, blob);

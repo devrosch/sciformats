@@ -19,6 +19,7 @@ pub struct AndiChromReader {
 // #[cfg(target_family = "wasm")]
 #[wasm_bindgen]
 impl AndiChromReader {
+    #[wasm_bindgen(js_name = read)]
     pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
         let read_result = Reader::read(self, path);
         match read_result {

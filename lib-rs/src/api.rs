@@ -182,6 +182,7 @@ impl Node {
     }
 
     #[wasm_bindgen(getter)]
+    #[wasm_bindgen(js_name = childNodeNames)]
     pub fn child_node_names(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.child_node_names {
@@ -210,17 +211,14 @@ pub struct Table {
 // WASM specific
 // -------------------------------------------------
 
-#[wasm_bindgen]
 // #[cfg(target_family = "wasm")]
 pub struct BlobWrapper {
     blob: Blob,
     pos: u64,
 }
 
-#[wasm_bindgen]
 // #[cfg(target_family = "wasm")]
 impl BlobWrapper {
-    #[wasm_bindgen(constructor)]
     pub fn new(blob: Blob) -> BlobWrapper {
         BlobWrapper { blob, pos: 0 }
     }

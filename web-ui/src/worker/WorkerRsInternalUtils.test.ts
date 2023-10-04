@@ -18,7 +18,7 @@ const mockReader: JsReader = {
     data: [],
     metadata: {},
     table: {},
-    child_node_names: [],
+    childNodeNames: [],
     free: jest.fn(),
   })),
   free: jest.fn(),
@@ -26,8 +26,8 @@ const mockReader: JsReader = {
 
 jest.mock('sf_rs', () => ({
   AndiChromScanner: jest.fn(() => ({
-    js_is_recognized: jest.fn(() => true),
-    js_get_reader: jest.fn(() => mockReader),
+    isRecognized: jest.fn(() => true),
+    getReader: jest.fn(() => mockReader),
     free: jest.fn(),
   })),
 }));
@@ -54,8 +54,8 @@ test('onScan() uses Scanner to scan if a file could be parsed', async () => {
     mockScanner,
   );
 
-  expect(mockScanner.js_is_recognized).toHaveBeenCalledTimes(1);
-  expect(mockScanner.js_get_reader).toHaveBeenCalledTimes(0);
+  expect(mockScanner.isRecognized).toHaveBeenCalledTimes(1);
+  expect(mockScanner.getReader).toHaveBeenCalledTimes(0);
   expect(mockScanner.free).toHaveBeenCalledTimes(0);
 
   expect(response.name).toBe('scanned');
@@ -78,7 +78,7 @@ test('onScan() returns error for illegal input', async () => {
     mockScanner,
   );
 
-  expect(mockScanner.js_is_recognized).toHaveBeenCalledTimes(0);
+  expect(mockScanner.isRecognized).toHaveBeenCalledTimes(0);
   expect(response.name).toBe('error');
 });
 
@@ -93,8 +93,8 @@ test('onOpen() uses Scanner to populate openFiles map', async () => {
     openFiles,
   );
 
-  expect(mockScanner.js_is_recognized).toHaveBeenCalledTimes(0);
-  expect(mockScanner.js_get_reader).toHaveBeenCalledTimes(1);
+  expect(mockScanner.isRecognized).toHaveBeenCalledTimes(0);
+  expect(mockScanner.getReader).toHaveBeenCalledTimes(1);
   expect(mockScanner.free).toHaveBeenCalledTimes(0);
 
   expect(response.name).toBe('opened');
@@ -109,8 +109,8 @@ test('onOpen() uses Scanner to populate openFiles map', async () => {
 test('onOpen() returns error if exception occurs', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
   const mockScanner = {
-    js_is_recognized: jest.fn(() => true),
-    js_get_reader: jest.fn(() => { throw new Error('getReader() error'); }),
+    isRecognized: jest.fn(() => true),
+    getReader: jest.fn(() => { throw new Error('getReader() error'); }),
     free: jest.fn(),
   };
   const openFiles = new Map<string, JsReader>();
@@ -121,7 +121,7 @@ test('onOpen() returns error if exception occurs', async () => {
     openFiles,
   );
 
-  expect(mockScanner.js_get_reader).toHaveBeenCalledTimes(1);
+  expect(mockScanner.getReader).toHaveBeenCalledTimes(1);
   expect(response.name).toBe('error');
 });
 

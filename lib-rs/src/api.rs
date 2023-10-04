@@ -5,7 +5,7 @@ use std::{
 };
 
 use js_sys::Uint8Array;
-use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use wasm_bindgen::{prelude::wasm_bindgen, JsError, JsValue};
 use web_sys::{Blob, FileReaderSync};
 
 /// Parses a (readonly) data set.
@@ -169,8 +169,11 @@ impl Node {
             }
         }
 
-        let set_col_names_ret = js_sys::Reflect::set(&js_table, &JsValue::from("columnNames"), &js_column_names).unwrap();
-        let set_rows_ret = js_sys::Reflect::set(&js_table, &JsValue::from("rows"), &js_rows).unwrap();
+        let set_col_names_ret =
+            js_sys::Reflect::set(&js_table, &JsValue::from("columnNames"), &js_column_names)
+                .unwrap();
+        let set_rows_ret =
+            js_sys::Reflect::set(&js_table, &JsValue::from("rows"), &js_rows).unwrap();
         if !set_col_names_ret || !set_rows_ret {
             panic!("Could not populate table JS Object.");
         }
@@ -317,11 +320,11 @@ impl JsReader {
 #[wasm_bindgen]
 // #[cfg(target_family = "wasm")]
 impl JsReader {
-    pub fn read(&self, path: &str) -> Result<Node, JsValue> {
+    pub fn read(&self, path: &str) -> Result<Node, JsError> {
         let read_result = self.reader.read(path);
         match read_result {
             Ok(node) => Ok(node),
-            Err(error) => Err(error.to_string().into()),
+            Err(error) => Err(JsError::new(&error.to_string())),
         }
     }
 }

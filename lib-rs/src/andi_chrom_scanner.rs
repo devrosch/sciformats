@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 // #[cfg(target_family = "wasm")]
-use wasm_bindgen::JsValue;
+use wasm_bindgen::JsError;
 use web_sys::Blob;
 
 use crate::{
@@ -48,12 +48,12 @@ impl AndiChromScanner {
         Scanner::is_recognized(self, path, &mut blob)
     }
 
-    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsValue> {
+    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
         let blob = BlobWrapper::new(input.clone());
         let reader_result = self.get_reader(path, blob);
         match reader_result {
             Ok(reader) => Ok(JsReader::new(reader)),
-            Err(error) => Err(error.to_string().into()),
+            Err(error) => Err(JsError::new(&error.to_string())),
         }
     }
 }

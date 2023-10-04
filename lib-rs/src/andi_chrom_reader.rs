@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 // #[cfg(target_family = "wasm")]
-use wasm_bindgen::JsValue;
+use wasm_bindgen::JsError;
 
 use crate::{
     andi::AndiError,
@@ -18,11 +18,11 @@ pub struct AndiChromReader {
 // #[cfg(target_family = "wasm")]
 #[wasm_bindgen]
 impl AndiChromReader {
-    pub fn js_read(&self, path: &str) -> Result<Node, JsValue> {
+    pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
         let read_result = Reader::read(self, path);
         match read_result {
             Ok(node) => Ok(node),
-            Err(error) => Err(error.to_string().into()),
+            Err(error) => Err(JsError::new(&error.to_string())),
         }
     }
 }

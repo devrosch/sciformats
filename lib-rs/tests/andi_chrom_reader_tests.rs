@@ -5,7 +5,7 @@ wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 use crate::io::open_file;
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
-    api::{Parameter, Parser, Reader},
+    api::{Column, Parameter, Parser, Reader, Value},
 };
 use wasm_bindgen_test::wasm_bindgen_test;
 
@@ -123,13 +123,19 @@ fn andi_chrom_read_valid_succeeds() {
     let error_log_table = error_log.table.as_ref().unwrap();
     assert_eq!(1, error_log_table.column_names.len());
     assert_eq!(
-        ("message".to_owned(), "Message".to_owned()),
+        Column::new("message", "Message"),
         error_log_table.column_names[0]
     );
     assert_eq!(1, error_log_table.rows[0].len());
-    assert_eq!("error 1", error_log_table.rows[0].get("message").unwrap());
+    assert_eq!(
+        &Value::String("error 1".to_owned()),
+        error_log_table.rows[0].get("message").unwrap()
+    );
     assert_eq!(1, error_log_table.rows[1].len());
-    assert_eq!("error 2", error_log_table.rows[1].get("message").unwrap());
+    assert_eq!(
+        &Value::String("error 2".to_owned()),
+        error_log_table.rows[1].get("message").unwrap()
+    );
     assert!(error_log.child_node_names.is_empty());
 
     let sample_description = &reader.read("/1- some name").unwrap();
@@ -289,84 +295,51 @@ fn andi_chrom_read_valid_succeeds() {
     let column_names = &peak_processing_results.table.as_ref().unwrap().column_names;
     assert_eq!(15, column_names.len());
     assert_eq!(
-        (
-            "peak_retention_time".to_owned(),
-            "Peak Retention Time".to_owned()
-        ),
+        Column::new("peak_retention_time", "Peak Retention Time"),
         column_names[0]
     );
+    assert_eq!(Column::new("peak_name", "Peak Name"), column_names[1]);
+    assert_eq!(Column::new("peak_amount", "Peak Amount"), column_names[2]);
     assert_eq!(
-        ("peak_name".to_owned(), "Peak Name".to_owned()),
-        column_names[1]
-    );
-    assert_eq!(
-        ("peak_amount".to_owned(), "Peak Amount".to_owned()),
-        column_names[2]
-    );
-    assert_eq!(
-        ("peak_start_time".to_owned(), "Peak Start Time".to_owned()),
+        Column::new("peak_start_time", "Peak Start Time"),
         column_names[3]
     );
     assert_eq!(
-        ("peak_end_time".to_owned(), "Peak End Time".to_owned()),
+        Column::new("peak_end_time", "Peak End Time"),
         column_names[4]
     );
+    assert_eq!(Column::new("peak_area", "Peak Area"), column_names[5]);
+    assert_eq!(Column::new("peak_height", "Peak Height"), column_names[6]);
     assert_eq!(
-        ("peak_area".to_owned(), "Peak Area".to_owned()),
-        column_names[5]
-    );
-    assert_eq!(
-        ("peak_height".to_owned(), "Peak Height".to_owned()),
-        column_names[6]
-    );
-    assert_eq!(
-        (
-            "baseline_start_value".to_owned(),
-            "Baseline Start Value".to_owned()
-        ),
+        Column::new("baseline_start_value", "Baseline Start Value"),
         column_names[7]
     );
     assert_eq!(
-        (
-            "baseline_stop_value".to_owned(),
-            "Baseline Stop Value".to_owned()
-        ),
+        Column::new("baseline_stop_value", "Baseline Stop Value"),
         column_names[8]
     );
     assert_eq!(
-        (
-            "peak_start_detection_code".to_owned(),
-            "Peak Start Detection Code".to_owned()
-        ),
+        Column::new("peak_start_detection_code", "Peak Start Detection Code"),
         column_names[9]
     );
     assert_eq!(
-        (
-            "peak_stop_detection_code".to_owned(),
-            "Peak Stop Detection Code".to_owned()
-        ),
+        Column::new("peak_stop_detection_code", "Peak Stop Detection Code"),
         column_names[10]
     );
     assert_eq!(
-        (
-            "manually_reintegrated_peaks".to_owned(),
-            "Manually Reintegrated Peak".to_owned()
-        ),
+        Column::new("manually_reintegrated_peaks", "Manually Reintegrated Peak"),
         column_names[11]
     );
     assert_eq!(
-        (
-            "peak_retention_unit".to_owned(),
-            "Peak Retention Unit".to_owned()
-        ),
+        Column::new("peak_retention_unit", "Peak Retention Unit"),
         column_names[12]
     );
     assert_eq!(
-        ("peak_amount_unit".to_owned(), "Peak Amount Unit".to_owned()),
+        Column::new("peak_amount_unit", "Peak Amount Unit"),
         column_names[13]
     );
     assert_eq!(
-        ("detector_unit".to_owned(), "Detector Unit".to_owned()),
+        Column::new("detector_unit", "Detector Unit"),
         column_names[14]
     );
 
@@ -377,41 +350,59 @@ fn andi_chrom_read_valid_succeeds() {
 
     let peak_0 = &peak_processing_results.table.as_ref().unwrap().rows[0];
     assert_eq!(15, peak_0.keys().len());
-    assert_eq!("10.111", peak_0["peak_retention_time"]);
-    assert_eq!("ref", peak_0["peak_name"]);
-    assert_eq!("110.1111", peak_0["peak_amount"]);
-    assert_eq!("8", peak_0["peak_start_time"]);
-    assert_eq!("12", peak_0["peak_end_time"]);
-    assert_eq!("111", peak_0["peak_area"]);
-    assert_eq!("111111.1", peak_0["peak_height"]);
-    assert_eq!("5", peak_0["baseline_start_value"]);
-    assert_eq!("7", peak_0["baseline_stop_value"]);
-    assert_eq!("A", peak_0["peak_start_detection_code"]);
-    assert_eq!("X", peak_0["peak_stop_detection_code"]);
-    assert_eq!("false", peak_0["manually_reintegrated_peaks"]);
-    assert_eq!("seconds", peak_0["peak_retention_unit"]);
-    assert_eq!("ppm", peak_0["peak_amount_unit"]);
-    assert_eq!("au", peak_0["detector_unit"]);
+    assert_eq!(Value::F32(10.111), peak_0["peak_retention_time"]);
+    assert_eq!(Value::String("ref".to_owned()), peak_0["peak_name"]);
+    assert_eq!(Value::F32(110.1111), peak_0["peak_amount"]);
+    assert_eq!(Value::F32(8.0), peak_0["peak_start_time"]);
+    assert_eq!(Value::F32(12.0), peak_0["peak_end_time"]);
+    assert_eq!(Value::F32(111.0), peak_0["peak_area"]);
+    assert_eq!(Value::F32(111111.1), peak_0["peak_height"]);
+    assert_eq!(Value::F32(5.0), peak_0["baseline_start_value"]);
+    assert_eq!(Value::F32(7.0), peak_0["baseline_stop_value"]);
+    assert_eq!(
+        Value::String("A".to_owned()),
+        peak_0["peak_start_detection_code"]
+    );
+    assert_eq!(
+        Value::String("X".to_owned()),
+        peak_0["peak_stop_detection_code"]
+    );
+    assert_eq!(Value::Bool(false), peak_0["manually_reintegrated_peaks"]);
+    assert_eq!(
+        Value::String("seconds".to_owned()),
+        peak_0["peak_retention_unit"]
+    );
+    assert_eq!(Value::String("ppm".to_owned()), peak_0["peak_amount_unit"]);
+    assert_eq!(Value::String("au".to_owned()), peak_0["detector_unit"]);
 
     // skip peak 1
 
     let peak_2 = &peak_processing_results.table.as_ref().unwrap().rows[2];
     assert_eq!(15, peak_2.keys().len());
-    assert_eq!("50.333", peak_2["peak_retention_time"]);
-    assert_eq!("peak name 2", peak_2["peak_name"]);
-    assert_eq!("330.333", peak_2["peak_amount"]);
-    assert_eq!("48", peak_2["peak_start_time"]);
-    assert_eq!("52", peak_2["peak_end_time"]);
-    assert_eq!("333", peak_2["peak_area"]);
-    assert_eq!("133333.3", peak_2["peak_height"]);
-    assert_eq!("7", peak_2["baseline_start_value"]);
-    assert_eq!("5", peak_2["baseline_stop_value"]);
-    assert_eq!("C", peak_2["peak_start_detection_code"]);
-    assert_eq!("Z", peak_2["peak_stop_detection_code"]);
-    assert_eq!("false", peak_2["manually_reintegrated_peaks"]);
-    assert_eq!("seconds", peak_2["peak_retention_unit"]);
-    assert_eq!("ppm", peak_2["peak_amount_unit"]);
-    assert_eq!("au", peak_2["detector_unit"]);
+    assert_eq!(Value::F32(50.333), peak_2["peak_retention_time"]);
+    assert_eq!(Value::String("peak name 2".to_owned()), peak_2["peak_name"]);
+    assert_eq!(Value::F32(330.333), peak_2["peak_amount"]);
+    assert_eq!(Value::F32(48.0), peak_2["peak_start_time"]);
+    assert_eq!(Value::F32(52.0), peak_2["peak_end_time"]);
+    assert_eq!(Value::F32(333.0), peak_2["peak_area"]);
+    assert_eq!(Value::F32(133333.3), peak_2["peak_height"]);
+    assert_eq!(Value::F32(7.0), peak_2["baseline_start_value"]);
+    assert_eq!(Value::F32(5.0), peak_2["baseline_stop_value"]);
+    assert_eq!(
+        Value::String("C".to_owned()),
+        peak_2["peak_start_detection_code"]
+    );
+    assert_eq!(
+        Value::String("Z".to_owned()),
+        peak_2["peak_stop_detection_code"]
+    );
+    assert_eq!(Value::Bool(false), peak_2["manually_reintegrated_peaks"]);
+    assert_eq!(
+        Value::String("seconds".to_owned()),
+        peak_2["peak_retention_unit"]
+    );
+    assert_eq!(Value::String("ppm".to_owned()), peak_2["peak_amount_unit"]);
+    assert_eq!(Value::String("au".to_owned()), peak_2["detector_unit"]);
 
     // TODO: add tests for non standard variables and attributes once available
 }

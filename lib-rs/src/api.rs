@@ -257,8 +257,8 @@ impl Node {
         if let Some(table) = &self.table {
             let col_names = &table.column_names;
             for col_name in col_names {
-                let key = JsValue::from(&col_name.0);
-                let value = JsValue::from(&col_name.1);
+                let key = JsValue::from(&col_name.key);
+                let value = JsValue::from(&col_name.name);
                 let column = js_sys::Object::new();
                 let set_col_key_ret =
                     js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
@@ -275,7 +275,7 @@ impl Node {
                 let js_row = js_sys::Object::new();
                 for cell in row {
                     let key = JsValue::from(cell.0);
-                    let val = JsValue::from(cell.1);
+                    let val = JsValue::from(cell.1.to_string());
                     let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
                     if !set_cell_ret {
                         panic!("Could not convert table cell to JS Object.");
@@ -308,11 +308,31 @@ impl Node {
     }
 }
 
+/// A table column.
+///
+/// Note: This does not hold any data. It is used to indicate what columns a table consists of.
+#[derive(Debug, PartialEq)]
+pub struct Column {
+    /// A unique key for a table.
+    key: String,
+    /// A name for the column.
+    name: String,
+}
+
+impl Column {
+    pub fn new(key: impl Into<String>, name: impl Into<String>) -> Column {
+        Column {
+            key: key.into(),
+            name: name.into(),
+        }
+    }
+}
+
 /// A data table.
 #[derive(Debug, PartialEq)]
 pub struct Table {
     /// A list of column keys and corresponding column names.
-    pub column_names: Vec<(String, String)>,
+    pub column_names: Vec<Column>,
 
     /// A list of rows.
     ///
@@ -320,7 +340,7 @@ pub struct Table {
     /// e.g., peak parameters such as position or height.
     /// Only keys from the coulmn_names may occur but not all keys from
     /// that list need to occur as there may be missing values for cells.
-    pub rows: Vec<HashMap<String, String>>,
+    pub rows: Vec<HashMap<String, Value>>,
 }
 
 // -------------------------------------------------

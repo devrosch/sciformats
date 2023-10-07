@@ -1,7 +1,7 @@
 use super::andi_chrom_parser::AndiChromFile;
 use crate::{
     andi::AndiError,
-    api::{Node, Reader, Table},
+    api::{Node, Parameter, Reader, Table, Value},
 };
 use std::{collections::HashMap, error::Error, path::Path};
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -70,35 +70,33 @@ impl AndiChromReader {
         })
     }
 
-    fn push_opt_str(key: &str, val: &Option<String>, vec: &mut Vec<(String, String)>) {
-        match val {
-            None => (),
-            Some(s) => vec.push((key.into(), s.into())),
+    fn push_opt_str(key: &str, val: &Option<String>, vec: &mut Vec<Parameter>) {
+        if let Some(v) = val {
+            vec.push(Parameter::from_str_str(key, v))
         }
     }
 
-    fn push_opt_f32(key: &str, val: &Option<f32>, vec: &mut Vec<(String, String)>) {
-        match val {
-            None => (),
-            Some(f) => vec.push((key.into(), f.to_string())),
+    fn push_opt_f32(key: &str, val: &Option<f32>, vec: &mut Vec<Parameter>) {
+        if let Some(v) = val {
+            vec.push(Parameter::from_str_f32(key, *v))
         }
     }
 
     fn read_admin_data(&self) -> Result<Node, Box<dyn Error>> {
         let admin_data = &self.file.admin_data;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
-        parameters.push((
-            "Dataset Completeness".into(),
+        let mut parameters: Vec<Parameter> = Vec::new();
+        parameters.push(Parameter::from_str_str(
+            "Dataset Completeness",
             admin_data.dataset_completeness.to_string(),
         ));
-        parameters.push((
-            "Protocol Template Revision".into(),
-            admin_data.protocol_template_revision.to_owned(),
+        parameters.push(Parameter::from_str_str(
+            "Protocol Template Revision",
+            &admin_data.protocol_template_revision,
         ));
-        parameters.push((
-            "NetCDF Revision".into(),
-            admin_data.netcdf_revision.to_owned(),
+        parameters.push(Parameter::from_str_str(
+            "NetCDF Revision",
+            &admin_data.netcdf_revision,
         ));
         Self::push_opt_str("Languages", &admin_data.languages, &mut parameters);
         Self::push_opt_str(
@@ -117,9 +115,9 @@ impl AndiChromReader {
             &admin_data.dataset_date_time_stamp,
             &mut parameters,
         );
-        parameters.push((
-            "Injection Date/Time Stamp".into(),
-            admin_data.injection_date_time_stamp.clone(),
+        parameters.push(Parameter::from_str_str(
+            "Injection Date/Time Stamp",
+            &admin_data.injection_date_time_stamp,
         ));
         Self::push_opt_str(
             "Experiment Title",
@@ -171,7 +169,7 @@ impl AndiChromReader {
     fn read_sample_description(&self) -> Result<Node, Box<dyn Error>> {
         let sample_description = &self.file.sample_description;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
+        let mut parameters: Vec<Parameter> = Vec::new();
         Self::push_opt_str(
             "Sample ID Comments",
             &sample_description.sample_id_comments,
@@ -212,7 +210,7 @@ impl AndiChromReader {
     fn read_detection_method(&self) -> Result<Node, Box<dyn Error>> {
         let detection_method = &self.file.detection_method;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
+        let mut parameters: Vec<Parameter> = Vec::new();
         Self::push_opt_str(
             "Detection Method Table Name",
             &detection_method.detection_method_table_name,
@@ -262,29 +260,35 @@ impl AndiChromReader {
     fn read_raw_data(&self) -> Result<Node, Box<dyn Error>> {
         let raw_data = &self.file.raw_data;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
-        parameters.push(("Point Number".into(), raw_data.point_number.to_string()));
+        let mut parameters: Vec<Parameter> = Vec::new();
+        parameters.push(Parameter {
+            key: "Point Number".into(),
+            value: Value::I32(raw_data.point_number),
+        });
         Self::push_opt_str(
             "Raw Data Table Name",
             &raw_data.raw_data_table_name,
             &mut parameters,
         );
-        parameters.push(("Retention Unit".into(), raw_data.retention_unit.clone()));
-        parameters.push((
-            "Actual Run Time Length".into(),
-            raw_data.actual_run_time_length.to_string(),
+        parameters.push(Parameter::from_str_str(
+            "Retention Unit",
+            &raw_data.retention_unit,
         ));
-        parameters.push((
-            "Actual Sampling Interval".into(),
-            raw_data.actual_sampling_interval.to_string(),
+        parameters.push(Parameter::from_str_f32(
+            "Actual Run Time Length",
+            raw_data.actual_run_time_length,
         ));
-        parameters.push((
-            "Actual Delay Time".into(),
-            raw_data.actual_delay_time.to_string(),
+        parameters.push(Parameter::from_str_f32(
+            "Actual Sampling Interval",
+            raw_data.actual_sampling_interval,
         ));
-        parameters.push((
-            "Uniform Sampling Flag".into(),
-            raw_data.uniform_sampling_flag.to_string(),
+        parameters.push(Parameter::from_str_f32(
+            "Actual Delay Time",
+            raw_data.actual_delay_time,
+        ));
+        parameters.push(Parameter::from_str_bool(
+            "Uniform Sampling Flag",
+            raw_data.uniform_sampling_flag,
         ));
         Self::push_opt_str(
             "Autosampler Position",
@@ -348,10 +352,10 @@ impl AndiChromReader {
     fn read_peak_processing_results(&self) -> Result<Node, Box<dyn Error>> {
         let peak_processing_results = &self.file.peak_processing_results;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
-        parameters.push((
-            "Peak Number".into(),
-            peak_processing_results.peak_number.to_string(),
+        let mut parameters: Vec<Parameter> = Vec::new();
+        parameters.push(Parameter::from_str_i32(
+            "Peak Number",
+            peak_processing_results.peak_number,
         ));
         Self::push_opt_str(
             "Peak Processing Results Table Name",

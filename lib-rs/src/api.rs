@@ -5,6 +5,7 @@ use std::io::SeekFrom;
 use std::{
     collections::HashMap,
     error::Error,
+    fmt::Display,
     io::{Read, Seek},
 };
 #[cfg(target_family = "wasm")]
@@ -63,6 +64,98 @@ pub trait Reader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Value {
+    String(String),
+    Bool(bool),
+    I32(i32),
+    U32(u32),
+    I64(i64),
+    U64(u64),
+    F32(f32),
+    F64(f64),
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::String(v) => write!(f, "{}", v),
+            Value::Bool(v) => write!(f, "{}", v),
+            Value::I32(v) => write!(f, "{}", v),
+            Value::U32(v) => write!(f, "{}", v),
+            Value::I64(v) => write!(f, "{}", v),
+            Value::U64(v) => write!(f, "{}", v),
+            Value::F32(v) => write!(f, "{}", v),
+            Value::F64(v) => write!(f, "{}", v),
+        }
+    }
+}
+
+/// A key value parameter.
+#[derive(Debug, PartialEq)]
+pub struct Parameter {
+    pub key: String,
+    pub value: Value,
+}
+
+impl Parameter {
+    pub fn from_str_str(key: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::String(value.into()),
+        }
+    }
+
+    pub fn from_str_bool(key: impl Into<String>, value: bool) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::Bool(value),
+        }
+    }
+
+    pub fn from_str_i32(key: impl Into<String>, value: i32) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::I32(value),
+        }
+    }
+
+    pub fn from_str_u32(key: impl Into<String>, value: u32) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::U32(value),
+        }
+    }
+
+    pub fn from_str_i64(key: impl Into<String>, value: i64) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::I64(value),
+        }
+    }
+
+    pub fn from_str_u64(key: impl Into<String>, value: u64) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::U64(value),
+        }
+    }
+
+    pub fn from_str_f32(key: impl Into<String>, value: f32) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::F32(value),
+        }
+    }
+
+    pub fn from_str_f64(key: impl Into<String>, value: f64) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::F64(value),
+        }
+    }
+}
+
 #[wasm_bindgen]
 /// An harmonized abstraction for a part of a data set.
 #[derive(Debug, PartialEq)]
@@ -70,7 +163,7 @@ pub struct Node {
     #[wasm_bindgen(skip)]
     pub name: String,
     #[wasm_bindgen(skip)]
-    pub parameters: Vec<(String, String)>,
+    pub parameters: Vec<Parameter>,
     #[wasm_bindgen(skip)]
     pub data: Vec<(f64, f64)>,
     #[wasm_bindgen(skip)]
@@ -92,8 +185,8 @@ impl Node {
     pub fn parameters(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.parameters {
-            let key = JsValue::from(&param.0);
-            let value = JsValue::from(&param.1);
+            let key = JsValue::from(&param.key);
+            let value = JsValue::from(&param.value.to_string());
             let js_param = js_sys::Object::new();
             let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
             let set_val_ret =
@@ -342,7 +435,10 @@ mod tests {
     fn map_node_to_js() {
         let node = Node {
             name: "abc".to_owned(),
-            parameters: vec![("a".to_owned(), "b".to_owned())],
+            parameters: vec![Parameter {
+                key: "a".into(),
+                value: Value::String("b".into()),
+            }],
             data: vec![],
             metadata: vec![],
             table: None,

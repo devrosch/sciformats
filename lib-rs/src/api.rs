@@ -156,6 +156,24 @@ impl Parameter {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct PointXy {
+    pub x: f64,
+    pub y: f64,
+}
+
+impl PointXy {
+    pub fn new(x: f64, y: f64) -> PointXy {
+        PointXy { x, y }
+    }
+}
+
+impl From<(f64, f64)> for PointXy {
+    fn from(value: (f64, f64)) -> Self {
+        PointXy::new(value.0, value.1)
+    }
+}
+
 #[wasm_bindgen]
 /// An harmonized abstraction for a part of a data set.
 #[derive(Debug, PartialEq)]
@@ -165,7 +183,7 @@ pub struct Node {
     #[wasm_bindgen(skip)]
     pub parameters: Vec<Parameter>,
     #[wasm_bindgen(skip)]
-    pub data: Vec<(f64, f64)>,
+    pub data: Vec<PointXy>,
     #[wasm_bindgen(skip)]
     pub metadata: Vec<(String, String)>,
     #[wasm_bindgen(skip)]
@@ -203,8 +221,8 @@ impl Node {
     pub fn data(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for xy in &self.data {
-            let x = JsValue::from_f64(xy.0);
-            let y = JsValue::from_f64(xy.1);
+            let x = JsValue::from_f64(xy.x);
+            let y = JsValue::from_f64(xy.y);
             let js_xy = js_sys::Object::new();
             let set_x_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("x"), &x).unwrap();
             let set_y_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("y"), &y).unwrap();

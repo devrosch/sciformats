@@ -244,8 +244,8 @@ fn andi_chrom_read_valid_succeeds() {
         (90f64, 10000f64),
     ];
     for i in 0..10 {
-        assert_eq_f64(expect_data[i].0, raw_data.data[i].0);
-        assert_eq_f64(expect_data[i].1, raw_data.data[i].1);
+        assert_eq_f64(expect_data[i].0, raw_data.data[i].x);
+        assert_eq_f64(expect_data[i].1, raw_data.data[i].y);
     }
     assert_eq!(2, raw_data.metadata.len());
     assert_eq!(

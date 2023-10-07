@@ -1,7 +1,7 @@
 use super::andi_chrom_parser::AndiChromFile;
 use crate::{
     andi::AndiError,
-    api::{Node, Parameter, Reader, Table, Value},
+    api::{Node, Parameter, PointXy, Reader, Table, Value},
 };
 use std::{collections::HashMap, error::Error, path::Path};
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -307,10 +307,12 @@ impl AndiChromReader {
                         "Numbers of ordinate and retention values do not match.",
                     )));
                 }
-                let xy_values: Vec<(f64, f64)> = x_values
+                let xy_values: Vec<PointXy> = x_values
                     .iter()
                     .enumerate()
-                    .map(|(i, &x)| (x as f64, y_values.get(i).unwrap().to_owned() as f64))
+                    .map(|(i, &x)| {
+                        PointXy::new(x as f64, y_values.get(i).unwrap().to_owned() as f64)
+                    })
                     .collect();
                 xy_values
             }
@@ -319,13 +321,13 @@ impl AndiChromReader {
                 let actual_delay_time = raw_data.actual_delay_time as f64;
                 let actual_sampling_interval = raw_data.actual_sampling_interval as f64;
                 let y_values = &raw_data.get_ordinate_values()?;
-                let xy_values: Vec<(f64, f64)> = y_values
+                let xy_values: Vec<PointXy> = y_values
                     .iter()
                     .enumerate()
                     .map(|(i, &y)| {
                         // spec is ambigious, could be i or (i+1)
                         let x = actual_delay_time + i as f64 * actual_sampling_interval;
-                        (x, y as f64)
+                        PointXy::new(x, y as f64)
                     })
                     .collect();
                 xy_values

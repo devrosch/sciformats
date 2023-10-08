@@ -175,6 +175,20 @@ pub fn convert_iso_8859_1_cstr_to_str(bytes: &[u8]) -> String {
         .collect()
 }
 
+pub fn trim_zeros_in_place(s: &mut String) {
+    if let Some(index) = s.find('\0') {
+        s.truncate(index);
+    }
+}
+
+pub fn read_global_str_attr(reader: &mut netcdf3::FileReader, attr_name: &str) -> Option<String> {
+    let mut res = reader.data_set().get_global_attr_as_string(attr_name);
+    if let Some(s) = res.as_mut() {
+        trim_zeros_in_place(s);
+    }
+    res
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

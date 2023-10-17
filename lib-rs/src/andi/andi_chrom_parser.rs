@@ -1,5 +1,3 @@
-use crate::api::Parser;
-
 use super::andi_utils::{
     read_global_str_attr, read_index_from_slice, read_index_from_var_2d_string,
     read_index_from_var_f32, read_multi_string_var, read_optional_var, trim_zeros_in_place,
@@ -8,6 +6,7 @@ use super::{
     andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
     AndiDatasetCompleteness, AndiError,
 };
+use crate::api::Parser;
 use std::{
     cell::RefCell,
     error::Error,
@@ -55,7 +54,7 @@ impl AndiChromFile {
             detection_method.detector_unit.as_deref(),
         )?;
 
-        Ok(AndiChromFile {
+        Ok(Self {
             admin_data,
             sample_description,
             detection_method,
@@ -245,12 +244,12 @@ impl AndiChromRawData {
             .ok_or(AndiError::new("Missing dataset_completeness dimension."))?;
         // TODO: usize?
         let point_number = point_number_dim.size() as i32;
-        let raw_data_table_name = read_global_str_attr(&mut reader, "raw_data_table_name");
-        let retention_unit = match read_global_str_attr(&mut reader, "retention_unit") {
+        let raw_data_table_name = read_global_str_attr(&reader, "raw_data_table_name");
+        let retention_unit = match read_global_str_attr(&reader, "retention_unit") {
             Some(unit) => unit,
             None => {
                 // quirk: accomodate different naming found in some data
-                read_global_str_attr(&mut reader, "retention_units")
+                read_global_str_attr(&reader, "retention_units")
                     .ok_or(AndiError::new("Missing retention_unit attribute."))?
             }
         };
@@ -352,7 +351,8 @@ impl AndiChromPeakProcessingResults {
         peak_retention_unit: &str,
         detector_unit: Option<&str>,
     ) -> Result<Self, Box<dyn Error>> {
-        let mut reader = reader_ref.borrow_mut();
+        // TODO: RefCell needed?
+        let reader = reader_ref.borrow_mut();
 
         let peak_number_dim = reader.data_set().get_dim("peak_number");
         let peak_number = match peak_number_dim {
@@ -361,17 +361,17 @@ impl AndiChromPeakProcessingResults {
             None => 0,
         };
         let peak_processing_results_table_name =
-            read_global_str_attr(&mut reader, "peak_processing_results_table_name");
+            read_global_str_attr(&reader, "peak_processing_results_table_name");
         let peak_processing_results_comments =
-            read_global_str_attr(&mut reader, "peak_processing_results_comments");
+            read_global_str_attr(&reader, "peak_processing_results_comments");
         let peak_processing_method_name =
-            read_global_str_attr(&mut reader, "peak_processing_method_name");
+            read_global_str_attr(&reader, "peak_processing_method_name");
         let peak_processing_date_time_stamp =
-            read_global_str_attr(&mut reader, "peak_processing_date_time_stamp");
-        let mut peak_amount_unit = read_global_str_attr(&mut reader, "peak_amount_unit");
+            read_global_str_attr(&reader, "peak_processing_date_time_stamp");
+        let mut peak_amount_unit = read_global_str_attr(&reader, "peak_amount_unit");
         if peak_amount_unit.is_none() {
             // quirk: accomodate different naming found in some data
-            peak_amount_unit = read_global_str_attr(&mut reader, "peak_amount_units");
+            peak_amount_unit = read_global_str_attr(&reader, "peak_amount_units");
         }
 
         drop(reader);

@@ -1,6 +1,6 @@
 use crate::andi::AndiError;
 use netcdf3::{DataType, DataVector};
-use std::error::Error;
+use std::{error::Error, str::FromStr};
 
 pub fn read_index_from_var_f32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
@@ -16,13 +16,13 @@ pub fn read_index_from_var_f32(
     Ok(res)
 }
 
-fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), Box<dyn Error>> {
+fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), AndiError> {
     if dims.len() != 2 {
-        return Err(Box::new(AndiError::new(&format!(
+        return Err(AndiError::new(&format!(
             "Unexpected number of dimensions for {}: {}",
             var_name,
             dims.len()
-        ))));
+        )));
     }
     Ok(())
 }
@@ -30,7 +30,7 @@ fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), Box<dyn Erro
 pub fn read_index_from_var_2d_string(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<String>, Box<dyn Error>> {
+) -> Result<Option<String>, AndiError> {
     match var {
         None => Ok(None),
         Some((var_name, dims, data)) => {
@@ -181,12 +181,80 @@ pub fn trim_zeros_in_place(s: &mut String) {
     }
 }
 
-pub fn read_global_str_attr(reader: &mut netcdf3::FileReader, attr_name: &str) -> Option<String> {
+pub fn read_global_str_attr(reader: &netcdf3::FileReader, attr_name: &str) -> Option<String> {
     let mut res = reader.data_set().get_global_attr_as_string(attr_name);
     if let Some(s) = res.as_mut() {
         trim_zeros_in_place(s);
     }
     res
+}
+
+pub fn read_global_attr_i16(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<i16>, AndiError> {
+    match reader.data_set().get_global_attr_i16(attr_name) {
+        None | Some([]) => Ok(None),
+        Some([val]) => Ok(Some(val.to_owned())),
+        Some([..]) => Err(AndiError::new(&format!(
+            "More than one element found in {} attribute.",
+            attr_name
+        ))),
+    }
+}
+
+pub fn read_global_i32_attr(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<i32>, AndiError> {
+    match reader.data_set().get_global_attr_i32(attr_name) {
+        None | Some([]) => Ok(None),
+        Some([val]) => Ok(Some(val.to_owned())),
+        Some([..]) => Err(AndiError::new(&format!(
+            "More than one element found in {} attribute.",
+            attr_name
+        ))),
+    }
+}
+
+pub fn read_global_f32_attr(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<f32>, AndiError> {
+    match reader.data_set().get_global_attr_f32(attr_name) {
+        None | Some([]) => Ok(None),
+        Some([val]) => Ok(Some(val.to_owned())),
+        Some([..]) => Err(AndiError::new(&format!(
+            "More than one element found in {} attribute.",
+            attr_name
+        ))),
+    }
+}
+
+pub fn read_global_attr_f64(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<f64>, AndiError> {
+    match reader.data_set().get_global_attr_f64(attr_name) {
+        None | Some([]) => Ok(None),
+        Some([val]) => Ok(Some(val.to_owned())),
+        Some([..]) => Err(AndiError::new(&format!(
+            "More than one element found in {} attribute.",
+            attr_name
+        ))),
+    }
+}
+
+pub fn read_enum_from_global_str_attr<T: Default + FromStr>(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<T, AndiError> {
+    read_global_str_attr(reader, attr_name).map_or(Ok(T::default()), |s| {
+        T::from_str(&s).or(Err(AndiError::new(&format!(
+            "Illegal {} value: {}",
+            attr_name, s
+        ))))
+    })
 }
 
 #[cfg(test)]

@@ -181,7 +181,7 @@ pub fn trim_zeros_in_place(s: &mut String) {
     }
 }
 
-pub fn read_global_str_attr(reader: &netcdf3::FileReader, attr_name: &str) -> Option<String> {
+pub fn read_global_attr_str(reader: &netcdf3::FileReader, attr_name: &str) -> Option<String> {
     let mut res = reader.data_set().get_global_attr_as_string(attr_name);
     if let Some(s) = res.as_mut() {
         trim_zeros_in_place(s);
@@ -203,7 +203,7 @@ pub fn read_global_attr_i16(
     }
 }
 
-pub fn read_global_i32_attr(
+pub fn read_global_attr_i32(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<Option<i32>, AndiError> {
@@ -217,7 +217,7 @@ pub fn read_global_i32_attr(
     }
 }
 
-pub fn read_global_f32_attr(
+pub fn read_global_attr_f32(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<Option<f32>, AndiError> {
@@ -245,11 +245,11 @@ pub fn read_global_attr_f64(
     }
 }
 
-pub fn read_enum_from_global_str_attr<T: Default + FromStr>(
+pub fn read_enum_from_global_attr_str<T: Default + FromStr>(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<T, AndiError> {
-    read_global_str_attr(reader, attr_name).map_or(Ok(T::default()), |s| {
+    read_global_attr_str(reader, attr_name).map_or(Ok(T::default()), |s| {
         T::from_str(&s).or(Err(AndiError::new(&format!(
             "Illegal {} value: {}",
             attr_name, s

@@ -1,5 +1,5 @@
 use super::andi_utils::{
-    read_global_str_attr, read_index_from_slice, read_index_from_var_2d_string,
+    read_global_attr_str, read_index_from_slice, read_index_from_var_2d_string,
     read_index_from_var_f32, read_multi_string_var, read_optional_var, trim_zeros_in_place,
 };
 use super::{
@@ -92,32 +92,32 @@ pub struct AndiChromAdminData {
 
 impl AndiChromAdminData {
     pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
-        let dataset_completeness_attr = read_global_str_attr(reader, "dataset_completeness")
+        let dataset_completeness_attr = read_global_attr_str(reader, "dataset_completeness")
             .ok_or(AndiError::new("Missing dataset_completeness attribute."))?;
         let dataset_completeness = AndiDatasetCompleteness::from_str(&dataset_completeness_attr)?;
-        let protocol_template_revision = read_global_str_attr(reader, "aia_template_revision")
+        let protocol_template_revision = read_global_attr_str(reader, "aia_template_revision")
             .ok_or(AndiError::new("Missing aia_template_revision attribute."))?;
-        let netcdf_revision = read_global_str_attr(reader, "netcdf_revision")
+        let netcdf_revision = read_global_attr_str(reader, "netcdf_revision")
             .ok_or(AndiError::new("Missing netcdf_revision attribute."))?;
-        let languages = read_global_str_attr(reader, "languages");
-        let administrative_comments = read_global_str_attr(reader, "administrative_comments");
-        let dataset_origin = read_global_str_attr(reader, "dataset_origin");
-        let dataset_owner = read_global_str_attr(reader, "dataset_owner");
-        let dataset_date_time_stamp = read_global_str_attr(reader, "dataset_date_time_stamp");
-        let injection_date_time_stamp = read_global_str_attr(reader, "injection_date_time_stamp")
+        let languages = read_global_attr_str(reader, "languages");
+        let administrative_comments = read_global_attr_str(reader, "administrative_comments");
+        let dataset_origin = read_global_attr_str(reader, "dataset_origin");
+        let dataset_owner = read_global_attr_str(reader, "dataset_owner");
+        let dataset_date_time_stamp = read_global_attr_str(reader, "dataset_date_time_stamp");
+        let injection_date_time_stamp = read_global_attr_str(reader, "injection_date_time_stamp")
             .ok_or(AndiError::new(
             "Missing injection_date_time_stamp attribute.",
         ))?;
-        let experiment_title = read_global_str_attr(reader, "experiment_title");
-        let operator_name = read_global_str_attr(reader, "operator_name");
-        let separation_experiment_type = read_global_str_attr(reader, "separation_experiment_type");
-        let company_method_name = read_global_str_attr(reader, "company_method_name");
-        let company_method_id = read_global_str_attr(reader, "company_method_id");
+        let experiment_title = read_global_attr_str(reader, "experiment_title");
+        let operator_name = read_global_attr_str(reader, "operator_name");
+        let separation_experiment_type = read_global_attr_str(reader, "separation_experiment_type");
+        let company_method_name = read_global_attr_str(reader, "company_method_name");
+        let company_method_id = read_global_attr_str(reader, "company_method_id");
         let pre_experiment_program_name =
-            read_global_str_attr(reader, "pre_experiment_program_name");
+            read_global_attr_str(reader, "pre_experiment_program_name");
         let post_experiment_program_name =
-            read_global_str_attr(reader, "post_experiment_program_name");
-        let source_file_reference = read_global_str_attr(reader, "source_file_reference");
+            read_global_attr_str(reader, "post_experiment_program_name");
+        let source_file_reference = read_global_attr_str(reader, "source_file_reference");
         let error_log = read_multi_string_var(reader, "error_log")?;
 
         Ok(Self {
@@ -155,10 +155,10 @@ pub struct AndiChromSampleDescription {
 
 impl AndiChromSampleDescription {
     pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
-        let sample_id_comments = read_global_str_attr(reader, "sample_id_comments");
-        let sample_id = read_global_str_attr(reader, "sample_id");
-        let sample_name = read_global_str_attr(reader, "sample_name");
-        let sample_type = read_global_str_attr(reader, "sample_type");
+        let sample_id_comments = read_global_attr_str(reader, "sample_id_comments");
+        let sample_id = read_global_attr_str(reader, "sample_id");
+        let sample_name = read_global_attr_str(reader, "sample_name");
+        let sample_type = read_global_attr_str(reader, "sample_type");
         // if present in sample data, seems to be stored as global attribute of either type string (possibly blank) or float
         let sample_injection_volume =
             read_optional_var_or_attr_f32(reader, "sample_injection_volume")?;
@@ -190,18 +190,18 @@ pub struct AndiChromDetectionMethod {
 impl AndiChromDetectionMethod {
     pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, AndiError> {
         let detection_method_table_name =
-            read_global_str_attr(reader, "detection_method_table_name");
+            read_global_attr_str(reader, "detection_method_table_name");
         // "detector_method_comment" or "detector_method_comments"?
         // => sample files use "detector_method_comments"
-        let detector_method_comments = read_global_str_attr(reader, "detector_method_comments");
-        let detection_method_name = read_global_str_attr(reader, "detection_method_name");
-        let detector_name = read_global_str_attr(reader, "detector_name");
+        let detector_method_comments = read_global_attr_str(reader, "detector_method_comments");
+        let detection_method_name = read_global_attr_str(reader, "detection_method_name");
+        let detector_name = read_global_attr_str(reader, "detector_name");
         let detector_maximum_value = read_scalar_var_f32(reader, "detector_maximum_value")?;
         let detector_minimum_value = read_scalar_var_f32(reader, "detector_minimum_value")?;
-        let mut detector_unit = read_global_str_attr(reader, "detector_unit");
+        let mut detector_unit = read_global_attr_str(reader, "detector_unit");
         if detector_unit.is_none() {
             // quirk: accomodate different naming found in some data
-            detector_unit = read_global_str_attr(reader, "detector_units");
+            detector_unit = read_global_attr_str(reader, "detector_units");
         }
 
         Ok(Self {
@@ -244,12 +244,12 @@ impl AndiChromRawData {
             .ok_or(AndiError::new("Missing dataset_completeness dimension."))?;
         // TODO: usize?
         let point_number = point_number_dim.size() as i32;
-        let raw_data_table_name = read_global_str_attr(&reader, "raw_data_table_name");
-        let retention_unit = match read_global_str_attr(&reader, "retention_unit") {
+        let raw_data_table_name = read_global_attr_str(&reader, "raw_data_table_name");
+        let retention_unit = match read_global_attr_str(&reader, "retention_unit") {
             Some(unit) => unit,
             None => {
                 // quirk: accomodate different naming found in some data
-                read_global_str_attr(&reader, "retention_units")
+                read_global_attr_str(&reader, "retention_units")
                     .ok_or(AndiError::new("Missing retention_unit attribute."))?
             }
         };
@@ -361,17 +361,17 @@ impl AndiChromPeakProcessingResults {
             None => 0,
         };
         let peak_processing_results_table_name =
-            read_global_str_attr(&reader, "peak_processing_results_table_name");
+            read_global_attr_str(&reader, "peak_processing_results_table_name");
         let peak_processing_results_comments =
-            read_global_str_attr(&reader, "peak_processing_results_comments");
+            read_global_attr_str(&reader, "peak_processing_results_comments");
         let peak_processing_method_name =
-            read_global_str_attr(&reader, "peak_processing_method_name");
+            read_global_attr_str(&reader, "peak_processing_method_name");
         let peak_processing_date_time_stamp =
-            read_global_str_attr(&reader, "peak_processing_date_time_stamp");
-        let mut peak_amount_unit = read_global_str_attr(&reader, "peak_amount_unit");
+            read_global_attr_str(&reader, "peak_processing_date_time_stamp");
+        let mut peak_amount_unit = read_global_attr_str(&reader, "peak_amount_unit");
         if peak_amount_unit.is_none() {
             // quirk: accomodate different naming found in some data
-            peak_amount_unit = read_global_str_attr(&reader, "peak_amount_units");
+            peak_amount_unit = read_global_attr_str(&reader, "peak_amount_units");
         }
 
         drop(reader);

@@ -7,8 +7,8 @@ use super::andi_enums::{
     AndiMsScanFunction, AndiMsScanLaw, AndiMsSeparationMethod, AndiMsTimeAxisUnit,
 };
 use super::andi_utils::{
-    read_enum_from_global_str_attr, read_global_attr_f64, read_global_attr_i16,
-    read_global_f32_attr, read_global_i32_attr, read_global_str_attr, read_multi_string_var,
+    read_enum_from_global_attr_str, read_global_attr_f32, read_global_attr_f64,
+    read_global_attr_i16, read_global_attr_i32, read_global_attr_str, read_multi_string_var,
     trim_zeros_in_place,
 };
 use super::{AndiDatasetCompleteness, AndiError};
@@ -122,16 +122,16 @@ pub struct AndiMsAdminData {
 
 impl AndiMsAdminData {
     pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
-        let dataset_completeness_attr = read_global_str_attr(reader, "dataset_completeness")
+        let dataset_completeness_attr = read_global_attr_str(reader, "dataset_completeness")
             .ok_or(AndiError::new("Missing dataset_completeness attribute."))?;
         let dataset_completeness = AndiDatasetCompleteness::from_str(&dataset_completeness_attr)?;
-        let ms_template_revision = read_global_str_attr(reader, "ms_template_revision")
+        let ms_template_revision = read_global_attr_str(reader, "ms_template_revision")
             .ok_or(AndiError::new("Missing ms_template_revision attribute."))?;
-        let administrative_comments = read_global_str_attr(reader, "administrative_comments");
-        let dataset_origin = read_global_str_attr(reader, "dataset_origin");
-        let dataset_owner = read_global_str_attr(reader, "dataset_owner");
-        let experiment_title = read_global_str_attr(reader, "experiment_title");
-        let experiment_date_time_stamp = read_global_str_attr(reader, "experiment_date_time_stamp")
+        let administrative_comments = read_global_attr_str(reader, "administrative_comments");
+        let dataset_origin = read_global_attr_str(reader, "dataset_origin");
+        let dataset_owner = read_global_attr_str(reader, "dataset_owner");
+        let experiment_title = read_global_attr_str(reader, "experiment_title");
+        let experiment_date_time_stamp = read_global_attr_str(reader, "experiment_date_time_stamp")
             .ok_or(AndiError::new(
                 "Missing experiment_date_time_stamp attribute.",
             ))?;
@@ -139,7 +139,7 @@ impl AndiMsAdminData {
         //     .map_or(Ok(AndiMsExperimentType::default()), |s| {
         //         AndiMsExperimentType::from_str(&s)
         //     })?;
-        let experiment_type = read_global_str_attr(reader, "experiment_type").map_or(
+        let experiment_type = read_global_attr_str(reader, "experiment_type").map_or(
             Ok(AndiMsExperimentType::default()),
             |s| {
                 AndiMsExperimentType::from_str(&s).or(Err(AndiError::new(&format!(
@@ -148,38 +148,38 @@ impl AndiMsAdminData {
                 ))))
             },
         )?;
-        let experiment_x_ref_0 = read_global_str_attr(reader, "experiment_x_ref_0");
-        let experiment_x_ref_1 = read_global_str_attr(reader, "experiment_x_ref_1");
-        let experiment_x_ref_2 = read_global_str_attr(reader, "experiment_x_ref_2");
-        let experiment_x_ref_3 = read_global_str_attr(reader, "experiment_x_ref_3");
+        let experiment_x_ref_0 = read_global_attr_str(reader, "experiment_x_ref_0");
+        let experiment_x_ref_1 = read_global_attr_str(reader, "experiment_x_ref_1");
+        let experiment_x_ref_2 = read_global_attr_str(reader, "experiment_x_ref_2");
+        let experiment_x_ref_3 = read_global_attr_str(reader, "experiment_x_ref_3");
         let netcdf_file_date_time_stamp =
-            read_global_str_attr(reader, "netcdf_file_date_time_stamp").ok_or(AndiError::new(
+            read_global_attr_str(reader, "netcdf_file_date_time_stamp").ok_or(AndiError::new(
                 "Missing netcdf_file_date_time_stamp attribute.",
             ))?;
-        let netcdf_revision = read_global_str_attr(reader, "netcdf_revision")
+        let netcdf_revision = read_global_attr_str(reader, "netcdf_revision")
             .ok_or(AndiError::new("Missing netcdf_revision attribute."))?;
-        let operator_name = read_global_str_attr(reader, "operator_name");
-        let source_file_reference = read_global_str_attr(reader, "source_file_reference");
-        let source_file_format = read_global_str_attr(reader, "source_file_format");
+        let operator_name = read_global_attr_str(reader, "operator_name");
+        let source_file_reference = read_global_attr_str(reader, "source_file_reference");
+        let source_file_format = read_global_attr_str(reader, "source_file_format");
         let source_file_date_time_stamp =
-            read_global_str_attr(reader, "source_file_date_time_stamp");
-        let external_file_ref_0 = read_global_str_attr(reader, "external_file_ref_0");
-        let external_file_ref_1 = read_global_str_attr(reader, "external_file_ref_1");
-        let external_file_ref_2 = read_global_str_attr(reader, "external_file_ref_2");
-        let external_file_ref_3 = read_global_str_attr(reader, "external_file_ref_3");
-        let languages = read_global_str_attr(reader, "languages")
+            read_global_attr_str(reader, "source_file_date_time_stamp");
+        let external_file_ref_0 = read_global_attr_str(reader, "external_file_ref_0");
+        let external_file_ref_1 = read_global_attr_str(reader, "external_file_ref_1");
+        let external_file_ref_2 = read_global_attr_str(reader, "external_file_ref_2");
+        let external_file_ref_3 = read_global_attr_str(reader, "external_file_ref_3");
+        let languages = read_global_attr_str(reader, "languages")
             .ok_or(AndiError::new("Missing languages attribute."))?;
-        let number_of_times_processed = read_global_i32_attr(reader, "number_of_times_processed")?;
+        let number_of_times_processed = read_global_attr_i32(reader, "number_of_times_processed")?;
         let number_of_times_calibrated =
-            read_global_i32_attr(reader, "number_of_times_calibrated")?;
-        let calibration_history_0 = read_global_str_attr(reader, "calibration_history_0");
-        let calibration_history_1 = read_global_str_attr(reader, "calibration_history_1");
-        let calibration_history_2 = read_global_str_attr(reader, "calibration_history_2");
-        let calibration_history_3 = read_global_str_attr(reader, "calibration_history_3");
+            read_global_attr_i32(reader, "number_of_times_calibrated")?;
+        let calibration_history_0 = read_global_attr_str(reader, "calibration_history_0");
+        let calibration_history_1 = read_global_attr_str(reader, "calibration_history_1");
+        let calibration_history_2 = read_global_attr_str(reader, "calibration_history_2");
+        let calibration_history_3 = read_global_attr_str(reader, "calibration_history_3");
         let pre_experiment_program_name =
-            read_global_str_attr(reader, "pre_experiment_program_name");
+            read_global_attr_str(reader, "pre_experiment_program_name");
         let post_experiment_program_name =
-            read_global_str_attr(reader, "post_experiment_program_name");
+            read_global_attr_str(reader, "post_experiment_program_name");
         let error_log = read_multi_string_var(reader, "error_log")?;
         // TODO: really i32?
         let instrument_number = reader
@@ -345,31 +345,31 @@ pub struct AndiMsSampleData {
 
 impl AndiMsSampleData {
     pub fn new(reader: &netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
-        let sample_owner = read_global_str_attr(reader, "sample_owner");
+        let sample_owner = read_global_attr_str(reader, "sample_owner");
         let sample_receipt_date_time_stamp =
-            read_global_str_attr(reader, "sample_receipt_date_time_stamp");
-        let sample_internal_id = read_global_str_attr(reader, "sample_internal_id");
-        let sample_external_id = read_global_str_attr(reader, "sample_external_id");
-        let sample_procedure_name = read_global_str_attr(reader, "sample_procedure_name");
-        let sample_prep_procedure = read_global_str_attr(reader, "sample_prep_procedure");
+            read_global_attr_str(reader, "sample_receipt_date_time_stamp");
+        let sample_internal_id = read_global_attr_str(reader, "sample_internal_id");
+        let sample_external_id = read_global_attr_str(reader, "sample_external_id");
+        let sample_procedure_name = read_global_attr_str(reader, "sample_procedure_name");
+        let sample_prep_procedure = read_global_attr_str(reader, "sample_prep_procedure");
         // let sample_state = read_global_str_attr(reader, "sample_state")
         //     .map_or(Ok(AndiMsSampleState::default()), |s| {
         //         AndiMsSampleState::from_str(&s)
         //     })?;
-        let sample_state = read_global_str_attr(reader, "sample_state").map_or(
+        let sample_state = read_global_attr_str(reader, "sample_state").map_or(
             Ok(AndiMsSampleState::default()),
             |s| {
                 AndiMsSampleState::from_str(&s)
                     .or(Err(AndiError::new(&format!("Illegal sample_state: {}", s))))
             },
         )?;
-        let sample_matrix = read_global_str_attr(reader, "sample_matrix");
-        let sample_storage = read_global_str_attr(reader, "sample_storage");
-        let sample_disposal = read_global_str_attr(reader, "sample_disposal");
-        let sample_history = read_global_str_attr(reader, "sample_history");
-        let sample_prep_comments = read_global_str_attr(reader, "sample_prep_comments");
-        let sample_comments = read_global_str_attr(reader, "sample_comments");
-        let sample_manual_handling = read_global_str_attr(reader, "sample_manual_handling");
+        let sample_matrix = read_global_attr_str(reader, "sample_matrix");
+        let sample_storage = read_global_attr_str(reader, "sample_storage");
+        let sample_disposal = read_global_attr_str(reader, "sample_disposal");
+        let sample_history = read_global_attr_str(reader, "sample_history");
+        let sample_prep_comments = read_global_attr_str(reader, "sample_prep_comments");
+        let sample_comments = read_global_attr_str(reader, "sample_comments");
+        let sample_manual_handling = read_global_attr_str(reader, "sample_manual_handling");
 
         Ok(Self {
             sample_owner,
@@ -435,52 +435,52 @@ pub struct AndiMsTestData {
 
 impl AndiMsTestData {
     pub fn new(reader: &netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
-        let separation_experiment_type = read_enum_from_global_str_attr::<AndiMsSeparationMethod>(
+        let separation_experiment_type = read_enum_from_global_attr_str::<AndiMsSeparationMethod>(
             reader,
             "test_separation_type",
         )?;
         let mass_spectrometer_inlet =
-            read_enum_from_global_str_attr::<AndiMsMassSpectrometerInlet>(reader, "test_ms_inlet")?;
+            read_enum_from_global_attr_str::<AndiMsMassSpectrometerInlet>(reader, "test_ms_inlet")?;
         let mass_spectrometer_inlet_temperature =
-            read_global_f32_attr(reader, "test_ms_inlet_temperature")?;
-        let ionization_mode = read_enum_from_global_str_attr::<AndiMsIonizationMethod>(
+            read_global_attr_f32(reader, "test_ms_inlet_temperature")?;
+        let ionization_mode = read_enum_from_global_attr_str::<AndiMsIonizationMethod>(
             reader,
             "test_ionization_mode",
         )?;
-        let ionization_polarity = read_enum_from_global_str_attr::<AndiMsIonizationPolarity>(
+        let ionization_polarity = read_enum_from_global_attr_str::<AndiMsIonizationPolarity>(
             reader,
             "test_ionization_polarity",
         )?;
-        let electron_energy = read_global_f32_attr(reader, "test_electron_energy")?;
-        let laser_wavelength = read_global_f32_attr(reader, "test_laser_wavelength")?;
-        let reagent_gas = read_global_str_attr(reader, "test_reagent_gas");
-        let reagent_gas_pressure = read_global_f32_attr(reader, "test_reagent_gas_pressure")?;
-        let fab_type = read_global_str_attr(reader, "test_fab_type");
-        let fab_matrix = read_global_str_attr(reader, "test_fab_matrix");
-        let source_temperature = read_global_f32_attr(reader, "test_source_temperature")?;
-        let filament_current = read_global_f32_attr(reader, "test_filament_current")?;
-        let emission_current = read_global_f32_attr(reader, "test_emission_current")?;
-        let accelerating_potential = read_global_f32_attr(reader, "test_accelerating_potential")?;
+        let electron_energy = read_global_attr_f32(reader, "test_electron_energy")?;
+        let laser_wavelength = read_global_attr_f32(reader, "test_laser_wavelength")?;
+        let reagent_gas = read_global_attr_str(reader, "test_reagent_gas");
+        let reagent_gas_pressure = read_global_attr_f32(reader, "test_reagent_gas_pressure")?;
+        let fab_type = read_global_attr_str(reader, "test_fab_type");
+        let fab_matrix = read_global_attr_str(reader, "test_fab_matrix");
+        let source_temperature = read_global_attr_f32(reader, "test_source_temperature")?;
+        let filament_current = read_global_attr_f32(reader, "test_filament_current")?;
+        let emission_current = read_global_attr_f32(reader, "test_emission_current")?;
+        let accelerating_potential = read_global_attr_f32(reader, "test_accelerating_potential")?;
         let detector_type =
-            read_enum_from_global_str_attr::<AndiMsDetectorType>(reader, "test_detector_type")?;
-        let detector_potential = read_global_f32_attr(reader, "test_detector_potential")?;
+            read_enum_from_global_attr_str::<AndiMsDetectorType>(reader, "test_detector_type")?;
+        let detector_potential = read_global_attr_f32(reader, "test_detector_potential")?;
         let detector_entrance_potential =
-            read_global_f32_attr(reader, "test_detector_entrance_potential")?;
+            read_global_attr_f32(reader, "test_detector_entrance_potential")?;
         let resolution_type =
-            read_enum_from_global_str_attr::<AndiMsResolutionType>(reader, "test_resolution_type")?;
-        let resolution_method = read_global_str_attr(reader, "test_resolution_method");
+            read_enum_from_global_attr_str::<AndiMsResolutionType>(reader, "test_resolution_type")?;
+        let resolution_method = read_global_attr_str(reader, "test_resolution_method");
         let scan_function =
-            read_enum_from_global_str_attr::<AndiMsScanFunction>(reader, "test_scan_function")?;
+            read_enum_from_global_attr_str::<AndiMsScanFunction>(reader, "test_scan_function")?;
         let scan_direction =
-            read_enum_from_global_str_attr::<AndiMsScanDirection>(reader, "test_scan_direction")?;
-        let scan_law = read_enum_from_global_str_attr::<AndiMsScanLaw>(reader, "test_scan_law")?;
-        let scan_time = read_global_f32_attr(reader, "test_scan_time")?;
-        let mass_calibration_file_name = read_global_str_attr(reader, "mass_calibration_file");
+            read_enum_from_global_attr_str::<AndiMsScanDirection>(reader, "test_scan_direction")?;
+        let scan_law = read_enum_from_global_attr_str::<AndiMsScanLaw>(reader, "test_scan_law")?;
+        let scan_time = read_global_attr_f32(reader, "test_scan_time")?;
+        let mass_calibration_file_name = read_global_attr_str(reader, "mass_calibration_file");
         let external_reference_file_name =
-            read_global_str_attr(reader, "test_external_reference_file");
+            read_global_attr_str(reader, "test_external_reference_file");
         let internal_reference_file_name =
-            read_global_str_attr(reader, "test_internal_reference_file");
-        let instrument_parameter_comments = read_global_str_attr(reader, "test_comments");
+            read_global_attr_str(reader, "test_internal_reference_file");
+        let instrument_parameter_comments = read_global_attr_str(reader, "test_comments");
 
         Ok(Self {
             separation_experiment_type,
@@ -589,7 +589,7 @@ impl AndiMsRawDataGlobal {
             .ok_or(AndiError::new("Missing scan_number dimension."))?;
         // TODO: usize?
         let scan_number = scan_number_dim.size() as i32;
-        let starting_scan_number = read_global_i32_attr(reader, "starting_scan_number")?;
+        let starting_scan_number = read_global_attr_i32(reader, "starting_scan_number")?;
         let mass_values_var = reader.data_set().get_var("mass_values");
         let has_masses = mass_values_var.is_some();
         let time_values_var = reader.data_set().get_var("time_values");
@@ -620,16 +620,16 @@ impl AndiMsRawDataGlobal {
             None => AndiMsIntensityAxisUnit::default(),
             Some(s) => AndiMsIntensityAxisUnit::from_str(&s)?,
         };
-        let mass_axis_data_format = match read_global_str_attr(reader, "raw_data_mass_format") {
+        let mass_axis_data_format = match read_global_attr_str(reader, "raw_data_mass_format") {
             None => AndiMsDataFormat::Short,
             Some(s) => AndiMsDataFormat::from_str(&s)?,
         };
-        let time_axis_data_format = match read_global_str_attr(reader, "raw_data_time_format") {
+        let time_axis_data_format = match read_global_attr_str(reader, "raw_data_time_format") {
             None => AndiMsDataFormat::Short,
             Some(s) => AndiMsDataFormat::from_str(&s)?,
         };
         let intensity_axis_data_format =
-            match read_global_str_attr(reader, "raw_data_intensity_format") {
+            match read_global_attr_str(reader, "raw_data_intensity_format") {
                 None => AndiMsDataFormat::Long,
                 Some(s) => AndiMsDataFormat::from_str(&s)?,
             };
@@ -648,7 +648,7 @@ impl AndiMsRawDataGlobal {
         let actual_delay_time = read_global_attr_f64(reader, "actual_delay_time")?;
         let uniform_sampling_flag = read_global_attr_i16(reader, "raw_data_uniform_sampling_flag")?
             .map_or(true, |v| v != 0);
-        let comments = read_global_str_attr(reader, "raw_data_comments");
+        let comments = read_global_attr_str(reader, "raw_data_comments");
 
         Ok(Self {
             scan_number,

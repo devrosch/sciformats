@@ -189,60 +189,46 @@ pub fn read_global_attr_str(reader: &netcdf3::FileReader, attr_name: &str) -> Op
     res
 }
 
+pub fn extract_single_attr_value<T: Clone>(
+    attr_name: &str,
+    values: Option<&[T]>,
+) -> Result<Option<T>, AndiError> {
+    match values {
+        None | Some([]) => Ok(None),
+        Some([val]) => Ok(Some(val.to_owned())),
+        Some([..]) => Err(AndiError::new(&format!(
+            "More than one element found in global {} attribute.",
+            attr_name
+        ))),
+    }
+}
+
 pub fn read_global_attr_i16(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<Option<i16>, AndiError> {
-    match reader.data_set().get_global_attr_i16(attr_name) {
-        None | Some([]) => Ok(None),
-        Some([val]) => Ok(Some(val.to_owned())),
-        Some([..]) => Err(AndiError::new(&format!(
-            "More than one element found in {} attribute.",
-            attr_name
-        ))),
-    }
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_i16(attr_name))
 }
 
 pub fn read_global_attr_i32(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<Option<i32>, AndiError> {
-    match reader.data_set().get_global_attr_i32(attr_name) {
-        None | Some([]) => Ok(None),
-        Some([val]) => Ok(Some(val.to_owned())),
-        Some([..]) => Err(AndiError::new(&format!(
-            "More than one element found in {} attribute.",
-            attr_name
-        ))),
-    }
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_i32(attr_name))
 }
 
 pub fn read_global_attr_f32(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<Option<f32>, AndiError> {
-    match reader.data_set().get_global_attr_f32(attr_name) {
-        None | Some([]) => Ok(None),
-        Some([val]) => Ok(Some(val.to_owned())),
-        Some([..]) => Err(AndiError::new(&format!(
-            "More than one element found in {} attribute.",
-            attr_name
-        ))),
-    }
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_f32(attr_name))
 }
 
 pub fn read_global_attr_f64(
     reader: &netcdf3::FileReader,
     attr_name: &str,
 ) -> Result<Option<f64>, AndiError> {
-    match reader.data_set().get_global_attr_f64(attr_name) {
-        None | Some([]) => Ok(None),
-        Some([val]) => Ok(Some(val.to_owned())),
-        Some([..]) => Err(AndiError::new(&format!(
-            "More than one element found in {} attribute.",
-            attr_name
-        ))),
-    }
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_f64(attr_name))
 }
 
 pub fn read_enum_from_global_attr_str<T: Default + FromStr>(

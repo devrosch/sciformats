@@ -38,6 +38,7 @@ pub struct AndiMsFile {
     pub instrument_data: AndiMsInstrumentData,
     pub sample_data: AndiMsSampleData,
     pub test_data: AndiMsTestData,
+    pub raw_data_global: AndiMsRawDataGlobal,
     // pub sample_description: AndiMsSampleDescription,
     // pub detection_method: AndiMsDetectionMethod,
     // pub raw_data: AndiMsRawData,
@@ -52,6 +53,7 @@ impl AndiMsFile {
         let instrument_data = AndiMsInstrumentData::new(&mut reader, admin_data.instrument_number)?;
         let sample_data = AndiMsSampleData::new(&reader)?;
         let test_data = AndiMsTestData::new(&reader)?;
+        let raw_data_global = AndiMsRawDataGlobal::new(&reader)?;
         // let sample_description = AndiMsSampleDescription::new(&mut reader)?;
         // let detection_method = AndiMsDetectionMethod::new(&mut reader)?;
 
@@ -69,6 +71,7 @@ impl AndiMsFile {
             instrument_data,
             sample_data,
             test_data,
+            raw_data_global,
             // sample_description,
             // detection_method,
             // raw_data,
@@ -515,6 +518,7 @@ impl AndiMsTestData {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiMsRawDataGlobal {
     /// 32 bit
     pub scan_number: i32,

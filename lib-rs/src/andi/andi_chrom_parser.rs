@@ -351,7 +351,6 @@ impl AndiChromPeakProcessingResults {
         peak_retention_unit: &str,
         detector_unit: Option<&str>,
     ) -> Result<Self, Box<dyn Error>> {
-        // TODO: RefCell needed?
         let reader = reader_ref.borrow_mut();
 
         let peak_number_dim = reader.data_set().get_dim("peak_number");

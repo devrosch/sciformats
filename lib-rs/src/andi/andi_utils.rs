@@ -133,7 +133,7 @@ pub fn read_optional_var_or_attr_f32(
     reader: &mut netcdf3::FileReader,
     var_name: &str,
 ) -> Result<Option<f32>, Box<dyn Error>> {
-    let mut value = read_scalar_var_f32(reader, "sample_injection_volume")?;
+    let mut value = read_scalar_var_f32(reader, var_name)?;
     if value.is_none() {
         let attr_opt = reader.data_set().get_global_attr(var_name);
         if let Some(attr) = attr_opt {
@@ -141,15 +141,16 @@ pub fn read_optional_var_or_attr_f32(
                 match val {
                     [single_val] => value = Some(single_val.to_owned()),
                     _ => {
-                        return Err(Box::new(AndiError::new(
-                            "Unexpected content for sample_injection_volume.",
-                        )))
+                        return Err(Box::new(AndiError::new(&format!(
+                            "Unexpected content for {}.",
+                            var_name
+                        ))))
                     }
                 }
-            } else if let Some(val) = attr.get_as_string() {
+            } else if let Some(mut val) = attr.get_as_string() {
                 // quirk: remove zero bytes from string
-                // TODO: find better way to deal with zero terminated strings here and elsewhere
-                let no_zero_bytes_val = val.trim_matches(char::from(0)).trim();
+                trim_zeros_in_place(&mut val);
+                let no_zero_bytes_val = val.trim();
                 if !no_zero_bytes_val.is_empty() {
                     let v = val.parse::<f32>()?;
                     value = Some(v);

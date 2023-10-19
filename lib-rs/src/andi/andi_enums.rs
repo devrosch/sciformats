@@ -1,20 +1,16 @@
-use strum::{EnumString, Display};
+use strum::{Display, EnumString, EnumIter, IntoEnumIterator};
 
-#[derive(Debug, PartialEq, EnumString, Display)]
+use super::AndiError;
+
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsExperimentType {
-    /// default
+    #[default]
     #[strum(serialize = "Centroided Mass Spectrum")]
     CentroidedMassSpectrum,
     #[strum(serialize = "Continuum Mass Spectrum")]
     ContinuumMassSpectrum,
     #[strum(serialize = "Library Mass Spectrum")]
     LibraryMassSpectrum,
-}
-
-impl Default for AndiMsExperimentType {
-    fn default() -> Self {
-        Self::CentroidedMassSpectrum
-    }
 }
 
 // #[derive(Debug, PartialEq)]
@@ -57,7 +53,7 @@ impl Default for AndiMsExperimentType {
 //     }
 // }
 
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsSampleState {
     #[strum(serialize = "Solid")]
     Solid,
@@ -69,15 +65,9 @@ pub enum AndiMsSampleState {
     SupercriticalFluid,
     #[strum(serialize = "Plasma")]
     Plasma,
-    /// default
+    #[default]
     #[strum(serialize = "Other State")]
     OtherState,
-}
-
-impl Default for AndiMsSampleState {
-    fn default() -> Self {
-        Self::OtherState
-    }
 }
 
 // impl AndiMsSampleState {
@@ -118,7 +108,7 @@ impl Default for AndiMsSampleState {
 //     }
 // }
 
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsSeparationMethod {
     #[strum(serialize = "Gas-Liquid Chromatography")]
     Glc,
@@ -146,18 +136,12 @@ pub enum AndiMsSeparationMethod {
     Cze,
     #[strum(serialize = "Other Chromatography")]
     Other,
-    /// default
+    #[default]
     #[strum(serialize = "No Chromatography")]
     None,
 }
 
-impl Default for AndiMsSeparationMethod {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsMassSpectrometerInlet {
     #[strum(serialize = "Membrane Separator")]
     Membrane,
@@ -167,7 +151,7 @@ pub enum AndiMsMassSpectrometerInlet {
     OpenSplit,
     #[strum(serialize = "Jet Separator")]
     Jet,
-    /// default
+    #[default]
     #[strum(serialize = "Direct Inlet Probe")]
     Direct,
     #[strum(serialize = "Septum")]
@@ -194,15 +178,9 @@ pub enum AndiMsMassSpectrometerInlet {
     Other,
 }
 
-impl Default for AndiMsMassSpectrometerInlet {
-    fn default() -> Self {
-        Self::Direct
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsIonizationMethod {
-    /// default
+    #[default]
     #[strum(serialize = "Electron Impact")]
     Ei,
     #[strum(serialize = "Chemical Ionization")]
@@ -231,30 +209,18 @@ pub enum AndiMsIonizationMethod {
     Other,
 }
 
-impl Default for AndiMsIonizationMethod {
-    fn default() -> Self {
-        Self::Ei
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsIonizationPolarity {
-    /// default
+    #[default]
     #[strum(serialize = "Positive Polarity")]
     Plus,
     #[strum(serialize = "Negative Polarity")]
     Minus,
 }
 
-impl Default for AndiMsIonizationPolarity {
-    fn default() -> Self {
-        Self::Plus
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsDetectorType {
-    /// default
+    #[default]
     #[strum(serialize = "Electron Multiplier")]
     Em,
     #[strum(serialize = "Photomultplier")]
@@ -273,30 +239,18 @@ pub enum AndiMsDetectorType {
     Other,
 }
 
-impl Default for AndiMsDetectorType {
-    fn default() -> Self {
-        Self::Em
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsResolutionType {
-    /// default
+    #[default]
     #[strum(serialize = "Constant Resolution")]
     Constant,
     #[strum(serialize = "Proportional Resolution")]
     Proportional,
 }
 
-impl Default for AndiMsResolutionType {
-    fn default() -> Self {
-        Self::Constant
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsScanFunction {
-    /// default
+    #[default]
     #[strum(serialize = "Mass Scan")]
     Scan,
     #[strum(serialize = "Selected Ion Detection")]
@@ -305,15 +259,9 @@ pub enum AndiMsScanFunction {
     Other,
 }
 
-impl Default for AndiMsScanFunction {
-    fn default() -> Self {
-        Self::Scan
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsScanDirection {
-    /// default
+    #[default]
     #[strum(serialize = "Up")]
     Up,
     #[strum(serialize = "Down")]
@@ -322,15 +270,9 @@ pub enum AndiMsScanDirection {
     Other,
 }
 
-impl Default for AndiMsScanDirection {
-    fn default() -> Self {
-        Self::Up
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsScanLaw {
-    /// default
+    #[default]
     #[strum(serialize = "Linear")]
     Linear,
     #[strum(serialize = "Exponential")]
@@ -341,15 +283,9 @@ pub enum AndiMsScanLaw {
     Other,
 }
 
-impl Default for AndiMsScanLaw {
-    fn default() -> Self {
-        Self::Linear
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsMassAxisUnit {
-    /// default
+    #[default]
     #[strum(serialize = "M/Z")]
     Mz,
     #[strum(serialize = "Arbitrary Mass Units")]
@@ -358,15 +294,9 @@ pub enum AndiMsMassAxisUnit {
     Other,
 }
 
-impl Default for AndiMsMassAxisUnit {
-    fn default() -> Self {
-        Self::Mz
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsTimeAxisUnit {
-    /// default
+    #[default]
     #[strum(serialize = "Seconds")]
     Seconds,
     #[strum(serialize = "Arbitrary Time Units")]
@@ -375,13 +305,7 @@ pub enum AndiMsTimeAxisUnit {
     Other,
 }
 
-impl Default for AndiMsTimeAxisUnit {
-    fn default() -> Self {
-        Self::Seconds
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsIntensityAxisUnit {
     #[strum(serialize = "Total counts")]
     Counts,
@@ -391,22 +315,16 @@ pub enum AndiMsIntensityAxisUnit {
     Volts,
     #[strum(serialize = "Current")]
     Current,
-    /// default
+    #[default]
     #[strum(serialize = "Arbitrary Intensity Units")]
     Arbitrary,
     #[strum(serialize = "Other Intensity")]
     Other,
 }
 
-impl Default for AndiMsIntensityAxisUnit {
-    fn default() -> Self {
-        Self::Arbitrary
-    }
-}
-
-#[derive(Debug, PartialEq, EnumString, Display)]
+#[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsDataFormat {
-    /// default
+    #[default]
     #[strum(serialize = "Short")]
     Short,
     #[strum(serialize = "Long")]
@@ -417,9 +335,75 @@ pub enum AndiMsDataFormat {
     Double,
 }
 
-impl Default for AndiMsDataFormat {
-    fn default() -> Self {
-        Self::Short
+#[derive(Debug, PartialEq, Eq, Hash, EnumIter, Display)]
+pub enum AndiMsFlagValue {
+    #[strum(serialize = "Not High Resolution")]
+    NotHighResolution,
+    #[strum(serialize = "Missed Reference")]
+    MissedReference,
+    #[strum(serialize = "Unresolved")]
+    Unresolved,
+    #[strum(serialize = "Doubly Charged")]
+    DoublyCharged,
+    #[strum(serialize = "Reference")]
+    Reference,
+    #[strum(serialize = "Exception")]
+    Exception,
+    #[strum(serialize = "Saturated")]
+    Saturated,
+    #[strum(serialize = "Significant")]
+    Significant,
+    #[strum(serialize = "Merged")]
+    Merged,
+    #[strum(serialize = "Fragemented")]
+    Fragemented,
+    #[strum(serialize = "Area Height")]
+    AreaHeight,
+    #[strum(serialize = "Math Modified")]
+    MathModified,
+    #[strum(serialize = "Negative Intensity")]
+    NegativeIntensity,
+    #[strum(serialize = "Extended Accuracy")]
+    ExtendedAccuracy,
+    #[strum(serialize = "Calculated")]
+    Calculated,
+    #[strum(serialize = "Lock Mass")]
+    LockMass,
+}
+
+impl AndiMsFlagValue {
+    pub fn as_i32(&self) -> i32 {
+        match self {
+            Self::NotHighResolution => 0x01,
+            Self::MissedReference => 0x02,
+            Self::Unresolved => 0x04,
+            Self::DoublyCharged => 0x08,
+            Self::Reference => 0x10,
+            Self::Exception => 0x020,
+            Self::Saturated => 0x40,
+            Self::Significant => 0x80,
+            Self::Merged => 0x100,
+            Self::Fragemented => 0x200,
+            Self::AreaHeight => 0x400,
+            Self::MathModified => 0x800,
+            Self::NegativeIntensity => 0x1000,
+            Self::ExtendedAccuracy => 0x2000,
+            Self::Calculated => 0x4000,
+            Self::LockMass => 0x8000,
+        }
+    }
+
+    pub fn set_from_i32(v: &i32) -> Result<Vec<Self>, AndiError> {
+        if *v as u32 & 0xFFFF0000 != 0 {
+            return Err(AndiError::new(&format!("Illegal flags: {:#0x}", v)));
+        }
+        let mut res = Vec::<Self>::new();
+        for flag in Self::iter() {
+            if flag.as_i32() & v != 0 {
+                res.push(flag);
+            }
+        }
+        Ok(res)
     }
 }
 

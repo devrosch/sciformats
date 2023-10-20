@@ -1,7 +1,7 @@
 use super::andi_chrom_parser::AndiChromFile;
 use crate::{
     andi::AndiError,
-    api::{Node, Reader, Table},
+    api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
 };
 use std::{collections::HashMap, error::Error, path::Path};
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -70,35 +70,33 @@ impl AndiChromReader {
         })
     }
 
-    fn push_opt_str(key: &str, val: &Option<String>, vec: &mut Vec<(String, String)>) {
-        match val {
-            None => (),
-            Some(s) => vec.push((key.into(), s.into())),
+    fn push_opt_str(key: &str, val: &Option<String>, vec: &mut Vec<Parameter>) {
+        if let Some(v) = val {
+            vec.push(Parameter::from_str_str(key, v))
         }
     }
 
-    fn push_opt_f32(key: &str, val: &Option<f32>, vec: &mut Vec<(String, String)>) {
-        match val {
-            None => (),
-            Some(f) => vec.push((key.into(), f.to_string())),
+    fn push_opt_f32(key: &str, val: &Option<f32>, vec: &mut Vec<Parameter>) {
+        if let Some(v) = val {
+            vec.push(Parameter::from_str_f32(key, *v))
         }
     }
 
     fn read_admin_data(&self) -> Result<Node, Box<dyn Error>> {
         let admin_data = &self.file.admin_data;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
-        parameters.push((
-            "Dataset Completeness".into(),
+        let mut parameters: Vec<Parameter> = Vec::new();
+        parameters.push(Parameter::from_str_str(
+            "Dataset Completeness",
             admin_data.dataset_completeness.to_string(),
         ));
-        parameters.push((
-            "Protocol Template Revision".into(),
-            admin_data.protocol_template_revision.to_owned(),
+        parameters.push(Parameter::from_str_str(
+            "Protocol Template Revision",
+            &admin_data.protocol_template_revision,
         ));
-        parameters.push((
-            "NetCDF Revision".into(),
-            admin_data.netcdf_revision.to_owned(),
+        parameters.push(Parameter::from_str_str(
+            "NetCDF Revision",
+            &admin_data.netcdf_revision,
         ));
         Self::push_opt_str("Languages", &admin_data.languages, &mut parameters);
         Self::push_opt_str(
@@ -117,9 +115,9 @@ impl AndiChromReader {
             &admin_data.dataset_date_time_stamp,
             &mut parameters,
         );
-        parameters.push((
-            "Injection Date/Time Stamp".into(),
-            admin_data.injection_date_time_stamp.clone(),
+        parameters.push(Parameter::from_str_str(
+            "Injection Date/Time Stamp",
+            &admin_data.injection_date_time_stamp,
         ));
         Self::push_opt_str(
             "Experiment Title",
@@ -171,7 +169,7 @@ impl AndiChromReader {
     fn read_sample_description(&self) -> Result<Node, Box<dyn Error>> {
         let sample_description = &self.file.sample_description;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
+        let mut parameters: Vec<Parameter> = Vec::new();
         Self::push_opt_str(
             "Sample ID Comments",
             &sample_description.sample_id_comments,
@@ -212,7 +210,7 @@ impl AndiChromReader {
     fn read_detection_method(&self) -> Result<Node, Box<dyn Error>> {
         let detection_method = &self.file.detection_method;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
+        let mut parameters: Vec<Parameter> = Vec::new();
         Self::push_opt_str(
             "Detection Method Table Name",
             &detection_method.detection_method_table_name,
@@ -262,29 +260,35 @@ impl AndiChromReader {
     fn read_raw_data(&self) -> Result<Node, Box<dyn Error>> {
         let raw_data = &self.file.raw_data;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
-        parameters.push(("Point Number".into(), raw_data.point_number.to_string()));
+        let mut parameters: Vec<Parameter> = Vec::new();
+        parameters.push(Parameter {
+            key: "Point Number".into(),
+            value: Value::I32(raw_data.point_number),
+        });
         Self::push_opt_str(
             "Raw Data Table Name",
             &raw_data.raw_data_table_name,
             &mut parameters,
         );
-        parameters.push(("Retention Unit".into(), raw_data.retention_unit.clone()));
-        parameters.push((
-            "Actual Run Time Length".into(),
-            raw_data.actual_run_time_length.to_string(),
+        parameters.push(Parameter::from_str_str(
+            "Retention Unit",
+            &raw_data.retention_unit,
         ));
-        parameters.push((
-            "Actual Sampling Interval".into(),
-            raw_data.actual_sampling_interval.to_string(),
+        parameters.push(Parameter::from_str_f32(
+            "Actual Run Time Length",
+            raw_data.actual_run_time_length,
         ));
-        parameters.push((
-            "Actual Delay Time".into(),
-            raw_data.actual_delay_time.to_string(),
+        parameters.push(Parameter::from_str_f32(
+            "Actual Sampling Interval",
+            raw_data.actual_sampling_interval,
         ));
-        parameters.push((
-            "Uniform Sampling Flag".into(),
-            raw_data.uniform_sampling_flag.to_string(),
+        parameters.push(Parameter::from_str_f32(
+            "Actual Delay Time",
+            raw_data.actual_delay_time,
+        ));
+        parameters.push(Parameter::from_str_bool(
+            "Uniform Sampling Flag",
+            raw_data.uniform_sampling_flag,
         ));
         Self::push_opt_str(
             "Autosampler Position",
@@ -303,10 +307,12 @@ impl AndiChromReader {
                         "Numbers of ordinate and retention values do not match.",
                     )));
                 }
-                let xy_values: Vec<(f64, f64)> = x_values
+                let xy_values: Vec<PointXy> = x_values
                     .iter()
                     .enumerate()
-                    .map(|(i, &x)| (x as f64, y_values.get(i).unwrap().to_owned() as f64))
+                    .map(|(i, &x)| {
+                        PointXy::new(x as f64, y_values.get(i).unwrap().to_owned() as f64)
+                    })
                     .collect();
                 xy_values
             }
@@ -315,13 +321,13 @@ impl AndiChromReader {
                 let actual_delay_time = raw_data.actual_delay_time as f64;
                 let actual_sampling_interval = raw_data.actual_sampling_interval as f64;
                 let y_values = &raw_data.get_ordinate_values()?;
-                let xy_values: Vec<(f64, f64)> = y_values
+                let xy_values: Vec<PointXy> = y_values
                     .iter()
                     .enumerate()
                     .map(|(i, &y)| {
                         // spec is ambigious, could be i or (i+1)
                         let x = actual_delay_time + i as f64 * actual_sampling_interval;
-                        (x, y as f64)
+                        PointXy::new(x, y as f64)
                     })
                     .collect();
                 xy_values
@@ -348,10 +354,10 @@ impl AndiChromReader {
     fn read_peak_processing_results(&self) -> Result<Node, Box<dyn Error>> {
         let peak_processing_results = &self.file.peak_processing_results;
 
-        let mut parameters: Vec<(String, String)> = Vec::new();
-        parameters.push((
-            "Peak Number".into(),
-            peak_processing_results.peak_number.to_string(),
+        let mut parameters: Vec<Parameter> = Vec::new();
+        parameters.push(Parameter::from_str_i32(
+            "Peak Number",
+            peak_processing_results.peak_number,
         ));
         Self::push_opt_str(
             "Peak Processing Results Table Name",
@@ -407,192 +413,168 @@ impl AndiChromReader {
             )))?;
 
         // table columns
-        let mut column_names: Vec<(String, String)> = vec![];
+        let mut column_names: Vec<Column> = vec![];
         if peaks.iter().any(|p| p.peak_retention_time.is_some()) {
-            column_names.push((
-                "peak_retention_time".to_owned(),
-                "Peak Retention Time".to_owned(),
-            ));
+            column_names.push(Column::new("peak_retention_time", "Peak Retention Time"));
         }
         if peaks.iter().any(|p| p.peak_name.is_some()) {
-            column_names.push(("peak_name".to_owned(), "Peak Name".to_owned()));
+            column_names.push(Column::new("peak_name", "Peak Name"));
         }
         if peaks.iter().any(|p| p.peak_amount.is_some()) {
-            column_names.push(("peak_amount".to_owned(), "Peak Amount".to_owned()));
+            column_names.push(Column::new("peak_amount", "Peak Amount"));
         }
         if peaks.iter().any(|p| p.peak_start_time.is_some()) {
-            column_names.push(("peak_start_time".to_owned(), "Peak Start Time".to_owned()));
+            column_names.push(Column::new("peak_start_time", "Peak Start Time"));
         }
         if peaks.iter().any(|p| p.peak_end_time.is_some()) {
-            column_names.push(("peak_end_time".to_owned(), "Peak End Time".to_owned()));
+            column_names.push(Column::new("peak_end_time", "Peak End Time"));
         }
         if peaks.iter().any(|p| p.peak_width.is_some()) {
-            column_names.push(("peak_width".to_owned(), "Peak Width".to_owned()));
+            column_names.push(Column::new("peak_width", "Peak Width"));
         }
         if peaks.iter().any(|p| p.peak_area.is_some()) {
-            column_names.push(("peak_area".to_owned(), "Peak Area".to_owned()));
+            column_names.push(Column::new("peak_area", "Peak Area"));
         }
         if peaks.iter().any(|p| p.peak_area_percent.is_some()) {
-            column_names.push((
-                "peak_area_percent".to_owned(),
-                "Peak Area Percent".to_owned(),
-            ));
+            column_names.push(Column::new("peak_area_percent", "Peak Area Percent"));
         }
         if peaks.iter().any(|p| p.peak_height.is_some()) {
-            column_names.push(("peak_height".to_owned(), "Peak Height".to_owned()));
+            column_names.push(Column::new("peak_height", "Peak Height"));
         }
         if peaks.iter().any(|p| p.peak_height_percent.is_some()) {
-            column_names.push((
-                "peak_height_percent".to_owned(),
-                "Peak Height Percent".to_owned(),
-            ));
+            column_names.push(Column::new("peak_height_percent", "Peak Height Percent"));
         }
         if peaks.iter().any(|p| p.baseline_start_time.is_some()) {
-            column_names.push((
-                "baseline_start_time".to_owned(),
-                "Baseline Start Time".to_owned(),
-            ));
+            column_names.push(Column::new("baseline_start_time", "Baseline Start Time"));
         }
         if peaks.iter().any(|p| p.baseline_start_value.is_some()) {
-            column_names.push((
-                "baseline_start_value".to_owned(),
-                "Baseline Start Value".to_owned(),
-            ));
+            column_names.push(Column::new("baseline_start_value", "Baseline Start Value"));
         }
         if peaks.iter().any(|p| p.baseline_stop_time.is_some()) {
-            column_names.push((
-                "baseline_stop_time".to_owned(),
-                "Baseline Stop Time".to_owned(),
-            ));
+            column_names.push(Column::new("baseline_stop_time", "Baseline Stop Time"));
         }
         if peaks.iter().any(|p| p.baseline_stop_value.is_some()) {
-            column_names.push((
-                "baseline_stop_value".to_owned(),
-                "Baseline Stop Value".to_owned(),
-            ));
+            column_names.push(Column::new("baseline_stop_value", "Baseline Stop Value"));
         }
         if peaks.iter().any(|p| p.peak_start_detection_code.is_some()) {
-            column_names.push((
-                "peak_start_detection_code".to_owned(),
-                "Peak Start Detection Code".to_owned(),
+            column_names.push(Column::new(
+                "peak_start_detection_code",
+                "Peak Start Detection Code",
             ));
         }
         if peaks.iter().any(|p| p.peak_stop_detection_code.is_some()) {
-            column_names.push((
-                "peak_stop_detection_code".to_owned(),
-                "Peak Stop Detection Code".to_owned(),
+            column_names.push(Column::new(
+                "peak_stop_detection_code",
+                "Peak Stop Detection Code",
             ));
         }
         if peaks.iter().any(|p| p.retention_index.is_some()) {
-            column_names.push(("retention_index".to_owned(), "Retention Index".to_owned()));
+            column_names.push(Column::new("retention_index", "Retention Index"));
         }
         if peaks.iter().any(|p| p.migration_time.is_some()) {
-            column_names.push(("migration_time".to_owned(), "Migration Time".to_owned()));
+            column_names.push(Column::new("migration_time", "Migration Time"));
         }
         if peaks.iter().any(|p| p.peak_asymmetry.is_some()) {
-            column_names.push(("peak_asymmetry".to_owned(), "Peak Asymmetry".to_owned()));
+            column_names.push(Column::new("peak_asymmetry", "Peak Asymmetry"));
         }
         if peaks.iter().any(|p| p.peak_efficiency.is_some()) {
-            column_names.push(("peak_efficiency".to_owned(), "Peak Efficiency".to_owned()));
+            column_names.push(Column::new("peak_efficiency", "Peak Efficiency"));
         }
         if peaks.iter().any(|p| p.mass_on_column.is_some()) {
-            column_names.push(("mass_on_column".to_owned(), "Mass On Column".to_owned()));
+            column_names.push(Column::new("mass_on_column", "Mass On Column"));
         }
-        column_names.push((
-            "manually_reintegrated_peaks".to_owned(),
-            "Manually Reintegrated Peak".to_owned(),
+        column_names.push(Column::new(
+            "manually_reintegrated_peaks",
+            "Manually Reintegrated Peak",
         ));
-        column_names.push((
-            "peak_retention_unit".to_owned(),
-            "Peak Retention Unit".to_owned(),
-        ));
+        column_names.push(Column::new("peak_retention_unit", "Peak Retention Unit"));
         if peaks.iter().any(|p| p.peak_amount_unit.is_some()) {
-            column_names.push(("peak_amount_unit".to_owned(), "Peak Amount Unit".to_owned()));
+            column_names.push(Column::new("peak_amount_unit", "Peak Amount Unit"));
         }
         if peaks.iter().any(|p| p.detector_unit.is_some()) {
-            column_names.push(("detector_unit".to_owned(), "Detector Unit".to_owned()));
+            column_names.push(Column::new("detector_unit", "Detector Unit"));
         }
 
         // table rows
-        let mut rows: Vec<HashMap<String, String>> = vec![];
+        let mut rows: Vec<HashMap<String, Value>> = vec![];
         for peak in peaks {
-            let mut row: HashMap<String, String> = HashMap::new();
-            if let Some(val) = &peak.peak_retention_time {
-                row.insert("peak_retention_time".into(), val.to_string());
+            let mut row: HashMap<String, Value> = HashMap::new();
+            if let Some(val) = peak.peak_retention_time {
+                row.insert("peak_retention_time".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_name {
-                row.insert("peak_name".into(), val.into());
+            if let Some(val) = peak.peak_name {
+                row.insert("peak_name".into(), Value::String(val));
             }
-            if let Some(val) = &peak.peak_amount {
-                row.insert("peak_amount".into(), val.to_string());
+            if let Some(val) = peak.peak_amount {
+                row.insert("peak_amount".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_start_time {
-                row.insert("peak_start_time".into(), val.to_string());
+            if let Some(val) = peak.peak_start_time {
+                row.insert("peak_start_time".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_end_time {
-                row.insert("peak_end_time".into(), val.to_string());
+            if let Some(val) = peak.peak_end_time {
+                row.insert("peak_end_time".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_width {
-                row.insert("peak_width".into(), val.to_string());
+            if let Some(val) = peak.peak_width {
+                row.insert("peak_width".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_area {
-                row.insert("peak_area".into(), val.to_string());
+            if let Some(val) = peak.peak_area {
+                row.insert("peak_area".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_area_percent {
-                row.insert("peak_area_percent".into(), val.to_string());
+            if let Some(val) = peak.peak_area_percent {
+                row.insert("peak_area_percent".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_height {
-                row.insert("peak_height".into(), val.to_string());
+            if let Some(val) = peak.peak_height {
+                row.insert("peak_height".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_height_percent {
-                row.insert("peak_height_percent".into(), val.to_string());
+            if let Some(val) = peak.peak_height_percent {
+                row.insert("peak_height_percent".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.baseline_start_time {
-                row.insert("baseline_start_time".into(), val.to_string());
+            if let Some(val) = peak.baseline_start_time {
+                row.insert("baseline_start_time".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.baseline_start_value {
-                row.insert("baseline_start_value".into(), val.to_string());
+            if let Some(val) = peak.baseline_start_value {
+                row.insert("baseline_start_value".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.baseline_stop_time {
-                row.insert("baseline_stop_time".into(), val.to_string());
+            if let Some(val) = peak.baseline_stop_time {
+                row.insert("baseline_stop_time".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.baseline_stop_value {
-                row.insert("baseline_stop_value".into(), val.to_string());
+            if let Some(val) = peak.baseline_stop_value {
+                row.insert("baseline_stop_value".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_start_detection_code {
-                row.insert("peak_start_detection_code".into(), val.into());
+            if let Some(val) = peak.peak_start_detection_code {
+                row.insert("peak_start_detection_code".into(), Value::String(val));
             }
-            if let Some(val) = &peak.peak_stop_detection_code {
-                row.insert("peak_stop_detection_code".into(), val.into());
+            if let Some(val) = peak.peak_stop_detection_code {
+                row.insert("peak_stop_detection_code".into(), Value::String(val));
             }
-            if let Some(val) = &peak.retention_index {
-                row.insert("retention_index".into(), val.to_string());
+            if let Some(val) = peak.retention_index {
+                row.insert("retention_index".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.migration_time {
-                row.insert("migration_time".into(), val.to_string());
+            if let Some(val) = peak.migration_time {
+                row.insert("migration_time".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_asymmetry {
-                row.insert("peak_asymmetry".into(), val.to_string());
+            if let Some(val) = peak.peak_asymmetry {
+                row.insert("peak_asymmetry".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.peak_efficiency {
-                row.insert("peak_efficiency".into(), val.to_string());
+            if let Some(val) = peak.peak_efficiency {
+                row.insert("peak_efficiency".into(), Value::F32(val));
             }
-            if let Some(val) = &peak.mass_on_column {
-                row.insert("mass_on_column".into(), val.to_string());
+            if let Some(val) = peak.mass_on_column {
+                row.insert("mass_on_column".into(), Value::F32(val));
             }
             row.insert(
                 "manually_reintegrated_peaks".into(),
-                peak.manually_reintegrated_peaks.to_string(),
+                Value::Bool(peak.manually_reintegrated_peaks),
             );
             row.insert(
                 "peak_retention_unit".into(),
-                peak.peak_retention_unit.clone(),
+                Value::String(peak.peak_retention_unit),
             );
-            if let Some(val) = &peak.peak_amount_unit {
-                row.insert("peak_amount_unit".into(), val.to_string());
+            if let Some(val) = peak.peak_amount_unit {
+                row.insert("peak_amount_unit".into(), Value::String(val));
             }
-            if let Some(val) = &peak.detector_unit {
-                row.insert("detector_unit".into(), val.to_string());
+            if let Some(val) = peak.detector_unit {
+                row.insert("detector_unit".into(), Value::String(val));
             }
 
             rows.push(row);
@@ -602,15 +584,15 @@ impl AndiChromReader {
     }
 
     fn read_error_log(&self) -> Result<Node, Box<dyn Error>> {
-        let column_names: Vec<(String, String)> = vec![("message".into(), "Message".into())];
-        let rows: Vec<HashMap<String, String>> = self
+        let column_names: Vec<Column> = vec![Column::new("message", "Message")];
+        let rows: Vec<HashMap<String, Value>> = self
             .file
             .admin_data
             .error_log
             .iter()
             .map(|e| {
-                let mut map: HashMap<String, String> = HashMap::new();
-                map.insert("message".into(), e.into());
+                let mut map: HashMap<String, Value> = HashMap::new();
+                map.insert("message".into(), Value::String(e.to_owned()));
                 map
             })
             .collect();

@@ -1,6 +1,37 @@
 use crate::andi::AndiError;
 use netcdf3::{DataType, DataVector};
-use std::error::Error;
+use std::{error::Error, str::FromStr};
+
+pub fn read_index_from_var_i16(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<i16>, Box<dyn Error>> {
+    let res = read_index_from_slice(
+        var.as_ref().and_then(|(_, _, v)| v.get_i16()),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
+        index,
+    )?
+    .copied();
+
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    Ok(res)
+}
+
+// TODO: try to extract some code for this and read_index_from_var_f32
+pub fn read_index_from_var_i32(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<i32>, Box<dyn Error>> {
+    let res = read_index_from_slice(
+        var.as_ref().and_then(|(_, _, v)| v.get_i32()),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
+        index,
+    )?
+    .copied();
+
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    Ok(res)
+}
 
 pub fn read_index_from_var_f32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
@@ -13,16 +44,32 @@ pub fn read_index_from_var_f32(
     )?
     .copied();
 
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
     Ok(res)
 }
 
-fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), Box<dyn Error>> {
+pub fn read_index_from_var_f64(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<f64>, Box<dyn Error>> {
+    let res = read_index_from_slice(
+        var.as_ref().and_then(|(_, _, v)| v.get_f64()),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
+        index,
+    )?
+    .copied();
+
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    Ok(res)
+}
+
+fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), AndiError> {
     if dims.len() != 2 {
-        return Err(Box::new(AndiError::new(&format!(
+        return Err(AndiError::new(&format!(
             "Unexpected number of dimensions for {}: {}",
             var_name,
             dims.len()
-        ))));
+        )));
     }
     Ok(())
 }
@@ -30,7 +77,7 @@ fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), Box<dyn Erro
 pub fn read_index_from_var_2d_string(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<String>, Box<dyn Error>> {
+) -> Result<Option<String>, AndiError> {
     match var {
         None => Ok(None),
         Some((var_name, dims, data)) => {
@@ -133,7 +180,7 @@ pub fn read_optional_var_or_attr_f32(
     reader: &mut netcdf3::FileReader,
     var_name: &str,
 ) -> Result<Option<f32>, Box<dyn Error>> {
-    let mut value = read_scalar_var_f32(reader, "sample_injection_volume")?;
+    let mut value = read_scalar_var_f32(reader, var_name)?;
     if value.is_none() {
         let attr_opt = reader.data_set().get_global_attr(var_name);
         if let Some(attr) = attr_opt {
@@ -141,15 +188,16 @@ pub fn read_optional_var_or_attr_f32(
                 match val {
                     [single_val] => value = Some(single_val.to_owned()),
                     _ => {
-                        return Err(Box::new(AndiError::new(
-                            "Unexpected content for sample_injection_volume.",
-                        )))
+                        return Err(Box::new(AndiError::new(&format!(
+                            "Unexpected content for {}.",
+                            var_name
+                        ))))
                     }
                 }
-            } else if let Some(val) = attr.get_as_string() {
+            } else if let Some(mut val) = attr.get_as_string() {
                 // quirk: remove zero bytes from string
-                // TODO: find better way to deal with zero terminated strings here and elsewhere
-                let no_zero_bytes_val = val.trim_matches(char::from(0)).trim();
+                trim_zeros_in_place(&mut val);
+                let no_zero_bytes_val = val.trim();
                 if !no_zero_bytes_val.is_empty() {
                     let v = val.parse::<f32>()?;
                     value = Some(v);
@@ -173,6 +221,74 @@ pub fn convert_iso_8859_1_cstr_to_str(bytes: &[u8]) -> String {
         .take_while(|&c| c != &0u8)
         .map(|&c| c as char)
         .collect()
+}
+
+pub fn trim_zeros_in_place(s: &mut String) {
+    if let Some(index) = s.find('\0') {
+        s.truncate(index);
+    }
+}
+
+pub fn read_global_attr_str(reader: &netcdf3::FileReader, attr_name: &str) -> Option<String> {
+    let mut res = reader.data_set().get_global_attr_as_string(attr_name);
+    if let Some(s) = res.as_mut() {
+        trim_zeros_in_place(s);
+    }
+    res
+}
+
+pub fn extract_single_attr_value<T: Clone>(
+    attr_name: &str,
+    values: Option<&[T]>,
+) -> Result<Option<T>, AndiError> {
+    match values {
+        None | Some([]) => Ok(None),
+        Some([val]) => Ok(Some(val.to_owned())),
+        Some([..]) => Err(AndiError::new(&format!(
+            "More than one element found in global {} attribute.",
+            attr_name
+        ))),
+    }
+}
+
+pub fn read_global_attr_i16(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<i16>, AndiError> {
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_i16(attr_name))
+}
+
+pub fn read_global_attr_i32(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<i32>, AndiError> {
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_i32(attr_name))
+}
+
+pub fn read_global_attr_f32(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<f32>, AndiError> {
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_f32(attr_name))
+}
+
+pub fn read_global_attr_f64(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<Option<f64>, AndiError> {
+    extract_single_attr_value(attr_name, reader.data_set().get_global_attr_f64(attr_name))
+}
+
+pub fn read_enum_from_global_attr_str<T: Default + FromStr>(
+    reader: &netcdf3::FileReader,
+    attr_name: &str,
+) -> Result<T, AndiError> {
+    read_global_attr_str(reader, attr_name).map_or(Ok(T::default()), |s| {
+        T::from_str(&s).or(Err(AndiError::new(&format!(
+            "Illegal {} value: {}",
+            attr_name, s
+        ))))
+    })
 }
 
 #[cfg(test)]

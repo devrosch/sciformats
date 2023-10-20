@@ -5,6 +5,7 @@ use std::io::SeekFrom;
 use std::{
     collections::HashMap,
     error::Error,
+    fmt::Display,
     io::{Read, Seek},
 };
 #[cfg(target_family = "wasm")]
@@ -63,6 +64,116 @@ pub trait Reader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Value {
+    String(String),
+    Bool(bool),
+    I32(i32),
+    U32(u32),
+    I64(i64),
+    U64(u64),
+    F32(f32),
+    F64(f64),
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::String(v) => write!(f, "{}", v),
+            Value::Bool(v) => write!(f, "{}", v),
+            Value::I32(v) => write!(f, "{}", v),
+            Value::U32(v) => write!(f, "{}", v),
+            Value::I64(v) => write!(f, "{}", v),
+            Value::U64(v) => write!(f, "{}", v),
+            Value::F32(v) => write!(f, "{}", v),
+            Value::F64(v) => write!(f, "{}", v),
+        }
+    }
+}
+
+/// A key value parameter.
+#[derive(Debug, PartialEq)]
+pub struct Parameter {
+    pub key: String,
+    pub value: Value,
+}
+
+impl Parameter {
+    pub fn from_str_str(key: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::String(value.into()),
+        }
+    }
+
+    pub fn from_str_bool(key: impl Into<String>, value: bool) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::Bool(value),
+        }
+    }
+
+    pub fn from_str_i32(key: impl Into<String>, value: i32) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::I32(value),
+        }
+    }
+
+    pub fn from_str_u32(key: impl Into<String>, value: u32) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::U32(value),
+        }
+    }
+
+    pub fn from_str_i64(key: impl Into<String>, value: i64) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::I64(value),
+        }
+    }
+
+    pub fn from_str_u64(key: impl Into<String>, value: u64) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::U64(value),
+        }
+    }
+
+    pub fn from_str_f32(key: impl Into<String>, value: f32) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::F32(value),
+        }
+    }
+
+    pub fn from_str_f64(key: impl Into<String>, value: f64) -> Self {
+        Self {
+            key: key.into(),
+            value: Value::F64(value),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct PointXy {
+    pub x: f64,
+    pub y: f64,
+}
+
+impl PointXy {
+    pub fn new(x: f64, y: f64) -> PointXy {
+        PointXy { x, y }
+    }
+}
+
+impl From<(f64, f64)> for PointXy {
+    fn from(value: (f64, f64)) -> Self {
+        PointXy::new(value.0, value.1)
+    }
+}
+
 #[wasm_bindgen]
 /// An harmonized abstraction for a part of a data set.
 #[derive(Debug, PartialEq)]
@@ -70,9 +181,9 @@ pub struct Node {
     #[wasm_bindgen(skip)]
     pub name: String,
     #[wasm_bindgen(skip)]
-    pub parameters: Vec<(String, String)>,
+    pub parameters: Vec<Parameter>,
     #[wasm_bindgen(skip)]
-    pub data: Vec<(f64, f64)>,
+    pub data: Vec<PointXy>,
     #[wasm_bindgen(skip)]
     pub metadata: Vec<(String, String)>,
     #[wasm_bindgen(skip)]
@@ -92,8 +203,8 @@ impl Node {
     pub fn parameters(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.parameters {
-            let key = JsValue::from(&param.0);
-            let value = JsValue::from(&param.1);
+            let key = JsValue::from(&param.key);
+            let value = JsValue::from(&param.value.to_string());
             let js_param = js_sys::Object::new();
             let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
             let set_val_ret =
@@ -110,8 +221,8 @@ impl Node {
     pub fn data(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for xy in &self.data {
-            let x = JsValue::from_f64(xy.0);
-            let y = JsValue::from_f64(xy.1);
+            let x = JsValue::from_f64(xy.x);
+            let y = JsValue::from_f64(xy.y);
             let js_xy = js_sys::Object::new();
             let set_x_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("x"), &x).unwrap();
             let set_y_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("y"), &y).unwrap();
@@ -146,8 +257,8 @@ impl Node {
         if let Some(table) = &self.table {
             let col_names = &table.column_names;
             for col_name in col_names {
-                let key = JsValue::from(&col_name.0);
-                let value = JsValue::from(&col_name.1);
+                let key = JsValue::from(&col_name.key);
+                let value = JsValue::from(&col_name.name);
                 let column = js_sys::Object::new();
                 let set_col_key_ret =
                     js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
@@ -164,7 +275,7 @@ impl Node {
                 let js_row = js_sys::Object::new();
                 for cell in row {
                     let key = JsValue::from(cell.0);
-                    let val = JsValue::from(cell.1);
+                    let val = JsValue::from(cell.1.to_string());
                     let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
                     if !set_cell_ret {
                         panic!("Could not convert table cell to JS Object.");
@@ -197,11 +308,31 @@ impl Node {
     }
 }
 
+/// A table column.
+///
+/// Note: This does not hold any data. It is used to indicate what columns a table consists of.
+#[derive(Debug, PartialEq)]
+pub struct Column {
+    /// A unique key for a table.
+    key: String,
+    /// A name for the column.
+    name: String,
+}
+
+impl Column {
+    pub fn new(key: impl Into<String>, name: impl Into<String>) -> Column {
+        Column {
+            key: key.into(),
+            name: name.into(),
+        }
+    }
+}
+
 /// A data table.
 #[derive(Debug, PartialEq)]
 pub struct Table {
     /// A list of column keys and corresponding column names.
-    pub column_names: Vec<(String, String)>,
+    pub column_names: Vec<Column>,
 
     /// A list of rows.
     ///
@@ -209,7 +340,7 @@ pub struct Table {
     /// e.g., peak parameters such as position or height.
     /// Only keys from the coulmn_names may occur but not all keys from
     /// that list need to occur as there may be missing values for cells.
-    pub rows: Vec<HashMap<String, String>>,
+    pub rows: Vec<HashMap<String, Value>>,
 }
 
 // -------------------------------------------------
@@ -342,7 +473,10 @@ mod tests {
     fn map_node_to_js() {
         let node = Node {
             name: "abc".to_owned(),
-            parameters: vec![("a".to_owned(), "b".to_owned())],
+            parameters: vec![Parameter {
+                key: "a".into(),
+                value: Value::String("b".into()),
+            }],
             data: vec![],
             metadata: vec![],
             table: None,

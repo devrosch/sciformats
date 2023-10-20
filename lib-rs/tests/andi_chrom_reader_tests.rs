@@ -5,7 +5,7 @@ wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 use crate::io::open_file;
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
-    api::{Parser, Reader},
+    api::{Column, Parameter, Parser, Reader, Value},
 };
 use wasm_bindgen_test::wasm_bindgen_test;
 
@@ -44,98 +44,71 @@ fn andi_chrom_read_valid_succeeds() {
     let admin_data = &reader.read("/0").unwrap();
     assert_eq!("Admin Data", admin_data.name);
     assert_eq!(
-        ("Dataset Completeness".to_owned(), "C1+C2".to_owned()),
+        Parameter::from_str_str("Dataset Completeness", "C1+C2"),
         admin_data.parameters[0]
     );
     assert_eq!(
-        ("Protocol Template Revision".to_owned(), "1.0".to_owned()),
+        Parameter::from_str_str("Protocol Template Revision", "1.0"),
         admin_data.parameters[1]
     );
     assert_eq!(
-        ("NetCDF Revision".to_owned(), "2.0".to_owned()),
+        Parameter::from_str_str("NetCDF Revision", "2.0"),
         admin_data.parameters[2]
     );
     assert_eq!(
-        ("Languages".to_owned(), "English".to_owned()),
+        Parameter::from_str_str("Languages", "English"),
         admin_data.parameters[3]
     );
     assert_eq!(
-        (
-            "Administrative Comments".to_owned(),
-            "dummy admin comment".to_owned()
-        ),
+        Parameter::from_str_str("Administrative Comments", "dummy admin comment"),
         admin_data.parameters[4]
     );
     assert_eq!(
-        ("Dataset Origin".to_owned(), "sf_rs".to_owned()),
+        Parameter::from_str_str("Dataset Origin", "sf_rs"),
         admin_data.parameters[5]
     );
     assert_eq!(
-        ("Dataset Owner".to_owned(), "Robert".to_owned()),
+        Parameter::from_str_str("Dataset Owner", "Robert"),
         admin_data.parameters[6]
     );
     assert_eq!(
-        (
-            "Dataset Date/Time Stamp".to_owned(),
-            "20230908200501+0200".to_owned()
-        ),
+        Parameter::from_str_str("Dataset Date/Time Stamp", "20230908200501+0200"),
         admin_data.parameters[7]
     );
     assert_eq!(
-        (
-            "Injection Date/Time Stamp".to_owned(),
-            "20230908200501+0200".to_owned()
-        ),
+        Parameter::from_str_str("Injection Date/Time Stamp", "20230908200501+0200"),
         admin_data.parameters[8]
     );
     assert_eq!(
-        (
-            "Experiment Title".to_owned(),
-            "sf_rs sample file".to_owned()
-        ),
+        Parameter::from_str_str("Experiment Title", "sf_rs sample file"),
         admin_data.parameters[9]
     );
     assert_eq!(
-        ("Operator Name".to_owned(), "Rob".to_owned()),
+        Parameter::from_str_str("Operator Name", "Rob"),
         admin_data.parameters[10]
     );
     assert_eq!(
-        (
-            "Separation Experiment Type".to_owned(),
-            "liquid chromatography".to_owned()
-        ),
+        Parameter::from_str_str("Separation Experiment Type", "liquid chromatography"),
         admin_data.parameters[11]
     );
     assert_eq!(
-        (
-            "Company Method Name".to_owned(),
-            "dummy company method 1".to_owned()
-        ),
+        Parameter::from_str_str("Company Method Name", "dummy company method 1"),
         admin_data.parameters[12]
     );
     assert_eq!(
-        ("Company Method ID".to_owned(), "1".to_owned()),
+        Parameter::from_str_str("Company Method ID", "1"),
         admin_data.parameters[13]
     );
     assert_eq!(
-        (
-            "Pre Experiment Program Name".to_owned(),
-            "dummy pre exp prog name".to_owned()
-        ),
+        Parameter::from_str_str("Pre Experiment Program Name", "dummy pre exp prog name"),
         admin_data.parameters[14]
     );
     assert_eq!(
-        (
-            "Post Experiment Program Name".to_owned(),
-            "dummy post exp prog name".to_owned()
-        ),
+        Parameter::from_str_str("Post Experiment Program Name", "dummy post exp prog name"),
         admin_data.parameters[15]
     );
     assert_eq!(
-        (
-            "Source File Reference".to_owned(),
-            "dummy source file reference".to_owned()
-        ),
+        Parameter::from_str_str("Source File Reference", "dummy source file reference"),
         admin_data.parameters[16]
     );
     assert!(admin_data.data.is_empty());
@@ -150,42 +123,45 @@ fn andi_chrom_read_valid_succeeds() {
     let error_log_table = error_log.table.as_ref().unwrap();
     assert_eq!(1, error_log_table.column_names.len());
     assert_eq!(
-        ("message".to_owned(), "Message".to_owned()),
+        Column::new("message", "Message"),
         error_log_table.column_names[0]
     );
     assert_eq!(1, error_log_table.rows[0].len());
-    assert_eq!("error 1", error_log_table.rows[0].get("message").unwrap());
+    assert_eq!(
+        &Value::String("error 1".to_owned()),
+        error_log_table.rows[0].get("message").unwrap()
+    );
     assert_eq!(1, error_log_table.rows[1].len());
-    assert_eq!("error 2", error_log_table.rows[1].get("message").unwrap());
+    assert_eq!(
+        &Value::String("error 2".to_owned()),
+        error_log_table.rows[1].get("message").unwrap()
+    );
     assert!(error_log.child_node_names.is_empty());
 
     let sample_description = &reader.read("/1- some name").unwrap();
     assert_eq!("Sample Description", sample_description.name);
     assert_eq!(
-        (
-            "Sample ID Comments".to_owned(),
-            "dummy sample id comments".to_owned()
-        ),
+        Parameter::from_str_str("Sample ID Comments", "dummy sample id comments"),
         sample_description.parameters[0]
     );
     assert_eq!(
-        ("Sample ID".to_owned(), "12345".to_owned()),
+        Parameter::from_str_str("Sample ID", "12345"),
         sample_description.parameters[1]
     );
     assert_eq!(
-        ("Sample Name".to_owned(), "dummy sample name".to_owned()),
+        Parameter::from_str_str("Sample Name", "dummy sample name"),
         sample_description.parameters[2]
     );
     assert_eq!(
-        ("Sample Type".to_owned(), "test".to_owned()),
+        Parameter::from_str_str("Sample Type", "test"),
         sample_description.parameters[3]
     );
     assert_eq!(
-        ("Sample Injection Volume".to_owned(), "1".to_owned()),
+        Parameter::from_str_f32("Sample Injection Volume", 1.0f32),
         sample_description.parameters[4]
     );
     assert_eq!(
-        ("Sample Amount".to_owned(), "2.2".to_owned()),
+        Parameter::from_str_f32("Sample Amount", 2.2f32),
         sample_description.parameters[5]
     );
     assert!(sample_description.data.is_empty());
@@ -195,40 +171,31 @@ fn andi_chrom_read_valid_succeeds() {
 
     let detection_method = &reader.read("/2").unwrap();
     assert_eq!(
-        (
-            "Detection Method Table Name".to_owned(),
-            "dummy method table name".to_owned()
-        ),
+        Parameter::from_str_str("Detection Method Table Name", "dummy method table name"),
         detection_method.parameters[0]
     );
     assert_eq!(
-        (
-            "Detector Method Comments".to_owned(),
-            "dummy detector method comments".to_owned()
-        ),
+        Parameter::from_str_str("Detector Method Comments", "dummy detector method comments"),
         detection_method.parameters[1]
     );
     assert_eq!(
-        (
-            "Detection Method Name".to_owned(),
-            "dummy detection method 1".to_owned()
-        ),
+        Parameter::from_str_str("Detection Method Name", "dummy detection method 1"),
         detection_method.parameters[2]
     );
     assert_eq!(
-        ("Detector Name".to_owned(), "dummy detector name".to_owned()),
+        Parameter::from_str_str("Detector Name", "dummy detector name"),
         detection_method.parameters[3]
     );
     assert_eq!(
-        ("Detector Maximum Value".to_owned(), 999999.0f32.to_string()),
+        Parameter::from_str_f32("Detector Maximum Value", 999999.0f32),
         detection_method.parameters[4]
     );
     assert_eq!(
-        ("Detector Minimum Value".to_owned(), 1.0f32.to_string()),
+        Parameter::from_str_f32("Detector Minimum Value", 1.0f32),
         detection_method.parameters[5]
     );
     assert_eq!(
-        ("Detector Unit".to_owned(), "au".to_owned()),
+        Parameter::from_str_str("Detector Unit", "au"),
         detection_method.parameters[6]
     );
     assert!(detection_method.data.is_empty());
@@ -238,38 +205,35 @@ fn andi_chrom_read_valid_succeeds() {
 
     let raw_data = &reader.read("/3").unwrap();
     assert_eq!(
-        ("Point Number".to_owned(), 10.to_string()),
+        Parameter::from_str_i32("Point Number", 10i32),
         raw_data.parameters[0]
     );
     assert_eq!(
-        (
-            "Raw Data Table Name".to_owned(),
-            "dummy raw data table name".to_owned()
-        ),
+        Parameter::from_str_str("Raw Data Table Name", "dummy raw data table name"),
         raw_data.parameters[1]
     );
     assert_eq!(
-        ("Retention Unit".to_owned(), "seconds".to_owned()),
+        Parameter::from_str_str("Retention Unit", "seconds"),
         raw_data.parameters[2]
     );
     assert_eq!(
-        ("Actual Run Time Length".to_owned(), "100".to_owned()),
+        Parameter::from_str_f32("Actual Run Time Length", 100f32),
         raw_data.parameters[3]
     );
     assert_eq!(
-        ("Actual Sampling Interval".to_owned(), "10".to_owned()),
+        Parameter::from_str_f32("Actual Sampling Interval", 10f32),
         raw_data.parameters[4]
     );
     assert_eq!(
-        ("Actual Delay Time".to_owned(), "0".to_owned()),
+        Parameter::from_str_f32("Actual Delay Time", 0f32),
         raw_data.parameters[5]
     );
     assert_eq!(
-        ("Uniform Sampling Flag".to_owned(), "true".to_owned()),
+        Parameter::from_str_bool("Uniform Sampling Flag", true),
         raw_data.parameters[6]
     );
     assert_eq!(
-        ("Autosampler Position".to_owned(), "1:2".to_owned()),
+        Parameter::from_str_str("Autosampler Position", "1:2"),
         raw_data.parameters[7]
     );
     assert_eq!(10, raw_data.data.len());
@@ -286,8 +250,8 @@ fn andi_chrom_read_valid_succeeds() {
         (90f64, 10000f64),
     ];
     for i in 0..10 {
-        assert_eq_f64(expect_data[i].0, raw_data.data[i].0);
-        assert_eq_f64(expect_data[i].1, raw_data.data[i].1);
+        assert_eq_f64(expect_data[i].0, raw_data.data[i].x);
+        assert_eq_f64(expect_data[i].1, raw_data.data[i].y);
     }
     assert_eq!(2, raw_data.metadata.len());
     assert_eq!(
@@ -300,124 +264,82 @@ fn andi_chrom_read_valid_succeeds() {
 
     let peak_processing_results = &reader.read("/4").unwrap();
     assert_eq!(
-        ("Peak Number".to_owned(), "3".to_owned()),
+        Parameter::from_str_i32("Peak Number", 3),
         peak_processing_results.parameters[0]
     );
     assert_eq!(
-        (
-            "Peak Processing Results Table Name".to_owned(),
-            "dummy pp res table name".to_owned()
+        Parameter::from_str_str(
+            "Peak Processing Results Table Name",
+            "dummy pp res table name"
         ),
         peak_processing_results.parameters[1]
     );
 
     assert_eq!(
-        (
-            "Peak Processing Results Comments".to_owned(),
-            "dummy pp res comments".to_owned()
-        ),
+        Parameter::from_str_str("Peak Processing Results Comments", "dummy pp res comments"),
         peak_processing_results.parameters[2]
     );
     assert_eq!(
-        (
-            "Peak Processing Method Name".to_owned(),
-            "dummy pp method name".to_owned()
-        ),
+        Parameter::from_str_str("Peak Processing Method Name", "dummy pp method name"),
         peak_processing_results.parameters[3]
     );
     assert_eq!(
-        (
-            "Peak Processing Date Time Stamp".to_owned(),
-            "20230908201502+0200".to_owned()
-        ),
+        Parameter::from_str_str("Peak Processing Date Time Stamp", "20230908201502+0200"),
         peak_processing_results.parameters[4]
     );
     assert_eq!(
-        ("Peak Amount Unit".to_owned(), "ppm".to_owned()),
+        Parameter::from_str_str("Peak Amount Unit", "ppm"),
         peak_processing_results.parameters[5]
     );
 
     let column_names = &peak_processing_results.table.as_ref().unwrap().column_names;
     assert_eq!(15, column_names.len());
     assert_eq!(
-        (
-            "peak_retention_time".to_owned(),
-            "Peak Retention Time".to_owned()
-        ),
+        Column::new("peak_retention_time", "Peak Retention Time"),
         column_names[0]
     );
+    assert_eq!(Column::new("peak_name", "Peak Name"), column_names[1]);
+    assert_eq!(Column::new("peak_amount", "Peak Amount"), column_names[2]);
     assert_eq!(
-        ("peak_name".to_owned(), "Peak Name".to_owned()),
-        column_names[1]
-    );
-    assert_eq!(
-        ("peak_amount".to_owned(), "Peak Amount".to_owned()),
-        column_names[2]
-    );
-    assert_eq!(
-        ("peak_start_time".to_owned(), "Peak Start Time".to_owned()),
+        Column::new("peak_start_time", "Peak Start Time"),
         column_names[3]
     );
     assert_eq!(
-        ("peak_end_time".to_owned(), "Peak End Time".to_owned()),
+        Column::new("peak_end_time", "Peak End Time"),
         column_names[4]
     );
+    assert_eq!(Column::new("peak_area", "Peak Area"), column_names[5]);
+    assert_eq!(Column::new("peak_height", "Peak Height"), column_names[6]);
     assert_eq!(
-        ("peak_area".to_owned(), "Peak Area".to_owned()),
-        column_names[5]
-    );
-    assert_eq!(
-        ("peak_height".to_owned(), "Peak Height".to_owned()),
-        column_names[6]
-    );
-    assert_eq!(
-        (
-            "baseline_start_value".to_owned(),
-            "Baseline Start Value".to_owned()
-        ),
+        Column::new("baseline_start_value", "Baseline Start Value"),
         column_names[7]
     );
     assert_eq!(
-        (
-            "baseline_stop_value".to_owned(),
-            "Baseline Stop Value".to_owned()
-        ),
+        Column::new("baseline_stop_value", "Baseline Stop Value"),
         column_names[8]
     );
     assert_eq!(
-        (
-            "peak_start_detection_code".to_owned(),
-            "Peak Start Detection Code".to_owned()
-        ),
+        Column::new("peak_start_detection_code", "Peak Start Detection Code"),
         column_names[9]
     );
     assert_eq!(
-        (
-            "peak_stop_detection_code".to_owned(),
-            "Peak Stop Detection Code".to_owned()
-        ),
+        Column::new("peak_stop_detection_code", "Peak Stop Detection Code"),
         column_names[10]
     );
     assert_eq!(
-        (
-            "manually_reintegrated_peaks".to_owned(),
-            "Manually Reintegrated Peak".to_owned()
-        ),
+        Column::new("manually_reintegrated_peaks", "Manually Reintegrated Peak"),
         column_names[11]
     );
     assert_eq!(
-        (
-            "peak_retention_unit".to_owned(),
-            "Peak Retention Unit".to_owned()
-        ),
+        Column::new("peak_retention_unit", "Peak Retention Unit"),
         column_names[12]
     );
     assert_eq!(
-        ("peak_amount_unit".to_owned(), "Peak Amount Unit".to_owned()),
+        Column::new("peak_amount_unit", "Peak Amount Unit"),
         column_names[13]
     );
     assert_eq!(
-        ("detector_unit".to_owned(), "Detector Unit".to_owned()),
+        Column::new("detector_unit", "Detector Unit"),
         column_names[14]
     );
 
@@ -428,41 +350,59 @@ fn andi_chrom_read_valid_succeeds() {
 
     let peak_0 = &peak_processing_results.table.as_ref().unwrap().rows[0];
     assert_eq!(15, peak_0.keys().len());
-    assert_eq!("10.111", peak_0["peak_retention_time"]);
-    assert_eq!("ref", peak_0["peak_name"]);
-    assert_eq!("110.1111", peak_0["peak_amount"]);
-    assert_eq!("8", peak_0["peak_start_time"]);
-    assert_eq!("12", peak_0["peak_end_time"]);
-    assert_eq!("111", peak_0["peak_area"]);
-    assert_eq!("111111.1", peak_0["peak_height"]);
-    assert_eq!("5", peak_0["baseline_start_value"]);
-    assert_eq!("7", peak_0["baseline_stop_value"]);
-    assert_eq!("A", peak_0["peak_start_detection_code"]);
-    assert_eq!("X", peak_0["peak_stop_detection_code"]);
-    assert_eq!("false", peak_0["manually_reintegrated_peaks"]);
-    assert_eq!("seconds", peak_0["peak_retention_unit"]);
-    assert_eq!("ppm", peak_0["peak_amount_unit"]);
-    assert_eq!("au", peak_0["detector_unit"]);
+    assert_eq!(Value::F32(10.111), peak_0["peak_retention_time"]);
+    assert_eq!(Value::String("ref".to_owned()), peak_0["peak_name"]);
+    assert_eq!(Value::F32(110.1111), peak_0["peak_amount"]);
+    assert_eq!(Value::F32(8.0), peak_0["peak_start_time"]);
+    assert_eq!(Value::F32(12.0), peak_0["peak_end_time"]);
+    assert_eq!(Value::F32(111.0), peak_0["peak_area"]);
+    assert_eq!(Value::F32(111111.1), peak_0["peak_height"]);
+    assert_eq!(Value::F32(5.0), peak_0["baseline_start_value"]);
+    assert_eq!(Value::F32(7.0), peak_0["baseline_stop_value"]);
+    assert_eq!(
+        Value::String("A".to_owned()),
+        peak_0["peak_start_detection_code"]
+    );
+    assert_eq!(
+        Value::String("X".to_owned()),
+        peak_0["peak_stop_detection_code"]
+    );
+    assert_eq!(Value::Bool(false), peak_0["manually_reintegrated_peaks"]);
+    assert_eq!(
+        Value::String("seconds".to_owned()),
+        peak_0["peak_retention_unit"]
+    );
+    assert_eq!(Value::String("ppm".to_owned()), peak_0["peak_amount_unit"]);
+    assert_eq!(Value::String("au".to_owned()), peak_0["detector_unit"]);
 
     // skip peak 1
 
     let peak_2 = &peak_processing_results.table.as_ref().unwrap().rows[2];
     assert_eq!(15, peak_2.keys().len());
-    assert_eq!("50.333", peak_2["peak_retention_time"]);
-    assert_eq!("peak name 2", peak_2["peak_name"]);
-    assert_eq!("330.333", peak_2["peak_amount"]);
-    assert_eq!("48", peak_2["peak_start_time"]);
-    assert_eq!("52", peak_2["peak_end_time"]);
-    assert_eq!("333", peak_2["peak_area"]);
-    assert_eq!("133333.3", peak_2["peak_height"]);
-    assert_eq!("7", peak_2["baseline_start_value"]);
-    assert_eq!("5", peak_2["baseline_stop_value"]);
-    assert_eq!("C", peak_2["peak_start_detection_code"]);
-    assert_eq!("Z", peak_2["peak_stop_detection_code"]);
-    assert_eq!("false", peak_2["manually_reintegrated_peaks"]);
-    assert_eq!("seconds", peak_2["peak_retention_unit"]);
-    assert_eq!("ppm", peak_2["peak_amount_unit"]);
-    assert_eq!("au", peak_2["detector_unit"]);
+    assert_eq!(Value::F32(50.333), peak_2["peak_retention_time"]);
+    assert_eq!(Value::String("peak name 2".to_owned()), peak_2["peak_name"]);
+    assert_eq!(Value::F32(330.333), peak_2["peak_amount"]);
+    assert_eq!(Value::F32(48.0), peak_2["peak_start_time"]);
+    assert_eq!(Value::F32(52.0), peak_2["peak_end_time"]);
+    assert_eq!(Value::F32(333.0), peak_2["peak_area"]);
+    assert_eq!(Value::F32(133333.3), peak_2["peak_height"]);
+    assert_eq!(Value::F32(7.0), peak_2["baseline_start_value"]);
+    assert_eq!(Value::F32(5.0), peak_2["baseline_stop_value"]);
+    assert_eq!(
+        Value::String("C".to_owned()),
+        peak_2["peak_start_detection_code"]
+    );
+    assert_eq!(
+        Value::String("Z".to_owned()),
+        peak_2["peak_stop_detection_code"]
+    );
+    assert_eq!(Value::Bool(false), peak_2["manually_reintegrated_peaks"]);
+    assert_eq!(
+        Value::String("seconds".to_owned()),
+        peak_2["peak_retention_unit"]
+    );
+    assert_eq!(Value::String("ppm".to_owned()), peak_2["peak_amount_unit"]);
+    assert_eq!(Value::String("au".to_owned()), peak_2["detector_unit"]);
 
     // TODO: add tests for non standard variables and attributes once available
 }

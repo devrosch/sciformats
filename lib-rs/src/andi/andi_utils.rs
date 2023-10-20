@@ -2,6 +2,37 @@ use crate::andi::AndiError;
 use netcdf3::{DataType, DataVector};
 use std::{error::Error, str::FromStr};
 
+pub fn read_index_from_var_i16(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<i16>, Box<dyn Error>> {
+    let res = read_index_from_slice(
+        var.as_ref().and_then(|(_, _, v)| v.get_i16()),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
+        index,
+    )?
+    .copied();
+
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    Ok(res)
+}
+
+// TODO: try to extract some code for this and read_index_from_var_f32
+pub fn read_index_from_var_i32(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<i32>, Box<dyn Error>> {
+    let res = read_index_from_slice(
+        var.as_ref().and_then(|(_, _, v)| v.get_i32()),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
+        index,
+    )?
+    .copied();
+
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    Ok(res)
+}
+
 pub fn read_index_from_var_f32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
@@ -13,6 +44,22 @@ pub fn read_index_from_var_f32(
     )?
     .copied();
 
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    Ok(res)
+}
+
+pub fn read_index_from_var_f64(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    index: usize,
+) -> Result<Option<f64>, Box<dyn Error>> {
+    let res = read_index_from_slice(
+        var.as_ref().and_then(|(_, _, v)| v.get_f64()),
+        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
+        index,
+    )?
+    .copied();
+
+    // TODO: report default value -9999 as None; or make configurable with fn parameter
     Ok(res)
 }
 

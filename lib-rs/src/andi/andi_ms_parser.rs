@@ -8,11 +8,14 @@ use super::andi_enums::{
 };
 use super::andi_utils::{
     read_enum_from_global_attr_str, read_global_attr_f32, read_global_attr_f64,
-    read_global_attr_i16, read_global_attr_i32, read_global_attr_str, read_multi_string_var,
+    read_global_attr_i16, read_global_attr_i32, read_global_attr_str, read_index_from_var_f64,
+    read_index_from_var_i16, read_index_from_var_i32, read_multi_string_var, read_optional_var,
     trim_zeros_in_place,
 };
 use super::{AndiDatasetCompleteness, AndiError};
 use crate::api::Parser;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::{
     error::Error,
     io::{Read, Seek},
@@ -39,6 +42,7 @@ pub struct AndiMsFile {
     pub sample_data: AndiMsSampleData,
     pub test_data: AndiMsTestData,
     pub raw_data_global: AndiMsRawDataGlobal,
+    pub raw_data_scans: AndiMsRawDataScans,
     // pub sample_description: AndiMsSampleDescription,
     // pub detection_method: AndiMsDetectionMethod,
     // pub raw_data: AndiMsRawData,
@@ -54,6 +58,14 @@ impl AndiMsFile {
         let sample_data = AndiMsSampleData::new(&reader)?;
         let test_data = AndiMsTestData::new(&reader)?;
         let raw_data_global = AndiMsRawDataGlobal::new(&reader)?;
+
+        let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
+
+        let raw_data_scans = AndiMsRawDataScans::new(
+            reader_ref,
+            &raw_data_global,
+            test_data.resolution_type.clone(),
+        )?;
         // let sample_description = AndiMsSampleDescription::new(&mut reader)?;
         // let detection_method = AndiMsDetectionMethod::new(&mut reader)?;
 
@@ -72,6 +84,7 @@ impl AndiMsFile {
             sample_data,
             test_data,
             raw_data_global,
+            raw_data_scans,
             // sample_description,
             // detection_method,
             // raw_data,
@@ -520,6 +533,7 @@ impl AndiMsTestData {
 
 #[derive(Debug)]
 pub struct AndiMsRawDataGlobal {
+    /// Total number of scans.
     /// 32 bit
     pub scan_number: i32,
     /// 32 bit
@@ -687,6 +701,150 @@ impl AndiMsRawDataGlobal {
             comments,
         })
     }
+}
+
+#[derive(Debug)]
+pub struct AndiMsRawDataScans {
+    pub raw_data_per_scan_list: Vec<AndiMsRawDataPerScan>,
+}
+
+impl AndiMsRawDataScans {
+    pub fn new(
+        reader_ref: Rc<RefCell<netcdf3::FileReader>>,
+        raw_data_global: &AndiMsRawDataGlobal,
+        resolution_type: AndiMsResolutionType,
+    ) -> Result<Self, Box<dyn Error>> {
+        let mass_scale_factor = raw_data_global.mass_axis_scale_factor;
+        let time_scale_factor = raw_data_global.time_axis_scale_factor;
+        let intensity_scale_factor = raw_data_global.intensity_axis_scale_factor;
+        let intensity_offset = raw_data_global.intensity_axis_offset;
+
+        let reader = &mut reader_ref.borrow_mut();
+        let scan_index_var = read_optional_var(reader, "scan_index")?;
+        let actual_scan_number_var = read_optional_var(reader, "actual_scan_number")?;
+        let point_count_var = read_optional_var(reader, "point_count")?;
+        let flag_count_var = read_optional_var(reader, "flag_count")?;
+        let total_intensity_var = read_optional_var(reader, "total_intensity")?;
+        let a_d_sampling_rate_var = read_optional_var(reader, "a_d_sampling_rate")?;
+        let a_d_coaddition_factor_var = read_optional_var(reader, "a_d_coaddition_factor")?;
+        let scan_acquisition_time_var = read_optional_var(reader, "scan_acquisition_time")?;
+        let scan_duration_var = read_optional_var(reader, "scan_duration")?;
+        let mass_range_min_var = read_optional_var(reader, "mass_range_min")?;
+        let mass_range_max_var = read_optional_var(reader, "mass_range_max")?;
+        let time_range_min_var = read_optional_var(reader, "time_range_min")?;
+        let time_range_max_var = read_optional_var(reader, "time_range_max")?;
+        let inter_scan_time_var = read_optional_var(reader, "inter_scan_time")?;
+        let resolution_var_var = read_optional_var(reader, "resolution")?;
+
+        let number_of_scans = raw_data_global.scan_number;
+        let mut raw_data_per_scan_list = Vec::<AndiMsRawDataPerScan>::new();
+        for i in 0..number_of_scans {
+            let scan_index = read_index_from_var_i32(&scan_index_var, i as usize)?.ok_or(
+                AndiError::new(&format!(
+                    "Could not read scan_index from scan_index variable at index: {}",
+                    i
+                )),
+            )?;
+            let scan_number = i;
+            let actual_scan_number =
+                read_index_from_var_i32(&actual_scan_number_var, i as usize)?.unwrap_or(i);
+            let number_of_points = read_index_from_var_i32(&point_count_var, i as usize)?.ok_or(
+                AndiError::new(&format!(
+                    "Could not read number_of_points from point_count variable at index: {}",
+                    i
+                )),
+            )?;
+            let number_of_flags = read_index_from_var_i32(&flag_count_var, i as usize)?.ok_or(
+                AndiError::new(&format!(
+                    "Could not read number_of_flags from flag_count variable at index: {}",
+                    i
+                )),
+            )?;
+            let total_intensity = read_index_from_var_f64(&total_intensity_var, i as usize)?;
+            let a_d_sampling_rate = read_index_from_var_f64(&a_d_sampling_rate_var, i as usize)?;
+            let a_d_coaddition_factor =
+                read_index_from_var_i16(&a_d_coaddition_factor_var, i as usize)?;
+            let scan_acquisition_time =
+                read_index_from_var_f64(&scan_acquisition_time_var, i as usize)?;
+            let scan_duration = read_index_from_var_f64(&scan_duration_var, i as usize)?;
+            let mass_range_min = read_index_from_var_f64(&mass_range_min_var, i as usize)?;
+            let mass_range_max = read_index_from_var_f64(&mass_range_max_var, i as usize)?;
+            let time_range_min = read_index_from_var_f64(&time_range_min_var, i as usize)?;
+            let time_range_max = read_index_from_var_f64(&time_range_max_var, i as usize)?;
+            let inter_scan_time = read_index_from_var_f64(&inter_scan_time_var, i as usize)?;
+            let resolution = read_index_from_var_f64(&resolution_var_var, i as usize)?;
+
+            let ms_raw_data_per_scan = AndiMsRawDataPerScan {
+                reader_ref: Rc::clone(&reader_ref),
+                mass_scale_factor,
+                time_scale_factor,
+                intensity_scale_factor,
+                intensity_offset,
+                scan_index,
+                // raw_data_global, // TODO: add ref
+                resolution_type: resolution_type.clone(),
+                scan_number,
+                actual_scan_number,
+                number_of_points,
+                number_of_flags,
+                total_intensity,
+                a_d_sampling_rate,
+                a_d_coaddition_factor,
+                scan_acquisition_time,
+                scan_duration,
+                mass_range_min,
+                mass_range_max,
+                time_range_min,
+                time_range_max,
+                inter_scan_time,
+                resolution,
+            };
+            raw_data_per_scan_list.push(ms_raw_data_per_scan);
+        }
+
+        Ok(Self {
+            raw_data_per_scan_list,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct AndiMsRawDataPerScan {
+    reader_ref: Rc<RefCell<netcdf3::FileReader>>,
+    mass_scale_factor: f64,
+    time_scale_factor: f64,
+    intensity_scale_factor: f64,
+    intensity_offset: f64,
+    // eager_parsing: bool, // always lazy
+    scan_index: i32,
+
+    // raw_data_global: AndiMsRawDataGlobal,
+    pub resolution_type: AndiMsResolutionType,
+    /// Scan index.
+    pub scan_number: i32,
+    pub actual_scan_number: i32,
+    pub number_of_points: i32,
+    // mass_axis_values are lazily read
+    // time_axis_values are lazily read
+    // intensity_axis_values are lazily read
+    pub number_of_flags: i32,
+    // flagged_peaks: Vec<i32>, // lazily read
+    // flag_values: Vec<AndiMsFlagValue>, // lazily read
+    pub total_intensity: Option<f64>,
+    pub a_d_sampling_rate: Option<f64>,
+    pub a_d_coaddition_factor: Option<i16>,
+    pub scan_acquisition_time: Option<f64>,
+    pub scan_duration: Option<f64>,
+    pub mass_range_min: Option<f64>,
+    pub mass_range_max: Option<f64>,
+    pub time_range_min: Option<f64>,
+    pub time_range_max: Option<f64>,
+    pub inter_scan_time: Option<f64>,
+    pub resolution: Option<f64>,
+}
+
+impl AndiMsRawDataPerScan {
+    // TODO: implement methods for lazily reading xy values and peak flags
 }
 
 // TODO: needed?

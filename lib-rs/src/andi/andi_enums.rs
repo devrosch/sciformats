@@ -239,7 +239,7 @@ pub enum AndiMsDetectorType {
     Other,
 }
 
-#[derive(Debug, PartialEq, Default, EnumString, Display)]
+#[derive(Debug, PartialEq, Clone, Default, EnumString, Display)]
 pub enum AndiMsResolutionType {
     #[default]
     #[strum(serialize = "Constant Resolution")]

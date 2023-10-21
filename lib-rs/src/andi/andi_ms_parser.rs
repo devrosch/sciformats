@@ -41,7 +41,7 @@ pub struct AndiMsFile {
     pub instrument_data: AndiMsInstrumentData,
     pub sample_data: AndiMsSampleData,
     pub test_data: AndiMsTestData,
-    pub raw_data_global: AndiMsRawDataGlobal,
+    pub raw_data_global: Rc<AndiMsRawDataGlobal>,
     pub raw_data_scans: AndiMsRawDataScans,
     // pub sample_description: AndiMsSampleDescription,
     // pub detection_method: AndiMsDetectionMethod,
@@ -57,13 +57,13 @@ impl AndiMsFile {
         let instrument_data = AndiMsInstrumentData::new(&mut reader, admin_data.instrument_number)?;
         let sample_data = AndiMsSampleData::new(&reader)?;
         let test_data = AndiMsTestData::new(&reader)?;
-        let raw_data_global = AndiMsRawDataGlobal::new(&reader)?;
+        let raw_data_global = Rc::new(AndiMsRawDataGlobal::new(&reader)?);
 
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
 
         let raw_data_scans = AndiMsRawDataScans::new(
             reader_ref,
-            &raw_data_global,
+            Rc::clone(&raw_data_global),
             test_data.resolution_type.clone(),
         )?;
         // let sample_description = AndiMsSampleDescription::new(&mut reader)?;
@@ -83,7 +83,7 @@ impl AndiMsFile {
             instrument_data,
             sample_data,
             test_data,
-            raw_data_global,
+            raw_data_global: Rc::clone(&raw_data_global),
             raw_data_scans,
             // sample_description,
             // detection_method,
@@ -711,7 +711,7 @@ pub struct AndiMsRawDataScans {
 impl AndiMsRawDataScans {
     pub fn new(
         reader_ref: Rc<RefCell<netcdf3::FileReader>>,
-        raw_data_global: &AndiMsRawDataGlobal,
+        raw_data_global: Rc<AndiMsRawDataGlobal>,
         resolution_type: AndiMsResolutionType,
     ) -> Result<Self, Box<dyn Error>> {
         let mass_scale_factor = raw_data_global.mass_axis_scale_factor;
@@ -781,7 +781,7 @@ impl AndiMsRawDataScans {
                 intensity_scale_factor,
                 intensity_offset,
                 scan_index,
-                // raw_data_global, // TODO: add ref
+                raw_data_global: Rc::clone(&raw_data_global),
                 resolution_type: resolution_type.clone(),
                 scan_number,
                 actual_scan_number,
@@ -818,7 +818,7 @@ pub struct AndiMsRawDataPerScan {
     // eager_parsing: bool, // always lazy
     scan_index: i32,
 
-    // raw_data_global: AndiMsRawDataGlobal,
+    raw_data_global: Rc<AndiMsRawDataGlobal>,
     pub resolution_type: AndiMsResolutionType,
     /// Scan index.
     pub scan_number: i32,

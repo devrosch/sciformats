@@ -15,6 +15,7 @@ use super::andi_utils::{
 use super::{AndiDatasetCompleteness, AndiError};
 use crate::api::Parser;
 use std::cell::RefCell;
+use std::ops::Range;
 use std::rc::Rc;
 use std::{
     error::Error,
@@ -714,11 +715,6 @@ impl AndiMsRawDataScans {
         raw_data_global: Rc<AndiMsRawDataGlobal>,
         resolution_type: AndiMsResolutionType,
     ) -> Result<Self, Box<dyn Error>> {
-        let mass_scale_factor = raw_data_global.mass_axis_scale_factor;
-        let time_scale_factor = raw_data_global.time_axis_scale_factor;
-        let intensity_scale_factor = raw_data_global.intensity_axis_scale_factor;
-        let intensity_offset = raw_data_global.intensity_axis_offset;
-
         let reader = &mut reader_ref.borrow_mut();
         let scan_index_var = read_optional_var(reader, "scan_index")?;
         let actual_scan_number_var = read_optional_var(reader, "actual_scan_number")?;
@@ -776,10 +772,6 @@ impl AndiMsRawDataScans {
 
             let ms_raw_data_per_scan = AndiMsRawDataPerScan {
                 reader_ref: Rc::clone(&reader_ref),
-                mass_scale_factor,
-                time_scale_factor,
-                intensity_scale_factor,
-                intensity_offset,
                 scan_index,
                 raw_data_global: Rc::clone(&raw_data_global),
                 resolution_type: resolution_type.clone(),
@@ -811,16 +803,12 @@ impl AndiMsRawDataScans {
 #[derive(Debug)]
 pub struct AndiMsRawDataPerScan {
     reader_ref: Rc<RefCell<netcdf3::FileReader>>,
-    mass_scale_factor: f64,
-    time_scale_factor: f64,
-    intensity_scale_factor: f64,
-    intensity_offset: f64,
-    // eager_parsing: bool, // always lazy
+    // the offset into the variable array at which the scan starts
     scan_index: i32,
 
     raw_data_global: Rc<AndiMsRawDataGlobal>,
     pub resolution_type: AndiMsResolutionType,
-    /// Scan index.
+    /// Which nth scan of all scans.
     pub scan_number: i32,
     pub actual_scan_number: i32,
     pub number_of_points: i32,
@@ -844,7 +832,111 @@ pub struct AndiMsRawDataPerScan {
 }
 
 impl AndiMsRawDataPerScan {
-    // TODO: implement methods for lazily reading xy values and peak flags
+    // TODO: implement method for lazily reading peak flags
+
+    fn extract_scan<T>(
+        var_values: Vec<T>,
+        var_name: &str,
+        range: &Range<usize>,
+        scale_factor: f64,
+        offset: f64,
+    ) -> Result<Vec<f64>, Box<dyn Error>>
+    where
+        f64: From<T>,
+        T: Copy,
+    {
+        let slice = var_values
+            .get(range.clone())
+            .ok_or(AndiError::new(&format!(
+                "Illegal range for {}: {}..{}",
+                var_name, &range.start, &range.end
+            )))?;
+
+        let scaled_values: Vec<f64> = slice
+            .iter()
+            .map(|v| f64::from(*v) * scale_factor + offset)
+            .collect();
+
+        Ok(scaled_values)
+    }
+
+    fn read_values(
+        &self,
+        var_name: &str,
+        data_format: &AndiMsDataFormat,
+        scale_factor: f64,
+        offset: f64,
+    ) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+        let mut reader = self.reader_ref.borrow_mut();
+        if reader.data_set().get_var(var_name).is_none() {
+            return Ok(None);
+        }
+
+        let scan_index = self.scan_index;
+        let number_of_points = self.number_of_points;
+        // TODO: consider data point size for start/end index
+        let range = scan_index as usize..(scan_index + number_of_points) as usize;
+
+        // reader currently does not provide an option to read only a part of the array
+        // this is inefficient as only a slice is processed
+        // TODO: add method to read slice of data from netCDF variable
+        let res = match data_format {
+            AndiMsDataFormat::Short => Self::extract_scan(
+                reader.read_var_i16(var_name)?,
+                var_name,
+                &range,
+                scale_factor,
+                offset,
+            )?,
+            AndiMsDataFormat::Long => Self::extract_scan(
+                reader.read_var_i32(var_name)?,
+                var_name,
+                &range,
+                scale_factor,
+                offset,
+            )?,
+            AndiMsDataFormat::Float => Self::extract_scan(
+                reader.read_var_f32(var_name)?,
+                var_name,
+                &range,
+                scale_factor,
+                offset,
+            )?,
+            AndiMsDataFormat::Double => Self::extract_scan(
+                reader.read_var_f64(var_name)?,
+                var_name,
+                &range,
+                scale_factor,
+                offset,
+            )?,
+        };
+
+        Ok(Some(res))
+    }
+
+    pub fn get_mass_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+        let scale_factor = self.raw_data_global.mass_axis_scale_factor;
+        let data_format = &self.raw_data_global.mass_axis_data_format;
+        let offset = 0.0f64;
+
+        self.read_values("mass_values", data_format, scale_factor, offset)
+    }
+
+    pub fn get_time_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+        let scale_factor = self.raw_data_global.time_axis_scale_factor;
+        let data_format = &self.raw_data_global.time_axis_data_format;
+        let offset = 0.0f64;
+
+        self.read_values("time_values", data_format, scale_factor, offset)
+    }
+
+    pub fn get_intensity_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+        let scale_factor = self.raw_data_global.intensity_axis_scale_factor;
+        let data_format = &self.raw_data_global.intensity_axis_data_format;
+        let offset = &self.raw_data_global.intensity_axis_offset;
+
+        self.read_values("intensity_values", data_format, scale_factor, *offset)
+    }
 }
 
 // TODO: needed?

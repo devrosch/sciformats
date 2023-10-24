@@ -393,8 +393,8 @@ impl AndiMsFlagValue {
         }
     }
 
-    pub fn set_from_i32(v: &i32) -> Result<Vec<Self>, AndiError> {
-        if *v as u32 & 0xFFFF0000 != 0 {
+    pub fn values_from_i32(v: i32) -> Result<Vec<Self>, AndiError> {
+        if v as u32 & 0xFFFF0000 != 0 {
             return Err(AndiError::new(&format!("Illegal flags: {:#0x}", v)));
         }
         let mut res = Vec::<Self>::new();

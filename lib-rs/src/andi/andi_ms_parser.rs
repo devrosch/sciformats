@@ -1,8 +1,8 @@
 use netcdf3::Variable;
 
 use super::andi_enums::{
-    AndiMsDataFormat, AndiMsDetectorType, AndiMsExperimentType, AndiMsIntensityAxisUnit,
-    AndiMsIonizationMethod, AndiMsIonizationPolarity, AndiMsMassAxisUnit,
+    AndiMsDataFormat, AndiMsDetectorType, AndiMsExperimentType, AndiMsFlagValue,
+    AndiMsIntensityAxisUnit, AndiMsIonizationMethod, AndiMsIonizationPolarity, AndiMsMassAxisUnit,
     AndiMsMassSpectrometerInlet, AndiMsResolutionType, AndiMsSampleState, AndiMsScanDirection,
     AndiMsScanFunction, AndiMsScanLaw, AndiMsSeparationMethod, AndiMsTimeAxisUnit,
 };
@@ -864,6 +864,7 @@ impl AndiMsRawDataPerScan {
         &self,
         var_name: &str,
         data_format: &AndiMsDataFormat,
+        range: &Range<usize>,
         scale_factor: f64,
         offset: f64,
     ) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
@@ -872,10 +873,9 @@ impl AndiMsRawDataPerScan {
             return Ok(None);
         }
 
-        let scan_index = self.scan_index;
-        let number_of_points = self.number_of_points;
-        // TODO: consider data point size for start/end index
-        let range = scan_index as usize..(scan_index + number_of_points) as usize;
+        // let scan_index = self.scan_index;
+        // let number_of_points = self.number_of_points;
+        // let range = scan_index as usize..(scan_index + number_of_points) as usize;
 
         // reader currently does not provide an option to read only a part of the array
         // this is inefficient as only a slice is processed
@@ -884,28 +884,28 @@ impl AndiMsRawDataPerScan {
             AndiMsDataFormat::Short => Self::extract_scan(
                 reader.read_var_i16(var_name)?,
                 var_name,
-                &range,
+                range,
                 scale_factor,
                 offset,
             )?,
             AndiMsDataFormat::Long => Self::extract_scan(
                 reader.read_var_i32(var_name)?,
                 var_name,
-                &range,
+                range,
                 scale_factor,
                 offset,
             )?,
             AndiMsDataFormat::Float => Self::extract_scan(
                 reader.read_var_f32(var_name)?,
                 var_name,
-                &range,
+                range,
                 scale_factor,
                 offset,
             )?,
             AndiMsDataFormat::Double => Self::extract_scan(
                 reader.read_var_f64(var_name)?,
                 var_name,
-                &range,
+                range,
                 scale_factor,
                 offset,
             )?,
@@ -915,27 +915,90 @@ impl AndiMsRawDataPerScan {
     }
 
     pub fn get_mass_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
-        let scale_factor = self.raw_data_global.mass_axis_scale_factor;
         let data_format = &self.raw_data_global.mass_axis_data_format;
+        let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
+        let scale_factor = self.raw_data_global.mass_axis_scale_factor;
         let offset = 0.0f64;
 
-        self.read_values("mass_values", data_format, scale_factor, offset)
+        self.read_values("mass_values", data_format, &range, scale_factor, offset)
     }
 
     pub fn get_time_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
-        let scale_factor = self.raw_data_global.time_axis_scale_factor;
         let data_format = &self.raw_data_global.time_axis_data_format;
+        let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
+        let scale_factor = self.raw_data_global.time_axis_scale_factor;
         let offset = 0.0f64;
 
-        self.read_values("time_values", data_format, scale_factor, offset)
+        self.read_values("time_values", data_format, &range, scale_factor, offset)
     }
 
     pub fn get_intensity_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
-        let scale_factor = self.raw_data_global.intensity_axis_scale_factor;
         let data_format = &self.raw_data_global.intensity_axis_data_format;
-        let offset = &self.raw_data_global.intensity_axis_offset;
+        let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
+        let scale_factor = self.raw_data_global.intensity_axis_scale_factor;
+        let offset = self.raw_data_global.intensity_axis_offset;
 
-        self.read_values("intensity_values", data_format, scale_factor, *offset)
+        self.read_values(
+            "intensity_values",
+            data_format,
+            &range,
+            scale_factor,
+            offset,
+        )
+    }
+
+    pub fn get_flagged_peaks(&self) -> Result<Vec<i32>, Box<dyn Error>> {
+        // flags are stored right after data points
+        let flag_index = self.scan_index + self.number_of_points;
+        let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;
+
+        let mut flagged_peaks = self.read_values(
+            "mass_values",
+            &self.raw_data_global.mass_axis_data_format,
+            &range,
+            1f64,
+            0f64,
+        )?;
+        if flagged_peaks.is_none() {
+            flagged_peaks = self.read_values(
+                "time_values",
+                &self.raw_data_global.mass_axis_data_format,
+                &range,
+                1f64,
+                0f64,
+            )?;
+        }
+
+        match flagged_peaks {
+            None => Ok(vec![]),
+            Some(vec) => Ok(vec.into_iter().map(|v| v as i32).collect()),
+        }
+    }
+
+    pub fn get_flag_values(&self) -> Result<Vec<Vec<AndiMsFlagValue>>, Box<dyn Error>> {
+        // flags are stored right after data points
+        let flag_index = self.scan_index + self.number_of_points;
+        let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;
+
+        let flag_values = self.read_values(
+            "intensity_values",
+            &self.raw_data_global.mass_axis_data_format,
+            &range,
+            1f64,
+            0f64,
+        )?;
+
+        match flag_values {
+            None => Ok(vec![]),
+            Some(vec) => {
+                let mut flags: Vec<Vec<AndiMsFlagValue>> = vec![];
+                for v in vec.into_iter() {
+                    let values = AndiMsFlagValue::values_from_i32(v as i32)?;
+                    flags.push(values);
+                }
+                Ok(flags)
+            }
+        }
     }
 }
 

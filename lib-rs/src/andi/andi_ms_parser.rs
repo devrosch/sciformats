@@ -832,8 +832,6 @@ pub struct AndiMsRawDataPerScan {
 }
 
 impl AndiMsRawDataPerScan {
-    // TODO: implement method for lazily reading peak flags
-
     fn extract_scan<T>(
         var_values: Vec<T>,
         var_name: &str,
@@ -872,11 +870,6 @@ impl AndiMsRawDataPerScan {
         if reader.data_set().get_var(var_name).is_none() {
             return Ok(None);
         }
-
-        // let scan_index = self.scan_index;
-        // let number_of_points = self.number_of_points;
-        // let range = scan_index as usize..(scan_index + number_of_points) as usize;
-
         // reader currently does not provide an option to read only a part of the array
         // this is inefficient as only a slice is processed
         // TODO: add method to read slice of data from netCDF variable

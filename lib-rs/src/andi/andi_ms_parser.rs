@@ -8,7 +8,8 @@ use super::andi_enums::{
 };
 use super::andi_utils::{
     read_enum_from_global_attr_str, read_global_attr_f32, read_global_attr_f64,
-    read_global_attr_i16, read_global_attr_i32, read_global_attr_str, read_index_from_var_f64,
+    read_global_attr_i16, read_global_attr_i32, read_global_attr_str,
+    read_index_from_var_2d_string, read_index_from_var_f32, read_index_from_var_f64,
     read_index_from_var_i16, read_index_from_var_i32, read_multi_string_var, read_optional_var,
     trim_zeros_in_place,
 };
@@ -993,6 +994,154 @@ impl AndiMsRawDataPerScan {
             }
         }
     }
+}
+
+pub struct AndiMsLibraryData {
+    pub library_data_per_scan: Vec<AndiMsLibraryDataPerScan>,
+}
+
+impl AndiMsLibraryData {
+    pub fn new(
+        reader: &mut netcdf3::FileReader,
+        number_of_scans: i32,
+    ) -> Result<Self, Box<dyn Error>> {
+        let entry_name_var = read_optional_var(reader, "entry_name")?;
+        let entry_id_var = read_optional_var(reader, "entry_id")?;
+        let entry_number_var = read_optional_var(reader, "entry_number")?;
+        let source_data_file_reference_var =
+            read_optional_var(reader, "source_data_file_reference")?;
+        let cas_name_var = read_optional_var(reader, "CAS_name")?;
+        let other_name_0_var = read_optional_var(reader, "other_name_0")?;
+        let other_name_1_var = read_optional_var(reader, "other_name_1")?;
+        let other_name_2_var = read_optional_var(reader, "other_name_2")?;
+        let other_name_3_var = read_optional_var(reader, "other_name_3")?;
+        let cas_number_var = read_optional_var(reader, "CAS_number")?;
+        let chemical_formula_var = read_optional_var(reader, "chemical_formula")?;
+        let wiswesser_var = read_optional_var(reader, "wiswesser")?;
+        let smiles_var = read_optional_var(reader, "smiles")?;
+        let molfile_reference_var = read_optional_var(reader, "molfile_reference")?;
+        let other_structure_var = read_optional_var(reader, "other_structure")?;
+        let retention_index_var = read_optional_var(reader, "retention_index")?;
+        let retention_type_var = read_optional_var(reader, "retention_type")?;
+        let absolute_retention_var = read_optional_var(reader, "absolute_retention")?;
+        let relative_retention_var = read_optional_var(reader, "relative_retention")?;
+        let retention_reference_name_var = read_optional_var(reader, "retention_reference_name")?;
+        let retention_reference_cas_number_var =
+            read_optional_var(reader, "retention_reference_CAS")?;
+        let melting_point_var = read_optional_var(reader, "melting_point")?;
+        let boiling_point_var = read_optional_var(reader, "boiling_point")?;
+        let chemical_mass_var = read_optional_var(reader, "chemical_mass")?;
+        let nominal_mass_var = read_optional_var(reader, "nominal_mass")?;
+        let accurate_mass_var = read_optional_var(reader, "accurate_mass")?;
+        let entry_other_information_var = read_optional_var(reader, "entry_other_information")?;
+
+        let mut library_data_per_scan: Vec<AndiMsLibraryDataPerScan> = vec![];
+        for scan_number in 0..number_of_scans as usize {
+            let entry_name = read_index_from_var_2d_string(&entry_name_var, scan_number)?;
+            let entry_id = read_index_from_var_2d_string(&entry_id_var, scan_number)?;
+            let entry_number = read_index_from_var_i32(&entry_number_var, scan_number)?;
+            let source_data_file_reference =
+                read_index_from_var_2d_string(&source_data_file_reference_var, scan_number)?;
+            let cas_name = read_index_from_var_2d_string(&cas_name_var, scan_number)?;
+            let other_name_0 = read_index_from_var_2d_string(&other_name_0_var, scan_number)?;
+            let other_name_1 = read_index_from_var_2d_string(&other_name_1_var, scan_number)?;
+            let other_name_2 = read_index_from_var_2d_string(&other_name_2_var, scan_number)?;
+            let other_name_3 = read_index_from_var_2d_string(&other_name_3_var, scan_number)?;
+            let cas_number = read_index_from_var_i32(&cas_number_var, scan_number)?;
+            let chemical_formula =
+                read_index_from_var_2d_string(&chemical_formula_var, scan_number)?;
+            let wiswesser_notation = read_index_from_var_2d_string(&wiswesser_var, scan_number)?;
+            let smiles_notation = read_index_from_var_2d_string(&smiles_var, scan_number)?;
+            let molfile_reference_name =
+                read_index_from_var_2d_string(&molfile_reference_var, scan_number)?;
+            let other_structure_notation =
+                read_index_from_var_2d_string(&other_structure_var, scan_number)?;
+            let retention_index = read_index_from_var_f64(&retention_index_var, scan_number)?;
+            let retention_index_type =
+                read_index_from_var_2d_string(&retention_type_var, scan_number)?;
+            let absolute_retention_time =
+                read_index_from_var_f64(&absolute_retention_var, scan_number)?;
+            let relative_retention = read_index_from_var_f64(&relative_retention_var, scan_number)?;
+            let retention_reference_name =
+                read_index_from_var_2d_string(&retention_reference_name_var, scan_number)?;
+            let retention_reference_cas_number =
+                read_index_from_var_i32(&retention_reference_cas_number_var, scan_number)?;
+            let melting_point = read_index_from_var_f32(&melting_point_var, scan_number)?;
+            let boiling_point = read_index_from_var_f32(&boiling_point_var, scan_number)?;
+            let chemical_mass = read_index_from_var_f64(&chemical_mass_var, scan_number)?;
+            let nominal_mass = read_index_from_var_i32(&nominal_mass_var, scan_number)?;
+            let accurate_mass = read_index_from_var_f64(&accurate_mass_var, scan_number)?;
+            let other_information =
+                read_index_from_var_2d_string(&entry_other_information_var, scan_number)?;
+
+            library_data_per_scan.push(AndiMsLibraryDataPerScan {
+                scan_number: scan_number as i32,
+                entry_name,
+                entry_id,
+                entry_number,
+                source_data_file_reference,
+                cas_name,
+                other_name_0,
+                other_name_1,
+                other_name_2,
+                other_name_3,
+                cas_number,
+                chemical_formula,
+                wiswesser_notation,
+                smiles_notation,
+                molfile_reference_name,
+                other_structure_notation,
+                retention_index,
+                retention_index_type,
+                absolute_retention_time,
+                relative_retention,
+                retention_reference_name,
+                retention_reference_cas_number,
+                melting_point,
+                boiling_point,
+                chemical_mass,
+                nominal_mass,
+                accurate_mass,
+                other_information,
+            })
+        }
+
+        Ok(Self {
+            library_data_per_scan,
+        })
+    }
+}
+
+pub struct AndiMsLibraryDataPerScan {
+    pub scan_number: i32,
+    pub entry_name: Option<String>,
+    pub entry_id: Option<String>,
+    pub entry_number: Option<i32>,
+    pub source_data_file_reference: Option<String>,
+    pub cas_name: Option<String>,
+    pub other_name_0: Option<String>,
+    pub other_name_1: Option<String>,
+    pub other_name_2: Option<String>,
+    pub other_name_3: Option<String>,
+    pub cas_number: Option<i32>,
+    pub chemical_formula: Option<String>,
+    pub wiswesser_notation: Option<String>,
+    pub smiles_notation: Option<String>,
+    pub molfile_reference_name: Option<String>,
+    pub other_structure_notation: Option<String>,
+    pub retention_index: Option<f64>,
+    // TODO: enum?
+    pub retention_index_type: Option<String>,
+    pub absolute_retention_time: Option<f64>, // in s
+    pub relative_retention: Option<f64>,
+    pub retention_reference_name: Option<String>,
+    pub retention_reference_cas_number: Option<i32>,
+    pub melting_point: Option<f32>,
+    pub boiling_point: Option<f32>,
+    pub chemical_mass: Option<f64>,
+    pub nominal_mass: Option<i32>,
+    pub accurate_mass: Option<f64>,
+    pub other_information: Option<String>,
 }
 
 // TODO: needed?

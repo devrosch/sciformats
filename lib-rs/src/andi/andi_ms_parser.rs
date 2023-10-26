@@ -1,5 +1,3 @@
-use netcdf3::Variable;
-
 use super::andi_enums::{
     AndiMsDataFormat, AndiMsDetectorType, AndiMsExperimentType, AndiMsFlagValue,
     AndiMsIntensityAxisUnit, AndiMsIonizationMethod, AndiMsIonizationPolarity, AndiMsMassAxisUnit,
@@ -15,6 +13,7 @@ use super::andi_utils::{
 };
 use super::{AndiDatasetCompleteness, AndiError};
 use crate::api::Parser;
+use netcdf3::Variable;
 use std::cell::RefCell;
 use std::ops::Range;
 use std::rc::Rc;
@@ -45,10 +44,7 @@ pub struct AndiMsFile {
     pub test_data: AndiMsTestData,
     pub raw_data_global: Rc<AndiMsRawDataGlobal>,
     pub raw_data_scans: AndiMsRawDataScans,
-    // pub sample_description: AndiMsSampleDescription,
-    // pub detection_method: AndiMsDetectionMethod,
-    // pub raw_data: AndiMsRawData,
-    // pub peak_processing_results: AndiMsPeakProcessingResults,
+    pub library_data: Option<AndiMsLibraryData>,
     // pub non_standard_variables: Vec<String>,
     // pub non_standard_attributes: Vec<String>,
 }
@@ -60,6 +56,13 @@ impl AndiMsFile {
         let sample_data = AndiMsSampleData::new(&reader)?;
         let test_data = AndiMsTestData::new(&reader)?;
         let raw_data_global = Rc::new(AndiMsRawDataGlobal::new(&reader)?);
+        let library_data = match &admin_data.experiment_type {
+            &AndiMsExperimentType::LibraryMassSpectrum => Some(AndiMsLibraryData::new(
+                &mut reader,
+                raw_data_global.scan_number,
+            )?),
+            _ => None,
+        };
 
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
 
@@ -68,17 +71,6 @@ impl AndiMsFile {
             Rc::clone(&raw_data_global),
             test_data.resolution_type.clone(),
         )?;
-        // let sample_description = AndiMsSampleDescription::new(&mut reader)?;
-        // let detection_method = AndiMsDetectionMethod::new(&mut reader)?;
-
-        // let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
-
-        // let raw_data = AndiMsRawData::new(Rc::clone(&reader_ref))?;
-        // let peak_processing_results = AndiMsPeakProcessingResults::new(
-        //     reader_ref,
-        //     &raw_data.retention_unit,
-        //     detection_method.detector_unit.as_deref(),
-        // )?;
 
         Ok(Self {
             admin_data,
@@ -87,6 +79,7 @@ impl AndiMsFile {
             test_data,
             raw_data_global: Rc::clone(&raw_data_global),
             raw_data_scans,
+            library_data,
             // sample_description,
             // detection_method,
             // raw_data,
@@ -996,6 +989,7 @@ impl AndiMsRawDataPerScan {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiMsLibraryData {
     pub library_data_per_scan: Vec<AndiMsLibraryDataPerScan>,
 }
@@ -1112,6 +1106,7 @@ impl AndiMsLibraryData {
     }
 }
 
+#[derive(Debug)]
 pub struct AndiMsLibraryDataPerScan {
     pub scan_number: i32,
     pub entry_name: Option<String>,

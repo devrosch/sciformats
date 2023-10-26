@@ -45,6 +45,7 @@ pub struct AndiMsFile {
     pub raw_data_global: Rc<AndiMsRawDataGlobal>,
     pub raw_data_scans: AndiMsRawDataScans,
     pub library_data: Option<AndiMsLibraryData>,
+    pub scan_groups: Option<AndiMsRawDataScanGroups>,
     // pub non_standard_variables: Vec<String>,
     // pub non_standard_attributes: Vec<String>,
 }
@@ -67,10 +68,15 @@ impl AndiMsFile {
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
 
         let raw_data_scans = AndiMsRawDataScans::new(
-            reader_ref,
+            Rc::clone(&reader_ref),
             Rc::clone(&raw_data_global),
             test_data.resolution_type.clone(),
         )?;
+
+        let scan_groups = match &test_data.scan_function {
+            AndiMsScanFunction::Sid => Some(AndiMsRawDataScanGroups::new(reader_ref)?),
+            _ => None,
+        };
 
         Ok(Self {
             admin_data,
@@ -80,10 +86,7 @@ impl AndiMsFile {
             raw_data_global: Rc::clone(&raw_data_global),
             raw_data_scans,
             library_data,
-            // sample_description,
-            // detection_method,
-            // raw_data,
-            // peak_processing_results,
+            scan_groups,
             // // TODO: read
             // non_standard_variables: vec![],
             // // TODO: read
@@ -1138,6 +1141,68 @@ pub struct AndiMsLibraryDataPerScan {
     pub accurate_mass: Option<f64>,
     pub other_information: Option<String>,
 }
+
+#[derive(Debug)]
+pub struct AndiMsRawDataScanGroups {
+    pub raw_data_per_scan_groups: Vec<AndiMsRawDataPerScanGroup>,
+}
+
+impl AndiMsRawDataScanGroups {
+    pub fn new(reader_ref: Rc<RefCell<netcdf3::FileReader>>) -> Result<Self, Box<dyn Error>> {
+        let reader = &mut reader_ref.borrow_mut();
+
+        let number_of_groups = reader
+            .data_set()
+            .get_dim("group_number")
+            .map(|d| d.size())
+            .unwrap_or_default();
+
+        let group_mass_count_var = read_optional_var(reader, "group_mass_count")?;
+        let group_starting_scan_var = read_optional_var(reader, "group_starting_scan")?;
+
+        let mut raw_data_per_scan_groups: Vec<AndiMsRawDataPerScanGroup> = vec![];
+        for group_number in 0..number_of_groups {
+            let number_of_masses_in_group =
+                read_index_from_var_i32(&group_mass_count_var, group_number)?.ok_or(
+                    AndiError::new(&format!(
+                        "Could not read group_mass_count at index: {}",
+                        group_number
+                    )),
+                )?;
+            let starting_scan_number =
+                read_index_from_var_i32(&group_starting_scan_var, group_number)?.ok_or(
+                    AndiError::new(&format!(
+                        "Could not read group_starting_scan at index: {}",
+                        group_number
+                    )),
+                )?;
+
+            raw_data_per_scan_groups.push(AndiMsRawDataPerScanGroup {
+                reader_ref: Rc::clone(&reader_ref),
+                group_number: group_number as i32,
+                number_of_masses_in_group,
+                starting_scan_number,
+            })
+        }
+
+        Ok(Self {
+            raw_data_per_scan_groups,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct AndiMsRawDataPerScanGroup {
+    reader_ref: Rc<RefCell<netcdf3::FileReader>>,
+
+    pub group_number: i32,              // required
+    pub number_of_masses_in_group: i32, // required
+    pub starting_scan_number: i32,      // required
+                                        // pub group_masses: Vec<f64>,         // required
+                                        // pub sampling_times: Vec<f64>,
+                                        // pub delay_times: Vec<f64>,
+}
+// TODO: add impl with getters for arrays
 
 // TODO: needed?
 // pub struct AndiNonStandardVariables {}

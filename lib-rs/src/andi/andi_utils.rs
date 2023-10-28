@@ -1,6 +1,6 @@
 use crate::andi::AndiError;
 use netcdf3::{DataType, DataVector};
-use std::{error::Error, str::FromStr};
+use std::{error::Error, ops::Range, str::FromStr};
 
 pub fn read_index_from_var_i16(
     var: &Option<(&str, Vec<usize>, DataVector)>,
@@ -63,7 +63,7 @@ pub fn read_index_from_var_f64(
     Ok(res)
 }
 
-fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), AndiError> {
+pub fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), AndiError> {
     if dims.len() != 2 {
         return Err(AndiError::new(&format!(
             "Unexpected number of dimensions for {}: {}",
@@ -95,6 +95,27 @@ pub fn read_index_from_var_2d_string(
             Ok(Some(s))
         }
     }
+}
+
+pub fn read_var_2d_slice_f64(
+    var: &(&str, Vec<usize>, DataVector),
+    range: &Range<usize>,
+) -> Result<Vec<f64>, AndiError> {
+    // TODO: inefficient, add option to read slice to netcdf3 library
+    let values = var
+        .2
+        .get_f64()
+        .ok_or(AndiError::new(&format!(
+            "Could not read values for variable: {}",
+            var.0
+        )))?
+        .get(range.to_owned())
+        .map(|v| v.to_owned())
+        .ok_or(AndiError::new(&format!(
+            "Could not read range for variable {}: {}..{}",
+            var.0, range.start, range.end
+        )))?;
+    Ok(values)
 }
 
 pub fn read_multi_string_var(

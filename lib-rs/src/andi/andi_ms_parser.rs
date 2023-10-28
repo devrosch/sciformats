@@ -5,15 +5,15 @@ use super::andi_enums::{
     AndiMsScanFunction, AndiMsScanLaw, AndiMsSeparationMethod, AndiMsTimeAxisUnit,
 };
 use super::andi_utils::{
-    read_enum_from_global_attr_str, read_global_attr_f32, read_global_attr_f64,
+    check_var_is_2d, read_enum_from_global_attr_str, read_global_attr_f32, read_global_attr_f64,
     read_global_attr_i16, read_global_attr_i32, read_global_attr_str,
     read_index_from_var_2d_string, read_index_from_var_f32, read_index_from_var_f64,
     read_index_from_var_i16, read_index_from_var_i32, read_multi_string_var, read_optional_var,
-    trim_zeros_in_place,
+    read_var_2d_slice_f64, trim_zeros_in_place,
 };
 use super::{AndiDatasetCompleteness, AndiError};
 use crate::api::Parser;
-use netcdf3::Variable;
+use netcdf3::{DataVector, Variable};
 use std::cell::RefCell;
 use std::ops::Range;
 use std::rc::Rc;
@@ -1195,14 +1195,62 @@ impl AndiMsRawDataScanGroups {
 pub struct AndiMsRawDataPerScanGroup {
     reader_ref: Rc<RefCell<netcdf3::FileReader>>,
 
+    // group_masses, sampling_times, and delay_times are lazily loaded through getters
     pub group_number: i32,              // required
     pub number_of_masses_in_group: i32, // required
     pub starting_scan_number: i32,      // required
-                                        // pub group_masses: Vec<f64>,         // required
-                                        // pub sampling_times: Vec<f64>,
-                                        // pub delay_times: Vec<f64>,
 }
-// TODO: add impl with getters for arrays
+
+impl AndiMsRawDataPerScanGroup {
+    fn read_var(&self, var: &(&str, Vec<usize>, DataVector)) -> Result<Vec<f64>, Box<dyn Error>> {
+        let var_name = &var.0;
+        let dims = &var.1;
+        check_var_is_2d(var_name, dims)?;
+        let row_length = dims[0];
+        let start_index = row_length * self.group_number as usize;
+        let end_index = start_index + row_length;
+        let range = start_index..end_index;
+
+        let values = read_var_2d_slice_f64(var, &range)?;
+        Ok(values)
+    }
+
+    pub fn get_group_masses(&self) -> Result<Vec<f64>, Box<dyn Error>> {
+        let var_name = "group_masses";
+        let group_masses_var = match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)?
+        {
+            Some(var) => var,
+            None => Err(AndiError::new(&format!(
+                "Could not find required variable: {}",
+                var_name
+            )))?,
+        };
+
+        self.read_var(&group_masses_var)
+    }
+
+    pub fn get_group_sampling_times(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+        let var_name = "group_sampling_times";
+        let group_sampling_times_var =
+            match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)? {
+                Some(var) => var,
+                None => return Ok(None),
+            };
+
+        Ok(Some(self.read_var(&group_sampling_times_var)?))
+    }
+
+    pub fn get_group_delay_times(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+        let var_name = "group_delay_times";
+        let group_delay_times_var =
+            match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)? {
+                Some(var) => var,
+                None => return Ok(None),
+            };
+
+        Ok(Some(self.read_var(&group_delay_times_var)?))
+    }
+}
 
 // TODO: needed?
 // pub struct AndiNonStandardVariables {}

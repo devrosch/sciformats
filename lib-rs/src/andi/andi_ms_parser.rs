@@ -64,15 +64,12 @@ impl AndiMsFile {
             )?),
             _ => None,
         };
-
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
-
         let raw_data_scans = AndiMsRawDataScans::new(
             Rc::clone(&reader_ref),
             Rc::clone(&raw_data_global),
             test_data.resolution_type.clone(),
         )?;
-
         let scan_groups = match &test_data.scan_function {
             AndiMsScanFunction::Sid => Some(AndiMsRawDataScanGroups::new(reader_ref)?),
             _ => None,
@@ -149,10 +146,6 @@ impl AndiMsAdminData {
             .ok_or(AndiError::new(
                 "Missing experiment_date_time_stamp attribute.",
             ))?;
-        // let experiment_type = read_global_str_attr(reader, "experiment_type")
-        //     .map_or(Ok(AndiMsExperimentType::default()), |s| {
-        //         AndiMsExperimentType::from_str(&s)
-        //     })?;
         let experiment_type = read_global_attr_str(reader, "experiment_type").map_or(
             Ok(AndiMsExperimentType::default()),
             |s| {
@@ -1195,7 +1188,7 @@ impl AndiMsRawDataScanGroups {
 pub struct AndiMsRawDataPerScanGroup {
     reader_ref: Rc<RefCell<netcdf3::FileReader>>,
 
-    // group_masses, sampling_times, and delay_times are lazily loaded through getters
+    // group_masses (required), sampling_times (optional), and delay_times (optional) are lazily loaded through getters
     pub group_number: i32,              // required
     pub number_of_masses_in_group: i32, // required
     pub starting_scan_number: i32,      // required

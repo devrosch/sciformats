@@ -1,0 +1,221 @@
+netcdf andi_ms_library {
+dimensions:
+	_2_byte_string = 2 ;
+	_4_byte_string = 4 ;
+	_8_byte_string = 8 ;
+	_16_byte_string = 16 ;
+	_32_byte_string = 32 ;
+	_64_byte_string = 64 ;
+	_128_byte_string = 128 ;
+	_255_byte_string = 255 ;
+	range = 2 ;
+	point_number = UNLIMITED ; // (1271 currently)
+	error_number = 1 ;
+	scan_number = 3 ;
+
+variables:
+	char error_log(error_number, _64_byte_string) ;
+	double a_d_sampling_rate(scan_number) ;
+	short a_d_coaddition_factor(scan_number) ;
+	double scan_acquisition_time(scan_number) ;
+	double scan_duration(scan_number) ;
+	double inter_scan_time(scan_number) ;
+	double resolution(scan_number) ;
+	double total_intensity(scan_number) ;
+		total_intensity:units = "Arbitrary Intensity Units" ;
+	double mass_range_min(scan_number) ;
+	double mass_range_max(scan_number) ;
+	double time_range_min(scan_number) ;
+	double time_range_max(scan_number) ;
+	long scan_index(scan_number) ;
+	long point_count(scan_number) ;
+	long flag_count(scan_number) ;
+	short mass_values(point_number) ;
+		mass_values:units = "M/Z" ;
+	short intensity_values(point_number) ;
+		intensity_values:units = "Arbitrary Intensity Units" ;
+	char entry_name(scan_number, _255_byte_string) ;
+	char entry_id(scan_number, _32_byte_string) ;
+	long entry_number(scan_number) ;
+	char source_data_file_reference(scan_number, _32_byte_string) ;
+	char CAS_name(scan_number, _255_byte_string) ;
+	long CAS_number(scan_number) ;
+	char other_name_0(scan_number, _255_byte_string) ;
+	char other_name_1(scan_number, _255_byte_string) ;
+	char other_name_2(scan_number, _255_byte_string) ;
+	char other_name_3(scan_number, _255_byte_string) ;
+	char chemical_formula(scan_number, _64_byte_string) ;
+	char smiles(scan_number, _255_byte_string) ;
+	char wiswesser(scan_number, _128_byte_string) ;
+	char other_structure(scan_number, _128_byte_string) ;
+	double retention_index(scan_number) ;
+	char retention_type(scan_number, _32_byte_string) ;
+	double relative_retention(scan_number) ;
+	double absolute_retention(scan_number) ;
+	char retention_reference_name(scan_number, _128_byte_string) ;
+	long retention_reference_CAS(scan_number) ;
+	float melting_point(scan_number) ;
+	float boiling_point(scan_number) ;
+	double chemical_mass(scan_number) ;
+	long nominal_mass(scan_number) ;
+	double accurate_mass(scan_number) ;
+	char entry_other_information(scan_number, _255_byte_string) ;
+
+// global attributes:
+		:dataset_completeness = "C1+C2" ;
+		:ms_template_revision = "1.0" ;
+		:netcdf_revision = "2.0" ;
+		:languages = "English" ;
+		:netcdf_file_date_time_stamp = "20231029185100+0100" ;
+		:experiment_date_time_stamp = "20231029185100+0100" ;
+		:source_file_reference = "Dummy Source File Reference" ;
+		:experiment_type = "Library Mass Spectrum" ;
+		:sample_state = "Other State" ;
+		:test_separation_type = "No Chromatography" ;
+		:test_ms_inlet = "Direct Inlet Probe" ;
+		:test_ionization_mode = "Electron Impact" ;
+		:test_ionization_polarity = "Positive Polarity" ;
+		:test_detector_type = "Electron Multiplier" ;
+		:test_resolution_type = "Constant Resolution" ;
+		:test_scan_function = "Mass Scan" ;
+		:test_scan_direction = "Up" ;
+		:test_scan_law = "Linear" ;
+		:raw_data_mass_format = "Short" ;
+		:raw_data_time_format = "Short" ;
+		:raw_data_intensity_format = "Short" ;
+		:units = "Seconds" ;
+
+data:
+
+ error_log =
+  "                                                               " ;
+
+ a_d_sampling_rate = -9999, -9999, -9999 ;
+
+ a_d_coaddition_factor = -9999, -9999, -9999 ;
+
+ scan_acquisition_time = -9999, -9999, -9999 ;
+
+ scan_duration = -9999, -9999, -9999 ;
+
+ inter_scan_time = -9999, -9999, -9999 ;
+
+ resolution = -9999, -9999, -9999 ;
+
+ total_intensity = -9999, -9999, -9999 ;
+
+ mass_range_min = 2, 14, 16 ;
+
+ mass_range_max = 17, 18, 20 ;
+
+ time_range_min = -9999, -9999, -9999 ;
+
+ time_range_max = -9999, -9999, -9999 ;
+
+ scan_index = 0, 2, 7 ;
+
+ point_count = 2, 5, 3 ;
+
+ flag_count = 0, 0, 0 ;
+
+ mass_values = 16, 32, 1, 2, 16, 17, 18, 1, 35, 36 ;
+
+ intensity_values = 100, 200, 10, 10, 100, 50, 30, 505, 20, 10 ;
+
+ entry_name =
+  "Entry Name 0",
+  "Entry Name 1",
+  "Entry Name 2" ;
+
+ entry_id =
+  "                               ",
+  "                               ",
+  "                               " ;
+
+ entry_number = 1, 2, 3 ;
+
+ source_data_file_reference =
+  "                               ",
+  "                               ",
+  "                               " ;
+
+ CAS_name =
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              " ;
+
+ CAS_number = 12345, 123456, 1234567 ;
+
+ other_name_0 =
+  "Other Name 0 0",
+  "Other Name 0 1",
+  "Other Name 0 2" ;
+
+ other_name_1 =
+  "Other Name 1 0",
+  "Other Name 1 1",
+  "Other Name 1 2" ;
+
+ other_name_2 =
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              " ;
+
+ other_name_3 =
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              " ;
+
+ chemical_formula =
+  "O2",
+  "H2O",
+  "HCl" ;
+
+ smiles =
+  "O=O",
+  "O",
+  "Cl" ;
+
+ wiswesser =
+  "                                                                                                                               ",
+  "                                                                                                                               ",
+  "                                                                                                                               " ;
+
+ other_structure =
+  "                                                                                                                               ",
+  "                                                                                                                               ",
+  "                                                                                                                               " ;
+
+ retention_index = -9999, -9999, -9999 ;
+
+ retention_type =
+  "                               ",
+  "                               ",
+  "                               " ;
+
+ relative_retention = -9999, -9999, -9999 ;
+
+ absolute_retention = -9999, -9999, -9999 ;
+
+ retention_reference_name =
+  "                                                                                                                               ",
+  "                                                                                                                               ",
+  "                                                                                                                               " ;
+
+ retention_reference_CAS = -9999, -9999, -9999 ;
+
+ melting_point = -9999, -9999, -9999 ;
+
+ boiling_point = -9999, -9999, -9999 ;
+
+ chemical_mass = -9999, -9999, -9999 ;
+
+ nominal_mass = 32, 16, 35 ;
+
+ accurate_mass = -9999, -9999, -9999 ;
+
+ entry_other_information =
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              ",
+  "                                                                                                                                                                                                                                                              " ;
+}

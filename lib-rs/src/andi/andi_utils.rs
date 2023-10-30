@@ -11,9 +11,10 @@ pub fn read_index_from_var_i16(
         var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
         index,
     )?
-    .copied();
-
-    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    .copied()
+    // report default value -9999 as None
+    // TODO: make configurable with fn parameter
+    .and_then(|v| if v == -9999 { None } else { Some(v) });
     Ok(res)
 }
 
@@ -27,9 +28,10 @@ pub fn read_index_from_var_i32(
         var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
         index,
     )?
-    .copied();
-
-    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    .copied()
+    // report default value -9999 as None
+    // TODO: make configurable with fn parameter
+    .and_then(|v| if v == -9999 { None } else { Some(v) });
     Ok(res)
 }
 
@@ -42,9 +44,10 @@ pub fn read_index_from_var_f32(
         var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
         index,
     )?
-    .copied();
-
-    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    .copied()
+    // report default value -9999 as None
+    // TODO: make configurable with fn parameter
+    .and_then(|v| if v == -9999.0 { None } else { Some(v) });
     Ok(res)
 }
 
@@ -57,9 +60,10 @@ pub fn read_index_from_var_f64(
         var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
         index,
     )?
-    .copied();
-
-    // TODO: report default value -9999 as None; or make configurable with fn parameter
+    .copied()
+    // report default value -9999 as None
+    // TODO: make configurable with fn parameter
+    .and_then(|v| if v == -9999.0 { None } else { Some(v) });
     Ok(res)
 }
 

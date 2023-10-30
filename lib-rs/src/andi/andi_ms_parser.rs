@@ -795,8 +795,8 @@ pub struct AndiMsRawDataPerScan {
     reader_ref: Rc<RefCell<netcdf3::FileReader>>,
     // the offset into the variable array at which the scan starts
     scan_index: i32,
-
     raw_data_global: Rc<AndiMsRawDataGlobal>,
+
     pub resolution_type: AndiMsResolutionType,
     /// Which nth scan of all scans.
     pub scan_number: i32,
@@ -806,8 +806,8 @@ pub struct AndiMsRawDataPerScan {
     // time_axis_values are lazily read
     // intensity_axis_values are lazily read
     pub number_of_flags: i32,
-    // flagged_peaks: Vec<i32>, // lazily read
-    // flag_values: Vec<AndiMsFlagValue>, // lazily read
+    // flagged_peaks are lazily read
+    // flag_values are lazily read
     pub total_intensity: Option<f64>,
     pub a_d_sampling_rate: Option<f64>,
     pub a_d_coaddition_factor: Option<i16>,

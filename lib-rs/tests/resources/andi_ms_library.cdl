@@ -9,7 +9,7 @@ dimensions:
 	_128_byte_string = 128 ;
 	_255_byte_string = 255 ;
 	range = 2 ;
-	point_number = UNLIMITED ; // (1271 currently)
+	point_number = UNLIMITED ;
 	error_number = 1 ;
 	scan_number = 3 ;
 
@@ -104,9 +104,9 @@ data:
 
  total_intensity = -9999, -9999, -9999 ;
 
- mass_range_min = 2, 14, 16 ;
+ mass_range_min = 16, 1, 1 ;
 
- mass_range_max = 17, 18, 20 ;
+ mass_range_max = 32, 18, 36 ;
 
  time_range_min = -9999, -9999, -9999 ;
 
@@ -120,7 +120,7 @@ data:
 
  mass_values = 16, 32, 1, 2, 16, 17, 18, 1, 35, 36 ;
 
- intensity_values = 100, 200, 10, 10, 100, 50, 30, 505, 20, 10 ;
+ intensity_values = 100, 200, 10, 10, 100, 50, 30, 50, 20, 10 ;
 
  entry_name =
   "Entry Name 0",
@@ -132,7 +132,7 @@ data:
   "                               ",
   "                               " ;
 
- entry_number = 1, 2, 3 ;
+ entry_number = 0, 1, 2 ;
 
  source_data_file_reference =
   "                               ",
@@ -210,7 +210,7 @@ data:
 
  chemical_mass = -9999, -9999, -9999 ;
 
- nominal_mass = 32, 16, 35 ;
+ nominal_mass = 32, 16, 36 ;
 
  accurate_mass = -9999, -9999, -9999 ;
 

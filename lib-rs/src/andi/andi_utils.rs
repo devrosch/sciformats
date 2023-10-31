@@ -2,69 +2,48 @@ use crate::andi::AndiError;
 use netcdf3::{DataType, DataVector};
 use std::{error::Error, ops::Range, str::FromStr};
 
+fn read_index_from_var<T: Clone + Copy + From<i16> + PartialEq>(
+    var: &Option<(&str, Vec<usize>, DataVector)>,
+    values: Option<&[T]>,
+    index: usize,
+) -> Result<Option<T>, Box<dyn Error>> {
+    let var_name = var.as_ref().map(|(name, _, _)| *name).unwrap_or_default();
+    let res = read_index_from_slice(values, var_name, index)?
+        .copied()
+        .and_then(|v| if v == T::from(-9999) { None } else { Some(v) });
+    Ok(res)
+}
+
 pub fn read_index_from_var_i16(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
 ) -> Result<Option<i16>, Box<dyn Error>> {
-    let res = read_index_from_slice(
-        var.as_ref().and_then(|(_, _, v)| v.get_i16()),
-        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
-        index,
-    )?
-    .copied()
-    // report default value -9999 as None
-    // TODO: make configurable with fn parameter
-    .and_then(|v| if v == -9999 { None } else { Some(v) });
-    Ok(res)
+    let slice = var.as_ref().and_then(|(_, _, v)| v.get_i16());
+    read_index_from_var(var, slice, index)
 }
 
-// TODO: try to extract some code for this and read_index_from_var_f32
 pub fn read_index_from_var_i32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
 ) -> Result<Option<i32>, Box<dyn Error>> {
-    let res = read_index_from_slice(
-        var.as_ref().and_then(|(_, _, v)| v.get_i32()),
-        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
-        index,
-    )?
-    .copied()
-    // report default value -9999 as None
-    // TODO: make configurable with fn parameter
-    .and_then(|v| if v == -9999 { None } else { Some(v) });
-    Ok(res)
+    let slice = var.as_ref().and_then(|(_, _, v)| v.get_i32());
+    read_index_from_var(var, slice, index)
 }
 
 pub fn read_index_from_var_f32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
 ) -> Result<Option<f32>, Box<dyn Error>> {
-    let res = read_index_from_slice(
-        var.as_ref().and_then(|(_, _, v)| v.get_f32()),
-        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
-        index,
-    )?
-    .copied()
-    // report default value -9999 as None
-    // TODO: make configurable with fn parameter
-    .and_then(|v| if v == -9999.0 { None } else { Some(v) });
-    Ok(res)
+    let slice = var.as_ref().and_then(|(_, _, v)| v.get_f32());
+    read_index_from_var(var, slice, index)
 }
 
 pub fn read_index_from_var_f64(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
 ) -> Result<Option<f64>, Box<dyn Error>> {
-    let res = read_index_from_slice(
-        var.as_ref().and_then(|(_, _, v)| v.get_f64()),
-        var.as_ref().map(|(name, _, _)| *name).unwrap_or_default(),
-        index,
-    )?
-    .copied()
-    // report default value -9999 as None
-    // TODO: make configurable with fn parameter
-    .and_then(|v| if v == -9999.0 { None } else { Some(v) });
-    Ok(res)
+    let slice = var.as_ref().and_then(|(_, _, v)| v.get_f64());
+    read_index_from_var(var, slice, index)
 }
 
 pub fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), AndiError> {

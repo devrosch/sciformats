@@ -10,6 +10,7 @@ fn read_index_from_var<T: Clone + Copy + From<i16> + PartialEq>(
     let var_name = var.as_ref().map(|(name, _, _)| *name).unwrap_or_default();
     let res = read_index_from_slice(values, var_name, index)?
         .copied()
+        // report missing value indicator "-9999" as None
         .and_then(|v| if v == T::from(-9999) { None } else { Some(v) });
     Ok(res)
 }

@@ -25,12 +25,14 @@ pub fn open_file(name: &str) -> (String, impl Read + Seek) {
     const ANDI_CHROM_QUIRKS: &[u8] = include_bytes!("../resources/andi_chrom_quirks.cdf");
     const DUMMY: &[u8] = include_bytes!("../resources/dummy.cdf");
     const ANDI_MS_LIBRARY: &[u8] = include_bytes!("../resources/andi_ms_library.cdf");
+    const ANDI_MS_CENTROID: &[u8] = include_bytes!("../resources/andi_ms_centroid.cdf");
 
     let file = match name {
         "andi_chrom_valid.cdf" => Cursor::new(ANDI_CHROM_VALID),
         "andi_chrom_quirks.cdf" => Cursor::new(ANDI_CHROM_QUIRKS),
         "dummy.cdf" => Cursor::new(DUMMY),
         "andi_ms_library.cdf" => Cursor::new(ANDI_MS_LIBRARY),
+        "andi_ms_centroid.cdf" => Cursor::new(ANDI_MS_CENTROID),
         _ => panic!(),
     };
 

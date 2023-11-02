@@ -930,6 +930,7 @@ impl AndiMsRawDataPerScan {
         )
     }
 
+    // TODO: account for -9999 values
     pub fn get_flagged_peaks(&self) -> Result<Vec<i32>, Box<dyn Error>> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;
@@ -945,7 +946,7 @@ impl AndiMsRawDataPerScan {
         if flagged_peaks.is_none() {
             flagged_peaks = self.read_values(
                 "time_values",
-                &self.raw_data_global.mass_axis_data_format,
+                &self.raw_data_global.time_axis_data_format,
                 &range,
                 1f64,
                 0f64,
@@ -965,7 +966,7 @@ impl AndiMsRawDataPerScan {
 
         let flag_values = self.read_values(
             "intensity_values",
-            &self.raw_data_global.mass_axis_data_format,
+            &self.raw_data_global.intensity_axis_data_format,
             &range,
             1f64,
             0f64,

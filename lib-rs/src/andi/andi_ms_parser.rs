@@ -1195,7 +1195,10 @@ pub struct AndiMsRawDataPerScanGroup {
 }
 
 impl AndiMsRawDataPerScanGroup {
-    fn read_var(&self, var: &(&str, Vec<usize>, DataVector)) -> Result<Vec<f64>, Box<dyn Error>> {
+    fn read_scan_group_var_slice_f64(
+        &self,
+        var: &(&str, Vec<usize>, DataVector),
+    ) -> Result<Vec<f64>, Box<dyn Error>> {
         let var_name = &var.0;
         let dims = &var.1;
         check_var_is_2d(var_name, dims)?;
@@ -1219,7 +1222,7 @@ impl AndiMsRawDataPerScanGroup {
             )))?,
         };
 
-        self.read_var(&group_masses_var)
+        self.read_scan_group_var_slice_f64(&group_masses_var)
     }
 
     pub fn get_group_sampling_times(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
@@ -1230,7 +1233,9 @@ impl AndiMsRawDataPerScanGroup {
                 None => return Ok(None),
             };
 
-        Ok(Some(self.read_var(&group_sampling_times_var)?))
+        Ok(Some(self.read_scan_group_var_slice_f64(
+            &group_sampling_times_var,
+        )?))
     }
 
     pub fn get_group_delay_times(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
@@ -1241,7 +1246,9 @@ impl AndiMsRawDataPerScanGroup {
                 None => return Ok(None),
             };
 
-        Ok(Some(self.read_var(&group_delay_times_var)?))
+        Ok(Some(
+            self.read_scan_group_var_slice_f64(&group_delay_times_var)?,
+        ))
     }
 }
 

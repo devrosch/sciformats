@@ -39,6 +39,7 @@ impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
 #[derive(Debug)]
 pub struct AndiMsFile {
     pub admin_data: AndiMsAdminData,
+    // TODO: make optional?
     pub instrument_data: AndiMsInstrumentData,
     pub sample_data: AndiMsSampleData,
     pub test_data: AndiMsTestData,

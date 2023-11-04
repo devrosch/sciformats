@@ -67,7 +67,7 @@ pub fn read_index_from_var_2d_string(
         Some((var_name, dims, data)) => {
             check_var_is_2d(var_name, dims)?;
 
-            let row_length = dims.get(1).unwrap();
+            let row_length = dims[1];
             let bytes = data
                 .get_u8()
                 .ok_or(AndiError::new(&format!("Failed to read {}", var_name)))?;

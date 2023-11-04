@@ -1204,7 +1204,7 @@ impl AndiMsRawDataPerScanGroup {
         let var_name = &var.0;
         let dims = &var.1;
         check_var_is_2d(var_name, dims)?;
-        let row_length = dims[0];
+        let row_length = dims[1];
         let start_index = row_length * self.group_number as usize;
         let end_index = start_index + row_length;
         let range = start_index..end_index;

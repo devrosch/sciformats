@@ -27,6 +27,7 @@ pub fn open_file(name: &str) -> (String, impl Read + Seek) {
     const ANDI_MS_LIBRARY: &[u8] = include_bytes!("../resources/andi_ms_library.cdf");
     const ANDI_MS_CENTROID: &[u8] = include_bytes!("../resources/andi_ms_centroid.cdf");
     const ANDI_MS_CONTINUUM: &[u8] = include_bytes!("../resources/andi_ms_continuum.cdf");
+    const ANDI_MS_SID: &[u8] = include_bytes!("../resources/andi_ms_sid.cdf");
 
     let file = match name {
         "andi_chrom_valid.cdf" => Cursor::new(ANDI_CHROM_VALID),
@@ -35,6 +36,7 @@ pub fn open_file(name: &str) -> (String, impl Read + Seek) {
         "andi_ms_library.cdf" => Cursor::new(ANDI_MS_LIBRARY),
         "andi_ms_centroid.cdf" => Cursor::new(ANDI_MS_CENTROID),
         "andi_ms_continuum.cdf" => Cursor::new(ANDI_MS_CONTINUUM),
+        "andi_ms_sid.cdf" => Cursor::new(ANDI_MS_SID),
         _ => panic!(),
     };
 

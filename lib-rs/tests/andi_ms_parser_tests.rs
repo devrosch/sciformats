@@ -210,7 +210,7 @@ fn andi_ms_parse_library_file_succeeds() {
             .unwrap()
     );
     assert_eq!(0, raw_data_scan_0.number_of_flags);
-    assert!(raw_data_scan_0.get_flagged_peaks().unwrap().is_empty());
+    assert!(raw_data_scan_0.get_flagged_peak_indices().unwrap().is_empty());
     assert!(raw_data_scan_0.get_flag_values().unwrap().is_empty());
     assert_eq!(None, raw_data_scan_0.total_intensity);
     assert_eq!(None, raw_data_scan_0.a_d_sampling_rate);
@@ -241,7 +241,7 @@ fn andi_ms_parse_library_file_succeeds() {
             .unwrap()
     );
     assert_eq!(0, raw_data_scan_2.number_of_flags);
-    assert!(raw_data_scan_2.get_flagged_peaks().unwrap().is_empty());
+    assert!(raw_data_scan_2.get_flagged_peak_indices().unwrap().is_empty());
     assert!(raw_data_scan_2.get_flag_values().unwrap().is_empty());
     assert_eq!(None, raw_data_scan_2.total_intensity);
     assert_eq!(None, raw_data_scan_2.a_d_sampling_rate);
@@ -631,7 +631,7 @@ fn andi_ms_parse_centroid_file_succeeds() {
     assert_eq!(2, raw_data_scan_0.number_of_flags);
     assert_eq!(
         vec![1i32, 2i32],
-        raw_data_scan_0.get_flagged_peaks().unwrap()
+        raw_data_scan_0.get_flagged_peak_indices().unwrap()
     );
     assert_eq!(
         vec![
@@ -674,7 +674,7 @@ fn andi_ms_parse_centroid_file_succeeds() {
     assert_eq!(3, raw_data_scan_1.number_of_flags);
     assert_eq!(
         vec![0i32, 1i32, 2i32],
-        raw_data_scan_1.get_flagged_peaks().unwrap()
+        raw_data_scan_1.get_flagged_peak_indices().unwrap()
     );
     assert_eq!(
         vec![

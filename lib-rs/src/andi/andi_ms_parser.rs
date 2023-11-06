@@ -360,10 +360,6 @@ impl AndiMsSampleData {
         let sample_external_id = read_global_attr_str(reader, "sample_external_id");
         let sample_procedure_name = read_global_attr_str(reader, "sample_procedure_name");
         let sample_prep_procedure = read_global_attr_str(reader, "sample_prep_procedure");
-        // let sample_state = read_global_str_attr(reader, "sample_state")
-        //     .map_or(Ok(AndiMsSampleState::default()), |s| {
-        //         AndiMsSampleState::from_str(&s)
-        //     })?;
         let sample_state = read_global_attr_str(reader, "sample_state").map_or(
             Ok(AndiMsSampleState::default()),
             |s| {
@@ -932,7 +928,7 @@ impl AndiMsRawDataPerScan {
     }
 
     // TODO: account for -9999 values
-    pub fn get_flagged_peaks(&self) -> Result<Vec<i32>, Box<dyn Error>> {
+    pub fn get_flagged_peak_indices(&self) -> Result<Vec<i32>, Box<dyn Error>> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;
         let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;

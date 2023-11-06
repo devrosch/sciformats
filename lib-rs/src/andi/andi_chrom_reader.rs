@@ -61,11 +61,11 @@ impl AndiChromReader {
             metadata: Vec::new(),
             table: None,
             child_node_names: vec![
-                "Admin Data".to_string(),
-                "Sample Description".to_string(),
-                "Detection Method".to_string(),
-                "Raw Data".to_string(),
-                "Peak Processing Results".to_string(),
+                "Admin Data".to_owned(),
+                "Sample Description".to_owned(),
+                "Detection Method".to_owned(),
+                "Raw Data".to_owned(),
+                "Peak Processing Results".to_owned(),
             ],
         })
     }
@@ -162,7 +162,7 @@ impl AndiChromReader {
             data: Vec::new(),
             metadata: Vec::new(),
             table: None,
-            child_node_names: vec!["Error Log".to_string()],
+            child_node_names: vec!["Error Log".to_owned()],
         })
     }
 

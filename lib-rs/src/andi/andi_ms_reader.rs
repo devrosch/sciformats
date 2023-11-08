@@ -44,10 +44,9 @@ impl Reader for AndiMsReader {
             [4] => self.read_raw_data_global(),
             [5] => self.read_raw_data_scans(),
             [5, n] => self.read_raw_data_per_scan(n),
+            [5, n, 0] => self.read_library_data_per_scan(n),
             // TODO: add mass-time mapping values as sub node if applicable
-            // TODO: add mappings for library data and scan groups
-            // [3] => self.read_raw_data(),
-            // [4] => self.read_peak_processing_results(),
+            // TODO: add mappings for scan groups
             _ => Err(AndiError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
@@ -907,6 +906,11 @@ impl AndiMsReader {
             table.rows.push(row);
         }
 
+        let mut child_node_names: Vec<String> = vec![];
+        if self.file.admin_data.experiment_type == AndiMsExperimentType::LibraryMassSpectrum {
+            child_node_names.push("Library Data".to_owned());
+        }
+
         // TODO: add mass-time mapping values as sub node if applicable
 
         Ok(Node {
@@ -915,7 +919,134 @@ impl AndiMsReader {
             data,
             metadata,
             table: Some(table),
-            child_node_names: Vec::new(),
+            child_node_names,
+        })
+    }
+
+    fn read_library_data_per_scan(&self, index: usize) -> Result<Node, Box<dyn Error>> {
+        let library_data = &self
+            .file
+            .library_data
+            .as_ref()
+            .ok_or(AndiError::new("No library data found."))?;
+        let scan_lib_data = library_data
+            .library_data_per_scan
+            .get(index)
+            .ok_or(AndiError::new(&format!(
+                "Illegal path. Library data per scan not found for index: {}",
+                index
+            )))?;
+
+        let name = "Library data".to_owned();
+
+        let mut parameters: Vec<Parameter> = vec![];
+        parameters.push(Parameter::from_str_i32(
+            "Scan Number",
+            scan_lib_data.scan_number,
+        ));
+        Self::push_opt_str("Entry Name", &scan_lib_data.entry_name, &mut parameters);
+        Self::push_opt_str("Entry ID", &scan_lib_data.entry_id, &mut parameters);
+        Self::push_opt_i32("Entry Number", &scan_lib_data.entry_number, &mut parameters);
+        Self::push_opt_str(
+            "Source Data File Reference",
+            &scan_lib_data.source_data_file_reference,
+            &mut parameters,
+        );
+        Self::push_opt_str("CAS Name", &scan_lib_data.entry_name, &mut parameters);
+        Self::push_opt_str("Other Name 0", &scan_lib_data.other_name_0, &mut parameters);
+        Self::push_opt_str("Other Name 1", &scan_lib_data.other_name_1, &mut parameters);
+        Self::push_opt_str("Other Name 2", &scan_lib_data.other_name_2, &mut parameters);
+        Self::push_opt_str("Other Name 3", &scan_lib_data.other_name_3, &mut parameters);
+        Self::push_opt_i32("CAS Number", &scan_lib_data.cas_number, &mut parameters);
+        Self::push_opt_str(
+            "Chemical Formula",
+            &scan_lib_data.chemical_formula,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "Wiswesser Notation",
+            &scan_lib_data.wiswesser_notation,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "SMILES Notation",
+            &scan_lib_data.smiles_notation,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "Molfile Reference Name",
+            &scan_lib_data.molfile_reference_name,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "Other Structure Notation",
+            &scan_lib_data.other_structure_notation,
+            &mut parameters,
+        );
+        Self::push_opt_f64(
+            "Retention Index",
+            &scan_lib_data.retention_index,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "Retention Index Type",
+            &scan_lib_data.retention_index_type,
+            &mut parameters,
+        );
+        Self::push_opt_f64(
+            "Absolute Retention Time",
+            &scan_lib_data.absolute_retention_time,
+            &mut parameters,
+        );
+        Self::push_opt_f64(
+            "Relative Retention",
+            &scan_lib_data.relative_retention,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "Retention Reference Name",
+            &scan_lib_data.retention_reference_name,
+            &mut parameters,
+        );
+        Self::push_opt_i32(
+            "Retention Reference CAS Number",
+            &scan_lib_data.retention_reference_cas_number,
+            &mut parameters,
+        );
+        Self::push_opt_f32(
+            "Melting Point",
+            &scan_lib_data.melting_point,
+            &mut parameters,
+        );
+        Self::push_opt_f32(
+            "Boiling Point",
+            &scan_lib_data.boiling_point,
+            &mut parameters,
+        );
+        Self::push_opt_f64(
+            "Chemical Mass",
+            &scan_lib_data.chemical_mass,
+            &mut parameters,
+        );
+        Self::push_opt_i32("Nominal Mass", &scan_lib_data.nominal_mass, &mut parameters);
+        Self::push_opt_f64(
+            "Accurate Mass",
+            &scan_lib_data.accurate_mass,
+            &mut parameters,
+        );
+        Self::push_opt_str(
+            "Other Information",
+            &scan_lib_data.other_information,
+            &mut parameters,
+        );
+
+        Ok(Node {
+            name,
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
         })
     }
 

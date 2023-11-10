@@ -348,6 +348,7 @@ pub struct Table {
 // -------------------------------------------------
 
 #[cfg(target_family = "wasm")]
+#[derive(Clone)]
 pub struct BlobWrapper {
     blob: Blob,
     pos: u64,

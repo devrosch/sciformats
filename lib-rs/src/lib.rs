@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 pub mod andi;
 pub mod api;
+pub mod common;
 
 #[cfg(target_family = "wasm")]
 #[wasm_bindgen(start)]

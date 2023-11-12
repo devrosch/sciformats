@@ -312,7 +312,7 @@ impl AndiMsReader {
             &component.instrument_name,
             &mut parameters,
         );
-        Self::push_opt_str("Instrument Id", &component.instrument_id, &mut parameters);
+        Self::push_opt_str("Instrument ID", &component.instrument_id, &mut parameters);
         Self::push_opt_str(
             "Instrument Manufacturer",
             &component.instrument_mfr,
@@ -324,7 +324,7 @@ impl AndiMsReader {
             &mut parameters,
         );
         Self::push_opt_str(
-            "Instrument Srial No",
+            "Instrument Serial No",
             &component.instrument_serial_no,
             &mut parameters,
         );
@@ -356,7 +356,7 @@ impl AndiMsReader {
 
         Ok(Node {
             name,
-            parameters: Vec::new(),
+            parameters,
             data: Vec::new(),
             metadata: Vec::new(),
             table: None,
@@ -375,17 +375,17 @@ impl AndiMsReader {
             &mut parameters,
         );
         Self::push_opt_str(
-            "Sample Internal Id",
+            "Sample Internal ID",
             &sample_data.sample_internal_id,
             &mut parameters,
         );
         Self::push_opt_str(
-            "Sample Internal Id",
+            "Sample Internal ID",
             &sample_data.sample_internal_id,
             &mut parameters,
         );
         Self::push_opt_str(
-            "Sample External Id",
+            "Sample External ID",
             &sample_data.sample_external_id,
             &mut parameters,
         );
@@ -805,7 +805,7 @@ impl AndiMsReader {
         Self::push_opt_f64("Mass Range Max", &scan.mass_range_max, &mut parameters);
         Self::push_opt_f64("Time Range Min", &scan.time_range_min, &mut parameters);
         Self::push_opt_f64("Time Range Max", &scan.time_range_max, &mut parameters);
-        Self::push_opt_f64("Inter scan time", &scan.inter_scan_time, &mut parameters);
+        Self::push_opt_f64("Inter Scan Time", &scan.inter_scan_time, &mut parameters);
         Self::push_opt_f64("Resolution", &scan.resolution, &mut parameters);
 
         let raw_data_global = &self.file.raw_data_global;

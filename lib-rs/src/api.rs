@@ -1,6 +1,6 @@
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 use js_sys::Uint8Array;
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 use std::io::SeekFrom;
 use std::{
     collections::HashMap,
@@ -8,10 +8,10 @@ use std::{
     fmt::Display,
     io::{Read, Seek},
 };
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsError;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 use web_sys::{Blob, FileReaderSync};
 
 /// Parses a (readonly) data set.
@@ -347,14 +347,14 @@ pub struct Table {
 // WASM specific
 // -------------------------------------------------
 
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 #[derive(Clone)]
 pub struct BlobWrapper {
     blob: Blob,
     pos: u64,
 }
 
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 impl BlobWrapper {
     pub fn new(blob: Blob) -> BlobWrapper {
         BlobWrapper { blob, pos: 0 }
@@ -365,12 +365,14 @@ impl BlobWrapper {
     }
 }
 
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 impl Seek for BlobWrapper {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
         fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error. Seek position out of bounds: {pos}").into());
             Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
+                std::io::ErrorKind::InvalidInput,
                 format!("Seek position out of bounds: {pos}"),
             ))
         }
@@ -378,21 +380,18 @@ impl Seek for BlobWrapper {
         let file_size = self.blob.size() as u64;
         match pos {
             SeekFrom::Start(seek_pos) => {
-                if seek_pos > file_size {
-                    return to_oob_error(seek_pos as i64);
-                }
                 self.pos = seek_pos;
             }
             SeekFrom::End(seek_pos) => {
                 let new_pos = file_size as i64 + seek_pos;
-                if new_pos < 0 || new_pos as u64 > file_size {
+                if new_pos < 0 {
                     return to_oob_error(new_pos);
                 }
                 self.pos = new_pos as u64;
             }
             SeekFrom::Current(seek_pos) => {
                 let new_pos = self.pos as i64 + seek_pos;
-                if new_pos < 0 || new_pos as u64 > file_size {
+                if new_pos < 0 {
                     return to_oob_error(new_pos);
                 }
                 self.pos = new_pos as u64;
@@ -402,13 +401,15 @@ impl Seek for BlobWrapper {
     }
 }
 
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 impl Read for BlobWrapper {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error: {:?}", js_error).into());
             Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                js_error.as_string().unwrap_or_default(),
+                format!("{:?}", js_error),
             ))
         }
 
@@ -429,7 +430,7 @@ impl Read for BlobWrapper {
                 };
                 // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
                 let uint8_array = Uint8Array::new(&array_buffer);
-                uint8_array.copy_to(buf);
+                uint8_array.copy_to(&mut buf[0..slice.size() as usize]);
                 Ok(slice.size() as usize)
             }
             Err(js_error) => to_io_error(js_error),
@@ -438,12 +439,12 @@ impl Read for BlobWrapper {
 }
 
 #[wasm_bindgen]
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 pub struct JsReader {
     reader: Box<dyn crate::api::Reader>,
 }
 
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 impl JsReader {
     pub fn new(reader: Box<dyn crate::api::Reader>) -> Self {
         JsReader { reader }
@@ -451,7 +452,7 @@ impl JsReader {
 }
 
 #[wasm_bindgen]
-#[cfg(target_family = "wasm")]
+// #[cfg(target_family = "wasm")]
 impl JsReader {
     pub fn read(&self, path: &str) -> Result<Node, JsError> {
         let read_result = self.reader.read(path);
@@ -463,11 +464,16 @@ impl JsReader {
 }
 
 #[cfg(test)]
+// #[cfg(target_family = "wasm")]
 mod tests {
-    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+    // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_worker);
+    // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     use super::*;
+    use js_sys::Array;
     use wasm_bindgen_test::*;
+    use web_sys::Blob;
 
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
@@ -497,5 +503,48 @@ mod tests {
             .unwrap();
         assert_eq!("a", key);
         assert_eq!("b", value);
+    }
+
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    async fn blob_wrapper_mimicks_std_seek_read_behavior_test() {
+        let arr: [u8; 3] = [1, 2, 3];
+        let js_arr = Array::new();
+        // see: https://github.com/rustwasm/wasm-bindgen/issues/1693
+        js_arr.push(&Uint8Array::from(arr.as_slice()));
+        let blob = Blob::new_with_u8_array_sequence(&js_arr).unwrap();
+        assert_eq!(3, blob.size() as u64);
+        // use web_sys::console;
+        // console::log_1(&format!("arr: {:?}", arr).into());
+        let mut blob_wrapper = BlobWrapper::new(blob);
+        let mut buf = [0u8; 3];
+
+        // read whole blob
+        let read_len = blob_wrapper.read(&mut buf).unwrap();
+        assert_eq!(3, read_len);
+        assert_eq!(arr, buf);
+
+        // read past end
+        buf.fill(0);
+        let pos = blob_wrapper.seek(SeekFrom::Start(1)).unwrap();
+        assert_eq!(1, pos);
+        let read_len = blob_wrapper.read(&mut buf).unwrap();
+        assert_eq!(2, read_len);
+        assert_eq!([2, 3, 0], buf);
+
+        // seek beyond end and read
+        buf.fill(0);
+        let pos = blob_wrapper.seek(SeekFrom::Start(10)).unwrap();
+        assert_eq!(10, pos);
+        let read_len = blob_wrapper.read(&mut buf).unwrap();
+        assert_eq!(0, read_len);
+        assert_eq!([0, 0, 0], buf);
+
+        // seek to negative position
+        let pos = blob_wrapper.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(0, pos);
+        let seek_err = blob_wrapper.seek(SeekFrom::Current(-1)).unwrap_err();
+        assert_eq!(std::io::ErrorKind::InvalidInput, seek_err.kind());
+        assert_eq!("Seek position out of bounds: -1", seek_err.to_string());
     }
 }

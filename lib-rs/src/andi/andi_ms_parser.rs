@@ -611,33 +611,45 @@ impl AndiMsRawDataGlobal {
             read_var_attr_f64(intensity_values_var, "add_offset")?.unwrap_or(0f64);
         let mass_axis_units = match read_var_attr_str(mass_values_var, "units") {
             None => AndiMsMassAxisUnit::default(),
-            Some(s) => AndiMsMassAxisUnit::from_str(&s)?,
+            Some(s) => AndiMsMassAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+                "Illegal mass_values units: {}",
+                s
+            ))))?,
         };
         let time_axis_units = match read_var_attr_str(time_values_var, "units") {
             None => AndiMsTimeAxisUnit::default(),
-            Some(s) => AndiMsTimeAxisUnit::from_str(&s)?,
+            Some(s) => AndiMsTimeAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+                "Illegal time_values units: {}",
+                s
+            ))))?,
         };
         let intensity_axis_units = match read_var_attr_str(intensity_values_var, "units") {
             None => AndiMsIntensityAxisUnit::default(),
-            Some(s) => AndiMsIntensityAxisUnit::from_str(&s)?,
+            Some(s) => AndiMsIntensityAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+                "Illegal intensity_values units: {}",
+                s
+            ))))?,
         };
         let total_intensity_var = reader.data_set().get_var("total_intensity");
         let total_intensity_units = match read_var_attr_str(total_intensity_var, "units") {
             None => AndiMsIntensityAxisUnit::default(),
-            Some(s) => AndiMsIntensityAxisUnit::from_str(&s)?,
+            Some(s) => AndiMsIntensityAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+                "Illegal total_intensity units: {}",
+                s
+            ))))?,
         };
-        let mass_axis_data_format = match read_global_attr_str(reader, "raw_data_mass_format") {
-            None => AndiMsDataFormat::Short,
-            Some(s) => AndiMsDataFormat::from_str(&s)?,
-        };
-        let time_axis_data_format = match read_global_attr_str(reader, "raw_data_time_format") {
-            None => AndiMsDataFormat::Short,
-            Some(s) => AndiMsDataFormat::from_str(&s)?,
-        };
+        let mass_axis_data_format =
+            read_enum_from_global_attr_str::<AndiMsDataFormat>(reader, "raw_data_mass_format")?;
+        let time_axis_data_format =
+            read_enum_from_global_attr_str::<AndiMsDataFormat>(reader, "raw_data_time_format")?;
+        // cannot use read_enum_from_global_attr_str() due to different default value
         let intensity_axis_data_format =
             match read_global_attr_str(reader, "raw_data_intensity_format") {
                 None => AndiMsDataFormat::Long,
-                Some(s) => AndiMsDataFormat::from_str(&s)?,
+                Some(s) => AndiMsDataFormat::from_str(&s).or(Err(AndiError::new(&format!(
+                    "Illegal raw_data_intensity_format: {}",
+                    s
+                ))))?,
             };
         let mass_axis_label = read_var_attr_str(mass_values_var, "long_name");
         let time_axis_label = read_var_attr_str(time_values_var, "long_name");

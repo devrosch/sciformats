@@ -290,7 +290,7 @@ pub fn read_enum_from_global_attr_str<T: Default + FromStr>(
 ) -> Result<T, AndiError> {
     read_global_attr_str(reader, attr_name).map_or(Ok(T::default()), |s| {
         T::from_str(&s).or(Err(AndiError::new(&format!(
-            "Illegal {} value: {}",
+            "Illegal {}: {}",
             attr_name, s
         ))))
     })

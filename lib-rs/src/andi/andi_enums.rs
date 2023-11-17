@@ -1,4 +1,4 @@
-use strum::{Display, EnumString, EnumIter, IntoEnumIterator};
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 
 use super::AndiError;
 
@@ -12,46 +12,6 @@ pub enum AndiMsExperimentType {
     #[strum(serialize = "Library Mass Spectrum")]
     LibraryMassSpectrum,
 }
-
-// #[derive(Debug, PartialEq)]
-// pub enum AndiMsExperimentType {
-//     /// default
-//     CentroidedMassSpectrum,
-//     ContinuumMassSpectrum,
-//     LibraryMassSpectrum,
-// }
-
-// impl AndiMsExperimentType {
-//     const CENTROIDED_MASS_SPECTRUM_STR: &str = "Centroided Mass Spectrum";
-//     const CONTINUUM_MASS_SPECTRUM_STR: &str = "Continuum Mass Spectrum";
-//     const LIBRARY_MASS_SPECTRUM_STR: &str = "Library Mass Spectrum";
-// }
-
-// impl FromStr for AndiMsExperimentType {
-//     type Err = AndiError;
-
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         match s {
-//             Self::CENTROIDED_MASS_SPECTRUM_STR => Ok(Self::CentroidedMassSpectrum),
-//             Self::CONTINUUM_MASS_SPECTRUM_STR => Ok(Self::ContinuumMassSpectrum),
-//             Self::LIBRARY_MASS_SPECTRUM_STR => Ok(Self::LibraryMassSpectrum),
-//             _ => Err(AndiError::new(&format!(
-//                 "Illegal MS experiment type: {}",
-//                 s
-//             ))),
-//         }
-//     }
-// }
-
-// impl Display for AndiMsExperimentType {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             Self::CentroidedMassSpectrum => write!(f, "{}", Self::CENTROIDED_MASS_SPECTRUM_STR),
-//             Self::ContinuumMassSpectrum => write!(f, "{}", Self::CONTINUUM_MASS_SPECTRUM_STR),
-//             Self::LibraryMassSpectrum => write!(f, "{}", Self::LIBRARY_MASS_SPECTRUM_STR),
-//         }
-//     }
-// }
 
 #[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsSampleState {
@@ -69,44 +29,6 @@ pub enum AndiMsSampleState {
     #[strum(serialize = "Other State")]
     OtherState,
 }
-
-// impl AndiMsSampleState {
-//     const SOLID_STR: &str = "Solid";
-//     const LIQUID_STR: &str = "Liquid";
-//     const GAS_STR: &str = "Gas";
-//     const SUPERCRITICAL_FLUID_STR: &str = "Supercritical Fluid";
-//     const PLASMA_STR: &str = "Plasma";
-//     const OTHER_STATE_STR: &str = "Other State";
-// }
-
-// impl FromStr for AndiMsSampleState {
-//     type Err = AndiError;
-
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         match s {
-//             Self::SOLID_STR => Ok(Self::Solid),
-//             Self::LIQUID_STR => Ok(Self::Liquid),
-//             Self::GAS_STR => Ok(Self::Gas),
-//             Self::SUPERCRITICAL_FLUID_STR => Ok(Self::SupercriticalFluid),
-//             Self::PLASMA_STR => Ok(Self::Plasma),
-//             Self::OTHER_STATE_STR => Ok(Self::OtherState),
-//             _ => Err(AndiError::new(&format!("Illegal MS sample state: {}", s))),
-//         }
-//     }
-// }
-
-// impl Display for AndiMsSampleState {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             Self::Solid => write!(f, "{}", Self::SOLID_STR),
-//             Self::Liquid => write!(f, "{}", Self::LIQUID_STR),
-//             Self::Gas => write!(f, "{}", Self::GAS_STR),
-//             Self::SupercriticalFluid => write!(f, "{}", Self::SUPERCRITICAL_FLUID_STR),
-//             Self::Plasma => write!(f, "{}", Self::PLASMA_STR),
-//             Self::OtherState => write!(f, "{}", Self::OTHER_STATE_STR),
-//         }
-//     }
-// }
 
 #[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsSeparationMethod {
@@ -307,7 +229,7 @@ pub enum AndiMsTimeAxisUnit {
 
 #[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsIntensityAxisUnit {
-    #[strum(serialize = "Total counts")]
+    #[strum(serialize = "Total Counts")]
     Counts,
     #[strum(serialize = "Counts Per Second")]
     Cps,
@@ -323,6 +245,7 @@ pub enum AndiMsIntensityAxisUnit {
 }
 
 #[derive(Debug, PartialEq, Default, EnumString, Display)]
+#[strum(ascii_case_insensitive)]
 pub enum AndiMsDataFormat {
     #[default]
     #[strum(serialize = "Short")]
@@ -1138,7 +1061,7 @@ mod tests {
     fn test_ms_intensity_axis_unit_from_string_conversion() {
         assert_eq!(
             AndiMsIntensityAxisUnit::Counts,
-            AndiMsIntensityAxisUnit::from_str("Total counts").unwrap()
+            AndiMsIntensityAxisUnit::from_str("Total Counts").unwrap()
         );
         assert_eq!(
             AndiMsIntensityAxisUnit::Cps,
@@ -1170,7 +1093,7 @@ mod tests {
     #[test]
     #[wasm_bindgen_test]
     fn test_ms_intensity_axis_unit_to_string_conversion() {
-        assert_eq!("Total counts", AndiMsIntensityAxisUnit::Counts.to_string(),);
+        assert_eq!("Total Counts", AndiMsIntensityAxisUnit::Counts.to_string(),);
         assert_eq!(
             "Counts Per Second",
             AndiMsIntensityAxisUnit::Cps.to_string(),

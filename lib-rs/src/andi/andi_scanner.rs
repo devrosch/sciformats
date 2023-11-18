@@ -1,5 +1,5 @@
 #[cfg(target_family = "wasm")]
-use crate::api::{BlobWrapper, JsReader};
+use crate::common::{BlobWrapper, JsReader};
 use crate::api::{Reader, Scanner};
 use std::{
     error::Error,

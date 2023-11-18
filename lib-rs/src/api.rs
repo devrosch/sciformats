@@ -1,18 +1,33 @@
-// #[cfg(target_family = "wasm")]
-use js_sys::Uint8Array;
-// #[cfg(target_family = "wasm")]
-use std::io::{BufReader, SeekFrom};
+use std::fmt;
 use std::{
     collections::HashMap,
     error::Error,
     fmt::Display,
     io::{Read, Seek},
 };
-// #[cfg(target_family = "wasm")]
-use wasm_bindgen::JsError;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
-// #[cfg(target_family = "wasm")]
-use web_sys::{Blob, FileReaderSync};
+
+#[derive(Debug, PartialEq)]
+pub struct SfError {
+    message: String,
+}
+
+/// A generic error.
+impl SfError {
+    pub fn new(msg: &str) -> SfError {
+        SfError {
+            message: msg.into(),
+        }
+    }
+}
+
+impl Error for SfError {}
+
+impl fmt::Display for SfError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
 
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
@@ -64,6 +79,7 @@ pub trait Reader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
 }
 
+/// A parameter value.
 #[derive(Debug, PartialEq)]
 pub enum Value {
     String(String),
@@ -156,6 +172,7 @@ impl Parameter {
     }
 }
 
+/// A 2D data point.
 #[derive(Debug, PartialEq)]
 pub struct PointXy {
     pub x: f64,
@@ -174,6 +191,42 @@ impl From<(f64, f64)> for PointXy {
     }
 }
 
+/// A table column.
+///
+/// Note: This does not hold any data. It is used to indicate what columns a table consists of.
+#[derive(Debug, PartialEq)]
+pub struct Column {
+    /// A unique key for a table.
+    key: String,
+    /// A name for the column.
+    name: String,
+}
+
+impl Column {
+    pub fn new(key: impl Into<String>, name: impl Into<String>) -> Column {
+        Column {
+            key: key.into(),
+            name: name.into(),
+        }
+    }
+}
+
+/// A data table.
+#[derive(Debug, PartialEq)]
+pub struct Table {
+    /// A list of column keys and corresponding column names.
+    pub column_names: Vec<Column>,
+
+    /// A list of rows.
+    ///
+    /// Each key-value pair in the map represents a single cell,
+    /// e.g., peak parameters such as position or height.
+    /// Only keys from the coulmn_names may occur but not all keys from
+    /// that list need to occur as there may be missing values for cells.
+    pub rows: Vec<HashMap<String, Value>>,
+}
+
+/// A tree node representing a section of data.
 #[wasm_bindgen]
 /// An harmonized abstraction for a part of a data set.
 #[derive(Debug, PartialEq)]
@@ -308,228 +361,20 @@ impl Node {
     }
 }
 
-/// A table column.
-///
-/// Note: This does not hold any data. It is used to indicate what columns a table consists of.
-#[derive(Debug, PartialEq)]
-pub struct Column {
-    /// A unique key for a table.
-    key: String,
-    /// A name for the column.
-    name: String,
-}
-
-impl Column {
-    pub fn new(key: impl Into<String>, name: impl Into<String>) -> Column {
-        Column {
-            key: key.into(),
-            name: name.into(),
-        }
-    }
-}
-
-/// A data table.
-#[derive(Debug, PartialEq)]
-pub struct Table {
-    /// A list of column keys and corresponding column names.
-    pub column_names: Vec<Column>,
-
-    /// A list of rows.
-    ///
-    /// Each key-value pair in the map represents a single cell,
-    /// e.g., peak parameters such as position or height.
-    /// Only keys from the coulmn_names may occur but not all keys from
-    /// that list need to occur as there may be missing values for cells.
-    pub rows: Vec<HashMap<String, Value>>,
-}
-
-// -------------------------------------------------
-// Wrappers
-// -------------------------------------------------
-
-pub struct SeekReadWrapper<T: Seek + Read> {
-    input: BufReader<T>,
-    pos: u64,
-}
-
-impl<T: Seek + Read> SeekReadWrapper<T> {
-    pub fn new(raw_input: T) -> Self {
-        SeekReadWrapper {
-            // input: BufReader::with_capacity(64 * 1024, raw_input),
-            input: BufReader::new(raw_input),
-            pos: 0,
-        }
-    }
-}
-
-impl<T: Seek + Read> Seek for SeekReadWrapper<T> {
-    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
-        match pos {
-            SeekFrom::Current(offset) => {
-                self.input.seek_relative(offset)?;
-                // todo: handle error cases
-                self.pos = (self.pos as i64 + offset) as u64;
-                Ok(self.pos)
-            }
-            SeekFrom::Start(offset) => {
-                // todo: handle error cases
-                let rel_offset = (offset as i64) - (self.pos as i64);
-                self.input.seek_relative(rel_offset)?;
-                self.pos = offset;
-                Ok(self.pos)
-            }
-            SeekFrom::End(offset) => {
-                // todo: make more efficient
-                self.pos = self.input.seek(SeekFrom::End(offset))?;
-                Ok(self.pos)
-            }
-        }
-    }
-}
-
-impl<T: Seek + Read> Read for SeekReadWrapper<T> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let num_read = self.input.read(buf)?;
-        self.pos += num_read as u64;
-        Ok(num_read)
-    }
-}
-
-// -------------------------------------------------
-// WASM specific
-// -------------------------------------------------
-
-// #[cfg(target_family = "wasm")]
-#[derive(Clone)]
-pub struct BlobWrapper {
-    blob: Blob,
-    pos: u64,
-}
-
-// #[cfg(target_family = "wasm")]
-impl BlobWrapper {
-    pub fn new(blob: Blob) -> BlobWrapper {
-        BlobWrapper { blob, pos: 0 }
-    }
-
-    pub fn get_pos(&self) -> u64 {
-        self.pos
-    }
-}
-
-// #[cfg(target_family = "wasm")]
-impl Seek for BlobWrapper {
-    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
-        fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
-            // use web_sys::console;
-            // console::error_1(&format!("I/O error. Seek position out of bounds: {pos}").into());
-            Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                format!("Seek position out of bounds: {pos}"),
-            ))
-        }
-
-        let file_size = self.blob.size() as u64;
-        match pos {
-            SeekFrom::Start(seek_pos) => {
-                self.pos = seek_pos;
-            }
-            SeekFrom::End(seek_pos) => {
-                let new_pos = file_size as i64 + seek_pos;
-                if new_pos < 0 {
-                    return to_oob_error(new_pos);
-                }
-                self.pos = new_pos as u64;
-            }
-            SeekFrom::Current(seek_pos) => {
-                let new_pos = self.pos as i64 + seek_pos;
-                if new_pos < 0 {
-                    return to_oob_error(new_pos);
-                }
-                self.pos = new_pos as u64;
-            }
-        }
-        Ok(self.pos)
-    }
-}
-
-// #[cfg(target_family = "wasm")]
-impl Read for BlobWrapper {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
-            // use web_sys::console;
-            // console::error_1(&format!("I/O error: {:?}", js_error).into());
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{:?}", js_error),
-            ))
-        }
-
-        let end_pos = self.pos + buf.len() as u64;
-        let result = self
-            .blob
-            .slice_with_f64_and_f64(self.pos as f64, end_pos as f64);
-        match result {
-            Ok(slice) => {
-                self.pos += slice.size() as u64;
-                let reader = match FileReaderSync::new() {
-                    Ok(frs) => frs,
-                    Err(err) => return to_io_error(err),
-                };
-                let array_buffer = match reader.read_as_array_buffer(&slice) {
-                    Ok(buf) => buf,
-                    Err(err) => return to_io_error(err),
-                };
-                // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
-                let uint8_array = Uint8Array::new(&array_buffer);
-                uint8_array.copy_to(&mut buf[0..slice.size() as usize]);
-                Ok(slice.size() as usize)
-            }
-            Err(js_error) => to_io_error(js_error),
-        }
-    }
-}
-
-#[wasm_bindgen]
-// #[cfg(target_family = "wasm")]
-pub struct JsReader {
-    reader: Box<dyn Reader>,
-}
-
-// #[cfg(target_family = "wasm")]
-impl JsReader {
-    pub fn new(reader: Box<dyn Reader>) -> Self {
-        JsReader { reader }
-    }
-}
-
-#[wasm_bindgen]
-// #[cfg(target_family = "wasm")]
-impl JsReader {
-    pub fn read(&self, path: &str) -> Result<Node, JsError> {
-        let read_result = self.reader.read(path);
-        match read_result {
-            Ok(node) => Ok(node),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
-    }
-}
-
 #[cfg(test)]
-// #[cfg(target_family = "wasm")]
+#[cfg(target_family = "wasm")]
 mod tests {
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
+    // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_worker);
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     use super::*;
-    use js_sys::Array;
     use wasm_bindgen_test::*;
-    use web_sys::Blob;
 
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
-    fn map_node_to_js() {
+    fn map_node_to_js_test() {
         let node = Node {
             name: "abc".to_owned(),
             parameters: vec![Parameter {
@@ -555,48 +400,5 @@ mod tests {
             .unwrap();
         assert_eq!("a", key);
         assert_eq!("b", value);
-    }
-
-    // no #[test] as this test cannot run outside a browser engine
-    #[wasm_bindgen_test]
-    async fn blob_wrapper_mimicks_std_seek_read_behavior_test() {
-        let arr: [u8; 3] = [1, 2, 3];
-        let js_arr = Array::new();
-        // see: https://github.com/rustwasm/wasm-bindgen/issues/1693
-        js_arr.push(&Uint8Array::from(arr.as_slice()));
-        let blob = Blob::new_with_u8_array_sequence(&js_arr).unwrap();
-        assert_eq!(3, blob.size() as u64);
-        // use web_sys::console;
-        // console::log_1(&format!("arr: {:?}", arr).into());
-        let mut blob_wrapper = BlobWrapper::new(blob);
-        let mut buf = [0u8; 3];
-
-        // read whole blob
-        let read_len = blob_wrapper.read(&mut buf).unwrap();
-        assert_eq!(3, read_len);
-        assert_eq!(arr, buf);
-
-        // read past end
-        buf.fill(0);
-        let pos = blob_wrapper.seek(SeekFrom::Start(1)).unwrap();
-        assert_eq!(1, pos);
-        let read_len = blob_wrapper.read(&mut buf).unwrap();
-        assert_eq!(2, read_len);
-        assert_eq!([2, 3, 0], buf);
-
-        // seek beyond end and read
-        buf.fill(0);
-        let pos = blob_wrapper.seek(SeekFrom::Start(10)).unwrap();
-        assert_eq!(10, pos);
-        let read_len = blob_wrapper.read(&mut buf).unwrap();
-        assert_eq!(0, read_len);
-        assert_eq!([0, 0, 0], buf);
-
-        // seek to negative position
-        let pos = blob_wrapper.seek(SeekFrom::Start(0)).unwrap();
-        assert_eq!(0, pos);
-        let seek_err = blob_wrapper.seek(SeekFrom::Current(-1)).unwrap_err();
-        assert_eq!(std::io::ErrorKind::InvalidInput, seek_err.kind());
-        assert_eq!("Seek position out of bounds: -1", seek_err.to_string());
     }
 }

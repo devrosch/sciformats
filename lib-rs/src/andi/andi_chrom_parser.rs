@@ -17,14 +17,19 @@ use std::{
 
 pub struct AndiChromParser {}
 
+impl AndiChromParser {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, Box<dyn Error>> {
+        AndiChromFile::new(reader)
+    }
+}
+
 impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     type R = AndiChromFile;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn std::error::Error>> {
+    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
-
-        AndiChromFile::new(reader)
+        Self::parse_cdf(reader)
     }
 }
 

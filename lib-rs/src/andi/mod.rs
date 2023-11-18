@@ -1,10 +1,9 @@
 pub mod andi_chrom_parser;
 pub mod andi_chrom_reader;
-pub mod andi_chrom_scanner;
 pub mod andi_enums;
 pub mod andi_ms_parser;
 pub mod andi_ms_reader;
-pub mod andi_ms_scanner;
+pub mod andi_scanner;
 mod andi_utils;
 
 use std::collections::BTreeSet;

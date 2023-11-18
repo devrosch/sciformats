@@ -10,8 +10,6 @@ import {
 /* eslint-disable no-restricted-globals */
 
 const openFiles = new Map<string, sf_rs.JsReader>();
-// const scanner = new sf_rs.AndiChromScanner();
-// const scanner = new sf_rs.AndiMsScanner();
 const scanner = new sf_rs.JsScannerRepository();
 
 self.onmessage = (event) => {

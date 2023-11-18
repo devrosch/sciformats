@@ -375,7 +375,7 @@ impl<T: Seek + Read> Seek for SeekReadWrapper<T> {
                 // todo: handle error cases
                 let rel_offset = (offset as i64) - (self.pos as i64);
                 self.input.seek_relative(rel_offset)?;
-                self.pos = offset as u64;
+                self.pos = offset;
                 Ok(self.pos)
             }
             SeekFrom::End(offset) => {

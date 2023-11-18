@@ -30,7 +30,7 @@ const extractFromRequest = (request: WorkerRequest) => {
 
 export const onScan = (
   request: WorkerRequest,
-  scanner: sf_rs.AndiChromScanner,
+  scanner: sf_rs.JsScannerRepository,
 ) => errorHandlingWrapper(request, () => {
   const { fileInfo, fileName } = extractFromRequest(request);
   const recognized = scanner.isRecognized(fileName, fileInfo.blob);
@@ -39,7 +39,7 @@ export const onScan = (
 
 export const onOpen = (
   request: WorkerRequest,
-  scanner: sf_rs.AndiChromScanner,
+  scanner: sf_rs.JsScannerRepository,
   openFiles: Map<string, sf_rs.JsReader>,
 ) => errorHandlingWrapper(request, () => {
   const { fileInfo, rootUrl, fileName } = extractFromRequest(request);

@@ -1,9 +1,7 @@
+use crate::andi::andi_scanner::AndiScanner;
 // #[cfg(target_family = "wasm")]
+use crate::api::Scanner;
 use crate::api::{BlobWrapper, JsReader, Reader, SeekReadWrapper};
-use crate::{
-    andi::{andi_chrom_scanner::AndiChromScanner, andi_ms_scanner::AndiMsScanner},
-    api::Scanner,
-};
 use std::io::SeekFrom;
 use std::{
     error::Error,
@@ -95,16 +93,13 @@ impl ScannerRepository {
     }
 
     pub fn init_all() -> ScannerRepository {
-        let chrom_box: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiChromScanner::new());
-        let ms_box: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiMsScanner::new());
-
-        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> = vec![chrom_box, ms_box];
-
+        let andi_scanner: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiScanner::new());
+        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> = vec![andi_scanner];
         ScannerRepository { scanners }
     }
 
     pub fn push(&mut self, scanner: Box<dyn Scanner<Box<dyn SeekRead>>>) {
-        (&mut self.scanners).push(scanner)
+        self.scanners.push(scanner)
     }
 }
 

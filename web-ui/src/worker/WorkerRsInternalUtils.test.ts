@@ -1,4 +1,4 @@
-import { AndiChromScanner, JsReader } from 'sf_rs';
+import { AndiScanner, JsReader } from 'sf_rs';
 import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerRsInternalUtils from './WorkerRsInternalUtils';
 import WorkerRequest from './WorkerRequest';
@@ -25,7 +25,7 @@ const mockReader: JsReader = {
 };
 
 jest.mock('sf_rs', () => ({
-  AndiChromScanner: jest.fn(() => ({
+  AndiScanner: jest.fn(() => ({
     isRecognized: jest.fn(() => true),
     getReader: jest.fn(() => mockReader),
     free: jest.fn(),
@@ -47,7 +47,7 @@ afterEach(() => {
 
 test('onScan() uses Scanner to scan if a file could be parsed', async () => {
   const requestStub = new WorkerRequest('scan', '123', fileInfoStub);
-  const mockScanner = new AndiChromScanner();
+  const mockScanner = new AndiScanner();
 
   const response = WorkerRsInternalUtils.onScan(
     requestStub,
@@ -71,7 +71,7 @@ test('onScan() returns error for illegal input', async () => {
     blob: new Blob(),
   };
   const requestStub = new WorkerRequest('scan', '123', illegalFileInfoStub);
-  const mockScanner = new AndiChromScanner();
+  const mockScanner = new AndiScanner();
 
   const response = WorkerRsInternalUtils.onScan(
     requestStub,
@@ -84,7 +84,7 @@ test('onScan() returns error for illegal input', async () => {
 
 test('onOpen() uses Scanner to populate openFiles map', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
-  const mockScanner = new AndiChromScanner();
+  const mockScanner = new AndiScanner();
   const openFiles = new Map<string, JsReader>();
 
   const response = WorkerRsInternalUtils.onOpen(

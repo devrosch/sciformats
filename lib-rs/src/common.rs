@@ -4,6 +4,7 @@ use crate::{
     andi::{andi_chrom_scanner::AndiChromScanner, andi_ms_scanner::AndiMsScanner},
     api::Scanner,
 };
+use std::io::SeekFrom;
 use std::{
     error::Error,
     fmt,
@@ -126,9 +127,9 @@ impl ScannerRepository {
         mut input: Box<dyn SeekRead>,
     ) -> Result<Box<dyn Reader>, Box<dyn Error>> {
         for scanner in &self.scanners {
-            input.seek(std::io::SeekFrom::Start(0))?;
+            input.seek(SeekFrom::Start(0))?;
             if scanner.is_recognized(path, &mut input) {
-                input.seek(std::io::SeekFrom::Start(0))?;
+                input.seek(SeekFrom::Start(0))?;
                 // TODO: find a way to still try other recognizing readers in case of error
                 let reader = scanner.get_reader(path, input)?;
                 return Ok(reader);

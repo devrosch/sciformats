@@ -54,3 +54,34 @@ export const extractUuid = (url: URL | string) => extractGroup(url, 2, 'Cannot e
  * @example For "file:///aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/test.jdx/#" this function returns "test.jdx".
  */
 export const extractFilename = (url: URL | string) => extractGroup(url, 3, 'Cannot extract filename from URL. URL does not match patterns "file:///<uuid>/<filename>/#..." or "http(s)://<uuid>/<filename>/#..."');
+
+/**
+ * Extracts the hash part of a URL as path string.
+ * @param url A URL that may have a hash.
+ * @returns A path extracted from the hash.
+ * @example For "file:///some/url#/hash/path" this function returns "/hash/path".
+ * @example For "file:///some/url#/hash/path/" this function returns "/hash/path/".
+ * @example For "file:///some/url#/" this function returns "/".
+ * @example For "file:///some/url#" this function returns "/".
+ * @example For "file:///some/url" this function returns "/".
+ * @throws if the passed value is not a URL or if the hash exists but does not statrt with '/'.
+ */
+export const extractHashPath = (url: URL | string) => {
+  const urlObject = url instanceof URL ? url : new URL(url);
+
+  // for an empty hash .../# hash is '', not '#'
+  let hash = urlObject.hash;
+  if (hash.length > 0 && !hash.startsWith('#/')) {
+    throw new Error(`Unexpected URL hash: ${hash}`);
+  }
+
+  // '', '#', '#/' all denote the root node
+  if (hash.startsWith('#')) {
+    hash = hash.substring(1);
+  }
+  if (hash.length === 0) {
+    hash = '/';
+  }
+
+  return hash;
+};

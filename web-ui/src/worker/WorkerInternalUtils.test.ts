@@ -332,7 +332,7 @@ test('onMessageScan() uses ConverterService to scan if a file could be parsed', 
   expect(scanResponse.name).toBe('scanned');
   expect(scanResponse.correlationId).toBe(requestStub.correlationId);
   expect(scanResponse.detail).toHaveProperty('recognized');
-  const responseDetail = scanResponse.detail as { recognized: true };
+  const responseDetail = scanResponse.detail as { recognized: boolean };
   expect(responseDetail.recognized).toBe(true);
 });
 

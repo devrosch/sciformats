@@ -3,7 +3,10 @@ import 'components/menu/NavbarMatchMediaMock'; // mock window.matchMedia()
 import './App'; // for side effects
 import App from './App';
 
-jest.mock('util/WorkerUtils');
+jest.mock('util/WorkerUtils', () => ({
+  initWorkerCpp: jest.fn(),
+  initWorkerRs: jest.fn(),
+}));
 
 // TODO: put elsewhere (duplicate in AboutDialog)
 const showModal = jest.fn();

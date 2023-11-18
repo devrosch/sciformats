@@ -64,7 +64,7 @@ module.exports = {
   // optimization: {
   //   runtimeChunk: 'single',
   // },
-  // experiments: {
-  //   asyncWebAssembly: true,
-  // },
+  experiments: {
+    asyncWebAssembly: true,
+  },
 };

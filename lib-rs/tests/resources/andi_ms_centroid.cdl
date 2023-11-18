@@ -1,0 +1,159 @@
+netcdf andi_ms_centroid {
+dimensions:
+	_2_byte_string = 2 ;
+	_4_byte_string = 4 ;
+	_8_byte_string = 8 ;
+	_16_byte_string = 16 ;
+	_32_byte_string = 32 ;
+	_64_byte_string = 64 ;
+	_128_byte_string = 128 ;
+	_255_byte_string = 255 ;
+	range = 2 ;
+	point_number = UNLIMITED ;
+	error_number = 1 ;
+	scan_number = 2 ;
+	instrument_number = 1 ;
+variables:
+	char error_log(error_number, _64_byte_string) ;
+	double a_d_sampling_rate(scan_number) ;
+	short a_d_coaddition_factor(scan_number) ;
+	double scan_acquisition_time(scan_number) ;
+	double scan_duration(scan_number) ;
+	double inter_scan_time(scan_number) ;
+	double resolution(scan_number) ;
+	int actual_scan_number(scan_number) ;
+	double total_intensity(scan_number) ;
+		total_intensity:units = "Arbitrary Intensity Units" ;
+	double mass_range_min(scan_number) ;
+	double mass_range_max(scan_number) ;
+	double time_range_min(scan_number) ;
+	double time_range_max(scan_number) ;
+	int scan_index(scan_number) ;
+	int point_count(scan_number) ;
+	int flag_count(scan_number) ;
+	double mass_values(point_number) ;
+		mass_values:units = "M/Z" ;
+		mass_values:scale_factor = 1. ;
+	double time_values(point_number) ;
+		time_values:units = "Arbitrary Time Units" ;
+		time_values:scale_factor = 1. ;
+	float intensity_values(point_number) ;
+		intensity_values:units = "Arbitrary Intensity Units" ;
+		intensity_values:add_offset = 0. ;
+		intensity_values:scale_factor = 1. ;
+	char instrument_name(instrument_number, _32_byte_string) ;
+	char instrument_id(instrument_number, _32_byte_string) ;
+	char instrument_mfr(instrument_number, _32_byte_string) ;
+	char instrument_model(instrument_number, _32_byte_string) ;
+	char instrument_serial_no(instrument_number, _32_byte_string) ;
+	char instrument_sw_version(instrument_number, _32_byte_string) ;
+	char instrument_fw_version(instrument_number, _32_byte_string) ;
+	char instrument_os_version(instrument_number, _32_byte_string) ;
+	char instrument_app_version(instrument_number, _32_byte_string) ;
+	char instrument_comments(instrument_number, _32_byte_string) ;
+
+// global attributes:
+		:dataset_completeness = "C1+C2" ;
+		:ms_template_revision = "1.0.1" ;
+		:netcdf_revision = "2.3.2" ;
+		:languages = "English" ;
+		:dataset_origin = "Dummy dataset origin" ;
+		:netcdf_file_date_time_stamp = "20231029185100+0100" ;
+		:experiment_title = "Dummy experiment title" ;
+		:experiment_date_time_stamp = "20231029185100+0100" ;
+		:source_file_reference = "Dummy source file reference" ;
+		:experiment_type = "Centroided Mass Spectrum" ;
+		:sample_state = "Other State" ;
+		:test_separation_type = "No Chromatography" ;
+		:test_ms_inlet = "Capillary Direct" ;
+		:test_ionization_mode = "Electron Impact" ;
+		:test_ionization_polarity = "Positive Polarity" ;
+		:test_electron_energy = 0.f ;
+		:test_reagent_gas = "Dummy reagent gas" ;
+		:test_accelerating_potential = 1000.f ;
+		:test_detector_type = "Electron Multiplier" ;
+		:test_resolution_type = "Proportional Resolution" ;
+		:test_resolution_method = "Dummy test resolution method" ;
+		:test_scan_function = "Mass Scan" ;
+		:test_scan_direction = "Down" ;
+		:test_scan_law = "Exponential" ;
+		:test_scan_time = 1.2f ;
+		:raw_data_mass_format = "Double" ;
+		:raw_data_time_format = "Double" ;
+		:raw_data_intensity_format = "Float" ;
+		:global_mass_min = 2. ;
+		:global_mass_max = 100. ;
+data:
+
+ error_log =
+  "Dummy error 1" ;
+
+ a_d_sampling_rate = 400000, 400000 ;
+
+ a_d_coaddition_factor = 3, 3 ;
+
+ scan_acquisition_time = 456, 457 ;
+
+ scan_duration = 12345, 123456 ;
+
+ inter_scan_time = 0.123, 0.234 ;
+
+ resolution = 100, 100 ;
+
+ actual_scan_number = 99, 100 ;
+
+ total_intensity = 50, 60 ;
+
+ mass_range_min = 20, 20 ;
+
+ mass_range_max = 400, 400 ;
+
+ time_range_min = 0.5, 0.6 ;
+
+ time_range_max = 0.7, 0.8 ;
+
+ scan_index = 0, 6 ;
+
+ point_count = 4, 3 ;
+
+ flag_count = 2, 3 ;
+
+ mass_values = 20.01, 150.02, 250.03, 399.99, 1, 2,
+    21.01, 250.02, 399.98, 0, 1, 2 ;
+
+ time_values = 0.1, 0.2, 0.3, 0.4, -9999, -9999,
+    0.1, 0.2, 0.3, -9999, -9999, -9999 ;
+
+ intensity_values = 1.1e+03, 2.2e+3, 3300, 4400, 32, 64,
+    1200, 2300, 3400, 4, 64, 128 ;
+
+ instrument_name =
+  "Dummy instrument name" ;
+
+ instrument_id =
+  "Dummy instrument id" ;
+
+ instrument_mfr =
+  "Dummy instrument mfr" ;
+
+ instrument_model =
+  "Dummy instrument model" ;
+
+ instrument_serial_no =
+  "Dummy instrument serial no" ;
+
+ instrument_sw_version =
+  "Dummy instrument sw version" ;
+
+ instrument_fw_version =
+  "Dummy instrument fw version" ;
+
+ instrument_os_version =
+  "Dummy instrument os version" ;
+
+ instrument_app_version =
+  "Dummy instrument app version" ;
+
+ instrument_comments =
+  "Dummy instrument comments" ;
+}

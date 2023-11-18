@@ -1,0 +1,122 @@
+netcdf andi_ms_sid {
+dimensions:
+	_2_byte_string = 2 ;
+	_4_byte_string = 4 ;
+	_8_byte_string = 8 ;
+	_16_byte_string = 16 ;
+	_32_byte_string = 32 ;
+	_64_byte_string = 64 ;
+	_128_byte_string = 128 ;
+	_255_byte_string = 255 ;
+	range = 2 ;
+	point_number = UNLIMITED ;
+	error_number = 1 ;
+	scan_number = 1 ;
+	group_number = 1 ;
+	group_max_masses = 2 ;
+variables:
+	char error_log(error_number, _64_byte_string) ;
+	double a_d_sampling_rate(scan_number) ;
+	short a_d_coaddition_factor(scan_number) ;
+	double scan_acquisition_time(scan_number) ;
+	double scan_duration(scan_number) ;
+	double inter_scan_time(scan_number) ;
+	double resolution(scan_number) ;
+	int actual_scan_number(scan_number) ;
+	double total_intensity(scan_number) ;
+		total_intensity:units = "Arbitrary Intensity Units" ;
+	double mass_range_min(scan_number) ;
+	double mass_range_max(scan_number) ;
+	double time_range_min(scan_number) ;
+	double time_range_max(scan_number) ;
+	int scan_index(scan_number) ;
+	int point_count(scan_number) ;
+	int flag_count(scan_number) ;
+	float mass_values(point_number) ;
+		mass_values:units = "M/Z" ;
+	float intensity_values(point_number) ;
+		intensity_values:units = "Arbitrary Intensity Units" ;
+	int group_mass_count(group_number) ;
+	int group_starting_scan(group_number) ;
+	double group_masses(group_number, group_max_masses) ;
+	double group_sampling_times(group_number, group_max_masses) ;
+	double group_delay_times(group_number, group_max_masses) ;
+
+// global attributes:
+		:dataset_completeness = "C1+C2" ;
+		:ms_template_revision = "1.0.1" ;
+		:netcdf_revision = "2.3.2" ;
+		:languages = "English" ;
+		:netcdf_file_date_time_stamp = "20231029185100+0100" ;
+		:experiment_date_time_stamp = "20231029185100+0100" ;
+		:experiment_type = "Continuum Mass Spectrum" ;
+		:sample_state = "Other State" ;
+		:test_separation_type = "Supercritical Fluid Chromatography" ;
+		:test_ms_inlet = "Jet Separator" ;
+		:test_ionization_mode = "Electrospray Ionization" ;
+		:test_ionization_polarity = "Negative Polarity" ;
+		:test_detector_type = "Electron Multiplier" ;
+		:test_resolution_type = "Constant Resolution" ;
+		:test_scan_function = "Selected Ion Detection" ;
+		:test_scan_direction = "Up" ;
+		:test_scan_law = "Linear" ;
+		:raw_data_mass_format = "Float" ;
+		:raw_data_time_format = "Float" ;
+		:raw_data_intensity_format = "Float" ;
+		:units = "Seconds" ;
+		:global_mass_min = 20. ;
+		:global_mass_max = 21. ;
+		:global_intensity_min = 300. ;
+		:global_intensity_max = 300. ;
+data:
+
+ error_log =
+  "Dummy error 1" ;
+
+ a_d_sampling_rate = -9999 ;
+
+ a_d_coaddition_factor = -9999 ;
+
+ scan_acquisition_time = 20 ;
+
+ scan_duration = -9999 ;
+
+ inter_scan_time = -9999 ;
+
+ resolution = NaN ;
+
+ actual_scan_number = -9999 ;
+
+ total_intensity = 300 ;
+
+ mass_range_min = 20 ;
+
+ mass_range_max = 21 ;
+
+ time_range_min = -9999 ;
+
+ time_range_max = -9999 ;
+
+ scan_index = 0 ;
+
+ point_count = 2 ;
+
+ flag_count = 0 ;
+
+ mass_values = 20, 21 ;
+
+ intensity_values = 100, 200 ;
+
+ group_mass_count = 2 ;
+
+ group_starting_scan = 0 ;
+
+ group_masses =
+  20, 21 ;
+
+ group_sampling_times =
+  NaN, Infinity ;
+
+ group_delay_times =
+  NaN, Infinity ;
+}

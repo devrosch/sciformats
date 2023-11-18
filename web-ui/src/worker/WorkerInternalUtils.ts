@@ -1,4 +1,4 @@
-import { extractFilename, extractUuid } from 'util/UrlUtils';
+import { extractFilename, extractHashPath, extractUuid } from 'util/UrlUtils';
 import Table from 'model/Table';
 import WorkerStatus from './WorkerStatus';
 import WorkerResponse from './WorkerResponse';
@@ -148,24 +148,9 @@ export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => 
   if (!openFiles.has(rootUrl.toString())) {
     throw new Error(`File not found: ${rootUrl}`);
   }
-  let hash = url.hash;
-  if (hash.length > 0 && !hash.startsWith('#/')) {
-    throw new Error(`Unexpected URL hash: ${hash}`);
-  }
+  const hash = extractHashPath(url);
 
   const converter = openFiles.get(rootUrl.toString());
-
-  // '', '#', '#/' all denote the root node
-  // splitting by '/' results in:
-  // '' => ['']
-  // '/' => ['', '']
-  if (hash.startsWith('#')) {
-    hash = hash.substring(1);
-  }
-  if (hash.length === 0) {
-    hash = '/';
-  }
-
   // node is of type Node and bound as a value object, hence it has no delete() method
   const node = converter.read(hash);
   return node;

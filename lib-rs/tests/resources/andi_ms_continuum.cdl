@@ -1,0 +1,103 @@
+netcdf andi_ms_continuum {
+dimensions:
+	_2_byte_string = 2 ;
+	_4_byte_string = 4 ;
+	_8_byte_string = 8 ;
+	_16_byte_string = 16 ;
+	_32_byte_string = 32 ;
+	_64_byte_string = 64 ;
+	_128_byte_string = 128 ;
+	_255_byte_string = 255 ;
+	range = 2 ;
+	point_number = UNLIMITED ;
+	error_number = 1 ;
+	scan_number = 2 ;
+variables:
+	char error_log(error_number, _64_byte_string) ;
+	double a_d_sampling_rate(scan_number) ;
+	short a_d_coaddition_factor(scan_number) ;
+	double scan_acquisition_time(scan_number) ;
+	double scan_duration(scan_number) ;
+	double inter_scan_time(scan_number) ;
+	double resolution(scan_number) ;
+	int actual_scan_number(scan_number) ;
+	double total_intensity(scan_number) ;
+		total_intensity:units = "Arbitrary Intensity Units" ;
+	double mass_range_min(scan_number) ;
+	double mass_range_max(scan_number) ;
+	double time_range_min(scan_number) ;
+	double time_range_max(scan_number) ;
+	int scan_index(scan_number) ;
+	int point_count(scan_number) ;
+	int flag_count(scan_number) ;
+	float mass_values(point_number) ;
+		mass_values:units = "M/Z" ;
+	float intensity_values(point_number) ;
+		intensity_values:units = "Arbitrary Intensity Units" ;
+
+// global attributes:
+		:dataset_completeness = "C1+C2" ;
+		:ms_template_revision = "1.0.1" ;
+		:netcdf_revision = "2.3.2" ;
+		:languages = "English" ;
+		:dataset_origin = "Dummy dataset origin" ;
+		:netcdf_file_date_time_stamp = "20231029185100+0100" ;
+		:experiment_date_time_stamp = "20231029185100+0100" ;
+		:source_file_reference = "Dummy source file reference" ;
+		:experiment_type = "Continuum Mass Spectrum" ;
+		:sample_state = "Other State" ;
+		:test_separation_type = "No Chromatography" ;
+		:test_ms_inlet = "Direct Inlet Probe" ;
+		:test_ionization_mode = "Electron Impact" ;
+		:test_ionization_polarity = "Positive Polarity" ;
+		:test_detector_type = "Electron Multiplier" ;
+		:test_resolution_type = "Constant Resolution" ;
+		:test_scan_function = "Mass Scan" ;
+		:test_scan_direction = "Up" ;
+		:test_scan_law = "Linear" ;
+		:raw_data_mass_format = "Float" ;
+		:raw_data_time_format = "Float" ;
+		:raw_data_intensity_format = "Float" ;
+		:units = "Seconds" ;
+data:
+
+ error_log =
+  "Dummy error 1" ;
+
+ a_d_sampling_rate = -9999, -9999 ;
+
+ a_d_coaddition_factor = -9999, -9999 ;
+
+ scan_acquisition_time = 0.1, 0.2 ;
+
+ scan_duration = -9999, -9999 ;
+
+ inter_scan_time = -9999, -9999 ;
+
+ resolution = -9999, -9999 ;
+
+ actual_scan_number = -9999, -9999 ;
+
+ total_intensity = -9999, -9999 ;
+
+ mass_range_min = 35.0, 35.0 ;
+
+ mass_range_max = 35.9, 35.9 ;
+
+ time_range_min = -9999, -9999 ;
+
+ time_range_max = -9999, -9999 ;
+
+ scan_index = 0, 10 ;
+
+ point_count = 10, 10 ;
+
+ flag_count = 0, 0 ;
+
+ mass_values = 35.0, 35.1, 35.2, 35.3, 35.4, 35.5, 35.6, 35.7, 35.8, 35.9,
+ 		35.0, 35.1, 35.2, 35.3, 35.4, 35.5, 35.6, 35.7, 35.8, 35.9 ;
+
+ intensity_values = 1.0e-03, 1.1e-03, 1.0e-03, 1.0e-01, 1.0e+01, 1.0e+03, 
+    1.0e+01, 1.0e-01, 1.0e-03, 1.1e-03, 2.0e-03, 2.1e-03, 2.0e-03, 2.0e-01, 
+    2.0e+01, 2.0e+03, 2.0e+01, 2.0e-01, 2.0e-03, 2.1e-03 ;
+}

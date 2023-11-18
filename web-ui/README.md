@@ -6,7 +6,7 @@ You can find the application published at [GitLab Pages](https://devrosch.gitlab
 
 ## Prerequisites
 
-Node.js v14.17.0 (support for crypto.randomUUID()).
+Minimum Node.js v15 (for @typescript-eslint). Tested with Node.js v20 only.
 
 ## Build
 

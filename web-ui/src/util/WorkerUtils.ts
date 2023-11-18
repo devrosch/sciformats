@@ -40,18 +40,36 @@ export const postMessage = (worker: Worker, name: string, payload: any) => {
  * Initialize web worker.
  * @returns Initialized web worker.
  */
-export const initWorker = async () => {
-  const worker = new Worker(new URL('worker/Worker.ts', import.meta.url));
+export const initWorker = async (worker: Worker) => {
   let isWorkerInitialized = false;
   while (!isWorkerInitialized) {
-    // eslint-disable-next-line no-await-in-loop
-    const scanReply: WorkerResponse = await postMessage(worker, 'status', null) as WorkerResponse;
-    if (scanReply.detail === WorkerStatus.Initialized) {
-      isWorkerInitialized = true;
-    } else {
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => { setTimeout(resolve, 500); });
+    const scanReply = postMessage(worker, 'status', null);
+    const timeout = new Promise((resolve) => { setTimeout(resolve, 500); });
+    /* eslint-disable-next-line no-await-in-loop */
+    const response = await Promise.any([scanReply, timeout]) as any;
+    if (response !== null && typeof response === 'object' && Object.hasOwn(response, 'correlationId')) {
+      const statusResponse = response as WorkerResponse;
+      if (statusResponse.detail === WorkerStatus.Initialized) {
+        isWorkerInitialized = true;
+      } else {
+        /* eslint-disable-next-line no-await-in-loop */
+        await new Promise((resolve) => { setTimeout(resolve, 500); });
+      }
     }
   }
   return worker;
+};
+
+export const initWorkerCpp = async () => {
+  // Webpack requires a string literal with the worker path
+  const workerCpp = new Worker(new URL('worker/Worker.ts', import.meta.url));
+  await initWorker(workerCpp);
+  return workerCpp;
+};
+
+export const initWorkerRs = async () => {
+  // Webpack requires a string literal with the worker path
+  const workerRs = new Worker(new URL('worker/WorkerRs.ts', import.meta.url));
+  await initWorker(workerRs);
+  return workerRs;
 };

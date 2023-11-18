@@ -1,7 +1,7 @@
 // #[cfg(target_family = "wasm")]
 use js_sys::Uint8Array;
 // #[cfg(target_family = "wasm")]
-use std::io::SeekFrom;
+use std::io::{BufReader, SeekFrom};
 use std::{
     collections::HashMap,
     error::Error,
@@ -344,6 +344,58 @@ pub struct Table {
 }
 
 // -------------------------------------------------
+// Wrappers
+// -------------------------------------------------
+
+pub struct SeekReadWrapper<T: Seek + Read> {
+    input: BufReader<T>,
+    pos: u64,
+}
+
+impl<T: Seek + Read> SeekReadWrapper<T> {
+    pub fn new(raw_input: T) -> Self {
+        SeekReadWrapper {
+            // input: BufReader::with_capacity(64 * 1024, raw_input),
+            input: BufReader::new(raw_input),
+            pos: 0,
+        }
+    }
+}
+
+impl<T: Seek + Read> Seek for SeekReadWrapper<T> {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        match pos {
+            SeekFrom::Current(offset) => {
+                self.input.seek_relative(offset)?;
+                // todo: handle error cases
+                self.pos = (self.pos as i64 + offset) as u64;
+                Ok(self.pos)
+            }
+            SeekFrom::Start(offset) => {
+                // todo: handle error cases
+                let rel_offset = (offset as i64) - (self.pos as i64);
+                self.input.seek_relative(rel_offset)?;
+                self.pos = offset as u64;
+                Ok(self.pos)
+            }
+            SeekFrom::End(offset) => {
+                // todo: make more efficient
+                self.pos = self.input.seek(SeekFrom::End(offset))?;
+                Ok(self.pos)
+            }
+        }
+    }
+}
+
+impl<T: Seek + Read> Read for SeekReadWrapper<T> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let num_read = self.input.read(buf)?;
+        self.pos += num_read as u64;
+        Ok(num_read)
+    }
+}
+
+// -------------------------------------------------
 // WASM specific
 // -------------------------------------------------
 
@@ -441,12 +493,12 @@ impl Read for BlobWrapper {
 #[wasm_bindgen]
 // #[cfg(target_family = "wasm")]
 pub struct JsReader {
-    reader: Box<dyn crate::api::Reader>,
+    reader: Box<dyn Reader>,
 }
 
 // #[cfg(target_family = "wasm")]
 impl JsReader {
-    pub fn new(reader: Box<dyn crate::api::Reader>) -> Self {
+    pub fn new(reader: Box<dyn Reader>) -> Self {
         JsReader { reader }
     }
 }

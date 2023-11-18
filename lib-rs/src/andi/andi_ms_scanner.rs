@@ -1,6 +1,6 @@
 #[cfg(target_family = "wasm")]
 use crate::api::{BlobWrapper, JsReader};
-use crate::api::{Parser, Scanner};
+use crate::api::{Parser, Reader, Scanner};
 use std::{
     error::Error,
     io::{Read, Seek},
@@ -98,11 +98,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiMsScanner {
         buf.as_slice() == Self::MAGIC_BYTES
     }
 
-    fn get_reader(
-        &self,
-        path: &str,
-        input: T,
-    ) -> Result<Box<dyn crate::api::Reader>, Box<dyn Error>> {
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
         let file = AndiMsParser::parse(path, input)?;
         Ok(Box::new(AndiMsReader::new(path, file)))
     }

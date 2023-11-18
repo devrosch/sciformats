@@ -1,5 +1,5 @@
 // #[cfg(target_family = "wasm")]
-use crate::api::{BlobWrapper, JsReader};
+use crate::api::{BlobWrapper, JsReader, Reader, SeekReadWrapper};
 use crate::{
     andi::{andi_chrom_scanner::AndiChromScanner, andi_ms_scanner::AndiMsScanner},
     api::Scanner,
@@ -72,7 +72,8 @@ impl JsScannerRepository {
     #[wasm_bindgen(js_name = getReader)]
     pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
         let blob = BlobWrapper::new(input.clone());
-        let reader_result = self.repo.get_reader(path, Box::new(blob));
+        let input = SeekReadWrapper::new(blob);
+        let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
             Ok(reader) => Ok(JsReader::new(reader)),
             Err(error) => Err(JsError::new(&error.to_string())),
@@ -123,7 +124,7 @@ impl ScannerRepository {
         &self,
         path: &str,
         mut input: Box<dyn SeekRead>,
-    ) -> Result<Box<dyn crate::api::Reader>, Box<dyn std::error::Error>> {
+    ) -> Result<Box<dyn Reader>, Box<dyn Error>> {
         for scanner in &self.scanners {
             input.seek(std::io::SeekFrom::Start(0))?;
             if scanner.is_recognized(path, &mut input) {

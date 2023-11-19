@@ -20,11 +20,14 @@ stages:
 
 build:wasm:
   stage: build
+  before_script:
+    - rustup target add wasm32-unknown-unknown
+    - cargo install wasm-pack
   script:
     - wasm-pack build
   artifacts:
     paths:
-      - pkg
+      - lib-rs/pkg
 
 # test:linux_gcc:
 #   stage: test

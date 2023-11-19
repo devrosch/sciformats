@@ -18,6 +18,11 @@ test:
   script:
     - CI=true npm test -- --coverage
   # coverage: /All files\s*\|\s*([\d\.]+)/
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lib-cpp
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lib-rs
 
 audit:
   stage: test
@@ -36,6 +41,11 @@ build:
   script:
     - npm run import-wasm
     - CI=true npm run build
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lib-cpp
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lib-rs
   artifacts:
     paths:
       - web-ui/dist

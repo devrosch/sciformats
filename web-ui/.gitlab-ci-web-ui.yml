@@ -57,10 +57,12 @@ web-ui:pages:
   stage: deploy
   script:
     - cd web-ui
-    - npm install
     - rm -rf public
     - mv dist public
+    - ls public # debug
     - gzip -k -r -6 public
+  dependencies:
+    - "web-ui:release"
   artifacts:
     paths:
       - web-ui/public

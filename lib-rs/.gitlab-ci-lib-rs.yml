@@ -63,7 +63,7 @@ lib-rs:coverage:
     paths:
       - lib-rs/target/debug/coverage
 
-lib-rs:build:
+lib-rs:release:
   image: rust:1.74
   stage: release
   script:
@@ -73,7 +73,7 @@ lib-rs:build:
     paths:
       - lib-rs/target/release
 
-lib-rs:build:wasm:
+lib-rs:release:wasm:
   image: rust:1.74
   stage: release
   script:

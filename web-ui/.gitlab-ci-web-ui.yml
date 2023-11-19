@@ -33,7 +33,7 @@ outdated:
     - npm outdated
   allow_failure: true
 
-build:
+release:
   image: node:20
   stage: release
   script:
@@ -41,10 +41,10 @@ build:
     - npm install
     - npm run import-wasm
     - CI=true npm run build
-  needs: ["lib-rs:build:wasm", "lib-cpp:build:wasm_emcc"]
+  needs: ["lib-rs:release:wasm", "lib-cpp:release:wasm_emcc"]
   dependencies:
-    - "lib-rs:build:wasm"
-    - "lib-cpp:build:wasm_emcc"
+    - "lib-rs:release:wasm"
+    - "lib-cpp:release:wasm_emcc"
   artifacts:
     paths:
       - web-ui/dist

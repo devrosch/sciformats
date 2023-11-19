@@ -22,10 +22,28 @@ lint:
     - rustup component add clippy
     - cargo clippy
 
-lint:
+test:
   stage: test
   script:
     - cargo test
+
+coverage:
+  stage: test
+  script:
+    - rustup component add llvm-tools-preview
+    - cargo install grcov --quiet
+    - export RUSTC_BOOTSTRAP=1
+    - export RUSTFLAGS="-Cinstrument-coverage"
+    - export LLVM_PROFILE_FILE="your_name-%p-%m.profraw"
+    - export CARGO_INCREMENTAL=0
+    - export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+    - export RUSTDOCFLAGS="-Cpanic=abort"
+    - cargo build
+    - cargo test
+    - grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
+  artifacts:
+    paths:
+      - lib-rs/target/debug/coverage
 
 build:
   stage: build
@@ -39,7 +57,7 @@ build:wasm:
   stage: build
   script:
     - rustup target add wasm32-unknown-unknown
-    - cargo install wasm-pack
+    - cargo install wasm-pack --quiet
     - wasm-pack build
   artifacts:
     paths:
@@ -50,14 +68,11 @@ build:wasm:
 #   script:
 #     - rm -rf public
 #     - mkdir public
-#     - mv build/coverage public/coverage
-#     - mv build/doc/html public/doc
+#     - mv target/debug/coverage public/coverage
 #   dependencies:
-#     - coverage:linux_gcc
-#     - doc:doxygen
+#     - coverage
 #   artifacts:
 #     paths:
-#       - public
+#       - lib-rs/public
 #   only:
 #     - master
-

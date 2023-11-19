@@ -7,9 +7,10 @@ stages:
   - release
   - deploy
 
-include: 'lib-cpp/.gitlab-ci-lib-cpp.yml'
-include: 'lib-rs/.gitlab-ci-lib-rs.yml'
-include: 'web-ui/.gitlab-ci-web-ui.yml'
+include:
+  - 'lib-cpp/.gitlab-ci-lib-cpp.yml'
+  - 'lib-rs/.gitlab-ci-lib-rs.yml'
+  - 'web-ui/.gitlab-ci-web-ui.yml'
 
 # lib-cpp:
 #   stage: build-lib

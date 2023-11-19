@@ -4,19 +4,36 @@ before_script:
   - cd lib-rs
 
 stages:
-  - build
   - test
   - coverage
+  - build
   - doc
   - publish
 
-# build:
-#   stage: build
-#   script:
-#     - cargo build
-#   artifacts:
-#     paths:
-#       - build
+format:
+  stage: test
+  script:
+    - rustup component add rustfmt
+    - cargo fmt --check
+
+lint:
+  stage: test
+  script:
+    - rustup component add clippy
+    - cargo clippy
+
+lint:
+  stage: test
+  script:
+    - cargo test
+
+build:
+  stage: build
+  script:
+    - cargo build --release
+  artifacts:
+    paths:
+      - lib-rs/target/release
 
 build:wasm:
   stage: build
@@ -27,63 +44,6 @@ build:wasm:
   artifacts:
     paths:
       - lib-rs/pkg
-
-# test:linux_gcc:
-#   stage: test
-#   script:
-#     - cd build
-#     - make coverage-base
-#     - ctest
-#   dependencies:
-#     - build:linux_gcc
-#   artifacts:
-#     paths:
-#       - build
-
-# test:wasm_emcc:
-#   stage: test
-#   script:
-#     - cd build-wasm
-#     - ctest -VV
-#   dependencies:
-#     - build:wasm_emcc
-#   artifacts:
-#     paths:
-#       - build-wasm
-
-# format:
-#   stage: test
-#   script:
-#     - cd build && make clang-format-check
-#   dependencies:
-#     - build:linux_gcc
-
-# quality:
-#   stage: test
-#   script:
-#     - cd build && make clang-tidy
-#   dependencies:
-#     - build:linux_gcc
-
-# coverage:linux_gcc:
-#   stage: coverage
-#   variables:
-#     COVERAGE_THRESHOLD: "95.0"
-#   script:
-#     - cd build
-#     - set -eo pipefail
-#     - make coverage-capture
-#     - "make coverage-report
-#       | tee /dev/stderr
-#       | grep -E 'lines\\.{6,}:'
-#       | awk -F': |%' '{print $2}'
-#       | { read coverage; echo \"=== line coverage: ${coverage}%, threshold: ${COVERAGE_THRESHOLD}% ===\"; (( $(echo \"$coverage >= $COVERAGE_THRESHOLD\" | bc -l) )); }"
-#   dependencies:
-#     - test:linux_gcc
-#   coverage: '/lines\.+: \d+\.\d+%/'
-#   artifacts:
-#     paths:
-#       - build/coverage
 
 # pages:
 #   stage: publish

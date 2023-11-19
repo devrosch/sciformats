@@ -17,7 +17,7 @@ test:
   stage: test
   script:
     - CI=true npm test -- --coverage
-  coverage: /All files\s*\|\s*([\d\.]+)/
+  # coverage: /All files\s*\|\s*([\d\.]+)/
 
 audit:
   stage: test
@@ -37,7 +37,7 @@ build:
     - CI=true npm run build
   artifacts:
     paths:
-      - dist
+      - web-ui/dist
   only:
     - main
 

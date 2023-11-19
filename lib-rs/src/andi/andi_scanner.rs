@@ -21,10 +21,10 @@ use super::{
 pub struct AndiScanner {}
 
 impl AndiScanner {
-    const ACCEPTED_EXTENSIONS: [&str; 2] = ["cdf", "nc"];
+    const ACCEPTED_EXTENSIONS: [&'static str; 2] = ["cdf", "nc"];
     const MAGIC_BYTES: [u8; 3] = [0x43, 0x44, 0x46]; // "CDF"
-    const AIA_TEMPLATE_REVISION_ATTR: &str = "aia_template_revision";
-    const MS_TEMPLATE_REVISION_ATTR: &str = "ms_template_revision";
+    const AIA_TEMPLATE_REVISION_ATTR: &'static str = "aia_template_revision";
+    const MS_TEMPLATE_REVISION_ATTR: &'static str = "ms_template_revision";
 }
 
 impl Default for AndiScanner {

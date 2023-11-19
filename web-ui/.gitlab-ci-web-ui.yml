@@ -2,7 +2,7 @@ cache:
   paths:
     - node_modules/
 
-test:
+web-ui:test:
   image: node:20
   stage: test
   script:
@@ -15,7 +15,7 @@ test:
     - "lib-rs:build:wasm"
     - "lib-cpp:build:wasm_emcc"
 
-audit:
+web-ui:audit:
   image: node:20
   stage: test
   script:
@@ -24,7 +24,7 @@ audit:
     - npm audit --audit-level=critical --production
   allow_failure: true
 
-outdated:
+web-ui:outdated:
   image: node:20
   stage: test
   script:
@@ -33,7 +33,7 @@ outdated:
     - npm outdated
   allow_failure: true
 
-release:
+web-ui:release:
   image: node:20
   stage: release
   script:
@@ -51,7 +51,7 @@ release:
   only:
     - main
 
-pages:
+web-ui:pages:
   image: node:20
   stage: deploy
   script:

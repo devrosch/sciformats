@@ -1,0 +1,78 @@
+lib-rs:format:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-rs
+    - rustup component add rustfmt
+    - cargo fmt --check
+
+lib-rs:lint:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-rs
+    - rustup component add clippy
+    - cargo clippy
+
+lib-rs:test:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-rs
+    - cargo test
+
+lib-rs:coverage:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-rs
+    - rustup component add llvm-tools-preview
+    - cargo install grcov --quiet
+    - export RUSTC_BOOTSTRAP=1
+    - export RUSTFLAGS="-Cinstrument-coverage"
+    - export LLVM_PROFILE_FILE="your_name-%p-%m.profraw"
+    - export CARGO_INCREMENTAL=0
+    - export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+    - export RUSTDOCFLAGS="-Cpanic=abort"
+    - cargo build
+    - cargo test
+    - grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
+  artifacts:
+    paths:
+      - lib-rs/target/debug/coverage
+
+lib-rs:build:
+  image: rust:1.74
+  stage: release
+  script:
+    - cd lib-rs
+    - cargo build --release
+  artifacts:
+    paths:
+      - lib-rs/target/release
+
+lib-rs:build:wasm:
+  image: rust:1.74
+  stage: release
+  script:
+    - cd lib-rs
+    - rustup target add wasm32-unknown-unknown
+    - cargo install wasm-pack --quiet
+    - wasm-pack build
+  artifacts:
+    paths:
+      - lib-rs/pkg
+
+# pages:
+#   stage: publish
+#   script:
+#     - rm -rf public
+#     - mkdir public
+#     - mv target/debug/coverage public/coverage
+#   dependencies:
+#     - coverage
+#   artifacts:
+#     paths:
+#       - lib-rs/public
+#   only:
+#     - master

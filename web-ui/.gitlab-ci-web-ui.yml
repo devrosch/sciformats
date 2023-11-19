@@ -1,0 +1,67 @@
+cache:
+  paths:
+    - node_modules/
+
+test:
+  image: node:20
+  stage: test
+  script:
+    - cd web-ui
+    - npm install
+    - CI=true npm test -- --coverage
+  # coverage: /All files\s*\|\s*([\d\.]+)/
+  needs: ["lib-rs:build:wasm", "lib-cpp:build:wasm_emcc"]
+  dependencies:
+    - "lib-rs:build:wasm"
+    - "lib-cpp:build:wasm_emcc"
+
+audit:
+  image: node:20
+  stage: test
+  script:
+    - cd web-ui
+    - npm install
+    - npm audit --audit-level=critical --production
+  allow_failure: true
+
+outdated:
+  image: node:20
+  stage: test
+  script:
+    - cd web-ui
+    - npm install
+    - npm outdated
+  allow_failure: true
+
+build:
+  image: node:20
+  stage: release
+  script:
+    - cd web-ui
+    - npm install
+    - npm run import-wasm
+    - CI=true npm run build
+  needs: ["lib-rs:build:wasm", "lib-cpp:build:wasm_emcc"]
+  dependencies:
+    - "lib-rs:build:wasm"
+    - "lib-cpp:build:wasm_emcc"
+  artifacts:
+    paths:
+      - web-ui/dist
+  only:
+    - main
+
+pages:
+  image: node:20
+  stage: deploy
+  script:
+    - cd web-ui
+    - npm install
+    - rm -rf public
+    - mv dist public
+    - gzip -k -r -6 public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

@@ -1,25 +1,32 @@
-image: ubuntu:22
+# image: ubuntu:22
 
 stages:
-  - build-lib
-  - build-ui
+  - build
+  - test
+  - doc
+  - release
+  - deploy
 
-lib-cpp:
-  stage: build-lib
-  trigger:
-    include: lib-cpp/.gitlab-ci.yml
-    strategy: depend
+include: 'lib-cpp/.gitlab-ci-lib-cpp.yml'
+include: 'lib-rs/.gitlab-ci-lib-rs.yml'
+include: 'web-ui/.gitlab-ci-web-ui.yml'
 
-lib-rs:
-  stage: build-lib
-  trigger:
-    include: lib-rs/.gitlab-ci.yml
-    strategy: depend
+# lib-cpp:
+#   stage: build-lib
+#   trigger:
+#     include: lib-cpp/.gitlab-ci.yml
+#     strategy: depend
 
-web-ui:
-  stage: build-ui
-  trigger:
-    include: web-ui/.gitlab-ci.yml
-    strategy: depend
-  variables:
-    PARENT_PIPELINE_ID: $CI_PIPELINE_ID
+# lib-rs:
+#   stage: build-lib
+#   trigger:
+#     include: lib-rs/.gitlab-ci.yml
+#     strategy: depend
+
+# web-ui:
+#   stage: build-ui
+#   trigger:
+#     include: web-ui/.gitlab-ci.yml
+#     strategy: depend
+#   variables:
+#     PARENT_PIPELINE_ID: $CI_PIPELINE_ID

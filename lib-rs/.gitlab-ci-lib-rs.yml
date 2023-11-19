@@ -1,3 +1,25 @@
+lib-rs:build:
+  image: rust:1.74
+  stage: build
+  script:
+    - cd lib-rs
+    - cargo build
+  artifacts:
+    paths:
+      - lib-rs/target/release
+
+lib-rs:build:wasm:
+  image: rust:1.74
+  stage: build
+  script:
+    - cd lib-rs
+    - rustup target add wasm32-unknown-unknown
+    - cargo install wasm-pack --quiet
+    - wasm-pack build --dev
+  artifacts:
+    paths:
+      - lib-rs/pkg
+
 lib-rs:format:
   image: rust:1.74
   stage: test
@@ -58,7 +80,7 @@ lib-rs:build:wasm:
     - cd lib-rs
     - rustup target add wasm32-unknown-unknown
     - cargo install wasm-pack --quiet
-    - wasm-pack build
+    - wasm-pack build --release
   artifacts:
     paths:
       - lib-rs/pkg

@@ -1,4 +1,4 @@
-# `sf_rs`
+# sf_rs
 
 A library for reading scientific data formats.
 

@@ -1,4 +1,4 @@
-image: node:16
+image: node:20
 
 cache:
   paths:
@@ -6,6 +6,7 @@ cache:
 
 before_script:
   - npm install
+  - cd web-ui
 
 stages:
   - test
@@ -40,14 +41,14 @@ build:
   only:
     - main
 
-pages:
-  stage: deploy
-  script:
-    - rm -rf public
-    - mv dist public
-    - gzip -k -r -6 public
-  artifacts:
-    paths:
-      - public
-  only:
-    - main
+# pages:
+#   stage: deploy
+#   script:
+#     - rm -rf public
+#     - mv dist public
+#     - gzip -k -r -6 public
+#   artifacts:
+#     paths:
+#       - public
+#   only:
+#     - main

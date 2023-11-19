@@ -1,0 +1,23 @@
+image: ubuntu:22
+
+stages:
+  - build-lib
+  - build-ui
+
+lib-cpp:
+  stage: build-lib
+  trigger:
+    include: lib-cpp/.gitlab-ci.yml
+    strategy: depend
+
+lib-rs:
+  stage: build-lib
+  trigger:
+    include: lib-rs/.gitlab-ci.yml
+    strategy: depend
+
+web-ui:
+  stage: build-ui
+  trigger:
+    include: web-ui/.gitlab-ci.yml
+    strategy: depend

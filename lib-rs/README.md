@@ -8,24 +8,24 @@ This is a library implemented in [Rust](https://www.rust-lang.org/) for reading 
 * AnDI/AIA for Chromatographic Data ([ASTM E1947-98(2022)](https://www.astm.org/e1947-98r22.html), [ASTM E1948-98(2022)](https://www.astm.org/e1948-98r22.html))
 * AnDI/AIA for Mass Spectrometric Data ([ASTM E2077-00(2016)](https://www.astm.org/e2077-00r16.html), [ASTM E2078-00(2016)](https://www.astm.org/e2078-00r16.html))
 
-## Build
-
-Native compilation (tested on Ubuntu Linux x86-64 and macOS ARM) and cross-compilation to WebAssembly (WASM) are supported.
-
-### Prerequisites
+## Prerequisites
 
 * Install the [Rust Toolchain](https://www.rust-lang.org/tools/install) including cargo.
     * It may be necessary to activate the WebAssembly target with: `rustup target add wasm32-unknown-unknown`.
 * Optionally, for WASM builds install [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/).
+* Optionally, for checking code formatting install `rustfmt` with `rustup component add rustfmt`.
+* Optionally, for linting the code install `clippy` with `rustup component add clippy`.
 
 For capturing code coverage, the following additional tools are required:
 * `llvm-tools-preview`: Install with: `rustup component add llvm-tools-preview`.
 * `grcov`: Install with: `cargo install grcov`.
 * Optionally, install `genhtml` if you want to use it to generate a coverage report instead of the `grcov` generated report.
 
-### Native
+## Native
 
-#### Build
+Native compilation (tested on Ubuntu Linux x86-64 and macOS ARM) and cross-compilation to WebAssembly (WASM) are supported.
+
+### Build
 
 You can build the library with:
 
@@ -33,7 +33,7 @@ You can build the library with:
 cargo build
 ```
 
-#### Test
+### Test
 
 To run unit tests, integration tests, and doc tests, run:
 
@@ -41,7 +41,7 @@ To run unit tests, integration tests, and doc tests, run:
 cargo test
 ```
 
-#### Code Coverage
+### Code Coverage
 
 For capturing code coverage:
 
@@ -70,9 +70,27 @@ genhtml -o ./target/debug/coverage/ --show-details --highlight --ignore-errors s
 
 More information on capturing code coverage can be found at [doc.rust-lang.org](https://doc.rust-lang.org/rustc/instrument-coverage.html) and [grcov](https://github.com/mozilla/grcov).
 
-### WASM
+### Formatting
 
-#### Build
+To check correct code formatting, run:
+```
+cargo fmt --check
+```
+
+To fix formatting issues, run the same command without the `--check` flag.
+
+### Linting
+
+To lint the code, run:
+```
+cargo clippy
+```
+
+To fix linting issues where possible, run the same command with the `--fix` flag.
+
+## WASM
+
+### Build
 
 You can build the library with:
 
@@ -82,7 +100,7 @@ wasm-pack build
 
 The resulting npm package is the available in the `/pkg` directory.
 
-#### Test
+### Test
 
 For running tests involving JavaScript interop, run:
 
@@ -90,7 +108,7 @@ For running tests involving JavaScript interop, run:
 wasm-pack test --firefox --headless
 ```
 
-`--firefox` is a placeholder for one of several browser engines that can be used: `--node`, `--chrome`, `--firefox`, or `--safari`. Note: For Chrome you may have to manually install chromedriver on some platforms to make headless mode work, see [wasm-pack/issues/611](https://github.com/rustwasm/wasm-pack/issues/611). Safari will only work on macOS.
+`--firefox` is a placeholder for one of several browser engines that can be used: `--node`, `--chrome`, `--firefox`, or `--safari`. Note: For Chrome you may have to manually install chromedriver on some platforms to make headless mode work, see [wasm-pack/issues/611](https://github.com/rustwasm/wasm-pack/issues/611). `--safari` will only work on macOS.
 
 ## Limitations
 

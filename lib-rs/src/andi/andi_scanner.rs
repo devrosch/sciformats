@@ -1,6 +1,6 @@
+use crate::api::{Reader, Scanner};
 #[cfg(target_family = "wasm")]
 use crate::common::{BlobWrapper, JsReader};
-use crate::api::{Reader, Scanner};
 use std::{
     error::Error,
     io::{Read, Seek},

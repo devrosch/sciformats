@@ -257,3 +257,17 @@ fn andi_chrom_parse_quirks() {
         chrom.peak_processing_results.peak_amount_unit.unwrap()
     );
 }
+
+#[test]
+fn andi_chrom_file_prints_debug_info() {
+    let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
+    let chrom = AndiChromParser::parse(&path, file).unwrap();
+
+    let debug_info = format!("{:?}", chrom);
+
+    assert!(debug_info.contains("AndiChromFile"));
+    assert!(debug_info.contains("AndiChromSampleDescription"));
+    assert!(debug_info.contains("AndiChromDetectionMethod"));
+    assert!(debug_info.contains("AndiChromRawData"));
+    assert!(debug_info.contains("AndiChromPeakProcessingResults"));
+}

@@ -1219,3 +1219,28 @@ fn andi_ms_parse_sid_file_succeeds() {
 
     // TODO: add tests for non standard variables and attributes once available
 }
+
+#[test]
+fn andi_ms_file_prints_debug_info() {
+    let (path, file) = open_file(ANDI_MS_CENTROID);
+    let centroid = AndiMsParser::parse(&path, file).unwrap();
+
+    let centroid_debug_info = format!("{:?}", centroid);
+    assert!(centroid_debug_info.contains("AndiMsAdminData"));
+    assert!(centroid_debug_info.contains("AndiMsInstrumentData"));
+    assert!(centroid_debug_info.contains("AndiMsSampleData"));
+    assert!(centroid_debug_info.contains("AndiMsTestData"));
+    assert!(centroid_debug_info.contains("AndiMsRawDataGlobal"));
+    assert!(centroid_debug_info.contains("AndiMsRawDataScans"));
+    assert!(centroid_debug_info.contains("AndiMsRawDataPerScan"));
+
+    let (path, file) = open_file(ANDI_MS_LIBRARY);
+    let library = AndiMsParser::parse(&path, file).unwrap();
+    let library_debug_info = format!("{:?}", library);
+    assert!(library_debug_info.contains("AndiMsLibraryData"));
+
+    let (path, file) = open_file(ANDI_MS_SID);
+    let sid = AndiMsParser::parse(&path, file).unwrap();
+    let sid_debug_info = format!("{:?}", sid);
+    assert!(sid_debug_info.contains("AndiMsRawDataScanGroups"));
+}

@@ -558,3 +558,14 @@ fn andi_ms_centroid_read_succeeds() {
 
     // // TODO: add tests for non standard variables and attributes once available
 }
+
+#[wasm_bindgen_test]
+#[test]
+fn andi_ms_read_illegal_node_path_fails() {
+    let (path, file) = open_file(ANDI_MS_CENTROID_FILE_PATH);
+    let ms = AndiMsParser::parse(&path, file).unwrap();
+    let reader = AndiMsReader::new(&path, ms);
+
+    let illegal_path_data = reader.read("/7");
+    assert!(illegal_path_data.is_err());
+}

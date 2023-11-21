@@ -16,6 +16,7 @@ fn assert_eq_f64(left: f64, right: f64) {
 }
 
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
+const ANDI_CHROM_QUIRKS_FILE_PATH: &str = "andi_chrom_quirks.cdf";
 
 #[wasm_bindgen_test]
 #[test]
@@ -410,10 +411,21 @@ fn andi_chrom_read_valid_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_quirks() {
-    let (path, file) = open_file("andi_chrom_quirks.cdf");
+    let (path, file) = open_file(ANDI_CHROM_QUIRKS_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 
     let raw_data = reader.read("/3");
     assert!(raw_data.is_ok());
+}
+
+#[wasm_bindgen_test]
+#[test]
+fn andi_chrom_read_illegal_node_path_fails() {
+    let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
+    let chrom = AndiChromParser::parse(&path, file).unwrap();
+    let reader = AndiChromReader::new(&path, chrom);
+
+    let illegal_path_data = reader.read("/5");
+    assert!(illegal_path_data.is_err());
 }

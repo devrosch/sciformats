@@ -112,6 +112,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn error_to_string_returns_error_message() {
+        let error = AndiError::new("Error message");
+        assert_eq!("Error message", error.to_string());
+    }
+
+    #[test]
     fn map_valid_strings_to_categories_succeeds() {
         assert_eq!(AndiCategory::from_str("C1").unwrap(), AndiCategory::C1);
         assert_eq!(AndiCategory::from_str("C2").unwrap(), AndiCategory::C2);

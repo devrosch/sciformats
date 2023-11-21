@@ -263,11 +263,14 @@ fn andi_chrom_file_prints_debug_info() {
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
-    let debug_info = format!("{:?}", chrom);
+    let chrom_debug_info = format!("{:?}", chrom);
+    assert!(chrom_debug_info.contains("AndiChromFile"));
+    assert!(chrom_debug_info.contains("AndiChromSampleDescription"));
+    assert!(chrom_debug_info.contains("AndiChromDetectionMethod"));
+    assert!(chrom_debug_info.contains("AndiChromRawData"));
+    assert!(chrom_debug_info.contains("AndiChromPeakProcessingResults"));
 
-    assert!(debug_info.contains("AndiChromFile"));
-    assert!(debug_info.contains("AndiChromSampleDescription"));
-    assert!(debug_info.contains("AndiChromDetectionMethod"));
-    assert!(debug_info.contains("AndiChromRawData"));
-    assert!(debug_info.contains("AndiChromPeakProcessingResults"));
+    let peaks = chrom.peak_processing_results.get_peaks().unwrap().unwrap();
+    let peaks_debug_info = format!("{:?}", peaks);
+    assert!(peaks_debug_info.contains("AndiChromPeak"));
 }

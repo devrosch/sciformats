@@ -18,6 +18,7 @@ use super::{
 };
 
 #[wasm_bindgen]
+#[derive(Default)]
 pub struct AndiScanner {}
 
 impl AndiScanner {
@@ -31,7 +32,7 @@ impl AndiScanner {
 impl AndiScanner {
     #[wasm_bindgen(constructor)]
     pub fn new() -> AndiScanner {
-        AndiScanner {}
+        AndiScanner::default()
     }
 
     #[cfg(target_family = "wasm")]

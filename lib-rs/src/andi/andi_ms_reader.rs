@@ -891,6 +891,7 @@ impl AndiMsReader {
             flagged_peaks.push(*peak);
         }
 
+        // TODO: make table None if no rows are present
         let mut table = Table {
             column_names: vec![
                 Column::new("peak", "Peak m/z"),

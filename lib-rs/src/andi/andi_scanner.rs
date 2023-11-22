@@ -27,12 +27,6 @@ impl AndiScanner {
     const MS_TEMPLATE_REVISION_ATTR: &'static str = "ms_template_revision";
 }
 
-impl Default for AndiScanner {
-    fn default() -> Self {
-        AndiScanner::new()
-    }
-}
-
 #[wasm_bindgen]
 impl AndiScanner {
     #[wasm_bindgen(constructor)]

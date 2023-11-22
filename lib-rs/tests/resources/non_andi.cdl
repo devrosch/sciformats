@@ -1,0 +1,11 @@
+netcdf non_andi {
+dimensions:
+	some_dim = 3 ;
+variables:
+	float some_var(some_dim) ;
+// global attributes:
+		:netcdf_revision = "2.0" ;
+		:some_attribute = "none AnDI" ;
+data:
+ some_var = 1.0, 2.0, 3.0 ;
+}

@@ -1,4 +1,4 @@
-netcdf sf_andi_test {
+netcdf andi_chrom_quirks {
 dimensions:
 	_2_byte_string = 2 ;
 	_4_byte_string = 4 ;

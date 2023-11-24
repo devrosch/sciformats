@@ -1,5 +1,3 @@
-mod io;
-
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use std::collections::HashMap;
@@ -21,6 +19,7 @@ use sf_rs::{
 };
 use wasm_bindgen_test::wasm_bindgen_test;
 
+const ROOT_PATH: &str = "andi";
 const ANDI_MS_CENTROID_FILE_PATH: &str = "andi_ms_centroid.cdf";
 const ANDI_MS_CONTINUUM_FILE_PATH: &str = "andi_ms_continuum.cdf";
 const ANDI_MS_LIBRARY_FILE_PATH: &str = "andi_ms_library.cdf";
@@ -29,7 +28,7 @@ const ANDI_MS_SID_FILE_PATH: &str = "andi_ms_sid.cdf";
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_centroid_read_succeeds() {
-    let (path, file) = open_file(ANDI_MS_CENTROID_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CENTROID_FILE_PATH);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
@@ -565,7 +564,7 @@ fn andi_ms_centroid_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_continuum_read_succeeds() {
-    let (path, file) = open_file(ANDI_MS_CONTINUUM_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CONTINUUM_FILE_PATH);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
@@ -964,7 +963,7 @@ fn andi_ms_continuum_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_library_read_succeeds() {
-    let (path, file) = open_file(ANDI_MS_LIBRARY_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_LIBRARY_FILE_PATH);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
@@ -1575,7 +1574,7 @@ fn andi_ms_library_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_sid_read_succeeds() {
-    let (path, file) = open_file(ANDI_MS_SID_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_SID_FILE_PATH);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
@@ -2030,7 +2029,7 @@ fn andi_ms_sid_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_read_illegal_node_path_fails() {
-    let (path, file) = open_file(ANDI_MS_CENTROID_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CENTROID_FILE_PATH);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 

@@ -1,5 +1,3 @@
-mod io;
-
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use crate::io::open_file;
@@ -20,6 +18,7 @@ use sf_rs::{
 use std::str::FromStr;
 use wasm_bindgen_test::wasm_bindgen_test;
 
+const ROOT_PATH: &str = "andi";
 const ANDI_MS_LIBRARY: &str = "andi_ms_library.cdf";
 const ANDI_MS_CENTROID: &str = "andi_ms_centroid.cdf";
 const ANDI_MS_CONTINUUM: &str = "andi_ms_continuum.cdf";
@@ -33,7 +32,7 @@ fn assert_blank_len(s: &str, size: usize) {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_centroid_file_succeeds() {
-    let (path, file) = open_file(ANDI_MS_CENTROID);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CENTROID);
     let ms = AndiMsParser::parse(&path, file).unwrap();
 
     let admin_data = &ms.admin_data;
@@ -352,7 +351,7 @@ fn andi_ms_parse_centroid_file_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_continuum_file_succeeds() {
-    let (path, file) = open_file(ANDI_MS_CONTINUUM);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CONTINUUM);
     let ms = AndiMsParser::parse(&path, file).unwrap();
 
     let admin_data = &ms.admin_data;
@@ -634,7 +633,7 @@ fn andi_ms_parse_continuum_file_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_library_file_succeeds() {
-    let (path, file) = open_file(ANDI_MS_LIBRARY);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_LIBRARY);
     let ms = AndiMsParser::parse(&path, file).unwrap();
 
     let admin_data = &ms.admin_data;
@@ -1010,7 +1009,7 @@ fn andi_ms_parse_library_file_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_sid_file_succeeds() {
-    let (path, file) = open_file(ANDI_MS_SID);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_SID);
     let ms = AndiMsParser::parse(&path, file).unwrap();
 
     let admin_data = &ms.admin_data;
@@ -1250,7 +1249,7 @@ fn andi_ms_parse_sid_file_succeeds() {
 
 #[test]
 fn andi_ms_file_prints_debug_info() {
-    let (path, file) = open_file(ANDI_MS_CENTROID);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CENTROID);
     let centroid = AndiMsParser::parse(&path, file).unwrap();
 
     let centroid_debug_info = format!("{:?}", centroid);
@@ -1262,12 +1261,12 @@ fn andi_ms_file_prints_debug_info() {
     assert!(centroid_debug_info.contains("AndiMsRawDataScans"));
     assert!(centroid_debug_info.contains("AndiMsRawDataPerScan"));
 
-    let (path, file) = open_file(ANDI_MS_LIBRARY);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_LIBRARY);
     let library = AndiMsParser::parse(&path, file).unwrap();
     let library_debug_info = format!("{:?}", library);
     assert!(library_debug_info.contains("AndiMsLibraryData"));
 
-    let (path, file) = open_file(ANDI_MS_SID);
+    let (path, file) = open_file(ROOT_PATH, ANDI_MS_SID);
     let sid = AndiMsParser::parse(&path, file).unwrap();
     let sid_debug_info = format!("{:?}", sid);
     assert!(sid_debug_info.contains("AndiMsRawDataScanGroups"));

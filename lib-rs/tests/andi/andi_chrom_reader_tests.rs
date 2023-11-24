@@ -1,5 +1,3 @@
-mod io;
-
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use crate::io::open_file;
@@ -15,13 +13,14 @@ fn assert_eq_f64(left: f64, right: f64) {
     assert!(f64::abs(left - right) <= epsilon)
 }
 
+const ROOT_PATH: &str = "andi";
 const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
 const ANDI_CHROM_QUIRKS_FILE_PATH: &str = "andi_chrom_quirks.cdf";
 
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_valid_succeeds() {
-    let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 
@@ -411,7 +410,7 @@ fn andi_chrom_read_valid_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_quirks() {
-    let (path, file) = open_file(ANDI_CHROM_QUIRKS_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_QUIRKS_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 
@@ -422,7 +421,7 @@ fn andi_chrom_read_quirks() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_illegal_node_path_fails() {
-    let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
+    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 

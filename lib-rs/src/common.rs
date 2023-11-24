@@ -297,9 +297,9 @@ mod tests {
     };
     #[cfg(target_family = "wasm")]
     use js_sys::{Array, Uint8Array};
-    use std::io::{Cursor, Read, Seek};
     #[cfg(target_family = "wasm")]
-    use std::io::{Read, Seek, SeekFrom};
+    use std::io::SeekFrom;
+    use std::io::{Cursor, Read, Seek};
     #[cfg(target_family = "wasm")]
     use wasm_bindgen_test::wasm_bindgen_test;
     #[cfg(target_family = "wasm")]

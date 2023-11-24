@@ -1067,7 +1067,7 @@ impl AndiMsReader {
         let child_node_names: Vec<String> = scan_groups
             .raw_data_per_scan_groups
             .iter()
-            .map(|scan_group| format!("Scan group {}", scan_group.group_number))
+            .map(|scan_group| format!("Scan Group {}", scan_group.group_number))
             .collect();
 
         Ok(Node {
@@ -1094,6 +1094,7 @@ impl AndiMsReader {
                 n
             )))?;
 
+        let name = format!("Scan Group {}", n);
         let parameters: Vec<Parameter> = vec![
             Parameter::from_str_i32("Group Number", scan_group.group_number),
             Parameter::from_str_i32(
@@ -1103,12 +1104,52 @@ impl AndiMsReader {
             Parameter::from_str_i32("Starting Scan Number", scan_group.starting_scan_number),
         ];
 
+        let masses = scan_group.get_group_masses()?;
+        let sampling_times = scan_group.get_group_sampling_times()?;
+        let delay_times = scan_group.get_group_delay_times()?;
+
+        // TODO: make table None if no rows are present
+        let mut table = Table {
+            column_names: vec![Column::new("mass", "M/Z")],
+            rows: vec![],
+        };
+        if sampling_times.is_some() {
+            table
+                .column_names
+                .push(Column::new("sampling_time", "Sampling Time"));
+        }
+        if delay_times.is_some() {
+            table
+                .column_names
+                .push(Column::new("delay_time", "Delay Time"));
+        }
+
+        for (i, mass) in masses.iter().enumerate() {
+            let mut row = HashMap::new();
+            row.insert("mass".to_owned(), Value::F64(*mass));
+            if let Some(samplings) = &sampling_times {
+                let sampling = samplings.get(i).ok_or(AndiError::new(&format!(
+                    "In scan_group {} could not find sampling time at index: {}",
+                    n, i
+                )))?;
+                row.insert("sampling_time".to_owned(), Value::F64(*sampling));
+            }
+            if let Some(delays) = &delay_times {
+                let delay = delays.get(i).ok_or(AndiError::new(&format!(
+                    "In scan_group {} could not find delay time at index: {}",
+                    n, i
+                )))?;
+                row.insert("delay_time".to_owned(), Value::F64(*delay));
+            }
+            table.rows.push(row);
+        }
+
         Ok(Node {
-            name: "Scan Groups".to_owned(),
+            name,
             parameters,
             data: vec![],
             metadata: vec![],
-            table: None,
+            table: Some(table),
             child_node_names: vec![],
         })
     }

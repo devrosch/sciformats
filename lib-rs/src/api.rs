@@ -5,7 +5,9 @@ use std::{
     fmt::Display,
     io::{Read, Seek},
 };
-use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use wasm_bindgen::prelude::wasm_bindgen;
+#[cfg(target_family = "wasm")]
+use wasm_bindgen::JsValue;
 
 #[derive(Debug, PartialEq)]
 pub struct SfError {
@@ -245,6 +247,7 @@ pub struct Node {
     pub child_node_names: Vec<String>,
 }
 
+#[cfg(target_family = "wasm")]
 #[wasm_bindgen]
 impl Node {
     #[wasm_bindgen(getter)]
@@ -362,17 +365,89 @@ impl Node {
 }
 
 #[cfg(test)]
-#[cfg(target_family = "wasm")]
 mod tests {
+    use super::*;
+    #[cfg(target_family = "wasm")]
+    use wasm_bindgen_test::*;
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
     // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
-    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_worker);
+    #[cfg(target_family = "wasm")]
+    wasm_bindgen_test_configure!(run_in_worker);
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-    use super::*;
-    use wasm_bindgen_test::*;
+    #[test]
+    fn sf_error_prints_debug_info() {
+        let error = SfError::new("Message");
+        assert!(format!("{:?}", error).contains("SfError"));
+        assert!(format!("{:?}", error).contains("Message"));
+    }
+
+    #[test]
+    fn sf_error_displays_error_message() {
+        let error = SfError::new("Message");
+        assert_eq!("Message", error.to_string());
+    }
+
+    #[test]
+    fn table_value_displays_value() {
+        let val_str = Value::String("abc".to_owned());
+        let val_bool = Value::Bool(true);
+        let val_i32 = Value::I32(1);
+        let val_u32 = Value::U32(2);
+        let val_i64 = Value::I64(3);
+        let val_u64 = Value::U64(4);
+        let val_f32 = Value::F32(5.0);
+        let val_f64 = Value::F64(6.0);
+
+        assert_eq!("abc", val_str.to_string());
+        assert_eq!("true", val_bool.to_string());
+        assert_eq!("1", val_i32.to_string());
+        assert_eq!("2", val_u32.to_string());
+        assert_eq!("3", val_i64.to_string());
+        assert_eq!("4", val_u64.to_string());
+        assert_eq!("5", val_f32.to_string());
+        assert_eq!("6", val_f64.to_string());
+    }
+
+    #[test]
+    fn point_xy_from_tuple() {
+        let point_xy = PointXy::from((1.0, 2.0));
+        assert_eq!(1.0, point_xy.x);
+        assert_eq!(2.0, point_xy.y);
+    }
+
+    #[test]
+    fn table_prints_debug_info() {
+        let table = Table {
+            column_names: vec![],
+            rows: vec![],
+        };
+        assert!(format!("{:?}", table).contains("Table"));
+        assert!(format!("{:?}", table).contains("column_names"));
+        assert!(format!("{:?}", table).contains("rows"));
+    }
+
+    #[test]
+    fn node_prints_debug_info() {
+        let node = Node {
+            name: "".to_owned(),
+            parameters: vec![],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        };
+        assert!(format!("{:?}", node).contains("Node"));
+        assert!(format!("{:?}", node).contains("name"));
+        assert!(format!("{:?}", node).contains("parameters"));
+        assert!(format!("{:?}", node).contains("data"));
+        assert!(format!("{:?}", node).contains("metadata"));
+        assert!(format!("{:?}", node).contains("table"));
+        assert!(format!("{:?}", node).contains("child_node_names"));
+    }
 
     // no #[test] as this test cannot run outside a browser engine
+    #[cfg(target_family = "wasm")]
     #[wasm_bindgen_test]
     fn map_node_to_js_test() {
         let node = Node {

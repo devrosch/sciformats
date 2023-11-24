@@ -68,7 +68,7 @@ variables:
 		:languages = "English" ;
 		:netcdf_file_date_time_stamp = "20231029185100+0100" ;
 		:experiment_date_time_stamp = "20231029185100+0100" ;
-		:source_file_reference = "Dummy Source File Reference" ;
+		:source_file_reference = "Dummy source file reference" ;
 		:experiment_type = "Library Mass Spectrum" ;
 		:sample_state = "Other State" ;
 		:test_separation_type = "No Chromatography" ;
@@ -123,9 +123,9 @@ data:
  intensity_values = 100, 200, 10, 10, 100, 50, 30, 50, 20, 10 ;
 
  entry_name =
-  "Entry Name 0",
-  "Entry Name 1",
-  "Entry Name 2" ;
+  "Entry name 0",
+  "Entry name 1",
+  "Entry name 2" ;
 
  entry_id =
   "                               ",
@@ -147,14 +147,14 @@ data:
  CAS_number = 12345, 123456, 1234567 ;
 
  other_name_0 =
-  "Other Name 0 0",
-  "Other Name 0 1",
-  "Other Name 0 2" ;
+  "Other name 0 0",
+  "Other name 0 1",
+  "Other name 0 2" ;
 
  other_name_1 =
-  "Other Name 1 0",
-  "Other Name 1 1",
-  "Other Name 1 2" ;
+  "Other name 1 0",
+  "Other name 1 1",
+  "Other name 1 2" ;
 
  other_name_2 =
   "                                                                                                                                                                                                                                                              ",

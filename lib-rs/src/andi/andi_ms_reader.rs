@@ -944,7 +944,7 @@ impl AndiMsReader {
                 index
             )))?;
 
-        let name = "Library data".to_owned();
+        let name = "Library Data".to_owned();
 
         let mut parameters: Vec<Parameter> = vec![];
         parameters.push(Parameter::from_str_i32(
@@ -959,7 +959,7 @@ impl AndiMsReader {
             &scan_lib_data.source_data_file_reference,
             &mut parameters,
         );
-        Self::push_opt_str("CAS Name", &scan_lib_data.entry_name, &mut parameters);
+        Self::push_opt_str("CAS Name", &scan_lib_data.cas_name, &mut parameters);
         Self::push_opt_str("Other Name 0", &scan_lib_data.other_name_0, &mut parameters);
         Self::push_opt_str("Other Name 1", &scan_lib_data.other_name_1, &mut parameters);
         Self::push_opt_str("Other Name 2", &scan_lib_data.other_name_2, &mut parameters);

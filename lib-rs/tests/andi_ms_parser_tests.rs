@@ -663,7 +663,7 @@ fn andi_ms_parse_library_file_succeeds() {
     assert_eq!("2.0", admin_data.netcdf_revision);
     assert_eq!(None, admin_data.operator_name);
     assert_eq!(
-        Some("Dummy Source File Reference".to_owned()),
+        Some("Dummy source file reference".to_owned()),
         admin_data.source_file_reference
     );
     assert_eq!(None, admin_data.source_file_format);
@@ -876,7 +876,7 @@ fn andi_ms_parse_library_file_succeeds() {
     let library_data_scan_0 = &library_data.library_data_per_scan[0];
     assert_eq!(0, library_data_scan_0.scan_number);
     assert_eq!(
-        "Entry Name 0",
+        "Entry name 0",
         library_data_scan_0.entry_name.as_ref().unwrap()
     );
     assert_blank_len(library_data_scan_0.entry_id.as_ref().unwrap(), 31);
@@ -890,11 +890,11 @@ fn andi_ms_parse_library_file_succeeds() {
     );
     assert_blank_len(library_data_scan_0.cas_name.as_ref().unwrap(), 254);
     assert_eq!(
-        "Other Name 0 0",
+        "Other name 0 0",
         library_data_scan_0.other_name_0.as_ref().unwrap()
     );
     assert_eq!(
-        "Other Name 1 0",
+        "Other name 1 0",
         library_data_scan_0.other_name_1.as_ref().unwrap()
     );
     assert_blank_len(library_data_scan_0.other_name_2.as_ref().unwrap(), 254);
@@ -939,7 +939,7 @@ fn andi_ms_parse_library_file_succeeds() {
     let library_data_scan_2 = &library_data.library_data_per_scan[2];
     assert_eq!(2, library_data_scan_2.scan_number);
     assert_eq!(
-        "Entry Name 2",
+        "Entry name 2",
         library_data_scan_2.entry_name.as_ref().unwrap()
     );
     assert_blank_len(library_data_scan_2.entry_id.as_ref().unwrap(), 31);
@@ -953,11 +953,11 @@ fn andi_ms_parse_library_file_succeeds() {
     );
     assert_blank_len(library_data_scan_2.cas_name.as_ref().unwrap(), 254);
     assert_eq!(
-        "Other Name 0 2",
+        "Other name 0 2",
         library_data_scan_2.other_name_0.as_ref().unwrap()
     );
     assert_eq!(
-        "Other Name 1 2",
+        "Other name 1 2",
         library_data_scan_2.other_name_1.as_ref().unwrap()
     );
     assert_blank_len(library_data_scan_2.other_name_2.as_ref().unwrap(), 254);

@@ -449,7 +449,7 @@ mod tests {
     // no #[test] as this test cannot run outside a browser engine
     #[cfg(target_family = "wasm")]
     #[wasm_bindgen_test]
-    fn map_node_to_js_test() {
+    fn map_node_to_js() {
         let node = Node {
             name: "abc".to_owned(),
             parameters: vec![Parameter {

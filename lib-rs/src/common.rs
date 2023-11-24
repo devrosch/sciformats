@@ -41,15 +41,7 @@ impl ScannerRepository {
     pub fn push(&mut self, scanner: Box<dyn Scanner<Box<dyn SeekRead>>>) {
         self.scanners.push(scanner)
     }
-}
 
-impl Default for ScannerRepository {
-    fn default() -> Self {
-        ScannerRepository::new(vec![])
-    }
-}
-
-impl ScannerRepository {
     pub fn is_recognized(&self, path: &str, input: &mut Box<dyn SeekRead>) -> bool {
         self.scanners
             .iter()
@@ -75,6 +67,12 @@ impl ScannerRepository {
             "No reader can be initialized for file: {}",
             path,
         )))?
+    }
+}
+
+impl Default for ScannerRepository {
+    fn default() -> Self {
+        ScannerRepository::new(vec![])
     }
 }
 
@@ -290,23 +288,138 @@ impl JsScannerRepository {
 }
 
 #[cfg(test)]
-#[cfg(target_family = "wasm")]
 mod tests {
-    use std::io::{Read, Seek, SeekFrom};
-
+    #[cfg(target_family = "wasm")]
+    use crate::common::BlobWrapper;
+    use crate::{
+        api::{Node, Reader, Scanner, SfError},
+        common::SeekRead,
+    };
+    #[cfg(target_family = "wasm")]
     use js_sys::{Array, Uint8Array};
+    use std::io::{Cursor, Read, Seek};
+    #[cfg(target_family = "wasm")]
+    use std::io::{Read, Seek, SeekFrom};
+    #[cfg(target_family = "wasm")]
     use wasm_bindgen_test::wasm_bindgen_test;
+    #[cfg(target_family = "wasm")]
     use web_sys::Blob;
 
-    use crate::common::BlobWrapper;
+    use super::ScannerRepository;
 
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
+    #[cfg(target_family = "wasm")]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_worker);
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
+    struct StubReader {
+        pub name: String,
+        node_ok: bool,
+    }
+    impl Reader for StubReader {
+        fn read(&self, _path: &str) -> Result<crate::api::Node, Box<dyn std::error::Error>> {
+            match self.node_ok {
+                true => Ok(Node {
+                    name: self.name.clone(),
+                    parameters: vec![],
+                    data: vec![],
+                    metadata: vec![],
+                    table: None,
+                    child_node_names: vec![],
+                }),
+                _ => Err(SfError::new("Error"))?,
+            }
+        }
+    }
+
+    struct StubScanner {
+        recognized: bool,
+        reader_name: Option<String>,
+    }
+    impl<T: Seek + Read> Scanner<T> for StubScanner {
+        fn is_recognized(&self, _path: &str, _input: &mut T) -> bool {
+            self.recognized
+        }
+
+        fn get_reader(
+            &self,
+            _path: &str,
+            _input: T,
+        ) -> Result<Box<dyn crate::api::Reader>, Box<dyn std::error::Error>> {
+            match &self.reader_name {
+                Some(name) => Ok(Box::new(StubReader {
+                    name: name.to_owned(),
+                    node_ok: true,
+                })),
+                None => Err(SfError::new("Error"))?,
+            }
+        }
+    }
+
+    #[test]
+    fn scanner_repository_recognizes_data_if_any_scanner_recognizes() {
+        let scanner_non_recognizing_0 = StubScanner {
+            recognized: false,
+            reader_name: None,
+        };
+        let scanner_recognizing_1 = StubScanner {
+            recognized: true,
+            reader_name: Some("1".to_owned()),
+        };
+        let scanner_non_recognizing_2 = StubScanner {
+            recognized: false,
+            reader_name: None,
+        };
+        let mut input: Box<dyn SeekRead> = Box::new(Cursor::new("abc"));
+        let mut repo = ScannerRepository::default();
+        repo.push(Box::new(scanner_non_recognizing_0));
+
+        assert!(!repo.is_recognized("a/b/c", &mut input));
+
+        repo.push(Box::new(scanner_recognizing_1));
+        repo.push(Box::new(scanner_non_recognizing_2));
+        assert!(repo.is_recognized("a/b/c", &mut input));
+    }
+
+    #[test]
+    fn scanner_repository_returns_first_applicable_scanner() {
+        let scanner_non_recognizing_0 = Box::new(StubScanner {
+            recognized: false,
+            reader_name: None,
+        });
+        let scanner_recognizing_1 = Box::new(StubScanner {
+            recognized: true,
+            reader_name: Some("1".to_owned()),
+        });
+        let scanner_recognizing_2 = Box::new(StubScanner {
+            recognized: true,
+            reader_name: Some("2".to_owned()),
+        });
+        let mut input: Box<dyn SeekRead> = Box::new(Cursor::new("abc"));
+        let repo = ScannerRepository::new(vec![
+            scanner_non_recognizing_0,
+            scanner_recognizing_1,
+            scanner_recognizing_2,
+        ]);
+
+        assert!(repo.is_recognized("a/b/c", &mut input));
+        let reader_result = repo.get_reader("path", input).unwrap();
+        assert_eq!("1", reader_result.read("").unwrap().name);
+    }
+
+    #[test]
+    fn scanner_repository_returns_error_if_no_applicable_scanner() {
+        let input: Box<dyn SeekRead> = Box::new(Cursor::new("abc"));
+        let repo = ScannerRepository::new(vec![]);
+
+        let reader_result = repo.get_reader("path", input);
+        assert!(reader_result.is_err());
+    }
+
     // no #[test] as this test cannot run outside a browser engine
+    #[cfg(target_family = "wasm")]
     #[wasm_bindgen_test]
-    async fn blob_wrapper_mimicks_std_seek_read_behavior_test() {
+    async fn blob_wrapper_mimicks_std_seek_read_behavior() {
         let arr: [u8; 3] = [1, 2, 3];
         let js_arr = Array::new();
         // see: https://github.com/rustwasm/wasm-bindgen/issues/1693

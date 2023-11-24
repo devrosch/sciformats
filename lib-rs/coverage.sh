@@ -10,12 +10,12 @@
 
 set -eu pipefail
 
+# Build with coverage instrumentation
+# export RUSTFLAGS="-Cinstrument-coverage"
+# Output file names
+# export LLVM_PROFILE_FILE="./target/coverage/sf_rs-%p-%m.profraw"
 # Use nightly Rust toolchain
 export RUSTC_BOOTSTRAP=1
-# Build with coverage instrumentation
-export RUSTFLAGS="-Cinstrument-coverage"
-# Output file names
-export LLVM_PROFILE_FILE="sf_rs-%p-%m.profraw"
 # Full build
 export CARGO_INCREMENTAL=0
 export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
@@ -24,7 +24,7 @@ export RUSTDOCFLAGS="-Cpanic=abort"
 cargo build
 cargo test
 
-# Unvommenting the following line and commenting out the ones below will generate an HTML report with grcov
+# Uncommenting the following line and commenting out the ones below will generate an HTML report with grcov
 # grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
 rm -rf ./target/debug/coverage
 mkdir ./target/debug/coverage

@@ -289,23 +289,19 @@ impl JsScannerRepository {
 
 #[cfg(test)]
 mod tests {
+    use super::ScannerRepository;
     #[cfg(target_family = "wasm")]
     use crate::common::BlobWrapper;
     use crate::{
         api::{Node, Reader, Scanner, SfError},
-        common::SeekRead,
+        common::{SeekRead, SeekReadWrapper},
     };
     #[cfg(target_family = "wasm")]
     use js_sys::{Array, Uint8Array};
-    #[cfg(target_family = "wasm")]
-    use std::io::SeekFrom;
-    use std::io::{Cursor, Read, Seek};
-    #[cfg(target_family = "wasm")]
+    use std::io::{Cursor, Read, Seek, SeekFrom};
     use wasm_bindgen_test::wasm_bindgen_test;
     #[cfg(target_family = "wasm")]
     use web_sys::Blob;
-
-    use super::ScannerRepository;
 
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
     #[cfg(target_family = "wasm")]
@@ -354,6 +350,46 @@ mod tests {
                 None => Err(SfError::new("Error"))?,
             }
         }
+    }
+
+    #[test]
+    #[wasm_bindgen_test]
+    fn seek_read_wrapper_mimicks_std_seek_read_behavior() {
+        let arr: [u8; 3] = [1, 2, 3];
+        let mut buf = [0u8; 3];
+        let input = Cursor::new(arr);
+        let mut seek_read_wrapper = SeekReadWrapper::new(input);
+
+        // read whole input
+        let read_len = seek_read_wrapper.read(&mut buf).unwrap();
+        assert_eq!(3, read_len);
+        assert_eq!(arr, buf);
+
+        // read past end
+        buf.fill(0);
+        let pos = seek_read_wrapper.seek(SeekFrom::Start(1)).unwrap();
+        assert_eq!(1, pos);
+        let read_len = seek_read_wrapper.read(&mut buf).unwrap();
+        assert_eq!(2, read_len);
+        assert_eq!([2, 3, 0], buf);
+
+        // seek beyond end and read
+        buf.fill(0);
+        let pos = seek_read_wrapper.seek(SeekFrom::Start(10)).unwrap();
+        assert_eq!(10, pos);
+        let read_len = seek_read_wrapper.read(&mut buf).unwrap();
+        assert_eq!(0, read_len);
+        assert_eq!([0, 0, 0], buf);
+
+        // seek from end
+        let pos = seek_read_wrapper.seek(SeekFrom::End(-1)).unwrap();
+        assert_eq!(2, pos);
+
+        // seek to negative position
+        let pos = seek_read_wrapper.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(0, pos);
+        let seek_err = seek_read_wrapper.seek(SeekFrom::Current(-1)).unwrap_err();
+        assert_eq!(std::io::ErrorKind::InvalidInput, seek_err.kind());
     }
 
     #[test]
@@ -451,6 +487,10 @@ mod tests {
         let read_len = blob_wrapper.read(&mut buf).unwrap();
         assert_eq!(0, read_len);
         assert_eq!([0, 0, 0], buf);
+
+        // seek from end
+        let pos = blob_wrapper.seek(SeekFrom::End(-1)).unwrap();
+        assert_eq!(2, pos);
 
         // seek to negative position
         let pos = blob_wrapper.seek(SeekFrom::Start(0)).unwrap();

@@ -1,7 +1,7 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use crate::io::open_file;
-use sf_rs::common::{ScannerRepository, SeekRead};
+use sf_rs::common::{ScannerRepository, SeekRead, SeekReadWrapper};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 const ROOT_PATH: &str = "andi";
@@ -42,4 +42,15 @@ fn scanner_repository_returns_error_for_valid_file() {
     let (path, file) = open_file(ROOT_PATH, ANDI_INVALID_FILE_PATH);
     let input: Box<dyn SeekRead> = Box::new(file);
     assert!(repo.get_reader(&path, input).is_err());
+}
+
+#[wasm_bindgen_test]
+#[test]
+fn seek_read_wrapper_allows_valid_file_reading() {
+    let repo = ScannerRepository::init_all();
+    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
+    let seek_read_wrapper = SeekReadWrapper::new(file);
+    let input: Box<dyn SeekRead> = Box::new(seek_read_wrapper);
+    let reader = repo.get_reader(&path, input).unwrap();
+    assert!(reader.read("/").is_ok());
 }

@@ -367,7 +367,6 @@ impl Node {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg(target_family = "wasm")]
     use wasm_bindgen_test::*;
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
     // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
@@ -376,6 +375,7 @@ mod tests {
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     #[test]
+    #[wasm_bindgen_test]
     fn sf_error_prints_debug_info() {
         let error = SfError::new("Message");
         assert!(format!("{:?}", error).contains("SfError"));
@@ -383,12 +383,14 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn sf_error_displays_error_message() {
         let error = SfError::new("Message");
         assert_eq!("Message", error.to_string());
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn table_value_displays_value() {
         let val_str = Value::String("abc".to_owned());
         let val_bool = Value::Bool(true);
@@ -410,6 +412,68 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
+    fn parameters_are_correctly_initialized_for_all_value_types() {
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::String("abc".to_owned())
+            },
+            Parameter::from_str_str("x", "abc")
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::Bool(true)
+            },
+            Parameter::from_str_bool("x", true)
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::I32(1)
+            },
+            Parameter::from_str_i32("x", 1)
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::U32(2)
+            },
+            Parameter::from_str_u32("x", 2)
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::I64(3)
+            },
+            Parameter::from_str_i64("x", 3)
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::U64(4)
+            },
+            Parameter::from_str_u64("x", 4)
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::F32(5.0)
+            },
+            Parameter::from_str_f32("x", 5.0)
+        );
+        assert_eq!(
+            Parameter {
+                key: "x".to_owned(),
+                value: Value::F64(6.0)
+            },
+            Parameter::from_str_f64("x", 6.0)
+        );
+    }
+
+    #[test]
+    #[wasm_bindgen_test]
     fn point_xy_from_tuple() {
         let point_xy = PointXy::from((1.0, 2.0));
         assert_eq!(1.0, point_xy.x);
@@ -417,6 +481,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn table_prints_debug_info() {
         let table = Table {
             column_names: vec![],
@@ -428,6 +493,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn node_prints_debug_info() {
         let node = Node {
             name: "".to_owned(),

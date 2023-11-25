@@ -50,15 +50,7 @@ lib-rs:coverage:
     - cd lib-rs
     - rustup component add llvm-tools-preview
     - cargo install grcov --quiet
-    - export RUSTC_BOOTSTRAP=1
-    - export RUSTFLAGS="-Cinstrument-coverage"
-    - export LLVM_PROFILE_FILE="sf_rs-%p-%m.profraw"
-    - export CARGO_INCREMENTAL=0
-    - export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
-    - export RUSTDOCFLAGS="-Cpanic=abort"
-    - cargo build
-    - cargo test
-    - grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
+    - ./coverage.sh
   artifacts:
     paths:
       - lib-rs/target/debug/coverage

@@ -51,7 +51,8 @@ web-ui:release:
   only:
     - main
 
-web-ui:pages:
+# should be called "web-ui:pages", but GitLab CI requires job to be called "pages" only
+pages:
   image: node:20
   stage: deploy
   script:

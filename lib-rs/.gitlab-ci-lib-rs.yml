@@ -6,7 +6,7 @@ lib-rs:build:
     - cargo build
   artifacts:
     paths:
-      - lib-rs/target/release
+      - lib-rs/target/debug
 
 lib-rs:build:wasm:
   image: rust:1.74

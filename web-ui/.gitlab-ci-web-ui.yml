@@ -65,5 +65,7 @@ pages:
   artifacts:
     paths:
       - web-ui/public
+  # publish non default directory "web-ui/public", default is "public"
+  publish: web-ui/public
   only:
     - main

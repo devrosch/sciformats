@@ -48,6 +48,7 @@ lib-rs:coverage:
   stage: test
   script:
     - cd lib-rs
+    - sudo apt-get -y update && sudo apt-get -y install lcov
     - rustup component add llvm-tools-preview
     - cargo install grcov --quiet
     - ./coverage.sh

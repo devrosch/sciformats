@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub mod andi;
 pub mod api;
 pub mod common;
+pub mod spc;
 
 #[cfg(target_family = "wasm")]
 #[wasm_bindgen(start)]

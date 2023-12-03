@@ -30,6 +30,8 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
     const ANDI_MS_CENTROID: &[u8] = include_bytes!("../resources/andi/andi_ms_centroid.cdf");
     const ANDI_MS_CONTINUUM: &[u8] = include_bytes!("../resources/andi/andi_ms_continuum.cdf");
     const ANDI_MS_SID: &[u8] = include_bytes!("../resources/andi/andi_ms_sid.cdf");
+    const SPC_NEW_FORMAT_LE: &[u8] = include_bytes!("../resources/spc/new_format_le.spc");
+    const SPC_INVALID: &[u8] = include_bytes!("../resources/spc/invalid.spc");
 
     let file = match (root_path, name) {
         ("andi", "andi_chrom_valid.cdf") => Cursor::new(ANDI_CHROM_VALID),
@@ -40,6 +42,8 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
         ("andi", "andi_ms_centroid.cdf") => Cursor::new(ANDI_MS_CENTROID),
         ("andi", "andi_ms_continuum.cdf") => Cursor::new(ANDI_MS_CONTINUUM),
         ("andi", "andi_ms_sid.cdf") => Cursor::new(ANDI_MS_SID),
+        ("spc", "new_format_le.spc") => Cursor::new(SPC_NEW_FORMAT_LE),
+        ("spc", "invalid.spc") => Cursor::new(SPC_INVALID),
         _ => panic!(),
     };
 

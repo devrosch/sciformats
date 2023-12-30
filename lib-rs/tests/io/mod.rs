@@ -33,6 +33,8 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
     const SPC_NEW_FORMAT_LE: &[u8] = include_bytes!("../resources/spc/new_format_le.spc");
     const SPC_NEW_FORMAT_LE_I16_Y: &[u8] =
         include_bytes!("../resources/spc/new_format_le_i16_y.spc");
+    const SPC_NEW_FORMAT_LE_I32_Y: &[u8] =
+        include_bytes!("../resources/spc/new_format_le_i32_y.spc");
     const SPC_NEW_FORMAT_LE_TXVALS: &[u8] =
         include_bytes!("../resources/spc/new_format_le_txvals.spc");
     const SPC_INVALID: &[u8] = include_bytes!("../resources/spc/invalid.spc");
@@ -50,6 +52,7 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
         ("andi", "andi_ms_sid.cdf") => Cursor::new(ANDI_MS_SID),
         ("spc", "new_format_le.spc") => Cursor::new(SPC_NEW_FORMAT_LE),
         ("spc", "new_format_le_i16_y.spc") => Cursor::new(SPC_NEW_FORMAT_LE_I16_Y),
+        ("spc", "new_format_le_i32_y.spc") => Cursor::new(SPC_NEW_FORMAT_LE_I32_Y),
         ("spc", "new_format_le_txvals.spc") => Cursor::new(SPC_NEW_FORMAT_LE_TXVALS),
         ("spc", "invalid.spc") => Cursor::new(SPC_INVALID),
         ("spc", "new_format_le_corrupt.spc") => Cursor::new(SPC_NEW_FORMAT_LE_CORRUPT),

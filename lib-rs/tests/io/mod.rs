@@ -39,6 +39,7 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
         include_bytes!("../resources/spc/new_format_le_txvals.spc");
     const SPC_NEW_FORMAT_LE_TXYXYS: &[u8] =
         include_bytes!("../resources/spc/new_format_le_txyxys.spc");
+    const SPC_NEW_FORMAT_LE_4D: &[u8] = include_bytes!("../resources/spc/new_format_le_4d.spc");
     const SPC_NEW_FORMAT_LE_DIR: &[u8] = include_bytes!("../resources/spc/new_format_le_dir.spc");
     const SPC_INVALID: &[u8] = include_bytes!("../resources/spc/invalid.spc");
     const SPC_NEW_FORMAT_LE_CORRUPT: &[u8] =
@@ -58,6 +59,7 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
         ("spc", "new_format_le_i32_y.spc") => Cursor::new(SPC_NEW_FORMAT_LE_I32_Y),
         ("spc", "new_format_le_txvals.spc") => Cursor::new(SPC_NEW_FORMAT_LE_TXVALS),
         ("spc", "new_format_le_txyxys.spc") => Cursor::new(SPC_NEW_FORMAT_LE_TXYXYS),
+        ("spc", "new_format_le_4d.spc") => Cursor::new(SPC_NEW_FORMAT_LE_4D),
         ("spc", "new_format_le_dir.spc") => Cursor::new(SPC_NEW_FORMAT_LE_DIR),
         ("spc", "invalid.spc") => Cursor::new(SPC_INVALID),
         ("spc", "new_format_le_corrupt.spc") => Cursor::new(SPC_NEW_FORMAT_LE_CORRUPT),

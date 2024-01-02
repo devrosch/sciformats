@@ -2,6 +2,7 @@ use crate::andi::andi_scanner::AndiScanner;
 #[cfg(target_family = "wasm")]
 use crate::api::Node;
 use crate::api::{Reader, Scanner, SfError};
+use crate::spc::spc_scanner::SpcScanner;
 #[cfg(target_family = "wasm")]
 use js_sys::Uint8Array;
 use std::io::{BufReader, SeekFrom};
@@ -34,7 +35,8 @@ impl ScannerRepository {
 
     pub fn init_all() -> ScannerRepository {
         let andi_scanner: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiScanner::new());
-        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> = vec![andi_scanner];
+        let spc_scanner = Box::new(SpcScanner::new());
+        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> = vec![andi_scanner, spc_scanner];
         ScannerRepository { scanners }
     }
 

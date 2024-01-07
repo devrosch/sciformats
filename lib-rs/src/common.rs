@@ -133,6 +133,24 @@ impl<T: Seek + Read> Read for SeekReadWrapper<T> {
 // WASM specific
 // -------------------------------------------------
 
+macro_rules! add_reader_js {
+    ($struct_name:ident) => {
+        #[cfg(target_family = "wasm")]
+        #[wasm_bindgen]
+        impl $struct_name {
+            #[wasm_bindgen(js_name = read)]
+            pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
+                let read_result = Reader::read(self, path);
+                match read_result {
+                    Ok(node) => Ok(node),
+                    Err(error) => Err(JsError::new(&error.to_string())),
+                }
+            }
+        }
+    };
+}
+pub(crate) use add_reader_js;
+
 #[cfg(target_family = "wasm")]
 #[derive(Clone)]
 pub struct BlobWrapper {

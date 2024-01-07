@@ -5,6 +5,7 @@ use super::{
 use crate::{
     andi::AndiError,
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
+    common::add_reader_js,
 };
 use std::{collections::HashMap, error::Error, path::Path};
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -17,18 +18,7 @@ pub struct AndiMsReader {
     file: AndiMsFile,
 }
 
-#[cfg(target_family = "wasm")]
-#[wasm_bindgen]
-impl AndiMsReader {
-    #[wasm_bindgen(js_name = read)]
-    pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
-        let read_result = Reader::read(self, path);
-        match read_result {
-            Ok(node) => Ok(node),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
-    }
-}
+add_reader_js!(AndiMsReader);
 
 impl Reader for AndiMsReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {

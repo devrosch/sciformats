@@ -22,6 +22,23 @@ pub(crate) fn is_recognized_extension(path: &str, accepted_extensions: &[&str]) 
     }
 }
 
+/// Convert path to indices
+///
+/// The path segments are expected to be separated by forward slashes.
+/// Each segment needs to start with a positive integer, optionally followed by a minus and arbitrary text.
+/// The root path may be designated by "" or "/".
+///
+/// Examples:
+///     - "/": root path (also "" is accepted)
+///     - "/"": root path
+///     - "/3/2/1": indices 3, 2, 1
+///     - "/0-some_text/1-some_more_text": indices 0, 1
+///     - "2-some_text/3": indices 2, 3
+///
+/// Invalid examples:
+///     - "/some_text/1": missing index for first segment
+///     - "\1\1": wrong separator
+///     - " /1": missing index for first (blank) segment
 pub(crate) fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, Box<dyn Error>> {
     let mut path_segments: Vec<&str> = path.split('/').collect();
     // remove blank start segment(s)

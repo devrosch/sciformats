@@ -2,12 +2,11 @@
 use crate::common::{BlobWrapper, JsReader};
 use crate::{
     api::{Reader, Scanner},
-    common::add_scanner_js,
+    utils::{add_scanner_js, is_recognized_extension},
 };
 use std::{
     error::Error,
     io::{Read, Seek},
-    path::Path,
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_family = "wasm")]
@@ -43,25 +42,11 @@ add_scanner_js!(AndiScanner);
 
 impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
     fn is_recognized(&self, path: &str, input: &mut T) -> bool {
-        let p = Path::new(path);
-        let extension = p
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(|ext| ext.to_lowercase());
-        match extension {
-            None => return false,
-            Some(ext) => {
-                let is_recognized_extension = Self::ACCEPTED_EXTENSIONS
-                    .iter()
-                    .any(|accept_ext| *accept_ext == ext);
-                if !is_recognized_extension {
-                    return false;
-                }
-            }
+        if !is_recognized_extension(path, &Self::ACCEPTED_EXTENSIONS) {
+            return false;
         }
 
         // recognized extension => check first few bytes ("magic bytes")
-
         let mut buf = [0u8; 3];
         let read_success = input.read_exact(&mut buf);
         if read_success.is_err() {

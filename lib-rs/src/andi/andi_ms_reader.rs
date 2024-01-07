@@ -5,7 +5,7 @@ use super::{
 use crate::{
     andi::AndiError,
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
-    common::add_reader_js,
+    utils::add_reader_js,
 };
 use std::{collections::HashMap, error::Error, path::Path};
 use wasm_bindgen::prelude::wasm_bindgen;

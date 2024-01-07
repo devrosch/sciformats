@@ -1,6 +1,9 @@
-use crate::api::{Reader, Scanner};
 #[cfg(target_family = "wasm")]
 use crate::common::{BlobWrapper, JsReader};
+use crate::{
+    api::{Reader, Scanner},
+    common::add_scanner_js,
+};
 use std::{
     error::Error,
     io::{Read, Seek},
@@ -31,37 +34,12 @@ impl AndiScanner {
 #[wasm_bindgen]
 impl AndiScanner {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> AndiScanner {
-        AndiScanner::default()
-    }
-
-    #[cfg(target_family = "wasm")]
-    #[wasm_bindgen(js_name = isRecognized)]
-    pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
-        use web_sys::console;
-
-        let mut blob = BlobWrapper::new(input.clone());
-
-        console::log_2(&"AndiScanner.js_is_recognized() path:".into(), &path.into());
-        console::log_2(
-            &"AndiScanner.js_is_recognized() input pos:".into(),
-            &blob.get_pos().into(),
-        );
-
-        Scanner::is_recognized(self, path, &mut blob)
-    }
-
-    #[cfg(target_family = "wasm")]
-    #[wasm_bindgen(js_name = getReader)]
-    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
-        let blob = BlobWrapper::new(input.clone());
-        let reader_result = self.get_reader(path, blob);
-        match reader_result {
-            Ok(reader) => Ok(JsReader::new(reader)),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 }
+
+add_scanner_js!(AndiScanner);
 
 impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
     fn is_recognized(&self, path: &str, input: &mut T) -> bool {

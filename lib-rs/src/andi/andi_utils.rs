@@ -1,4 +1,4 @@
-use crate::andi::AndiError;
+use crate::{andi::AndiError, utils::from_iso_8859_1_cstr};
 use netcdf3::{DataType, DataVector};
 use std::{error::Error, ops::Range, str::FromStr};
 
@@ -74,7 +74,7 @@ pub fn read_index_from_var_2d_string(
             let start_index = index * row_length;
             let end_index = start_index + row_length;
             let string_bytes = &bytes[start_index..end_index];
-            let s = convert_iso_8859_1_cstr_to_str(string_bytes);
+            let s = from_iso_8859_1_cstr(string_bytes);
 
             Ok(Some(s))
         }
@@ -213,21 +213,6 @@ pub fn read_optional_var_or_attr_f32(
     Ok(value)
 }
 
-#[allow(dead_code)]
-pub fn convert_utf8_cstr_to_str(bytes: &[u8]) -> String {
-    let len = bytes.iter().position(|&c| c == 0u8).unwrap_or(bytes.len());
-    String::from_utf8_lossy(&bytes[..len]).to_string()
-}
-
-pub fn convert_iso_8859_1_cstr_to_str(bytes: &[u8]) -> String {
-    // see https://stackoverflow.com/a/28175593 for why this works
-    bytes
-        .iter()
-        .take_while(|&c| c != &0u8)
-        .map(|&c| c as char)
-        .collect()
-}
-
 pub fn trim_zeros_in_place(s: &mut String) {
     if let Some(index) = s.find('\0') {
         s.truncate(index);
@@ -298,6 +283,8 @@ pub fn read_enum_from_global_attr_str<T: Default + FromStr>(
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::convert_utf8_cstr_to_str;
+
     use super::*;
     use wasm_bindgen_test::*;
 
@@ -330,11 +317,8 @@ mod tests {
         // additional bytes after zero terminator
         let iso8850_1_data_zt_plus: [u8; 6] = [0x61, 0xe4, 0x41, 0xc4, 0, 0x62];
 
-        assert_eq!(expect, convert_iso_8859_1_cstr_to_str(&iso8850_1_data));
-        assert_eq!(expect, convert_iso_8859_1_cstr_to_str(&iso8850_1_data_zt));
-        assert_eq!(
-            expect,
-            convert_iso_8859_1_cstr_to_str(&iso8850_1_data_zt_plus)
-        );
+        assert_eq!(expect, from_iso_8859_1_cstr(&iso8850_1_data));
+        assert_eq!(expect, from_iso_8859_1_cstr(&iso8850_1_data_zt));
+        assert_eq!(expect, from_iso_8859_1_cstr(&iso8850_1_data_zt_plus));
     }
 }

@@ -1,3 +1,5 @@
+use std::{error::Error, path::Path};
+
 // -------------------------------------------------
 // Util functions
 // -------------------------------------------------
@@ -18,6 +20,29 @@ pub(crate) fn is_recognized_extension(path: &str, accepted_extensions: &[&str]) 
             is_recognized_extension
         }
     }
+}
+
+pub(crate) fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, Box<dyn Error>> {
+    let mut path_segments: Vec<&str> = path.split('/').collect();
+    // remove blank start segment(s)
+    match path_segments[..] {
+        // "/" or ""
+        ["", ""] | [""] => path_segments = vec![],
+        // "/xyz"
+        ["", ..] => {
+            path_segments.remove(0);
+        }
+        _ => (),
+    };
+    // map segments to indices, expected segment structure is "n-some optional name"
+    let mut indices: Vec<usize> = vec![];
+    for seg in path_segments {
+        let idx_str = seg.split_once('-').map_or(seg, |p| p.0);
+        let idx = idx_str.parse::<usize>()?;
+        indices.push(idx);
+    }
+
+    Ok(indices)
 }
 
 /// Convert UTF-8 C string to String
@@ -71,6 +96,7 @@ pub(crate) fn from_iso_8859_1_cstr_arr<const N: usize>(bytes: &[u8]) -> Option<[
 // WASM specific
 // -------------------------------------------------
 
+/// Add JS wrapper functions to Scanner
 macro_rules! add_scanner_js {
     ($scanner_name:ident) => {
         #[wasm_bindgen]
@@ -95,10 +121,9 @@ macro_rules! add_scanner_js {
         }
     };
 }
-use std::path::Path;
-
 pub(crate) use add_scanner_js;
 
+/// Add JS wrapper functions to Reader
 macro_rules! add_reader_js {
     ($struct_name:ident) => {
         #[cfg(target_family = "wasm")]

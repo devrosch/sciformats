@@ -11,8 +11,9 @@ use std::io::{Cursor, Read, Seek};
 #[cfg(not(target_family = "wasm"))]
 pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("tests/resources/");
+    path.push("tests/");
     path.push(root_path);
+    path.push("resources/");
     path.push(name);
 
     let file = File::open(&path).unwrap();
@@ -22,29 +23,29 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
 
 #[cfg(target_family = "wasm")]
 pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
-    const ANDI_CHROM_VALID: &[u8] = include_bytes!("../resources/andi/andi_chrom_valid.cdf");
-    const ANDI_CHROM_QUIRKS: &[u8] = include_bytes!("../resources/andi/andi_chrom_quirks.cdf");
-    const NON_ANDI_CDF_FILE_PATH: &[u8] = include_bytes!("../resources/andi/non_andi.cdf");
-    const DUMMY: &[u8] = include_bytes!("../resources/andi/dummy.cdf");
-    const ANDI_MS_LIBRARY: &[u8] = include_bytes!("../resources/andi/andi_ms_library.cdf");
-    const ANDI_MS_CENTROID: &[u8] = include_bytes!("../resources/andi/andi_ms_centroid.cdf");
-    const ANDI_MS_CONTINUUM: &[u8] = include_bytes!("../resources/andi/andi_ms_continuum.cdf");
-    const ANDI_MS_SID: &[u8] = include_bytes!("../resources/andi/andi_ms_sid.cdf");
-    const SPC_NEW_FORMAT_LE: &[u8] = include_bytes!("../resources/spc/new_format_le.spc");
-    const SPC_NEW_FORMAT_BE: &[u8] = include_bytes!("../resources/spc/new_format_be.spc");
+    const ANDI_CHROM_VALID: &[u8] = include_bytes!("../andi/resources/andi_chrom_valid.cdf");
+    const ANDI_CHROM_QUIRKS: &[u8] = include_bytes!("../andi/resources/andi_chrom_quirks.cdf");
+    const NON_ANDI_CDF_FILE_PATH: &[u8] = include_bytes!("../andi/resources/non_andi.cdf");
+    const DUMMY: &[u8] = include_bytes!("../andi/resources/dummy.cdf");
+    const ANDI_MS_LIBRARY: &[u8] = include_bytes!("../andi/resources/andi_ms_library.cdf");
+    const ANDI_MS_CENTROID: &[u8] = include_bytes!("../andi/resources/andi_ms_centroid.cdf");
+    const ANDI_MS_CONTINUUM: &[u8] = include_bytes!("../andi/resources/andi_ms_continuum.cdf");
+    const ANDI_MS_SID: &[u8] = include_bytes!("../andi/resources/andi_ms_sid.cdf");
+    const SPC_NEW_FORMAT_LE: &[u8] = include_bytes!("../spc/resources/new_format_le.spc");
+    const SPC_NEW_FORMAT_BE: &[u8] = include_bytes!("../spc/resources/new_format_be.spc");
     const SPC_NEW_FORMAT_LE_I16_Y: &[u8] =
-        include_bytes!("../resources/spc/new_format_le_i16_y.spc");
+        include_bytes!("../spc/resources/new_format_le_i16_y.spc");
     const SPC_NEW_FORMAT_LE_I32_Y: &[u8] =
-        include_bytes!("../resources/spc/new_format_le_i32_y.spc");
+        include_bytes!("../spc/resources/new_format_le_i32_y.spc");
     const SPC_NEW_FORMAT_LE_TXVALS: &[u8] =
-        include_bytes!("../resources/spc/new_format_le_txvals.spc");
+        include_bytes!("../spc/resources/new_format_le_txvals.spc");
     const SPC_NEW_FORMAT_LE_TXYXYS: &[u8] =
-        include_bytes!("../resources/spc/new_format_le_txyxys.spc");
-    const SPC_NEW_FORMAT_LE_4D: &[u8] = include_bytes!("../resources/spc/new_format_le_4d.spc");
-    const SPC_NEW_FORMAT_LE_DIR: &[u8] = include_bytes!("../resources/spc/new_format_le_dir.spc");
-    const SPC_INVALID: &[u8] = include_bytes!("../resources/spc/invalid.spc");
+        include_bytes!("../spc/resources/new_format_le_txyxys.spc");
+    const SPC_NEW_FORMAT_LE_4D: &[u8] = include_bytes!("../spc/resources/new_format_le_4d.spc");
+    const SPC_NEW_FORMAT_LE_DIR: &[u8] = include_bytes!("../spc/resources/new_format_le_dir.spc");
+    const SPC_INVALID: &[u8] = include_bytes!("../spc/resources/invalid.spc");
     const SPC_NEW_FORMAT_LE_CORRUPT: &[u8] =
-        include_bytes!("../resources/spc/new_format_le_corrupt.spc");
+        include_bytes!("../spc/resources/new_format_le_corrupt.spc");
 
     let file = match (root_path, name) {
         ("andi", "andi_chrom_valid.cdf") => Cursor::new(ANDI_CHROM_VALID),

@@ -31,6 +31,7 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
     const ANDI_MS_CONTINUUM: &[u8] = include_bytes!("../resources/andi/andi_ms_continuum.cdf");
     const ANDI_MS_SID: &[u8] = include_bytes!("../resources/andi/andi_ms_sid.cdf");
     const SPC_NEW_FORMAT_LE: &[u8] = include_bytes!("../resources/spc/new_format_le.spc");
+    const SPC_NEW_FORMAT_BE: &[u8] = include_bytes!("../resources/spc/new_format_be.spc");
     const SPC_NEW_FORMAT_LE_I16_Y: &[u8] =
         include_bytes!("../resources/spc/new_format_le_i16_y.spc");
     const SPC_NEW_FORMAT_LE_I32_Y: &[u8] =
@@ -55,6 +56,7 @@ pub fn open_file(root_path: &str, name: &str) -> (String, impl Read + Seek) {
         ("andi", "andi_ms_continuum.cdf") => Cursor::new(ANDI_MS_CONTINUUM),
         ("andi", "andi_ms_sid.cdf") => Cursor::new(ANDI_MS_SID),
         ("spc", "new_format_le.spc") => Cursor::new(SPC_NEW_FORMAT_LE),
+        ("spc", "new_format_be.spc") => Cursor::new(SPC_NEW_FORMAT_BE),
         ("spc", "new_format_le_i16_y.spc") => Cursor::new(SPC_NEW_FORMAT_LE_I16_Y),
         ("spc", "new_format_le_i32_y.spc") => Cursor::new(SPC_NEW_FORMAT_LE_I32_Y),
         ("spc", "new_format_le_txvals.spc") => Cursor::new(SPC_NEW_FORMAT_LE_TXVALS),

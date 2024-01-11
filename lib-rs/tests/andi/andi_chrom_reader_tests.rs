@@ -1,6 +1,6 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-use crate::io::open_file;
+use super::{open_file, ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID};
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
     api::{Column, Parameter, Parser, Reader, Value},
@@ -13,19 +13,15 @@ fn assert_eq_f64(left: f64, right: f64) {
     assert!(f64::abs(left - right) <= epsilon)
 }
 
-const ROOT_PATH: &str = "andi";
-const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
-const ANDI_CHROM_QUIRKS_FILE_PATH: &str = "andi_chrom_quirks.cdf";
-
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_valid_succeeds() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
+    let (path, file) = open_file(ANDI_CHROM_VALID);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 
     let root = &reader.read("/").unwrap();
-    assert_eq!(ANDI_CHROM_VALID_FILE_PATH, root.name);
+    assert_eq!(ANDI_CHROM_VALID, root.name);
     assert!(root.parameters.is_empty());
     assert!(root.data.is_empty());
     assert!(root.metadata.is_empty());
@@ -410,7 +406,7 @@ fn andi_chrom_read_valid_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_quirks() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_QUIRKS_FILE_PATH);
+    let (path, file) = open_file(ANDI_CHROM_QUIRKS);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 
@@ -421,7 +417,7 @@ fn andi_chrom_read_quirks() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_illegal_node_path_fails() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
+    let (path, file) = open_file(ANDI_CHROM_VALID);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
     let reader = AndiChromReader::new(&path, chrom);
 

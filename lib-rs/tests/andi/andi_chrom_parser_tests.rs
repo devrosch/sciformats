@@ -1,17 +1,12 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-use crate::io::open_file;
+use super::{open_file, ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID, ANDI_NON_CDF_DUMMY};
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, AndiDatasetCompleteness},
     api::Parser,
 };
 use std::str::FromStr;
 use wasm_bindgen_test::wasm_bindgen_test;
-
-const ROOT_PATH: &str = "andi";
-const ANDI_CHROM_VALID_FILE_PATH: &str = "andi_chrom_valid.cdf";
-const ANDI_CHROM_QUIRKS_FILE_PATH: &str = "andi_chrom_quirks.cdf";
-const ANDI_CHROM_INVALID_FILE_PATH: &str = "dummy.cdf";
 
 fn assert_eq_f32(left: f32, right: f32) {
     let max = left.max(right);
@@ -22,7 +17,7 @@ fn assert_eq_f32(left: f32, right: f32) {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_valid_succeeds() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
+    let (path, file) = open_file(ANDI_CHROM_VALID);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
     let admin_data = &chrom.admin_data;
@@ -237,7 +232,7 @@ fn andi_chrom_parse_valid_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_invalid_fails() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_INVALID_FILE_PATH);
+    let (path, file) = open_file(ANDI_NON_CDF_DUMMY);
     let chrom = AndiChromParser::parse(&path, file);
 
     assert!(chrom.is_err());
@@ -246,7 +241,7 @@ fn andi_chrom_parse_invalid_fails() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_quirks() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_QUIRKS_FILE_PATH);
+    let (path, file) = open_file(ANDI_CHROM_QUIRKS);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
     assert_eq!("au", chrom.detection_method.detector_unit.unwrap());
@@ -259,7 +254,7 @@ fn andi_chrom_parse_quirks() {
 
 #[test]
 fn andi_chrom_file_prints_debug_info() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_CHROM_VALID_FILE_PATH);
+    let (path, file) = open_file(ANDI_CHROM_VALID);
     let chrom = AndiChromParser::parse(&path, file).unwrap();
 
     let chrom_debug_info = format!("{:?}", chrom);

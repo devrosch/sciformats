@@ -1,7 +1,5 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-use std::collections::HashMap;
-
 use super::{open_file, ANDI_MS_CENTROID, ANDI_MS_CONTINUUM, ANDI_MS_LIBRARY, ANDI_MS_SID};
 use sf_rs::{
     andi::{
@@ -17,6 +15,7 @@ use sf_rs::{
     },
     api::{Column, Parameter, Parser, PointXy, Reader, Value},
 };
+use std::collections::HashMap;
 use wasm_bindgen_test::wasm_bindgen_test;
 
 #[wasm_bindgen_test]

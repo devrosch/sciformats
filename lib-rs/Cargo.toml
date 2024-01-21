@@ -12,6 +12,8 @@ web-sys = { version = "0.3.64", features = ['console', 'File', 'Blob', 'FileRead
 js-sys = "0.3.64"
 netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
 strum = { version = "0.25", features = ["derive"] }
+binrw = "0.13"
+chrono = "0.4"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

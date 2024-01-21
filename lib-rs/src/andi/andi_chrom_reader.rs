@@ -2,6 +2,7 @@ use super::andi_chrom_parser::AndiChromFile;
 use crate::{
     andi::AndiError,
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
+    utils::{add_reader_js, convert_path_to_node_indices},
 };
 use std::{collections::HashMap, error::Error, path::Path};
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -14,22 +15,11 @@ pub struct AndiChromReader {
     file: AndiChromFile,
 }
 
-#[cfg(target_family = "wasm")]
-#[wasm_bindgen]
-impl AndiChromReader {
-    #[wasm_bindgen(js_name = read)]
-    pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
-        let read_result = Reader::read(self, path);
-        match read_result {
-            Ok(node) => Ok(node),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
-    }
-}
+add_reader_js!(AndiChromReader);
 
 impl Reader for AndiChromReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
-        let path_indices = Self::convert_path_to_node_indices(path)?;
+        let path_indices = convert_path_to_node_indices(path)?;
         match path_indices[..] {
             [] => self.read_root(), // "", "/"
             [0] => self.read_admin_data(),
@@ -605,29 +595,6 @@ impl AndiChromReader {
             table: Some(Table { column_names, rows }),
             child_node_names: vec![],
         })
-    }
-
-    fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, Box<dyn Error>> {
-        let mut path_segments: Vec<&str> = path.split('/').collect();
-        // remove blank start segment(s)
-        match path_segments[..] {
-            // "/" or ""
-            ["", ""] | [""] => path_segments = vec![],
-            // "/xyz"
-            ["", ..] => {
-                path_segments.remove(0);
-            }
-            _ => (),
-        };
-        // map segments to indices, expected segment structure is "n-some optional name"
-        let mut indices: Vec<usize> = vec![];
-        for seg in path_segments {
-            let idx_str = seg.split_once('-').map_or(seg, |p| p.0);
-            let idx = idx_str.parse::<usize>()?;
-            indices.push(idx);
-        }
-
-        Ok(indices)
     }
 }
 

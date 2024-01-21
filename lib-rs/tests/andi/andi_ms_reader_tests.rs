@@ -1,8 +1,6 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-use std::collections::HashMap;
-
-use crate::io::open_file;
+use super::{open_file, ANDI_MS_CENTROID, ANDI_MS_CONTINUUM, ANDI_MS_LIBRARY, ANDI_MS_SID};
 use sf_rs::{
     andi::{
         andi_enums::{
@@ -17,23 +15,18 @@ use sf_rs::{
     },
     api::{Column, Parameter, Parser, PointXy, Reader, Value},
 };
+use std::collections::HashMap;
 use wasm_bindgen_test::wasm_bindgen_test;
-
-const ROOT_PATH: &str = "andi";
-const ANDI_MS_CENTROID_FILE_PATH: &str = "andi_ms_centroid.cdf";
-const ANDI_MS_CONTINUUM_FILE_PATH: &str = "andi_ms_continuum.cdf";
-const ANDI_MS_LIBRARY_FILE_PATH: &str = "andi_ms_library.cdf";
-const ANDI_MS_SID_FILE_PATH: &str = "andi_ms_sid.cdf";
 
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_centroid_read_succeeds() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CENTROID_FILE_PATH);
+    let (path, file) = open_file(ANDI_MS_CENTROID);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
     let root = &reader.read("/").unwrap();
-    assert_eq!(ANDI_MS_CENTROID_FILE_PATH, root.name);
+    assert_eq!(ANDI_MS_CENTROID, root.name);
     assert!(root.parameters.is_empty());
     assert!(root.data.is_empty());
     assert!(root.metadata.is_empty());
@@ -564,12 +557,12 @@ fn andi_ms_centroid_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_continuum_read_succeeds() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CONTINUUM_FILE_PATH);
+    let (path, file) = open_file(ANDI_MS_CONTINUUM);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
     let root = &reader.read("/").unwrap();
-    assert_eq!(ANDI_MS_CONTINUUM_FILE_PATH, root.name);
+    assert_eq!(ANDI_MS_CONTINUUM, root.name);
     assert!(root.parameters.is_empty());
     assert!(root.data.is_empty());
     assert!(root.metadata.is_empty());
@@ -963,12 +956,12 @@ fn andi_ms_continuum_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_library_read_succeeds() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_MS_LIBRARY_FILE_PATH);
+    let (path, file) = open_file(ANDI_MS_LIBRARY);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
     let root = &reader.read("/").unwrap();
-    assert_eq!(ANDI_MS_LIBRARY_FILE_PATH, root.name);
+    assert_eq!(ANDI_MS_LIBRARY, root.name);
     assert!(root.parameters.is_empty());
     assert!(root.data.is_empty());
     assert!(root.metadata.is_empty());
@@ -1574,12 +1567,12 @@ fn andi_ms_library_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_sid_read_succeeds() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_MS_SID_FILE_PATH);
+    let (path, file) = open_file(ANDI_MS_SID);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 
     let root = &reader.read("/").unwrap();
-    assert_eq!(ANDI_MS_SID_FILE_PATH, root.name);
+    assert_eq!(ANDI_MS_SID, root.name);
     assert!(root.parameters.is_empty());
     assert!(root.data.is_empty());
     assert!(root.metadata.is_empty());
@@ -2029,7 +2022,7 @@ fn andi_ms_sid_read_succeeds() {
 #[wasm_bindgen_test]
 #[test]
 fn andi_ms_read_illegal_node_path_fails() {
-    let (path, file) = open_file(ROOT_PATH, ANDI_MS_CENTROID_FILE_PATH);
+    let (path, file) = open_file(ANDI_MS_CENTROID);
     let ms = AndiMsParser::parse(&path, file).unwrap();
     let reader = AndiMsReader::new(&path, ms);
 

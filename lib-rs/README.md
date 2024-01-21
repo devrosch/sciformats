@@ -108,7 +108,7 @@ For running tests involving JavaScript interop, run:
 wasm-pack test --firefox --headless
 ```
 
-`--firefox` is a placeholder for one of several browser engines that can be used: `--node`, `--chrome`, `--firefox`, or `--safari`. Note: For Chrome you may have to manually install chromedriver on some platforms to make headless mode work, see [wasm-pack/issues/611](https://github.com/rustwasm/wasm-pack/issues/611). `--safari` will only work on macOS. `--node` will skip tests configured to run in a browser.
+`--firefox` is a placeholder for one of several browser engines that can be used: `--node`, `--chrome`, `--firefox`, or `--safari`. Note: For Chrome you may have to manually install chromedriver on some platforms to make headless mode work, see [wasm-pack/issues/611](https://github.com/rustwasm/wasm-pack/issues/611). On macOS, to install geckodriver and chromedriver you may be able to use `brew` and install via `brew install geckodriver` and `brew install --cask chromedriver`. `--safari` will only work on macOS. `--node` will skip tests configured to run in a browser.
 
 ## Limitations
 

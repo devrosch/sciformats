@@ -7,27 +7,69 @@ pub mod andi_scanner;
 mod andi_utils;
 
 use std::collections::BTreeSet;
+use std::io;
 use std::str::FromStr;
 use std::{error::Error, fmt};
 
-#[derive(Debug, PartialEq)]
+use netcdf3::ReadError;
+
+use crate::api::SfError;
+
+#[derive(Debug)]
 pub struct AndiError {
     message: String,
+    source: Option<Box<dyn Error>>,
 }
 
 impl AndiError {
     pub fn new(msg: &str) -> AndiError {
         AndiError {
             message: msg.into(),
+            source: None,
+        }
+    }
+
+    pub fn from_source(source: Box<dyn Error>, message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(source),
         }
     }
 }
 
-impl Error for AndiError {}
-
 impl fmt::Display for AndiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.message)
+    }
+}
+
+impl Error for AndiError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.source.as_ref().map(|b| b.as_ref())
+    }
+}
+
+impl From<AndiError> for SfError {
+    fn from(value: AndiError) -> Self {
+        SfError::from_source(Box::new(value), "SfError")
+    }
+}
+
+impl From<Box<dyn Error>> for AndiError {
+    fn from(value: Box<dyn Error>) -> Self {
+        Self::from_source(value, "AnDI Error")
+    }
+}
+
+impl From<io::Error> for AndiError {
+    fn from(value: io::Error) -> Self {
+        Self::from_source(Box::new(value), "IO Error")
+    }
+}
+
+impl From<ReadError> for AndiError {
+    fn from(value: ReadError) -> Self {
+        Self::from_source(Box::new(value), "netCDF Read Error")
     }
 }
 
@@ -133,8 +175,8 @@ mod tests {
     #[wasm_bindgen_test]
     fn map_invalid_string_to_category_fails() {
         assert_eq!(
-            AndiCategory::from_str("X9").unwrap_err(),
-            AndiError::new("Illegal category: X9")
+            AndiCategory::from_str("X9").unwrap_err().to_string(),
+            "Illegal category: X9"
         );
     }
 
@@ -186,13 +228,17 @@ mod tests {
     #[wasm_bindgen_test]
     fn map_invalid_strings_to_dataset_completeness_fails() {
         assert_eq!(
-            AndiDatasetCompleteness::from_str("C1+X2").unwrap_err(),
-            AndiError::new("Illegal category: X2")
+            AndiDatasetCompleteness::from_str("C1+X2")
+                .unwrap_err()
+                .to_string(),
+            "Illegal category: X2"
         );
 
         assert_eq!(
-            AndiDatasetCompleteness::from_str("C1 C3").unwrap_err(),
-            AndiError::new("Illegal category: C1 C3")
+            AndiDatasetCompleteness::from_str("C1 C3")
+                .unwrap_err()
+                .to_string(),
+            "Illegal category: C1 C3"
         );
     }
 

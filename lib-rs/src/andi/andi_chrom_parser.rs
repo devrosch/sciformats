@@ -6,7 +6,7 @@ use super::{
     andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
     AndiDatasetCompleteness, AndiError,
 };
-use crate::api::Parser;
+use crate::api::{Parser, SfError};
 use std::{
     cell::RefCell,
     error::Error,
@@ -18,7 +18,7 @@ use std::{
 pub struct AndiChromParser {}
 
 impl AndiChromParser {
-    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, Box<dyn Error>> {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, AndiError> {
         AndiChromFile::new(reader)
     }
 }
@@ -26,10 +26,11 @@ impl AndiChromParser {
 impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     type R = AndiChromFile;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>> {
+    fn parse(name: &str, input: T) -> Result<Self::R, SfError> {
         let input_seek_read = Box::new(input);
-        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
-        Self::parse_cdf(reader)
+        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
+            .map_err(Into::<AndiError>::into)?;
+        Ok(Self::parse_cdf(reader)?)
     }
 }
 
@@ -45,7 +46,7 @@ pub struct AndiChromFile {
 }
 
 impl AndiChromFile {
-    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, AndiError> {
         let admin_data = AndiChromAdminData::new(&mut reader)?;
         let sample_description = AndiChromSampleDescription::new(&mut reader)?;
         let detection_method = AndiChromDetectionMethod::new(&mut reader)?;

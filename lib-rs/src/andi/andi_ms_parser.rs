@@ -12,7 +12,7 @@ use super::andi_utils::{
     read_var_2d_slice_f64, trim_zeros_in_place,
 };
 use super::{AndiDatasetCompleteness, AndiError};
-use crate::api::Parser;
+use crate::api::{Parser, SfError};
 use netcdf3::{DataVector, Variable};
 use std::cell::RefCell;
 use std::ops::Range;
@@ -26,7 +26,7 @@ use std::{
 pub struct AndiMsParser {}
 
 impl AndiMsParser {
-    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiMsFile, Box<dyn Error>> {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiMsFile, AndiError> {
         AndiMsFile::new(reader)
     }
 }
@@ -34,10 +34,11 @@ impl AndiMsParser {
 impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
     type R = AndiMsFile;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>> {
+    fn parse(name: &str, input: T) -> Result<Self::R, SfError> {
         let input_seek_read = Box::new(input);
-        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
-        Self::parse_cdf(reader)
+        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
+            .map_err(Into::<AndiError>::into)?;
+        Ok(Self::parse_cdf(reader)?)
     }
 }
 
@@ -57,7 +58,7 @@ pub struct AndiMsFile {
 }
 
 impl AndiMsFile {
-    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, AndiError> {
         let admin_data = AndiMsAdminData::new(&mut reader)?;
         let instrument_data = AndiMsInstrumentData::new(&mut reader, admin_data.instrument_number)?;
         let sample_data = AndiMsSampleData::new(&reader)?;

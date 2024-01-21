@@ -9,21 +9,34 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsValue;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct SfError {
     message: String,
+    source: Option<Box<dyn Error>>,
 }
 
 /// A generic error.
 impl SfError {
     pub fn new(msg: &str) -> SfError {
-        SfError {
+        Self {
             message: msg.into(),
+            source: None,
+        }
+    }
+
+    pub fn from_source(source: Box<dyn Error>, message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(source),
         }
     }
 }
 
-impl Error for SfError {}
+impl Error for SfError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.source.as_ref().map(|b| b.as_ref())
+    }
+}
 
 impl fmt::Display for SfError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -35,7 +48,7 @@ impl fmt::Display for SfError {
 pub trait Parser<T: Read + Seek> {
     type R;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>>;
+    fn parse(name: &str, input: T) -> Result<Self::R, SfError>;
 }
 
 /// Scans a data set and provides a reader for recognized formats.
@@ -68,7 +81,7 @@ pub trait Scanner<T: Read + Seek> {
     /// or just the file name, e.g. when run in a browser.
     ///
     /// May fail even if `is_recognized()` returns true.
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>>;
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError>;
 }
 
 /// Provides a harmonized view for reading a scientifc data set.

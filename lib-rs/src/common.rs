@@ -244,7 +244,8 @@ impl JsReader {
         let read_result = self.reader.read(path);
         match read_result {
             Ok(node) => Ok(node),
-            Err(error) => Err(JsError::new(&error.to_string())),
+            // Err(error) => Err(JsError::new(&error.to_string())),
+            Err(error) => Err(map_to_js_err(&error)),
         }
     }
 }
@@ -284,9 +285,22 @@ impl JsScannerRepository {
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
             Ok(reader) => Ok(JsReader::new(reader)),
-            Err(error) => Err(JsError::new(&error.to_string())),
+            // Err(error) => Err(JsError::new(&error.to_string())),
+            Err(error) => Err(map_to_js_err(&error)),
         }
     }
+}
+
+#[cfg(target_family = "wasm")]
+fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
+    let mut err_str = error.to_string();
+    let mut source = error.source();
+    while let Some(nested_err) = source {
+        err_str += "\n";
+        err_str += nested_err.to_string().as_str();
+        source = nested_err.source();
+    }
+    JsError::new(&err_str)
 }
 
 #[cfg(test)]
@@ -343,7 +357,7 @@ mod tests {
             &self,
             _path: &str,
             _input: T,
-        ) -> Result<Box<dyn crate::api::Reader>, Box<dyn std::error::Error>> {
+        ) -> Result<Box<dyn crate::api::Reader>, SfError> {
             match &self.reader_name {
                 Some(name) => Ok(Box::new(StubReader {
                     name: name.to_owned(),

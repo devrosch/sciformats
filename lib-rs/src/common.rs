@@ -314,7 +314,10 @@ mod tests {
     };
     #[cfg(target_family = "wasm")]
     use js_sys::{Array, Uint8Array};
-    use std::io::{Cursor, Read, Seek, SeekFrom};
+    use std::{
+        error::Error,
+        io::{Cursor, Read, Seek, SeekFrom},
+    };
     use wasm_bindgen_test::wasm_bindgen_test;
     #[cfg(target_family = "wasm")]
     use web_sys::Blob;
@@ -357,7 +360,7 @@ mod tests {
             &self,
             _path: &str,
             _input: T,
-        ) -> Result<Box<dyn crate::api::Reader>, SfError> {
+        ) -> Result<Box<dyn crate::api::Reader>, Box<dyn Error>> {
             match &self.reader_name {
                 Some(name) => Ok(Box::new(StubReader {
                     name: name.to_owned(),

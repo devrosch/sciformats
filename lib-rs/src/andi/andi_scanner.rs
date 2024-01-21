@@ -1,10 +1,13 @@
 #[cfg(target_family = "wasm")]
 use crate::common::{BlobWrapper, JsReader};
 use crate::{
-    api::{Reader, Scanner, SfError},
+    api::{Reader, Scanner},
     utils::{add_scanner_js, is_recognized_extension},
 };
-use std::io::{Read, Seek};
+use std::{
+    error::Error,
+    io::{Read, Seek},
+};
 use wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsError;
@@ -53,7 +56,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
         buf.as_slice() == Self::MAGIC_BYTES
     }
 
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError> {
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
         let input_seek_read = Box::new(input);
         let cdf_reader = netcdf3::FileReader::open_seek_read(path, input_seek_read)
             .map_err(Into::<AndiError>::into)?;

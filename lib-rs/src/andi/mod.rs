@@ -6,14 +6,11 @@ pub mod andi_ms_reader;
 pub mod andi_scanner;
 mod andi_utils;
 
+use netcdf3::ReadError;
 use std::collections::BTreeSet;
 use std::io;
 use std::str::FromStr;
 use std::{error::Error, fmt};
-
-use netcdf3::ReadError;
-
-use crate::api::SfError;
 
 #[derive(Debug)]
 pub struct AndiError {
@@ -49,12 +46,6 @@ impl Error for AndiError {
     }
 }
 
-impl From<AndiError> for SfError {
-    fn from(value: AndiError) -> Self {
-        SfError::from_source(Box::new(value), "SfError")
-    }
-}
-
 impl From<Box<dyn Error>> for AndiError {
     fn from(value: Box<dyn Error>) -> Self {
         Self::from_source(value, "AnDI Error")
@@ -63,13 +54,13 @@ impl From<Box<dyn Error>> for AndiError {
 
 impl From<io::Error> for AndiError {
     fn from(value: io::Error) -> Self {
-        Self::from_source(Box::new(value), "IO Error")
+        Self::from_source(Box::new(value), "AnDI IO Error")
     }
 }
 
 impl From<ReadError> for AndiError {
     fn from(value: ReadError) -> Self {
-        Self::from_source(Box::new(value), "netCDF Read Error")
+        Self::from_source(Box::new(value), "AnDI netCDF Read Error")
     }
 }
 

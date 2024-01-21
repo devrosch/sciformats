@@ -12,7 +12,7 @@ use super::andi_utils::{
     read_var_2d_slice_f64, trim_zeros_in_place,
 };
 use super::{AndiDatasetCompleteness, AndiError};
-use crate::api::{Parser, SfError};
+use crate::api::Parser;
 use netcdf3::{DataVector, Variable};
 use std::cell::RefCell;
 use std::ops::Range;
@@ -33,8 +33,9 @@ impl AndiMsParser {
 
 impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
     type R = AndiMsFile;
+    type E = AndiError;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, SfError> {
+    fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
             .map_err(Into::<AndiError>::into)?;

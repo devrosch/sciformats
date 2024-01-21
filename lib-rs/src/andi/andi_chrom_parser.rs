@@ -6,7 +6,7 @@ use super::{
     andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
     AndiDatasetCompleteness, AndiError,
 };
-use crate::api::{Parser, SfError};
+use crate::api::Parser;
 use std::{
     cell::RefCell,
     error::Error,
@@ -25,8 +25,9 @@ impl AndiChromParser {
 
 impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     type R = AndiChromFile;
+    type E = AndiError;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, SfError> {
+    fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
             .map_err(Into::<AndiError>::into)?;

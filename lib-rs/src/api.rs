@@ -1,7 +1,7 @@
-use std::fmt;
 use std::{
     collections::HashMap,
     error::Error,
+    fmt,
     fmt::Display,
     io::{Read, Seek},
 };
@@ -47,8 +47,9 @@ impl fmt::Display for SfError {
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
     type R;
+    type E: Error;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, SfError>;
+    fn parse(name: &str, input: T) -> Result<Self::R, Self::E>;
 }
 
 /// Scans a data set and provides a reader for recognized formats.
@@ -81,7 +82,7 @@ pub trait Scanner<T: Read + Seek> {
     /// or just the file name, e.g. when run in a browser.
     ///
     /// May fail even if `is_recognized()` returns true.
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError>;
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>>;
 }
 
 /// Provides a harmonized view for reading a scientifc data set.

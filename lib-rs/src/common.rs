@@ -1,10 +1,11 @@
 use crate::andi::andi_scanner::AndiScanner;
 #[cfg(target_family = "wasm")]
 use crate::api::Node;
-use crate::api::{Reader, Scanner, SfError};
+use crate::api::{Reader, Scanner};
 use crate::spc::spc_scanner::SpcScanner;
 #[cfg(target_family = "wasm")]
 use js_sys::Uint8Array;
+use std::fmt;
 use std::io::{BufReader, SeekFrom};
 use std::{
     error::Error,
@@ -15,14 +16,43 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsError, JsValue};
 #[cfg(target_family = "wasm")]
 use web_sys::{Blob, FileReaderSync};
 
-#[cfg(target_family = "wasm")]
-#[wasm_bindgen]
-pub struct JsScannerRepository {
-    repo: ScannerRepository,
-}
-
 pub trait SeekRead: Seek + Read {}
 impl<T: Seek + Read> SeekRead for T {}
+
+#[derive(Debug)]
+pub struct SfError {
+    message: String,
+    source: Option<Box<dyn Error>>,
+}
+
+/// A generic error.
+impl SfError {
+    pub fn new(msg: &str) -> Self {
+        Self {
+            message: msg.into(),
+            source: None,
+        }
+    }
+
+    pub fn from_source(source: Box<dyn Error>, message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(source),
+        }
+    }
+}
+
+impl Error for SfError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.source.as_ref().map(|b| b.as_ref())
+    }
+}
+
+impl fmt::Display for SfError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
 
 pub struct ScannerRepository {
     scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>>,
@@ -252,6 +282,12 @@ impl JsReader {
 
 #[cfg(target_family = "wasm")]
 #[wasm_bindgen]
+pub struct JsScannerRepository {
+    repo: ScannerRepository,
+}
+
+#[cfg(target_family = "wasm")]
+#[wasm_bindgen]
 impl JsScannerRepository {
     #[wasm_bindgen(constructor)]
     pub fn init_all() -> JsScannerRepository {
@@ -305,11 +341,11 @@ fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
 
 #[cfg(test)]
 mod tests {
-    use super::ScannerRepository;
+    use super::*;
     #[cfg(target_family = "wasm")]
     use crate::common::BlobWrapper;
     use crate::{
-        api::{Node, Reader, Scanner, SfError},
+        api::{Node, Reader, Scanner},
         common::{SeekRead, SeekReadWrapper},
     };
     #[cfg(target_family = "wasm")]
@@ -369,6 +405,21 @@ mod tests {
                 None => Err(SfError::new("Error"))?,
             }
         }
+    }
+
+    #[test]
+    #[wasm_bindgen_test]
+    fn sf_error_prints_debug_info() {
+        let error = SfError::new("Message");
+        assert!(format!("{:?}", error).contains("SfError"));
+        assert!(format!("{:?}", error).contains("Message"));
+    }
+
+    #[test]
+    #[wasm_bindgen_test]
+    fn sf_error_displays_error_message() {
+        let error = SfError::new("Message");
+        assert_eq!("Message", error.to_string());
     }
 
     #[test]

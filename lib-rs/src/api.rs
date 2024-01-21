@@ -1,48 +1,12 @@
 use std::{
     collections::HashMap,
     error::Error,
-    fmt,
     fmt::Display,
     io::{Read, Seek},
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsValue;
-
-#[derive(Debug)]
-pub struct SfError {
-    message: String,
-    source: Option<Box<dyn Error>>,
-}
-
-/// A generic error.
-impl SfError {
-    pub fn new(msg: &str) -> SfError {
-        Self {
-            message: msg.into(),
-            source: None,
-        }
-    }
-
-    pub fn from_source(source: Box<dyn Error>, message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-            source: Some(source),
-        }
-    }
-}
-
-impl Error for SfError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_ref().map(|b| b.as_ref())
-    }
-}
-
-impl fmt::Display for SfError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
 
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
@@ -387,21 +351,6 @@ mod tests {
     #[cfg(target_family = "wasm")]
     wasm_bindgen_test_configure!(run_in_worker);
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
-    #[test]
-    #[wasm_bindgen_test]
-    fn sf_error_prints_debug_info() {
-        let error = SfError::new("Message");
-        assert!(format!("{:?}", error).contains("SfError"));
-        assert!(format!("{:?}", error).contains("Message"));
-    }
-
-    #[test]
-    #[wasm_bindgen_test]
-    fn sf_error_displays_error_message() {
-        let error = SfError::new("Message");
-        assert_eq!("Message", error.to_string());
-    }
 
     #[test]
     #[wasm_bindgen_test]

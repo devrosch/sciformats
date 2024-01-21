@@ -31,7 +31,7 @@ impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
             .map_err(Into::<AndiError>::into)?;
-        Ok(Self::parse_cdf(reader)?)
+        Self::parse_cdf(reader)
     }
 }
 

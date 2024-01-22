@@ -6,9 +6,7 @@ pub mod andi_ms_reader;
 pub mod andi_scanner;
 mod andi_utils;
 
-use netcdf3::ReadError;
 use std::collections::BTreeSet;
-use std::io;
 use std::str::FromStr;
 use std::{error::Error, fmt};
 
@@ -26,10 +24,10 @@ impl AndiError {
         }
     }
 
-    pub fn from_source(source: Box<dyn Error>, message: impl Into<String>) -> Self {
+    pub fn from_source(source: impl Into<Box<dyn Error>>, message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
-            source: Some(source),
+            source: Some(source.into()),
         }
     }
 }
@@ -43,24 +41,6 @@ impl fmt::Display for AndiError {
 impl Error for AndiError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         self.source.as_ref().map(|b| b.as_ref())
-    }
-}
-
-impl From<Box<dyn Error>> for AndiError {
-    fn from(value: Box<dyn Error>) -> Self {
-        Self::from_source(value, "AnDI Error")
-    }
-}
-
-impl From<io::Error> for AndiError {
-    fn from(value: io::Error) -> Self {
-        Self::from_source(Box::new(value), "AnDI IO Error")
-    }
-}
-
-impl From<ReadError> for AndiError {
-    fn from(value: ReadError) -> Self {
-        Self::from_source(Box::new(value), "AnDI netCDF Read Error")
     }
 }
 

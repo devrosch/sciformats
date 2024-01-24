@@ -18,17 +18,19 @@ use std::{
 pub struct AndiChromParser {}
 
 impl AndiChromParser {
-    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, Box<dyn Error>> {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, AndiError> {
         AndiChromFile::new(reader)
     }
 }
 
 impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     type R = AndiChromFile;
+    type E = AndiError;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>> {
+    fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
-        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
+        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
+            .map_err(|e| AndiError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
         Self::parse_cdf(reader)
     }
 }
@@ -45,19 +47,27 @@ pub struct AndiChromFile {
 }
 
 impl AndiChromFile {
-    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
-        let admin_data = AndiChromAdminData::new(&mut reader)?;
-        let sample_description = AndiChromSampleDescription::new(&mut reader)?;
-        let detection_method = AndiChromDetectionMethod::new(&mut reader)?;
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, AndiError> {
+        let admin_data = AndiChromAdminData::new(&mut reader)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI Chrom admin data."))?;
+        let sample_description = AndiChromSampleDescription::new(&mut reader).map_err(|e| {
+            AndiError::from_source(e, "Error parsing AnDI Chrom sample description.")
+        })?;
+        let detection_method = AndiChromDetectionMethod::new(&mut reader)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI Chrom detection method."))?;
 
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
 
-        let raw_data = AndiChromRawData::new(Rc::clone(&reader_ref))?;
+        let raw_data = AndiChromRawData::new(Rc::clone(&reader_ref))
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI Chrom raw data."))?;
         let peak_processing_results = AndiChromPeakProcessingResults::new(
             reader_ref,
             &raw_data.retention_unit,
             detection_method.detector_unit.as_deref(),
-        )?;
+        )
+        .map_err(|e| {
+            AndiError::from_source(e, "Error parsing AnDI Chrom peak processing results.")
+        })?;
 
         Ok(Self {
             admin_data,
@@ -308,25 +318,33 @@ impl AndiChromRawData {
         })
     }
 
-    pub fn get_ordinate_values(&self) -> Result<Vec<f32>, Box<dyn Error>> {
+    pub fn get_ordinate_values(&self) -> Result<Vec<f32>, AndiError> {
         let mut reader = self.reader_ref.borrow_mut();
         let ordinate_values = reader
-            .read_var("ordinate_values")?
+            .read_var("ordinate_values")
+            .map_err(|e| {
+                AndiError::from_source(e, "AnDI error. Error parsing AnDI ordinate values.")
+            })?
             .get_f32()
             .ok_or(AndiError::new("Missing ordinate_values variable."))?
             .to_owned();
         Ok(ordinate_values)
     }
 
-    pub fn get_raw_data_retention(&self) -> Result<Option<Vec<f32>>, Box<dyn Error>> {
+    pub fn get_raw_data_retention(&self) -> Result<Option<Vec<f32>>, AndiError> {
         let mut reader = self.reader_ref.borrow_mut();
         let raw_data_retention = match self.uniform_sampling_flag {
             true => None,
             false => Some(
                 reader
-                    .read_var("raw_data_retention")?
+                    .read_var("raw_data_retention")
+                    .map_err(|e| {
+                        AndiError::from_source(e, "Error parsing AnDI raw datat retention.")
+                    })?
                     .get_f32()
-                    .ok_or(AndiError::new("Missing raw_data_retention variable."))?
+                    .ok_or(AndiError::new(
+                        "AnDI error. Missing raw_data_retention variable.",
+                    ))?
                     .to_owned(),
             ),
         };

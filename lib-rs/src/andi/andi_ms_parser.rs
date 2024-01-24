@@ -26,17 +26,19 @@ use std::{
 pub struct AndiMsParser {}
 
 impl AndiMsParser {
-    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiMsFile, Box<dyn Error>> {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiMsFile, AndiError> {
         AndiMsFile::new(reader)
     }
 }
 
 impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
     type R = AndiMsFile;
+    type E = AndiError;
 
-    fn parse(name: &str, input: T) -> Result<Self::R, Box<dyn Error>> {
+    fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
-        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)?;
+        let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
+            .map_err(|e| AndiError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
         Self::parse_cdf(reader)
     }
 }
@@ -57,17 +59,25 @@ pub struct AndiMsFile {
 }
 
 impl AndiMsFile {
-    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, Box<dyn std::error::Error>> {
-        let admin_data = AndiMsAdminData::new(&mut reader)?;
-        let instrument_data = AndiMsInstrumentData::new(&mut reader, admin_data.instrument_number)?;
-        let sample_data = AndiMsSampleData::new(&reader)?;
-        let test_data = AndiMsTestData::new(&reader)?;
-        let raw_data_global = Rc::new(AndiMsRawDataGlobal::new(&reader)?);
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, AndiError> {
+        let admin_data = AndiMsAdminData::new(&mut reader)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS admin data."))?;
+        let instrument_data = AndiMsInstrumentData::new(&mut reader, admin_data.instrument_number)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS instrument data."))?;
+        let sample_data = AndiMsSampleData::new(&reader)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS sample data."))?;
+        let test_data = AndiMsTestData::new(&reader)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS test data."))?;
+        let raw_data_global =
+            Rc::new(AndiMsRawDataGlobal::new(&reader).map_err(|e| {
+                AndiError::from_source(e, "Error parsing AnDI MS raw data global.")
+            })?);
         let library_data = match &admin_data.experiment_type {
-            &AndiMsExperimentType::LibraryMassSpectrum => Some(AndiMsLibraryData::new(
-                &mut reader,
-                raw_data_global.scan_number,
-            )?),
+            &AndiMsExperimentType::LibraryMassSpectrum => Some(
+                AndiMsLibraryData::new(&mut reader, raw_data_global.scan_number).map_err(|e| {
+                    AndiError::from_source(e, "Error parsing AnDI MS library data.")
+                })?,
+            ),
             _ => None,
         };
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
@@ -75,9 +85,13 @@ impl AndiMsFile {
             Rc::clone(&reader_ref),
             Rc::clone(&raw_data_global),
             test_data.resolution_type.clone(),
-        )?;
+        )
+        .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS raw data scans."))?;
         let scan_groups = match &test_data.scan_function {
-            AndiMsScanFunction::Sid => Some(AndiMsRawDataScanGroups::new(reader_ref)?),
+            AndiMsScanFunction::Sid => Some(
+                AndiMsRawDataScanGroups::new(reader_ref)
+                    .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS scan groups."))?,
+            ),
             _ => None,
         };
 
@@ -199,8 +213,6 @@ impl AndiMsAdminData {
             .data_set()
             .get_dim("instrument_number")
             .map(|dim| dim.size() as i32);
-
-        // TODO: continue
 
         Ok(Self {
             dataset_completeness,
@@ -911,25 +923,27 @@ impl AndiMsRawDataPerScan {
         Ok(Some(res))
     }
 
-    pub fn get_mass_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+    pub fn get_mass_axis_values(&self) -> Result<Option<Vec<f64>>, AndiError> {
         let data_format = &self.raw_data_global.mass_axis_data_format;
         let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
         let scale_factor = self.raw_data_global.mass_axis_scale_factor;
         let offset = 0.0f64;
 
         self.read_values("mass_values", data_format, &range, scale_factor, offset)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI mass axis values."))
     }
 
-    pub fn get_time_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+    pub fn get_time_axis_values(&self) -> Result<Option<Vec<f64>>, AndiError> {
         let data_format = &self.raw_data_global.time_axis_data_format;
         let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
         let scale_factor = self.raw_data_global.time_axis_scale_factor;
         let offset = 0.0f64;
 
         self.read_values("time_values", data_format, &range, scale_factor, offset)
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI time axis values."))
     }
 
-    pub fn get_intensity_axis_values(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+    pub fn get_intensity_axis_values(&self) -> Result<Option<Vec<f64>>, AndiError> {
         let data_format = &self.raw_data_global.intensity_axis_data_format;
         let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
         let scale_factor = self.raw_data_global.intensity_axis_scale_factor;
@@ -942,29 +956,38 @@ impl AndiMsRawDataPerScan {
             scale_factor,
             offset,
         )
+        .map_err(|e| AndiError::from_source(e, "Error parsing AnDI intensity axis values."))
     }
 
     // TODO: account for -9999 values
-    pub fn get_flagged_peak_indices(&self) -> Result<Vec<i32>, Box<dyn Error>> {
+    pub fn get_flagged_peak_indices(&self) -> Result<Vec<i32>, AndiError> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;
         let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;
 
-        let mut flagged_peaks = self.read_values(
-            "mass_values",
-            &self.raw_data_global.mass_axis_data_format,
-            &range,
-            1f64,
-            0f64,
-        )?;
-        if flagged_peaks.is_none() {
-            flagged_peaks = self.read_values(
-                "time_values",
-                &self.raw_data_global.time_axis_data_format,
+        let mut flagged_peaks = self
+            .read_values(
+                "mass_values",
+                &self.raw_data_global.mass_axis_data_format,
                 &range,
                 1f64,
                 0f64,
-            )?;
+            )
+            .map_err(|e| {
+                AndiError::from_source(e, "Error parsing AnDI flagged peaks mass values.")
+            })?;
+        if flagged_peaks.is_none() {
+            flagged_peaks = self
+                .read_values(
+                    "time_values",
+                    &self.raw_data_global.time_axis_data_format,
+                    &range,
+                    1f64,
+                    0f64,
+                )
+                .map_err(|e| {
+                    AndiError::from_source(e, "Error parsing AnDI flagged peaks time values.")
+                })?;
         }
 
         match flagged_peaks {
@@ -973,18 +996,20 @@ impl AndiMsRawDataPerScan {
         }
     }
 
-    pub fn get_flag_values(&self) -> Result<Vec<Vec<AndiMsFlagValue>>, Box<dyn Error>> {
+    pub fn get_flag_values(&self) -> Result<Vec<Vec<AndiMsFlagValue>>, AndiError> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;
         let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;
 
-        let flag_values = self.read_values(
-            "intensity_values",
-            &self.raw_data_global.intensity_axis_data_format,
-            &range,
-            1f64,
-            0f64,
-        )?;
+        let flag_values = self
+            .read_values(
+                "intensity_values",
+                &self.raw_data_global.intensity_axis_data_format,
+                &range,
+                1f64,
+                0f64,
+            )
+            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI flag values."))?;
 
         match flag_values {
             None => Ok(vec![]),

@@ -58,7 +58,8 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
 
     fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
         let input_seek_read = Box::new(input);
-        let cdf_reader = netcdf3::FileReader::open_seek_read(path, input_seek_read)?;
+        let cdf_reader = netcdf3::FileReader::open_seek_read(path, input_seek_read)
+            .map_err(|e| AndiError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
 
         if cdf_reader
             .data_set()

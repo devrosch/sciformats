@@ -10,24 +10,37 @@ use std::collections::BTreeSet;
 use std::str::FromStr;
 use std::{error::Error, fmt};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct AndiError {
     message: String,
+    source: Option<Box<dyn Error>>,
 }
 
 impl AndiError {
     pub fn new(msg: &str) -> AndiError {
         AndiError {
             message: msg.into(),
+            source: None,
+        }
+    }
+
+    pub fn from_source(source: impl Into<Box<dyn Error>>, message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            source: Some(source.into()),
         }
     }
 }
 
-impl Error for AndiError {}
-
 impl fmt::Display for AndiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.message)
+    }
+}
+
+impl Error for AndiError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.source.as_ref().map(|b| b.as_ref())
     }
 }
 
@@ -133,8 +146,8 @@ mod tests {
     #[wasm_bindgen_test]
     fn map_invalid_string_to_category_fails() {
         assert_eq!(
-            AndiCategory::from_str("X9").unwrap_err(),
-            AndiError::new("Illegal category: X9")
+            AndiCategory::from_str("X9").unwrap_err().to_string(),
+            "Illegal category: X9"
         );
     }
 
@@ -186,13 +199,17 @@ mod tests {
     #[wasm_bindgen_test]
     fn map_invalid_strings_to_dataset_completeness_fails() {
         assert_eq!(
-            AndiDatasetCompleteness::from_str("C1+X2").unwrap_err(),
-            AndiError::new("Illegal category: X2")
+            AndiDatasetCompleteness::from_str("C1+X2")
+                .unwrap_err()
+                .to_string(),
+            "Illegal category: X2"
         );
 
         assert_eq!(
-            AndiDatasetCompleteness::from_str("C1 C3").unwrap_err(),
-            AndiError::new("Illegal category: C1 C3")
+            AndiDatasetCompleteness::from_str("C1 C3")
+                .unwrap_err()
+                .to_string(),
+            "Illegal category: C1 C3"
         );
     }
 

@@ -2,20 +2,14 @@ use super::andi_chrom_parser::AndiChromFile;
 use crate::{
     andi::AndiError,
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
-    utils::{add_reader_js, convert_path_to_node_indices},
+    utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path};
-use wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_family = "wasm")]
-use wasm_bindgen::JsError;
 
-#[wasm_bindgen]
 pub struct AndiChromReader {
     path: String,
     file: AndiChromFile,
 }
-
-add_reader_js!(AndiChromReader);
 
 impl Reader for AndiChromReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {

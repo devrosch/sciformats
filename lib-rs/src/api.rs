@@ -4,9 +4,6 @@ use std::{
     fmt::Display,
     io::{Read, Seek},
 };
-use wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_family = "wasm")]
-use wasm_bindgen::JsValue;
 
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
@@ -177,9 +174,9 @@ impl From<(f64, f64)> for PointXy {
 #[derive(Debug, PartialEq)]
 pub struct Column {
     /// A unique key for a table.
-    key: String,
+    pub key: String,
     /// A name for the column.
-    name: String,
+    pub name: String,
 }
 
 impl Column {
@@ -207,153 +204,22 @@ pub struct Table {
 }
 
 /// A tree node representing a section of data.
-#[wasm_bindgen]
 /// An harmonized abstraction for a part of a data set.
 #[derive(Debug, PartialEq)]
 pub struct Node {
-    #[wasm_bindgen(skip)]
     pub name: String,
-    #[wasm_bindgen(skip)]
     pub parameters: Vec<Parameter>,
-    #[wasm_bindgen(skip)]
     pub data: Vec<PointXy>,
-    #[wasm_bindgen(skip)]
     pub metadata: Vec<(String, String)>,
-    #[wasm_bindgen(skip)]
     pub table: Option<Table>,
-    #[wasm_bindgen(skip)]
     pub child_node_names: Vec<String>,
-}
-
-#[cfg(target_family = "wasm")]
-#[wasm_bindgen]
-impl Node {
-    #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn parameters(&self) -> Vec<JsValue> {
-        let mut vec: Vec<JsValue> = vec![];
-        for param in &self.parameters {
-            let key = JsValue::from(&param.key);
-            let value = JsValue::from(&param.value.to_string());
-            let js_param = js_sys::Object::new();
-            let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
-            let set_val_ret =
-                js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
-            if !set_key_ret || !set_val_ret {
-                panic!("Could not convert parameter to JS Object.");
-            }
-            vec.push(js_param.into());
-        }
-        vec
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn data(&self) -> Vec<JsValue> {
-        let mut vec: Vec<JsValue> = vec![];
-        for xy in &self.data {
-            let x = JsValue::from_f64(xy.x);
-            let y = JsValue::from_f64(xy.y);
-            let js_xy = js_sys::Object::new();
-            let set_x_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("x"), &x).unwrap();
-            let set_y_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("y"), &y).unwrap();
-            if !set_x_ret || !set_y_ret {
-                panic!("Could not convert data point to JS Object.");
-            }
-            vec.push(js_xy.into());
-        }
-        vec
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn metadata(&self) -> js_sys::Object {
-        let meta = js_sys::Object::new();
-        for xy in &self.metadata {
-            let key = JsValue::from(&xy.0);
-            let value = JsValue::from(&xy.1);
-            let set_meta_ret = js_sys::Reflect::set(&meta, &key, &value).unwrap();
-            if !set_meta_ret {
-                panic!("Could not convert metadata to JS Object.");
-            }
-        }
-        meta
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn table(&self) -> js_sys::Object {
-        let js_table = js_sys::Object::new();
-        let js_column_names: js_sys::Array = js_sys::Array::new();
-        let js_rows: js_sys::Array = js_sys::Array::new();
-
-        if let Some(table) = &self.table {
-            let col_names = &table.column_names;
-            for col_name in col_names {
-                let key = JsValue::from(&col_name.key);
-                let value = JsValue::from(&col_name.name);
-                let column = js_sys::Object::new();
-                let set_col_key_ret =
-                    js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
-                let set_col_val_ret =
-                    js_sys::Reflect::set(&column, &JsValue::from("value"), &value).unwrap();
-                if !set_col_key_ret || !set_col_val_ret {
-                    panic!("Could not convert table column to JS Object.");
-                }
-                js_column_names.push(&column);
-            }
-
-            let rows = &table.rows;
-            for row in rows {
-                let js_row = js_sys::Object::new();
-                for cell in row {
-                    let key = JsValue::from(cell.0);
-                    let val = JsValue::from(cell.1.to_string());
-                    let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
-                    if !set_cell_ret {
-                        panic!("Could not convert table cell to JS Object.");
-                    }
-                }
-                js_rows.push(&js_row);
-            }
-        }
-
-        let set_col_names_ret =
-            js_sys::Reflect::set(&js_table, &JsValue::from("columnNames"), &js_column_names)
-                .unwrap();
-        let set_rows_ret =
-            js_sys::Reflect::set(&js_table, &JsValue::from("rows"), &js_rows).unwrap();
-        if !set_col_names_ret || !set_rows_ret {
-            panic!("Could not populate table JS Object.");
-        }
-
-        js_table
-    }
-
-    #[wasm_bindgen(getter)]
-    #[wasm_bindgen(js_name = childNodeNames)]
-    pub fn child_node_names(&self) -> Vec<JsValue> {
-        let mut vec: Vec<JsValue> = vec![];
-        for param in &self.child_node_names {
-            vec.push(param.into());
-        }
-        vec
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasm_bindgen_test::*;
-    // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
-    // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
-    #[cfg(target_family = "wasm")]
-    wasm_bindgen_test_configure!(run_in_worker);
-    // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     #[test]
-    #[wasm_bindgen_test]
     fn table_value_displays_value() {
         let val_str = Value::String("abc".to_owned());
         let val_bool = Value::Bool(true);
@@ -375,7 +241,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn parameters_are_correctly_initialized_for_all_value_types() {
         assert_eq!(
             Parameter {
@@ -436,7 +301,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn point_xy_from_tuple() {
         let point_xy = PointXy::from((1.0, 2.0));
         assert_eq!(1.0, point_xy.x);
@@ -444,7 +308,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn table_prints_debug_info() {
         let table = Table {
             column_names: vec![],
@@ -456,7 +319,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn node_prints_debug_info() {
         let node = Node {
             name: "".to_owned(),
@@ -473,36 +335,5 @@ mod tests {
         assert!(format!("{:?}", node).contains("metadata"));
         assert!(format!("{:?}", node).contains("table"));
         assert!(format!("{:?}", node).contains("child_node_names"));
-    }
-
-    // no #[test] as this test cannot run outside a browser engine
-    #[cfg(target_family = "wasm")]
-    #[wasm_bindgen_test]
-    fn map_node_to_js() {
-        let node = Node {
-            name: "abc".to_owned(),
-            parameters: vec![Parameter {
-                key: "a".into(),
-                value: Value::String("b".into()),
-            }],
-            data: vec![],
-            metadata: vec![],
-            table: None,
-            child_node_names: vec![],
-        };
-
-        assert_eq!("abc", node.name());
-        let params = node.parameters();
-        assert_eq!(1, params.len());
-        let key = js_sys::Reflect::get(&params[0], &JsValue::from("key"))
-            .unwrap()
-            .as_string()
-            .unwrap();
-        let value = js_sys::Reflect::get(&params[0], &JsValue::from("value"))
-            .unwrap()
-            .as_string()
-            .unwrap();
-        assert_eq!("a", key);
-        assert_eq!("b", value);
     }
 }

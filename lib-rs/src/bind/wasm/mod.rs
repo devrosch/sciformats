@@ -1,0 +1,454 @@
+pub mod andi;
+pub mod spc;
+
+use crate::api::{Node, Reader};
+use crate::common::{ScannerRepository, SeekRead, SeekReadWrapper};
+use js_sys::Uint8Array;
+use std::error::Error;
+use std::io::SeekFrom;
+use std::io::{Read, Seek};
+use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::{JsError, JsValue};
+use web_sys::{Blob, FileReaderSync};
+
+// -------------------------------------------------
+// API
+// -------------------------------------------------
+
+#[wasm_bindgen]
+pub struct JsNode {
+    node: Node,
+}
+
+impl From<Node> for JsNode {
+    fn from(value: Node) -> Self {
+        JsNode { node: value }
+    }
+}
+
+#[wasm_bindgen]
+impl JsNode {
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        self.node.name.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn parameters(&self) -> Vec<JsValue> {
+        let mut vec: Vec<JsValue> = vec![];
+        for param in &self.node.parameters {
+            let key = JsValue::from(&param.key);
+            let value = JsValue::from(&param.value.to_string());
+            let js_param = js_sys::Object::new();
+            let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
+            let set_val_ret =
+                js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
+            if !set_key_ret || !set_val_ret {
+                panic!("Could not convert parameter to JS Object.");
+            }
+            vec.push(js_param.into());
+        }
+        vec
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn data(&self) -> Vec<JsValue> {
+        let mut vec: Vec<JsValue> = vec![];
+        for xy in &self.node.data {
+            let x = JsValue::from_f64(xy.x);
+            let y = JsValue::from_f64(xy.y);
+            let js_xy = js_sys::Object::new();
+            let set_x_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("x"), &x).unwrap();
+            let set_y_ret = js_sys::Reflect::set(&js_xy, &JsValue::from("y"), &y).unwrap();
+            if !set_x_ret || !set_y_ret {
+                panic!("Could not convert data point to JS Object.");
+            }
+            vec.push(js_xy.into());
+        }
+        vec
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn metadata(&self) -> js_sys::Object {
+        let meta = js_sys::Object::new();
+        for xy in &self.node.metadata {
+            let key = JsValue::from(&xy.0);
+            let value = JsValue::from(&xy.1);
+            let set_meta_ret = js_sys::Reflect::set(&meta, &key, &value).unwrap();
+            if !set_meta_ret {
+                panic!("Could not convert metadata to JS Object.");
+            }
+        }
+        meta
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn table(&self) -> js_sys::Object {
+        let js_table = js_sys::Object::new();
+        let js_column_names: js_sys::Array = js_sys::Array::new();
+        let js_rows: js_sys::Array = js_sys::Array::new();
+
+        if let Some(table) = &self.node.table {
+            let col_names = &table.column_names;
+            for col_name in col_names {
+                let key = JsValue::from(&col_name.key);
+                let value = JsValue::from(&col_name.name);
+                let column = js_sys::Object::new();
+                let set_col_key_ret =
+                    js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
+                let set_col_val_ret =
+                    js_sys::Reflect::set(&column, &JsValue::from("value"), &value).unwrap();
+                if !set_col_key_ret || !set_col_val_ret {
+                    panic!("Could not convert table column to JS Object.");
+                }
+                js_column_names.push(&column);
+            }
+
+            let rows = &table.rows;
+            for row in rows {
+                let js_row = js_sys::Object::new();
+                for cell in row {
+                    let key = JsValue::from(cell.0);
+                    let val = JsValue::from(cell.1.to_string());
+                    let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
+                    if !set_cell_ret {
+                        panic!("Could not convert table cell to JS Object.");
+                    }
+                }
+                js_rows.push(&js_row);
+            }
+        }
+
+        let set_col_names_ret =
+            js_sys::Reflect::set(&js_table, &JsValue::from("columnNames"), &js_column_names)
+                .unwrap();
+        let set_rows_ret =
+            js_sys::Reflect::set(&js_table, &JsValue::from("rows"), &js_rows).unwrap();
+        if !set_col_names_ret || !set_rows_ret {
+            panic!("Could not populate table JS Object.");
+        }
+
+        js_table
+    }
+
+    #[wasm_bindgen(getter)]
+    #[wasm_bindgen(js_name = childNodeNames)]
+    pub fn child_node_names(&self) -> Vec<JsValue> {
+        let mut vec: Vec<JsValue> = vec![];
+        for param in &self.node.child_node_names {
+            vec.push(param.into());
+        }
+        vec
+    }
+}
+
+#[wasm_bindgen]
+pub struct JsReader {
+    reader: Box<dyn Reader>,
+}
+
+// TODO: implement From trait instead
+impl JsReader {
+    pub fn new(reader: Box<dyn Reader>) -> Self {
+        JsReader { reader }
+    }
+}
+
+#[wasm_bindgen]
+impl JsReader {
+    pub fn read(&self, path: &str) -> Result<JsNode, JsError> {
+        let read_result = self.reader.read(path);
+        match read_result {
+            Ok(node) => Ok(JsNode::from(node)),
+            // Err(error) => Err(JsError::new(&error.to_string())),
+            Err(error) => Err(map_to_js_err(&error)),
+        }
+    }
+}
+
+// -------------------------------------------------
+// Common
+// -------------------------------------------------
+
+#[derive(Clone)]
+pub struct BlobWrapper {
+    blob: Blob,
+    pos: u64,
+}
+
+impl BlobWrapper {
+    pub fn new(blob: Blob) -> BlobWrapper {
+        BlobWrapper { blob, pos: 0 }
+    }
+
+    pub fn get_pos(&self) -> u64 {
+        self.pos
+    }
+}
+
+impl Seek for BlobWrapper {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error. Seek position out of bounds: {pos}").into());
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Seek position out of bounds: {pos}"),
+            ))
+        }
+
+        let file_size = self.blob.size() as u64;
+        match pos {
+            SeekFrom::Start(seek_pos) => {
+                self.pos = seek_pos;
+            }
+            SeekFrom::End(seek_pos) => {
+                let new_pos = file_size as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+            SeekFrom::Current(seek_pos) => {
+                let new_pos = self.pos as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+        }
+        Ok(self.pos)
+    }
+}
+
+impl Read for BlobWrapper {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error: {:?}", js_error).into());
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("{:?}", js_error),
+            ))
+        }
+
+        let end_pos = self.pos + buf.len() as u64;
+        let result = self
+            .blob
+            .slice_with_f64_and_f64(self.pos as f64, end_pos as f64);
+        match result {
+            Ok(slice) => {
+                self.pos += slice.size() as u64;
+                let reader = match FileReaderSync::new() {
+                    Ok(frs) => frs,
+                    Err(err) => return to_io_error(err),
+                };
+                let array_buffer = match reader.read_as_array_buffer(&slice) {
+                    Ok(buf) => buf,
+                    Err(err) => return to_io_error(err),
+                };
+                // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
+                let uint8_array = Uint8Array::new(&array_buffer);
+                uint8_array.copy_to(&mut buf[0..slice.size() as usize]);
+                Ok(slice.size() as usize)
+            }
+            Err(js_error) => to_io_error(js_error),
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub struct JsScannerRepository {
+    repo: ScannerRepository,
+}
+
+#[wasm_bindgen]
+impl JsScannerRepository {
+    #[wasm_bindgen(constructor)]
+    pub fn init_all() -> JsScannerRepository {
+        let repo = ScannerRepository::init_all();
+        JsScannerRepository { repo }
+    }
+
+    #[wasm_bindgen(js_name = isRecognized)]
+    pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
+        use web_sys::console;
+        let blob = Box::new(BlobWrapper::new(input.clone()));
+        console::log_2(
+            &"JsScannerRepository.js_is_recognized() path:".into(),
+            &path.into(),
+        );
+        console::log_2(
+            &"JsScannerRepository.js_is_recognized() input pos:".into(),
+            &blob.get_pos().into(),
+        );
+
+        self.repo
+            .is_recognized(path, &mut (blob as Box<dyn SeekRead>))
+    }
+
+    #[wasm_bindgen(js_name = getReader)]
+    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
+        let blob = BlobWrapper::new(input.clone());
+        let input = SeekReadWrapper::new(blob);
+        let reader_result = self.repo.get_reader(path, Box::new(input));
+        match reader_result {
+            Ok(reader) => Ok(JsReader::new(reader)),
+            // Err(error) => Err(JsError::new(&error.to_string())),
+            Err(error) => Err(map_to_js_err(&error)),
+        }
+    }
+}
+
+// -------------------------------------------------
+// Utils
+// -------------------------------------------------
+
+/// Add JS wrapper functions to Scanner
+macro_rules! add_scanner_js {
+    ($scanner_name:ident) => {
+        #[cfg(target_family = "wasm")]
+        #[wasm_bindgen]
+        impl $scanner_name {
+            #[cfg(target_family = "wasm")]
+            #[wasm_bindgen(js_name = isRecognized)]
+            pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
+                let mut blob = BlobWrapper::new(input.clone());
+                Scanner::is_recognized(self, path, &mut blob)
+            }
+
+            #[cfg(target_family = "wasm")]
+            #[wasm_bindgen(js_name = getReader)]
+            pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
+                let blob = BlobWrapper::new(input.clone());
+                let reader_result = self.get_reader(path, blob);
+                match reader_result {
+                    Ok(reader) => Ok(JsReader::new(reader)),
+                    Err(error) => Err(JsError::new(&error.to_string())),
+                }
+            }
+        }
+    };
+}
+pub(crate) use add_scanner_js;
+
+/// Add JS wrapper functions to Reader
+macro_rules! add_reader_js {
+    ($struct_name:ident) => {
+        #[cfg(target_family = "wasm")]
+        #[wasm_bindgen]
+        impl $struct_name {
+            #[wasm_bindgen(js_name = read)]
+            pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
+                let read_result = Reader::read(self, path);
+                match read_result {
+                    Ok(node) => Ok(node),
+                    Err(error) => Err(JsError::new(&error.to_string())),
+                }
+            }
+        }
+    };
+}
+pub(crate) use add_reader_js;
+
+pub(crate) fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
+    let mut err_str = error.to_string();
+    let mut source = error.source();
+    while let Some(nested_err) = source {
+        err_str += "\n";
+        err_str += nested_err.to_string().as_str();
+        source = nested_err.source();
+    }
+    JsError::new(&err_str)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::{Parameter, Value};
+    use js_sys::Array;
+    use wasm_bindgen_test::*;
+    // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
+    // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
+    wasm_bindgen_test_configure!(run_in_worker);
+    // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    fn map_node_to_js() {
+        let node = Node {
+            name: "abc".to_owned(),
+            parameters: vec![Parameter {
+                key: "a".into(),
+                value: Value::String("b".into()),
+            }],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        };
+
+        let js_node = JsNode::from(node);
+
+        assert_eq!("abc", js_node.name());
+        let params = js_node.parameters();
+        assert_eq!(1, params.len());
+        let key = js_sys::Reflect::get(&params[0], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        let value = js_sys::Reflect::get(&params[0], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("a", key);
+        assert_eq!("b", value);
+    }
+
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    async fn blob_wrapper_mimicks_std_seek_read_behavior() {
+        let arr: [u8; 3] = [1, 2, 3];
+        let js_arr = Array::new();
+        // see: https://github.com/rustwasm/wasm-bindgen/issues/1693
+        js_arr.push(&Uint8Array::from(arr.as_slice()));
+        let blob = Blob::new_with_u8_array_sequence(&js_arr).unwrap();
+        assert_eq!(3, blob.size() as u64);
+        // use web_sys::console;
+        // console::log_1(&format!("arr: {:?}", arr).into());
+        let mut blob_wrapper = BlobWrapper::new(blob);
+        let mut buf = [0u8; 3];
+
+        // read whole blob
+        let read_len = blob_wrapper.read(&mut buf).unwrap();
+        assert_eq!(3, read_len);
+        assert_eq!(arr, buf);
+
+        // read past end
+        buf.fill(0);
+        let pos = blob_wrapper.seek(SeekFrom::Start(1)).unwrap();
+        assert_eq!(1, pos);
+        let read_len = blob_wrapper.read(&mut buf).unwrap();
+        assert_eq!(2, read_len);
+        assert_eq!([2, 3, 0], buf);
+
+        // seek beyond end and read
+        buf.fill(0);
+        let pos = blob_wrapper.seek(SeekFrom::Start(10)).unwrap();
+        assert_eq!(10, pos);
+        let read_len = blob_wrapper.read(&mut buf).unwrap();
+        assert_eq!(0, read_len);
+        assert_eq!([0, 0, 0], buf);
+
+        // seek from end
+        let pos = blob_wrapper.seek(SeekFrom::End(-1)).unwrap();
+        assert_eq!(2, pos);
+
+        // seek to negative position
+        let pos = blob_wrapper.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(0, pos);
+        let seek_err = blob_wrapper.seek(SeekFrom::Current(-1)).unwrap_err();
+        assert_eq!(std::io::ErrorKind::InvalidInput, seek_err.kind());
+        assert_eq!("Seek position out of bounds: -1", seek_err.to_string());
+    }
+}

@@ -6,6 +6,7 @@ pub mod api;
 pub mod common;
 pub mod spc;
 pub(crate) mod utils;
+pub mod bind;
 
 #[cfg(target_family = "wasm")]
 #[wasm_bindgen(start)]

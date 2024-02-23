@@ -1,25 +1,16 @@
-#[cfg(target_family = "wasm")]
-use crate::common::{BlobWrapper, JsReader};
+use super::{
+    andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader,
+    andi_ms_parser::AndiMsParser, andi_ms_reader::AndiMsReader, AndiError,
+};
 use crate::{
     api::{Reader, Scanner},
-    utils::{add_scanner_js, is_recognized_extension},
+    utils::is_recognized_extension,
 };
 use std::{
     error::Error,
     io::{Read, Seek},
 };
-use wasm_bindgen::prelude::wasm_bindgen;
-#[cfg(target_family = "wasm")]
-use wasm_bindgen::JsError;
-#[cfg(target_family = "wasm")]
-use web_sys::Blob;
 
-use super::{
-    andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader,
-    andi_ms_parser::AndiMsParser, andi_ms_reader::AndiMsReader, AndiError,
-};
-
-#[wasm_bindgen]
 #[derive(Default)]
 pub struct AndiScanner {}
 
@@ -30,15 +21,11 @@ impl AndiScanner {
     const MS_TEMPLATE_REVISION_ATTR: &'static str = "ms_template_revision";
 }
 
-#[wasm_bindgen]
 impl AndiScanner {
-    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self::default()
     }
 }
-
-add_scanner_js!(AndiScanner);
 
 impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
     fn is_recognized(&self, path: &str, input: &mut T) -> bool {

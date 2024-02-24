@@ -96,6 +96,7 @@ impl JsNode {
                 let column = js_sys::Object::new();
                 let set_col_key_ret =
                     js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
+                // TODO: make this "name" not "value"
                 let set_col_val_ret =
                     js_sys::Reflect::set(&column, &JsValue::from("value"), &value).unwrap();
                 if !set_col_key_ret || !set_col_val_ret {
@@ -308,7 +309,7 @@ impl JsScannerRepository {
 macro_rules! create_js_scanner {
     ($scanner_name:ident, $js_scanner_name:ident) => {
         #[wasm_bindgen(js_name = $scanner_name)]
-        struct $js_scanner_name {
+        pub struct $js_scanner_name {
             scanner: $scanner_name,
         }
 
@@ -346,7 +347,7 @@ macro_rules! create_js_reader {
     ($reader_name:ident, $js_reader_name:ident) => {
         // concat!("Js", $reader_name) does not seem to work for identifiers
         #[wasm_bindgen(js_name = $reader_name)]
-        struct $js_reader_name {
+        pub struct $js_reader_name {
             reader: $reader_name,
         }
 
@@ -379,13 +380,55 @@ pub(crate) fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::{Parameter, Value};
+    use crate::api::{Column, Parameter, PointXy, Scanner, Table, Value};
     use js_sys::Array;
+    use std::collections::HashMap;
     use wasm_bindgen_test::*;
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
-    // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
+    // some need to run in a worker and fail if this one is not set to run in a worker
     wasm_bindgen_test_configure!(run_in_worker);
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    struct StubReader {}
+    impl Reader for StubReader {
+        fn read(&self, _path: &str) -> Result<Node, Box<dyn Error>> {
+            Ok(Node {
+                name: "Node name".into(),
+                parameters: vec![
+                    Parameter {
+                        key: "Key 0".into(),
+                        value: Value::String("Value 0".into()),
+                    },
+                    Parameter {
+                        key: "Key 1".into(),
+                        value: Value::String("Value 1".into()),
+                    },
+                ],
+                data: vec![PointXy::new(1.0, 100.0), PointXy::new(2.0, 200.0)],
+                metadata: vec![("x.unit".into(), "X unit".into())],
+                table: Some(Table {
+                    column_names: vec![Column::new("Col key 0", "Col name 0")],
+                    rows: vec![HashMap::from([(
+                        "Col key 0".into(),
+                        Value::String("Cell value 0".into()),
+                    )])],
+                }),
+                child_node_names: vec!["Child node name 0".into(), "Child node name 1".into()],
+            })
+        }
+    }
+
+    #[derive(Default)]
+    struct StubScanner {}
+    impl<T: Seek + Read> Scanner<T> for StubScanner {
+        fn is_recognized(&self, _path: &str, _input: &mut T) -> bool {
+            true
+        }
+
+        fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
+            Ok(Box::new(StubReader {}))
+        }
+    }
 
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
@@ -464,5 +507,119 @@ mod tests {
         let seek_err = blob_wrapper.seek(SeekFrom::Current(-1)).unwrap_err();
         assert_eq!(std::io::ErrorKind::InvalidInput, seek_err.kind());
         assert_eq!("Seek position out of bounds: -1", seek_err.to_string());
+    }
+
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    fn js_scanner_calls_wrapped_scanner() {
+        create_js_scanner!(StubScanner, JsStubScanner);
+        let scanner = JsStubScanner::js_new();
+        let blob = Blob::new().unwrap();
+        assert!(scanner.js_is_recognized("some_path.xyz", &blob));
+    }
+
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    fn js_reader_calls_wrapped_reader() {
+        create_js_reader!(StubReader, JsStubReader);
+        let reader = JsStubReader {
+            reader: StubReader {},
+        };
+
+        let node = reader
+            .js_read("some_path.xyz")
+            .map_err(|_e| "Stub read failed.")
+            .unwrap();
+
+        assert_eq!("Node name", node.name());
+
+        let params = &node.parameters();
+        assert_eq!(2, params.len());
+        let key_0 = js_sys::Reflect::get(&params[0], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Key 0", key_0);
+        let value_0 = js_sys::Reflect::get(&params[0], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Value 0", value_0);
+        let key_1 = js_sys::Reflect::get(&params[1], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Key 1", key_1);
+        let value_1 = js_sys::Reflect::get(&params[1], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Value 1", value_1);
+
+        let data = &node.data();
+        assert_eq!(2, data.len());
+        let x_0 = js_sys::Reflect::get(&data[0], &JsValue::from("x"))
+            .unwrap()
+            .as_f64()
+            .unwrap();
+        assert_eq!(1.0, x_0);
+        let y_0 = js_sys::Reflect::get(&data[0], &JsValue::from("y"))
+            .unwrap()
+            .as_f64()
+            .unwrap();
+        assert_eq!(100.0, y_0);
+        let x_1 = js_sys::Reflect::get(&data[1], &JsValue::from("x"))
+            .unwrap()
+            .as_f64()
+            .unwrap();
+        assert_eq!(2.0, x_1);
+        let y_1 = js_sys::Reflect::get(&data[1], &JsValue::from("y"))
+            .unwrap()
+            .as_f64()
+            .unwrap();
+        assert_eq!(200.0, y_1);
+
+        let metadata = &node.metadata();
+        let metadata_value = js_sys::Reflect::get(&metadata, &JsValue::from("x.unit"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("X unit", metadata_value);
+
+        let table = &node.table();
+        let column_names = js_sys::Reflect::get(&table, &JsValue::from("columnNames")).unwrap();
+        let columns = js_sys::Array::from(&column_names);
+        assert_eq!(1, columns.length());
+        let column_0 = columns.get(0);
+        let column_key_0 = js_sys::Reflect::get(&column_0, &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Col key 0", column_key_0);
+        let column_name_0 = js_sys::Reflect::get(&column_0, &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Col name 0", column_name_0);
+        let table_rows = js_sys::Reflect::get(&table, &JsValue::from("rows")).unwrap();
+        let rows = js_sys::Array::from(&table_rows);
+        assert_eq!(1, rows.length());
+        let row_0 = rows.get(0);
+        let cell_value_0 = js_sys::Reflect::get(&row_0, &JsValue::from("Col key 0"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("Cell value 0", cell_value_0);
+
+        let child_node_names = &node.child_node_names();
+        assert_eq!(2, data.len());
+        assert_eq!(
+            "Child node name 0",
+            &child_node_names[0].as_string().unwrap()
+        );
+        assert_eq!(
+            "Child node name 1",
+            &child_node_names[1].as_string().unwrap()
+        );
     }
 }

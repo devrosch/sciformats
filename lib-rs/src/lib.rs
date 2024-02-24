@@ -1,12 +1,11 @@
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::prelude::wasm_bindgen;
-
 pub mod andi;
 pub mod api;
+pub mod bind;
 pub mod common;
 pub mod spc;
 pub(crate) mod utils;
-pub mod bind;
 
 #[cfg(target_family = "wasm")]
 #[wasm_bindgen(start)]

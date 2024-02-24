@@ -1,75 +1,39 @@
+use super::{create_js_reader, create_js_scanner};
 use crate::{
     api::{Reader, Scanner},
     bind::wasm::{BlobWrapper, JsNode, JsReader},
-    spc::{spc_reader::{SpcReaderNewFormat, SpcReaderOldFormat}, spc_scanner::SpcScanner},
+    spc::{
+        spc_reader::{SpcReaderNewFormat, SpcReaderOldFormat},
+        spc_scanner::SpcScanner,
+    },
 };
 use wasm_bindgen::{prelude::wasm_bindgen, JsError};
 use web_sys::Blob;
 
-#[wasm_bindgen(js_name = SpcScanner)]
-struct JsSpcScanner {
-    scanner: SpcScanner,
-}
+create_js_scanner!(SpcScanner, JsSpcScanner);
+create_js_reader!(SpcReaderNewFormat, JsSpcReaderNewFormat);
+create_js_reader!(SpcReaderOldFormat, JsSpcReaderOldFormat);
 
-#[wasm_bindgen]
-impl JsSpcScanner {
-    #[wasm_bindgen(constructor)]
-    pub fn js_new() -> Self {
-        Self {
-            scanner: SpcScanner::default(),
-        }
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use js_sys::{Array, Uint8Array};
+    use wasm_bindgen_test::*;
+    // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
+    // even though this test does not need to run in a worker, other unit tests do and fail if this one is not set to run in a worker
+    wasm_bindgen_test_configure!(run_in_worker);
+    // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-#[wasm_bindgen]
-impl JsSpcScanner {
-    #[wasm_bindgen(js_name = isRecognized)]
-    pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
-        let mut blob = BlobWrapper::new(input.clone());
-        self.scanner.is_recognized(path, &mut blob)
-    }
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    fn js_scanner_test() {
+        let arr: [u8; 3] = [1, 2, 3];
+        let js_arr = Array::new();
+        // see: https://github.com/rustwasm/wasm-bindgen/issues/1693
+        js_arr.push(&Uint8Array::from(arr.as_slice()));
+        let blob = Blob::new_with_u8_array_sequence(&js_arr).unwrap();
 
-    #[wasm_bindgen(js_name = getReader)]
-    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
-        let blob = BlobWrapper::new(input.clone());
-        let reader_result = self.scanner.get_reader(path, blob);
-        match reader_result {
-            Ok(reader) => Ok(JsReader::new(reader)),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
-    }
-}
-
-#[wasm_bindgen]
-struct JsSpcReaderNewFormat {
-    reader: SpcReaderNewFormat,
-}
-
-#[wasm_bindgen]
-impl JsSpcReaderNewFormat {
-    #[wasm_bindgen(js_name = read)]
-    pub fn js_read(&self, path: &str) -> Result<JsNode, JsError> {
-        let read_result = self.reader.read(path);
-        match read_result {
-            Ok(node) => Ok(node.into()),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
-    }
-}
-
-#[wasm_bindgen]
-struct JsSpcReaderOldFormat {
-    reader: SpcReaderOldFormat,
-}
-
-#[wasm_bindgen]
-impl JsSpcReaderOldFormat {
-    #[wasm_bindgen(js_name = read)]
-    pub fn js_read(&self, path: &str) -> Result<JsNode, JsError> {
-        let read_result = self.reader.read(path);
-        match read_result {
-            Ok(node) => Ok(node.into()),
-            Err(error) => Err(JsError::new(&error.to_string())),
-        }
+        let scanner = JsSpcScanner::js_new();
+        assert!(!scanner.js_is_recognized("some.spc", &blob))
     }
 }

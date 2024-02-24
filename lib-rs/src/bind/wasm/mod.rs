@@ -304,24 +304,33 @@ impl JsScannerRepository {
 // Utils
 // -------------------------------------------------
 
-/// Add JS wrapper functions to Scanner
-macro_rules! add_scanner_js {
-    ($scanner_name:ident) => {
-        #[cfg(target_family = "wasm")]
-        #[wasm_bindgen]
-        impl $scanner_name {
-            #[cfg(target_family = "wasm")]
+/// Create JS wrapper for Scanner
+macro_rules! create_js_scanner {
+    ($scanner_name:ident, $js_scanner_name:ident) => {
+        #[wasm_bindgen(js_name = $scanner_name)]
+        struct $js_scanner_name {
+            scanner: $scanner_name,
+        }
+
+        #[wasm_bindgen(js_class = $scanner_name)]
+        impl $js_scanner_name {
+            #[wasm_bindgen(constructor)]
+            pub fn js_new() -> Self {
+                Self {
+                    scanner: $scanner_name::default(),
+                }
+            }
+
             #[wasm_bindgen(js_name = isRecognized)]
             pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
                 let mut blob = BlobWrapper::new(input.clone());
-                Scanner::is_recognized(self, path, &mut blob)
+                self.scanner.is_recognized(path, &mut blob)
             }
 
-            #[cfg(target_family = "wasm")]
             #[wasm_bindgen(js_name = getReader)]
             pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
                 let blob = BlobWrapper::new(input.clone());
-                let reader_result = self.get_reader(path, blob);
+                let reader_result = self.scanner.get_reader(path, blob);
                 match reader_result {
                     Ok(reader) => Ok(JsReader::new(reader)),
                     Err(error) => Err(JsError::new(&error.to_string())),
@@ -330,26 +339,31 @@ macro_rules! add_scanner_js {
         }
     };
 }
-pub(crate) use add_scanner_js;
+pub(crate) use create_js_scanner;
 
-/// Add JS wrapper functions to Reader
-macro_rules! add_reader_js {
-    ($struct_name:ident) => {
-        #[cfg(target_family = "wasm")]
-        #[wasm_bindgen]
-        impl $struct_name {
+/// Create JS wrapper for Reader
+macro_rules! create_js_reader {
+    ($reader_name:ident, $js_reader_name:ident) => {
+        // concat!("Js", $reader_name) does not seem to work for identifiers
+        #[wasm_bindgen(js_name = $reader_name)]
+        struct $js_reader_name {
+            reader: $reader_name,
+        }
+
+        #[wasm_bindgen(js_class = $reader_name)]
+        impl $js_reader_name {
             #[wasm_bindgen(js_name = read)]
-            pub fn js_read(&self, path: &str) -> Result<Node, JsError> {
-                let read_result = Reader::read(self, path);
+            pub fn js_read(&self, path: &str) -> Result<JsNode, JsError> {
+                let read_result = self.reader.read(path);
                 match read_result {
-                    Ok(node) => Ok(node),
+                    Ok(node) => Ok(node.into()),
                     Err(error) => Err(JsError::new(&error.to_string())),
                 }
             }
         }
     };
 }
-pub(crate) use add_reader_js;
+pub(crate) use create_js_reader;
 
 pub(crate) fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
     let mut err_str = error.to_string();

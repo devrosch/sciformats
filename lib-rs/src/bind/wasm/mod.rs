@@ -162,7 +162,7 @@ impl JsReader {
         match read_result {
             Ok(node) => Ok(JsNode::from(node)),
             // Err(error) => Err(JsError::new(&error.to_string())),
-            Err(error) => Err(map_to_js_err(&error)),
+            Err(error) => Err(map_to_js_err(&*error)),
         }
     }
 }
@@ -296,7 +296,7 @@ impl JsScannerRepository {
         match reader_result {
             Ok(reader) => Ok(JsReader::new(reader)),
             // Err(error) => Err(JsError::new(&error.to_string())),
-            Err(error) => Err(map_to_js_err(&error)),
+            Err(error) => Err(map_to_js_err(&*error)),
         }
     }
 }
@@ -366,8 +366,7 @@ macro_rules! create_js_reader {
 }
 pub(crate) use create_js_reader;
 
-#[allow(clippy::borrowed_box)]
-pub(crate) fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
+pub(crate) fn map_to_js_err(error: &dyn Error) -> JsError {
     let mut err_str = error.to_string();
     let mut source = error.source();
     while let Some(nested_err) = source {

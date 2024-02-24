@@ -366,6 +366,7 @@ macro_rules! create_js_reader {
 }
 pub(crate) use create_js_reader;
 
+#[allow(clippy::borrowed_box)]
 pub(crate) fn map_to_js_err(error: &Box<dyn Error>) -> JsError {
     let mut err_str = error.to_string();
     let mut source = error.source();

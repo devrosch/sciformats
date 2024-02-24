@@ -3,7 +3,7 @@ use crate::{
     api::{Reader, Scanner},
     bind::wasm::{BlobWrapper, JsNode, JsReader},
     spc::{
-        spc_reader::{SpcReaderNewFormat, SpcReaderOldFormat},
+        spc_reader::{SpcNewFormatReader, SpcOldFormatReader},
         spc_scanner::SpcScanner,
     },
 };
@@ -11,8 +11,8 @@ use wasm_bindgen::{prelude::wasm_bindgen, JsError};
 use web_sys::Blob;
 
 create_js_scanner!(SpcScanner, JsSpcScanner);
-create_js_reader!(SpcReaderNewFormat, JsSpcReaderNewFormat);
-create_js_reader!(SpcReaderOldFormat, JsSpcReaderOldFormat);
+create_js_reader!(SpcNewFormatReader, JsSpcNewFormatReader);
+create_js_reader!(SpcOldFormatReader, JsSpcOldFormatReader);
 
 #[cfg(test)]
 mod tests {

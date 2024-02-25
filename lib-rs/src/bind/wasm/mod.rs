@@ -12,6 +12,19 @@ use wasm_bindgen::{JsError, JsValue};
 use web_sys::{Blob, FileReaderSync};
 
 // -------------------------------------------------
+// Log library name and version on startup
+// -------------------------------------------------
+
+#[wasm_bindgen(start)]
+pub fn start() {
+    use web_sys::console;
+
+    const NAME: &str = env!("CARGO_PKG_NAME");
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    console::log_1(&format!("Rust: {} {} loaded", NAME, VERSION).into());
+}
+
+// -------------------------------------------------
 // API
 // -------------------------------------------------
 

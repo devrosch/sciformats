@@ -170,14 +170,14 @@ impl JsReader {
 // -------------------------------------------------
 
 #[derive(Clone)]
-pub struct BlobWrapper {
+pub struct BlobSeekRead {
     blob: Blob,
     pos: u64,
 }
 
-impl BlobWrapper {
-    pub fn new(blob: Blob) -> BlobWrapper {
-        BlobWrapper { blob, pos: 0 }
+impl BlobSeekRead {
+    pub fn new(blob: Blob) -> BlobSeekRead {
+        Self { blob, pos: 0 }
     }
 
     pub fn get_pos(&self) -> u64 {
@@ -185,7 +185,7 @@ impl BlobWrapper {
     }
 }
 
-impl Seek for BlobWrapper {
+impl Seek for BlobSeekRead {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
         fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
             // use web_sys::console;
@@ -220,7 +220,7 @@ impl Seek for BlobWrapper {
     }
 }
 
-impl Read for BlobWrapper {
+impl Read for BlobSeekRead {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
             // use web_sys::console;
@@ -272,7 +272,7 @@ impl JsScannerRepository {
     #[wasm_bindgen(js_name = isRecognized)]
     pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
         use web_sys::console;
-        let blob = Box::new(BlobWrapper::new(input.clone()));
+        let blob = Box::new(BlobSeekRead::new(input.clone()));
         console::log_2(
             &"JsScannerRepository.js_is_recognized() path:".into(),
             &path.into(),
@@ -288,7 +288,7 @@ impl JsScannerRepository {
 
     #[wasm_bindgen(js_name = getReader)]
     pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
-        let blob = BlobWrapper::new(input.clone());
+        let blob = BlobSeekRead::new(input.clone());
         let input = SeekReadWrapper::new(blob);
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
@@ -321,13 +321,13 @@ macro_rules! create_js_scanner {
 
             #[wasm_bindgen(js_name = isRecognized)]
             pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
-                let mut blob = BlobWrapper::new(input.clone());
+                let mut blob = BlobSeekRead::new(input.clone());
                 self.scanner.is_recognized(path, &mut blob)
             }
 
             #[wasm_bindgen(js_name = getReader)]
             pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
-                let blob = BlobWrapper::new(input.clone());
+                let blob = BlobSeekRead::new(input.clone());
                 let reader_result = self.scanner.get_reader(path, blob);
                 match reader_result {
                     Ok(reader) => Ok(JsReader::from(reader)),
@@ -470,7 +470,7 @@ mod tests {
         assert_eq!(3, blob.size() as u64);
         // use web_sys::console;
         // console::log_1(&format!("arr: {:?}", arr).into());
-        let mut blob_wrapper = BlobWrapper::new(blob);
+        let mut blob_wrapper = BlobSeekRead::new(blob);
         let mut buf = [0u8; 3];
 
         // read whole blob

@@ -4,7 +4,7 @@ use crate::{
         andi_chrom_reader::AndiChromReader, andi_ms_reader::AndiMsReader, andi_scanner::AndiScanner,
     },
     api::{Reader, Scanner},
-    bind::wasm::{BlobWrapper, JsNode, JsReader},
+    bind::wasm::{BlobSeekRead, JsNode, JsReader},
 };
 use wasm_bindgen::{prelude::wasm_bindgen, JsError};
 use web_sys::Blob;

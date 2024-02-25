@@ -145,8 +145,7 @@ impl JsNode {
         js_table
     }
 
-    #[wasm_bindgen(getter)]
-    #[wasm_bindgen(js_name = childNodeNames)]
+    #[wasm_bindgen(getter, js_name = childNodeNames)]
     pub fn child_node_names(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.node.child_node_names {

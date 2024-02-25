@@ -1,4 +1,4 @@
-import { AndiScanner, JsReader } from 'sf_rs';
+import { AndiScanner, Reader } from 'sf_rs';
 import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerRsInternalUtils from './WorkerRsInternalUtils';
 import WorkerRequest from './WorkerRequest';
@@ -11,7 +11,7 @@ const rootUrl = new URL(`file:///${uuid}/${filename}`);
 const nodeName = 'x';
 const url = new URL(`file:///${uuid}/${filename}#/${nodeName}`);
 
-const mockReader: JsReader = {
+const mockReader: Reader = {
   read: jest.fn(() => ({
     name: nodeName,
     parameters: [],
@@ -85,7 +85,7 @@ test('onScan() returns error for illegal input', async () => {
 test('onOpen() uses Scanner to populate openFiles map', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
   const mockScanner = new AndiScanner();
-  const openFiles = new Map<string, JsReader>();
+  const openFiles = new Map<string, Reader>();
 
   const response = WorkerRsInternalUtils.onOpen(
     requestStub,
@@ -113,7 +113,7 @@ test('onOpen() returns error if exception occurs', async () => {
     getReader: jest.fn(() => { throw new Error('getReader() error'); }),
     free: jest.fn(),
   };
-  const openFiles = new Map<string, JsReader>();
+  const openFiles = new Map<string, Reader>();
 
   const response = WorkerRsInternalUtils.onOpen(
     requestStub,
@@ -127,7 +127,7 @@ test('onOpen() returns error if exception occurs', async () => {
 
 test('onRead() uses openFiles to read node', async () => {
   const requestStub = new WorkerRequest('read', '123', workerFileUrlStub);
-  const openFiles = new Map<string, JsReader>();
+  const openFiles = new Map<string, Reader>();
   openFiles.set(rootUrl.toString(), mockReader);
 
   const response = WorkerRsInternalUtils.onRead(
@@ -144,7 +144,7 @@ test('onRead() uses openFiles to read node', async () => {
 
 test('onRead() returns error if file not open', async () => {
   const requestStub = new WorkerRequest('read', '123', workerFileUrlStub);
-  const openFiles = new Map<string, JsReader>();
+  const openFiles = new Map<string, Reader>();
 
   const response = WorkerRsInternalUtils.onRead(
     requestStub,
@@ -157,7 +157,7 @@ test('onRead() returns error if file not open', async () => {
 
 test('onClose() removes file from openFiles map', async () => {
   const requestStub = new WorkerRequest('close', '123', workerFileUrlStub);
-  const openFiles = new Map<string, JsReader>();
+  const openFiles = new Map<string, Reader>();
   openFiles.set(rootUrl.toString(), mockReader);
 
   const response = WorkerRsInternalUtils.onClose(
@@ -178,7 +178,7 @@ test('onClose() removes file from openFiles map', async () => {
 
 test('onClose() also succeeds if file not open', async () => {
   const requestStub = new WorkerRequest('close', '123', workerFileUrlStub);
-  const openFiles = new Map<string, JsReader>();
+  const openFiles = new Map<string, Reader>();
 
   const response = WorkerRsInternalUtils.onClose(
     requestStub,

@@ -30,7 +30,7 @@ const extractFromRequest = (request: WorkerRequest) => {
 
 export const onScan = (
   request: WorkerRequest,
-  scanner: sf_rs.JsScannerRepository,
+  scanner: sf_rs.ScannerRepository,
 ) => errorHandlingWrapper(request, () => {
   const { fileInfo, fileName } = extractFromRequest(request);
   const recognized = scanner.isRecognized(fileName, fileInfo.blob);
@@ -39,8 +39,8 @@ export const onScan = (
 
 export const onOpen = (
   request: WorkerRequest,
-  scanner: sf_rs.JsScannerRepository,
-  openFiles: Map<string, sf_rs.JsReader>,
+  scanner: sf_rs.ScannerRepository,
+  openFiles: Map<string, sf_rs.Reader>,
 ) => errorHandlingWrapper(request, () => {
   const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
   const reader = scanner.getReader(fileName, fileInfo.blob);
@@ -50,7 +50,7 @@ export const onOpen = (
 
 export const onRead = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_rs.JsReader>,
+  openFiles: Map<string, sf_rs.Reader>,
 ) => errorHandlingWrapper(request, () => {
   const { url, rootUrl } = extractFromRequest(request);
   const reader = openFiles.get(rootUrl.toString());
@@ -74,7 +74,7 @@ export const onRead = (
 
 export const onClose = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_rs.JsReader>,
+  openFiles: Map<string, sf_rs.Reader>,
 ) => errorHandlingWrapper(request, () => {
   const fileUrl = request.detail as WorkerFileUrl;
   const url = new URL(fileUrl.url);

@@ -15,7 +15,7 @@ use web_sys::{Blob, FileReaderSync};
 // API
 // -------------------------------------------------
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = Node)]
 pub struct JsNode {
     node: Node,
 }
@@ -26,7 +26,7 @@ impl From<Node> for JsNode {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Node)]
 impl JsNode {
     #[wasm_bindgen(getter)]
     pub fn name(&self) -> String {
@@ -143,7 +143,7 @@ impl JsNode {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = Reader)]
 pub struct JsReader {
     reader: Box<dyn Reader>,
 }
@@ -154,7 +154,7 @@ impl From<Box<dyn Reader>> for JsReader {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = Reader)]
 impl JsReader {
     pub fn read(&self, path: &str) -> Result<JsNode, JsError> {
         let read_result = self.reader.read(path);
@@ -256,12 +256,12 @@ impl Read for BlobWrapper {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = ScannerRepository)]
 pub struct JsScannerRepository {
     repo: ScannerRepository,
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_class = ScannerRepository)]
 impl JsScannerRepository {
     #[wasm_bindgen(constructor)]
     pub fn init_all() -> JsScannerRepository {

@@ -104,21 +104,21 @@ impl Default for ScannerRepository {
 // Wrappers
 // -------------------------------------------------
 
-pub struct SeekReadWrapper<T: Seek + Read> {
+pub struct BufSeekRead<T: Seek + Read> {
     input: BufReader<T>,
     pos: u64,
 }
 
-impl<T: Seek + Read> SeekReadWrapper<T> {
+impl<T: Seek + Read> BufSeekRead<T> {
     pub fn new(raw_input: T) -> Self {
-        SeekReadWrapper {
+        Self {
             input: BufReader::new(raw_input),
             pos: 0,
         }
     }
 }
 
-impl<T: Seek + Read> Seek for SeekReadWrapper<T> {
+impl<T: Seek + Read> Seek for BufSeekRead<T> {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
         match pos {
             SeekFrom::Current(offset) => {
@@ -143,7 +143,7 @@ impl<T: Seek + Read> Seek for SeekReadWrapper<T> {
     }
 }
 
-impl<T: Seek + Read> Read for SeekReadWrapper<T> {
+impl<T: Seek + Read> Read for BufSeekRead<T> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let num_read = self.input.read(buf)?;
         self.pos += num_read as u64;
@@ -156,7 +156,7 @@ mod tests {
     use super::*;
     use crate::{
         api::{Node, Reader, Scanner},
-        common::{SeekRead, SeekReadWrapper},
+        common::{BufSeekRead, SeekRead},
     };
     use std::{
         error::Error,
@@ -221,41 +221,41 @@ mod tests {
     }
 
     #[test]
-    fn seek_read_wrapper_mimicks_std_seek_read_behavior() {
+    fn buf_seek_read_mimicks_std_seek_read_behavior() {
         let arr: [u8; 3] = [1, 2, 3];
         let mut buf = [0u8; 3];
         let input = Cursor::new(arr);
-        let mut seek_read_wrapper = SeekReadWrapper::new(input);
+        let mut buf_seek_read = BufSeekRead::new(input);
 
         // read whole input
-        let read_len = seek_read_wrapper.read(&mut buf).unwrap();
+        let read_len = buf_seek_read.read(&mut buf).unwrap();
         assert_eq!(3, read_len);
         assert_eq!(arr, buf);
 
         // read past end
         buf.fill(0);
-        let pos = seek_read_wrapper.seek(SeekFrom::Start(1)).unwrap();
+        let pos = buf_seek_read.seek(SeekFrom::Start(1)).unwrap();
         assert_eq!(1, pos);
-        let read_len = seek_read_wrapper.read(&mut buf).unwrap();
+        let read_len = buf_seek_read.read(&mut buf).unwrap();
         assert_eq!(2, read_len);
         assert_eq!([2, 3, 0], buf);
 
         // seek beyond end and read
         buf.fill(0);
-        let pos = seek_read_wrapper.seek(SeekFrom::Start(10)).unwrap();
+        let pos = buf_seek_read.seek(SeekFrom::Start(10)).unwrap();
         assert_eq!(10, pos);
-        let read_len = seek_read_wrapper.read(&mut buf).unwrap();
+        let read_len = buf_seek_read.read(&mut buf).unwrap();
         assert_eq!(0, read_len);
         assert_eq!([0, 0, 0], buf);
 
         // seek from end
-        let pos = seek_read_wrapper.seek(SeekFrom::End(-1)).unwrap();
+        let pos = buf_seek_read.seek(SeekFrom::End(-1)).unwrap();
         assert_eq!(2, pos);
 
         // seek to negative position
-        let pos = seek_read_wrapper.seek(SeekFrom::Start(0)).unwrap();
+        let pos = buf_seek_read.seek(SeekFrom::Start(0)).unwrap();
         assert_eq!(0, pos);
-        let seek_err = seek_read_wrapper.seek(SeekFrom::Current(-1)).unwrap_err();
+        let seek_err = buf_seek_read.seek(SeekFrom::Current(-1)).unwrap_err();
         assert_eq!(std::io::ErrorKind::InvalidInput, seek_err.kind());
     }
 

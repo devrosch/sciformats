@@ -1,7 +1,7 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use super::open_files;
-use sf_rs::common::{ScannerRepository, SeekRead, SeekReadWrapper};
+use sf_rs::common::{BufSeekRead, ScannerRepository, SeekRead};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 open_files!(
@@ -50,11 +50,11 @@ fn scanner_repository_returns_error_for_valid_file() {
 
 #[wasm_bindgen_test]
 #[test]
-fn seek_read_wrapper_allows_valid_file_reading() {
+fn buf_seek_read_allows_valid_file_reading() {
     let repo = ScannerRepository::init_all();
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
-    let seek_read_wrapper = SeekReadWrapper::new(file);
-    let input: Box<dyn SeekRead> = Box::new(seek_read_wrapper);
+    let buf_seek_read = BufSeekRead::new(file);
+    let input: Box<dyn SeekRead> = Box::new(buf_seek_read);
     let reader = repo.get_reader(&path, input).unwrap();
     assert!(reader.read("/").is_ok());
 }

@@ -2,7 +2,7 @@ pub mod andi;
 pub mod spc;
 
 use crate::api::{Node, Reader};
-use crate::common::{ScannerRepository, SeekRead, SeekReadWrapper};
+use crate::common::{BufSeekRead, ScannerRepository, SeekRead};
 use js_sys::Uint8Array;
 use std::error::Error;
 use std::io::SeekFrom;
@@ -301,7 +301,7 @@ impl JsScannerRepository {
     #[wasm_bindgen(js_name = getReader)]
     pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
         let blob = BlobSeekRead::new(input.clone());
-        let input = SeekReadWrapper::new(blob);
+        let input = BufSeekRead::new(blob);
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
             Ok(reader) => Ok(JsReader::from(reader)),

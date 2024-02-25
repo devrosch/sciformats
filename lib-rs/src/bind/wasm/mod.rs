@@ -22,7 +22,7 @@ pub struct JsNode {
 
 impl From<Node> for JsNode {
     fn from(value: Node) -> Self {
-        JsNode { node: value }
+        Self { node: value }
     }
 }
 
@@ -148,10 +148,9 @@ pub struct JsReader {
     reader: Box<dyn Reader>,
 }
 
-// TODO: implement From trait instead
-impl JsReader {
-    pub fn new(reader: Box<dyn Reader>) -> Self {
-        JsReader { reader }
+impl From<Box<dyn Reader>> for JsReader {
+    fn from(value: Box<dyn Reader>) -> Self {
+        Self { reader: value }
     }
 }
 
@@ -294,8 +293,7 @@ impl JsScannerRepository {
         let input = SeekReadWrapper::new(blob);
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
-            Ok(reader) => Ok(JsReader::new(reader)),
-            // Err(error) => Err(JsError::new(&error.to_string())),
+            Ok(reader) => Ok(JsReader::from(reader)),
             Err(error) => Err(map_to_js_err(&*error)),
         }
     }
@@ -333,7 +331,7 @@ macro_rules! create_js_scanner {
                 let blob = BlobWrapper::new(input.clone());
                 let reader_result = self.scanner.get_reader(path, blob);
                 match reader_result {
-                    Ok(reader) => Ok(JsReader::new(reader)),
+                    Ok(reader) => Ok(JsReader::from(reader)),
                     Err(error) => Err(JsError::new(&error.to_string())),
                 }
             }

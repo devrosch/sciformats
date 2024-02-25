@@ -160,7 +160,6 @@ impl JsReader {
         let read_result = self.reader.read(path);
         match read_result {
             Ok(node) => Ok(JsNode::from(node)),
-            // Err(error) => Err(JsError::new(&error.to_string())),
             Err(error) => Err(map_to_js_err(&*error)),
         }
     }
@@ -332,7 +331,7 @@ macro_rules! create_js_scanner {
                 let reader_result = self.scanner.get_reader(path, blob);
                 match reader_result {
                     Ok(reader) => Ok(JsReader::from(reader)),
-                    Err(error) => Err(JsError::new(&error.to_string())),
+                    Err(error) => Err(map_to_js_err(&*error)),
                 }
             }
         }
@@ -356,7 +355,7 @@ macro_rules! create_js_reader {
                 let read_result = self.reader.read(path);
                 match read_result {
                     Ok(node) => Ok(node.into()),
-                    Err(error) => Err(JsError::new(&error.to_string())),
+                    Err(error) => Err(map_to_js_err(&*error)),
                 }
             }
         }

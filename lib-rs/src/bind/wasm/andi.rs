@@ -1,4 +1,4 @@
-use super::{create_js_reader, create_js_scanner};
+use super::{create_js_reader, create_js_scanner, map_to_js_err};
 use crate::{
     andi::{
         andi_chrom_reader::AndiChromReader, andi_ms_reader::AndiMsReader, andi_scanner::AndiScanner,

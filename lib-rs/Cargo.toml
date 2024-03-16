@@ -14,6 +14,7 @@ netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
 strum = { version = "0.26", features = ["derive"] }
 binrw = "0.13"
 chrono = "0.4"
+quick-xml = "0.31.0"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

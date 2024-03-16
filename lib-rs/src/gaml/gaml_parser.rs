@@ -1,0 +1,211 @@
+use super::gaml_utils::{get_attributes, get_opt_attr, get_req_attr, skip_whitespace};
+use super::GamlError;
+use crate::api::Parser;
+use quick_xml::events::Event;
+use quick_xml::reader::Reader;
+use std::io::{BufRead, BufReader, Read, Seek};
+use std::str;
+
+pub struct GamlParser {}
+
+impl<T: Seek + Read + 'static> Parser<T> for GamlParser {
+    type R = Gaml;
+    type E = GamlError;
+
+    fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
+        let buf_reader = BufReader::new(input);
+        let reader = Reader::from_reader(buf_reader);
+        Self::R::new(name, reader)
+    }
+}
+
+pub struct Gaml {
+    // Attributes
+    pub version: String,
+    pub name: Option<String>,
+    // Elements
+    pub integrity: Option<Integrity>,
+    pub parameters: Vec<Parameter>,
+}
+
+impl Gaml {
+    pub fn new<R: BufRead>(_name: &str, mut reader: Reader<R>) -> Result<Self, GamlError> {
+        let mut buf = Vec::new();
+
+        // skip <?xml> element
+        let _e0 = reader.read_event_into(&mut buf);
+        let _e1 = reader.read_event_into(&mut buf);
+
+        let (version, name) = match reader.read_event_into(&mut buf) {
+            Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
+            Ok(Event::Start(e)) => match e.name().as_ref() {
+                b"GAML" => {
+                    let attr_map = get_attributes(&e, &reader);
+                    let version = get_req_attr("version", &attr_map)?;
+                    let name = get_opt_attr("name", &attr_map);
+
+                    Ok((version, name))
+                }
+                tag_name => Err(GamlError::new(&format!(
+                    "Unexpected tag: {:?}",
+                    str::from_utf8(tag_name)
+                ))),
+            },
+            Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+        }?;
+
+        let next_evt = skip_whitespace(&mut reader, &mut buf);
+        let start_event = match next_evt {
+            Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
+            Ok(Event::Start(e)) => Ok(e),
+            Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+        }?;
+
+        let integrity = if start_event.name().as_ref() == b"integrity" {
+            let attr_map = get_attributes(&start_event, &reader);
+            let algorithm = get_req_attr("algorithm", &attr_map)?;
+
+            let value = match reader.read_event_into(&mut buf) {
+                Ok(Event::Text(e)) => Ok(e.unescape()?.into_owned()),
+                Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+                Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
+            }?;
+
+            Some(Integrity { algorithm, value })
+        } else {
+            None
+        };
+        // skip integrity end event
+        let _ = reader.read_event_into(&mut buf);
+
+        let param_0 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+        let param_1 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+        let param_2 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+
+        let parameters: Vec<Parameter> = vec![param_0, param_1, param_2];
+        // parameters.push(param_0);
+        // parameters.push(param_1);
+        // parameters.push(param_2);
+
+        Ok(Self {
+            version,
+            name,
+            integrity,
+            parameters,
+        })
+    }
+}
+
+pub struct Integrity {
+    // Attributes
+    pub algorithm: String,
+    // Content
+    pub value: String,
+}
+
+// impl Integrity {
+//     pub fn new<R: BufRead>(bytes_start: &BytesStart, mut reader: Reader<R>) -> Result<Self, GamlError> {
+
+//     }
+// }
+
+pub struct Parameter {
+    // Attributes
+    pub group: Option<String>,
+    pub name: String,
+    pub label: Option<String>,
+    pub alias: Option<String>,
+    // Content
+    pub value: String,
+}
+
+impl Parameter {
+    pub fn new<R: BufRead>(event: Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
+        match event {
+            Event::Start(e) => match e.name().as_ref() {
+                b"parameter" => {
+                    let attr_map = get_attributes(&e, reader);
+                    let group = get_opt_attr("group", &attr_map);
+                    let name = get_req_attr("name", &attr_map)?;
+                    let label = get_opt_attr("label", &attr_map);
+                    let alias = get_opt_attr("alias", &attr_map);
+
+                    let mut buf = Vec::new();
+                    let value = match reader.read_event_into(&mut buf) {
+                        Ok(Event::Text(e)) => Ok(e.unescape()?.into_owned()),
+                        Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+                        Err(e) => Err(GamlError::from_source(e, "Error reading Parameter.")),
+                    }?;
+
+                    // read end event
+                    let _ = match reader.read_event_into(&mut buf) {
+                        Ok(Event::End(_e)) => match e.name().as_ref() {
+                            b"parameter" => Ok(()),
+                            _ => Err(GamlError::new(&format!(
+                                "Unexpected end event instead of Parameter end: {:?}",
+                                &e
+                            ))),
+                        },
+                        Ok(e) => Err(GamlError::new(&format!(
+                            "Unexpected event instead of Parameter end: {:?}",
+                            &e
+                        ))),
+                        Err(e) => Err(GamlError::from_source(e, "Error reading Parameter.")),
+                    };
+
+                    Ok(Parameter {
+                        group,
+                        name,
+                        label,
+                        alias,
+                        value,
+                    })
+                }
+                tag_name => Err(GamlError::new(&format!(
+                    "Unexpected tag instead of \"Parameter\": {:?}",
+                    str::from_utf8(tag_name)
+                ))),
+            },
+            e => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn parsing_simple_gaml_succeeds() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+                        <GAML version="1.20" name="Gaml test file">
+                            <integrity algorithm="SHA1">03cfd743661f07975fa2f1220c5194cbaff48451</integrity>
+                            <parameter name="parameter0" label="Parameter label 0" group="Parameter group 0">Parameter value 0</parameter>
+                            <parameter name="parameter1" label="Parameter label 1" group="Parameter group 1">Parameter value 1</parameter>
+                            <parameter name="parameter2" label="Parameter label 2" group="Parameter group 2">Parameter value 2</parameter>
+                        </GAML>"#;
+        let cursor = Cursor::new(xml);
+
+        let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
+
+        assert_eq!("1.20", gaml.version);
+        assert_eq!(Some("Gaml test file".into()), gaml.name);
+        let integrity = &gaml.integrity.unwrap();
+        assert_eq!("SHA1", integrity.algorithm);
+        let parameters = &gaml.parameters;
+        assert_eq!(3, parameters.len());
+        assert_eq!("parameter0", &parameters[0].name);
+        assert_eq!(Some("Parameter label 0".into()), parameters[0].label);
+        assert_eq!(Some("Parameter group 0".into()), parameters[0].group);
+        assert_eq!("Parameter value 0", &parameters[0].value);
+        assert_eq!("parameter1", &parameters[1].name);
+        assert_eq!(Some("Parameter label 1".into()), parameters[1].label);
+        assert_eq!(Some("Parameter group 1".into()), parameters[1].group);
+        assert_eq!("Parameter value 1", &parameters[1].value);
+        assert_eq!("parameter2", &parameters[2].name);
+        assert_eq!(Some("Parameter label 2".into()), parameters[2].label);
+        assert_eq!(Some("Parameter group 2".into()), parameters[2].group);
+        assert_eq!("Parameter value 2", &parameters[2].value);
+    }
+}

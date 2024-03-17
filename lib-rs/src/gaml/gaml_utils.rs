@@ -48,24 +48,19 @@ pub fn skip_whitespace<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
 ) -> Result<Event<'b>, GamlError> {
-    let event: Result<Event<'_>, quick_xml::Error> = reader.read_event_into(buf);
-    // skip whitespace
-    match event {
-        Err(e) => Err(GamlError::from_source(e, "Error skipping whitespace.")),
-        Ok(Event::Text(ws)) => match ws.unescape()?.trim().is_empty() {
-            true => Ok(()),
-            false => Err(GamlError::new(&format!(
-                "Unexpected text instead of whitespace: {:?}",
-                &ws
-            ))),
-        },
-        Ok(e) => Err(GamlError::new(&format!(
-            "Unexpected event instead of whitespace: {:?}",
-            &e
-        ))),
-    }?;
-    // return event following the whitespace
-    reader
-        .read_event_into(buf)
-        .map_err(|e| GamlError::from_source(e, "Error reading next event after whitespace."))
+    // TODO: more efficient way than to call e.into_owned()?
+    let mut event: Result<Event<'_>, quick_xml::Error> =
+        reader.read_event_into(buf).map(|e| e.into_owned());
+
+    let is_ws = match &event {
+        Err(_) => false,
+        Ok(Event::Text(ws)) => ws.unescape()?.trim().is_empty(),
+        Ok(_) => false,
+    };
+
+    if is_ws {
+        event = reader.read_event_into(buf);
+    }
+
+    event.map_err(|e| GamlError::from_source(e, "Error skipping whitespace."))
 }

@@ -64,3 +64,47 @@ pub fn skip_whitespace<'b, R: BufRead>(
 
     event.map_err(|e| GamlError::from_source(e, "Error skipping whitespace."))
 }
+
+pub fn read_value<'b, R: BufRead>(
+    reader: &mut Reader<R>,
+    mut buf: &'b mut Vec<u8>,
+) -> Result<(String, Event<'b>), GamlError> {
+    let value = match reader.read_event_into(&mut buf) {
+        Ok(Event::Text(e)) => Ok(e.unescape()?.into_owned()),
+        Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+        Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
+    }?;
+
+    let ret = (
+        value,
+        reader.read_event_into(&mut buf).map(|e| e.into_owned())?,
+    );
+
+    Ok(ret)
+}
+
+pub fn read_start<'b, R: BufRead>(
+    tag_name: &[u8],
+    reader: &mut Reader<R>,
+    mut buf: &'b mut Vec<u8>,
+) -> Result<BytesStart<'b>, GamlError> {
+    // TODO: make efficient
+    let event = reader.read_event_into(&mut buf).map(|e| e.into_owned())?;
+    match event {
+        Event::Start(e) => {
+            let name = e.name().as_ref().to_owned();
+            if name == tag_name {
+                Ok(e)
+            } else {
+                Err(GamlError::new(&format!(
+                    "Unexpected start tag: {:?}",
+                    std::str::from_utf8(&name)
+                )))
+            }
+        }
+        e => Err(GamlError::new(&format!(
+            "Unexpected event instead of start tag: {:?}",
+            &e
+        ))),
+    }
+}

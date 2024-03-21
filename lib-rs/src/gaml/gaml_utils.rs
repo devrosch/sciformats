@@ -108,3 +108,32 @@ pub fn read_start<'b, R: BufRead>(
         ))),
     }
 }
+
+pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
+    match event {
+        Event::End(e) => {
+            let name = e.name().as_ref().to_owned();
+            if name == tag_name {
+                Ok(())
+            } else {
+                Err(GamlError::new(&format!(
+                    "Unexpected end tag: {:?}",
+                    std::str::from_utf8(&name)
+                )))
+            }
+        }
+        e => Err(GamlError::new(&format!(
+            "Unexpected event instead of end tag: {:?}",
+            &e
+        ))),
+    }
+}
+
+pub fn consume_end<'b, R: BufRead>(
+    tag_name: &[u8],
+    reader: &mut Reader<R>,
+    mut buf: &'b mut Vec<u8>,
+) -> Result<(), GamlError> {
+    let event = reader.read_event_into(&mut buf)?;
+    Ok(check_end(tag_name, &event)?)
+}

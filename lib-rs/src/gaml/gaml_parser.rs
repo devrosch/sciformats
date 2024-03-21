@@ -1,4 +1,6 @@
-use super::gaml_utils::{get_attributes, get_opt_attr, get_req_attr, read_start, read_value, skip_whitespace};
+use super::gaml_utils::{
+    check_end, get_attributes, get_opt_attr, get_req_attr, read_start, read_value, skip_whitespace,
+};
 use super::GamlError;
 use crate::api::Parser;
 use quick_xml::events::Event;
@@ -30,22 +32,22 @@ pub struct Gaml {
 
 impl Gaml {
     pub fn new<R: BufRead>(_name: &str, mut reader: Reader<R>) -> Result<Self, GamlError> {
+        const TAG: &[u8] = b"GAML";
         let mut buf = Vec::new();
 
         // skip <?xml> element
         let _e0 = reader.read_event_into(&mut buf);
         let _e1 = reader.read_event_into(&mut buf);
 
-        let start_tag = read_start(b"GAML", &mut reader, &mut buf)?;
+        let start_tag = read_start(TAG, &mut reader, &mut buf)?;
         let attr_map = get_attributes(&start_tag, &reader);
         let version = get_req_attr("version", &attr_map)?;
         let name = get_opt_attr("name", &attr_map);
 
-        let next_event = skip_whitespace(&mut reader, &mut buf);
+        let mut next_event = skip_whitespace(&mut reader, &mut buf)?;
         let start_event = match next_event {
-            Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
-            Ok(Event::Start(e)) => Ok(e),
-            Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
+            Event::Start(e) => Ok(e),
+            e => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
         }?;
 
         let integrity = if start_event.name().as_ref() == b"integrity" {
@@ -58,13 +60,14 @@ impl Gaml {
         } else {
             None
         };
-        // skip integrity end event
-        let _ = reader.read_event_into(&mut buf);
 
         let param_0 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
         let param_1 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
         let param_2 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
         let parameters: Vec<Parameter> = vec![param_0, param_1, param_2];
+
+        next_event = skip_whitespace(&mut reader, &mut buf)?;
+        let _ = check_end(TAG, &next_event);
 
         Ok(Self {
             version,
@@ -103,9 +106,10 @@ impl Parameter {
         event: Event<'_>,
         mut reader: &mut Reader<R>,
     ) -> Result<Self, GamlError> {
+        const TAG: &[u8] = b"parameter";
         match event {
             Event::Start(e) => match e.name().as_ref() {
-                b"parameter" => {
+                TAG => {
                     let attr_map = get_attributes(&e, reader);
                     let group = get_opt_attr("group", &attr_map);
                     let name = get_req_attr("name", &attr_map)?;
@@ -115,20 +119,7 @@ impl Parameter {
                     let mut buf = Vec::new();
                     let (value, next_elem) = read_value(&mut reader, &mut buf)?;
 
-                    // read end event
-                    let _ = match next_elem {
-                        Event::End(_e) => match e.name().as_ref() {
-                            b"parameter" => Ok(()),
-                            _ => Err(GamlError::new(&format!(
-                                "Unexpected end event instead of Parameter end: {:?}",
-                                &e
-                            ))),
-                        },
-                        e => Err(GamlError::new(&format!(
-                            "Unexpected event instead of Parameter end: {:?}",
-                            &e
-                        ))),
-                    };
+                    check_end(TAG, &next_elem)?;
 
                     Ok(Parameter {
                         group,

@@ -3,6 +3,7 @@ use super::gaml_utils::{
 };
 use super::GamlError;
 use crate::api::Parser;
+use crate::gaml::gaml_utils::read_opt_elem;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::io::{BufRead, BufReader, Read, Seek};
@@ -44,17 +45,8 @@ impl Gaml {
         let version = get_req_attr("version", &attr_map)?;
         let name = get_opt_attr("name", &attr_map);
 
-        // todo: simplify reading optional elements
         let mut next_event = skip_whitespace(&mut reader, &mut buf)?;
-        let start_event = match &next_event {
-            Event::Start(e) => Ok(e),
-            e => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
-        }?;
-        let integrity = if start_event.name().as_ref() == b"integrity" {
-            Some(Integrity::new(next_event, &mut reader)?)
-        } else {
-            None
-        };
+        let integrity = read_opt_elem(b"integrity", &next_event, &mut reader, &Integrity::new)?;
 
         let param_0 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
         let param_1 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
@@ -81,12 +73,12 @@ pub struct Integrity {
 }
 
 impl Integrity {
-    pub fn new<R: BufRead>(event: Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
+    pub fn new<R: BufRead>(event: &Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
         const TAG: &[u8] = b"integrity";
         match event {
             Event::Start(e) => match e.name().as_ref() {
                 TAG => {
-                    let attr_map = get_attributes(&e, reader);
+                    let attr_map = get_attributes(e, reader);
                     let algorithm = get_req_attr("algorithm", &attr_map)?;
                     let mut buf = Vec::new();
                     let (value, next_elem) = read_value(reader, &mut buf)?;

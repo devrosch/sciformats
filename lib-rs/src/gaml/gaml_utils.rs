@@ -1,11 +1,10 @@
+use super::GamlError;
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
     Reader,
 };
 use std::{collections::HashMap, io::BufRead};
-
-use super::GamlError;
 
 pub fn get_attributes<'a, R>(
     bytes_start: &'a BytesStart<'a>,
@@ -133,4 +132,54 @@ pub fn consume_end<R: BufRead>(
 ) -> Result<(), GamlError> {
     let event = reader.read_event_into(buf)?;
     check_end(tag_name, &event)
+}
+
+pub fn read_req_elem<'b, R: BufRead, T>(
+    tag_name: &[u8],
+    next_event: &Event<'b>,
+    reader: &mut Reader<R>,
+    constructor: &dyn Fn(&Event<'_>, &mut Reader<R>) -> Result<T, GamlError>,
+) -> Result<T, GamlError> {
+    match next_event {
+        Event::Start(e) => {
+            let name = e.name().as_ref().to_owned();
+            if name == tag_name {
+                let elem = constructor(next_event, reader)?;
+                Ok(elem)
+            } else {
+                Err(GamlError::new(&format!(
+                    "Unexpected start tag: {:?}",
+                    std::str::from_utf8(&name)
+                )))
+            }
+        }
+        e => Err(GamlError::new(&format!(
+            "Unexpected event instead of start tag: {:?}",
+            &e
+        ))),
+    }
+}
+
+pub fn read_opt_elem<'b, R: BufRead, T>(
+    tag_name: &[u8],
+    next_event: &Event<'b>,
+    reader: &mut Reader<R>,
+    constructor: &dyn Fn(&Event<'_>, &mut Reader<R>) -> Result<T, GamlError>,
+) -> Result<Option<T>, GamlError> {
+    match next_event {
+        Event::Start(e) => {
+            let name = e.name().as_ref().to_owned();
+            if name == tag_name {
+                Ok(Some(read_req_elem(
+                    tag_name,
+                    next_event,
+                    reader,
+                    constructor,
+                )?))
+            } else {
+                Ok(None)
+            }
+        }
+        _ => Ok(None),
+    }
 }

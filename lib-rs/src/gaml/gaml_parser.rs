@@ -67,7 +67,7 @@ impl Gaml {
         let parameters: Vec<Parameter> = vec![param_0, param_1, param_2];
 
         next_event = skip_whitespace(&mut reader, &mut buf)?;
-        let _ = check_end(TAG, &next_event);
+        let _ = check_end(TAG, &next_event)?;
 
         Ok(Self {
             version,

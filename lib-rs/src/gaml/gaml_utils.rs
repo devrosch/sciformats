@@ -67,18 +67,15 @@ pub fn skip_whitespace<'b, R: BufRead>(
 
 pub fn read_value<'b, R: BufRead>(
     reader: &mut Reader<R>,
-    mut buf: &'b mut Vec<u8>,
+    buf: &'b mut Vec<u8>,
 ) -> Result<(String, Event<'b>), GamlError> {
-    let value = match reader.read_event_into(&mut buf) {
+    let value = match reader.read_event_into(buf) {
         Ok(Event::Text(e)) => Ok(e.unescape()?.into_owned()),
         Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
         Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
     }?;
 
-    let ret = (
-        value,
-        reader.read_event_into(&mut buf).map(|e| e.into_owned())?,
-    );
+    let ret = (value, reader.read_event_into(buf).map(|e| e.into_owned())?);
 
     Ok(ret)
 }
@@ -86,10 +83,10 @@ pub fn read_value<'b, R: BufRead>(
 pub fn read_start<'b, R: BufRead>(
     tag_name: &[u8],
     reader: &mut Reader<R>,
-    mut buf: &'b mut Vec<u8>,
+    buf: &'b mut Vec<u8>,
 ) -> Result<BytesStart<'b>, GamlError> {
     // TODO: make efficient
-    let event = reader.read_event_into(&mut buf).map(|e| e.into_owned())?;
+    let event = reader.read_event_into(buf).map(|e| e.into_owned())?;
     match event {
         Event::Start(e) => {
             let name = e.name().as_ref().to_owned();
@@ -129,11 +126,11 @@ pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
     }
 }
 
-pub fn consume_end<'b, R: BufRead>(
+pub fn consume_end<R: BufRead>(
     tag_name: &[u8],
     reader: &mut Reader<R>,
-    mut buf: &'b mut Vec<u8>,
+    buf: &mut Vec<u8>,
 ) -> Result<(), GamlError> {
-    let event = reader.read_event_into(&mut buf)?;
-    Ok(check_end(tag_name, &event)?)
+    let event = reader.read_event_into(buf)?;
+    check_end(tag_name, &event)
 }

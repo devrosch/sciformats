@@ -4,7 +4,22 @@ use quick_xml::{
     name::QName,
     Reader,
 };
-use std::{collections::HashMap, io::BufRead};
+use std::{collections::HashMap, io::BufRead, str};
+
+pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
+    if let Event::Start(e) = event {
+        if e.name().as_ref() != tag {
+            return Err(GamlError::new(&format!(
+                "Unexpected tag instead of \"{}\": {:?}",
+                str::from_utf8(tag).unwrap_or_default(),
+                str::from_utf8(e.name().as_ref())
+            )));
+        }
+        Ok(e)
+    } else {
+        Err(GamlError::new(&format!("Unexpected event: {:?}", event)))
+    }
+}
 
 pub fn get_attributes<'a, R>(
     bytes_start: &'a BytesStart<'a>,
@@ -88,26 +103,6 @@ pub fn read_value<'b, R: BufRead>(
     let ret = (value, reader.read_event_into(buf).map(|e| e.into_owned())?);
 
     Ok(ret)
-}
-
-pub fn read_start<'b>(tag_name: &[u8], event: Event<'b>) -> Result<BytesStart<'b>, GamlError> {
-    match event {
-        Event::Start(e) => {
-            let name = e.name().as_ref().to_owned();
-            if name == tag_name {
-                Ok(e)
-            } else {
-                Err(GamlError::new(&format!(
-                    "Unexpected start tag: {:?}",
-                    std::str::from_utf8(&name)
-                )))
-            }
-        }
-        e => Err(GamlError::new(&format!(
-            "Unexpected event instead of start tag: {:?}",
-            &e
-        ))),
-    }
 }
 
 pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {

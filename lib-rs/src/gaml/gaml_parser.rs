@@ -1,9 +1,9 @@
 use super::gaml_utils::{
-    check_end, get_attributes, get_opt_attr, get_req_attr, read_start, read_value, skip_whitespace,
+    check_end, get_attributes, get_opt_attr, get_req_attr, read_opt_elem, read_start, read_value,
+    skip_whitespace, skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
-use crate::gaml::gaml_utils::{read_opt_elem, skip_xml_decl};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::io::{BufRead, BufReader, Read, Seek};
@@ -32,28 +32,29 @@ pub struct Gaml {
 }
 
 impl Gaml {
+    const TAG: &'static [u8] = b"GAML";
+
     pub fn new<R: BufRead>(_name: &str, mut reader: Reader<R>) -> Result<Self, GamlError> {
-        const TAG: &[u8] = b"GAML";
         let mut buf = Vec::new();
 
         // skip <?xml> element
         let start_event = skip_xml_decl(&mut reader, &mut buf)?;
 
-        let start_tag = read_start(TAG, start_event)?;
-        let attr_map = get_attributes(&start_tag, &reader);
+        let start = read_start(Self::TAG, &start_event)?;
+        let attr_map = get_attributes(start, &reader);
         let version = get_req_attr("version", &attr_map)?;
         let name = get_opt_attr("name", &attr_map);
 
         let mut next_event = skip_whitespace(&mut reader, &mut buf)?;
         let integrity = read_opt_elem(b"integrity", &next_event, &mut reader, &Integrity::new)?;
 
-        let param_0 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
-        let param_1 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
-        let param_2 = Parameter::new(skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+        let param_0 = Parameter::new(&skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+        let param_1 = Parameter::new(&skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+        let param_2 = Parameter::new(&skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
         let parameters: Vec<Parameter> = vec![param_0, param_1, param_2];
 
         next_event = skip_whitespace(&mut reader, &mut buf)?;
-        check_end(TAG, &next_event)?;
+        check_end(Self::TAG, &next_event)?;
 
         Ok(Self {
             version,
@@ -72,26 +73,19 @@ pub struct Integrity {
 }
 
 impl Integrity {
+    const TAG: &'static [u8] = b"integrity";
+
     pub fn new<R: BufRead>(event: &Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
-        const TAG: &[u8] = b"integrity";
-        match event {
-            Event::Start(e) => match e.name().as_ref() {
-                TAG => {
-                    let attr_map = get_attributes(e, reader);
-                    let algorithm = get_req_attr("algorithm", &attr_map)?;
-                    let mut buf = Vec::new();
-                    let (value, next_elem) = read_value(reader, &mut buf)?;
-                    check_end(TAG, &next_elem)?;
-                    Ok(Self { algorithm, value })
-                }
-                tag_name => Err(GamlError::new(&format!(
-                    "Unexpected tag instead of \"{}\": {:?}",
-                    str::from_utf8(TAG).unwrap_or_default(),
-                    str::from_utf8(tag_name)
-                ))),
-            },
-            e => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
-        }
+        let start = read_start(Self::TAG, event)?;
+
+        let attr_map = get_attributes(start, reader);
+        let algorithm = get_req_attr("algorithm", &attr_map)?;
+
+        let mut buf = Vec::new();
+        let (value, next_elem) = read_value(reader, &mut buf)?;
+        check_end(Self::TAG, &next_elem)?;
+
+        Ok(Self { algorithm, value })
     }
 }
 
@@ -106,38 +100,29 @@ pub struct Parameter {
 }
 
 impl Parameter {
-    pub fn new<R: BufRead>(event: Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
-        const TAG: &[u8] = b"parameter";
-        match event {
-            Event::Start(e) => match e.name().as_ref() {
-                TAG => {
-                    let attr_map = get_attributes(&e, reader);
-                    let group = get_opt_attr("group", &attr_map);
-                    let name = get_req_attr("name", &attr_map)?;
-                    let label = get_opt_attr("label", &attr_map);
-                    let alias = get_opt_attr("alias", &attr_map);
+    const TAG: &'static [u8] = b"parameter";
 
-                    let mut buf = Vec::new();
-                    let (value, next_elem) = read_value(reader, &mut buf)?;
+    pub fn new<R: BufRead>(event: &Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
 
-                    check_end(TAG, &next_elem)?;
+        let attr_map = get_attributes(start, reader);
+        let group = get_opt_attr("group", &attr_map);
+        let name = get_req_attr("name", &attr_map)?;
+        let label = get_opt_attr("label", &attr_map);
+        let alias = get_opt_attr("alias", &attr_map);
 
-                    Ok(Parameter {
-                        group,
-                        name,
-                        label,
-                        alias,
-                        value,
-                    })
-                }
-                tag_name => Err(GamlError::new(&format!(
-                    "Unexpected tag instead of \"{}\": {:?}",
-                    str::from_utf8(TAG).unwrap_or_default(),
-                    str::from_utf8(tag_name)
-                ))),
-            },
-            e => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
-        }
+        let mut buf = Vec::new();
+        let (value, next_elem) = read_value(reader, &mut buf)?;
+
+        check_end(Self::TAG, &next_elem)?;
+
+        Ok(Parameter {
+            group,
+            name,
+            label,
+            alias,
+            value,
+        })
     }
 }
 

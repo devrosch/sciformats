@@ -134,11 +134,14 @@ pub fn consume_end<R: BufRead>(
     check_end(tag_name, &event)
 }
 
-pub fn read_req_elem<'b, R: BufRead, T>(
+type ElemConstructor<'r, R, T> =
+    &'r (dyn Fn(&Event<'r>, &'r mut Reader<R>) -> Result<T, GamlError>);
+
+pub fn read_req_elem<'r, R: BufRead + 'r, T>(
     tag_name: &[u8],
-    next_event: &Event<'b>,
-    reader: &mut Reader<R>,
-    constructor: &dyn Fn(&Event<'_>, &mut Reader<R>) -> Result<T, GamlError>,
+    next_event: &Event<'r>,
+    reader: &'r mut Reader<R>,
+    constructor: ElemConstructor<'r, R, T>,
 ) -> Result<T, GamlError> {
     match next_event {
         Event::Start(e) => {
@@ -160,11 +163,11 @@ pub fn read_req_elem<'b, R: BufRead, T>(
     }
 }
 
-pub fn read_opt_elem<'b, R: BufRead, T>(
+pub fn read_opt_elem<'r, R: BufRead + 'r, T>(
     tag_name: &[u8],
-    next_event: &Event<'b>,
-    reader: &mut Reader<R>,
-    constructor: &dyn Fn(&Event<'_>, &mut Reader<R>) -> Result<T, GamlError>,
+    next_event: &Event<'r>,
+    reader: &'r mut Reader<R>,
+    constructor: ElemConstructor<'r, R, T>,
 ) -> Result<Option<T>, GamlError> {
     match next_event {
         Event::Start(e) => {

@@ -3,7 +3,7 @@ use super::gaml_utils::{
 };
 use super::GamlError;
 use crate::api::Parser;
-use crate::gaml::gaml_utils::read_opt_elem;
+use crate::gaml::gaml_utils::{read_opt_elem, skip_xml_decl};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::io::{BufRead, BufReader, Read, Seek};
@@ -37,10 +37,9 @@ impl Gaml {
         let mut buf = Vec::new();
 
         // skip <?xml> element
-        let _e0 = reader.read_event_into(&mut buf);
-        let _e1 = reader.read_event_into(&mut buf);
+        let start_event = skip_xml_decl(&mut reader, &mut buf)?;
 
-        let start_tag = read_start(TAG, &mut reader, &mut buf)?;
+        let start_tag = read_start(TAG, start_event)?;
         let attr_map = get_attributes(&start_tag, &reader);
         let version = get_req_attr("version", &attr_map)?;
         let name = get_opt_attr("name", &attr_map);

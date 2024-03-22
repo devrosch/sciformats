@@ -43,6 +43,17 @@ pub fn get_opt_attr<'a>(
         .map(|name| name.clone().into_owned())
 }
 
+pub fn skip_xml_decl<'b, R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &'b mut Vec<u8>,
+) -> Result<Event<'b>, GamlError> {
+    let event = skip_whitespace(reader, buf).map(|e| e.into_owned())?;
+    match &event {
+        Event::Decl(_) => skip_whitespace(reader, buf),
+        _ => Ok(event),
+    }
+}
+
 pub fn skip_whitespace<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
@@ -79,13 +90,7 @@ pub fn read_value<'b, R: BufRead>(
     Ok(ret)
 }
 
-pub fn read_start<'b, R: BufRead>(
-    tag_name: &[u8],
-    reader: &mut Reader<R>,
-    buf: &'b mut Vec<u8>,
-) -> Result<BytesStart<'b>, GamlError> {
-    // TODO: make efficient
-    let event = reader.read_event_into(buf).map(|e| e.into_owned())?;
+pub fn read_start<'b>(tag_name: &[u8], event: Event<'b>) -> Result<BytesStart<'b>, GamlError> {
     match event {
         Event::Start(e) => {
             let name = e.name().as_ref().to_owned();

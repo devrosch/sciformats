@@ -86,7 +86,7 @@ impl Integrity {
                 }
                 tag_name => Err(GamlError::new(&format!(
                     "Unexpected tag instead of \"{}\": {:?}",
-                    str::from_utf8(TAG).unwrap(),
+                    str::from_utf8(TAG).unwrap_or_default(),
                     str::from_utf8(tag_name)
                 ))),
             },
@@ -132,7 +132,7 @@ impl Parameter {
                 }
                 tag_name => Err(GamlError::new(&format!(
                     "Unexpected tag instead of \"{}\": {:?}",
-                    str::from_utf8(TAG).unwrap(),
+                    str::from_utf8(TAG).unwrap_or_default(),
                     str::from_utf8(tag_name)
                 ))),
             },

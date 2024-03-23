@@ -48,9 +48,21 @@ impl Gaml {
         let mut next_event = skip_whitespace(&mut reader, &mut buf)?;
         let integrity = read_opt_elem(b"integrity", &next_event, &mut reader, &Integrity::new)?;
 
-        let param_0 = Parameter::new(&skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
-        let param_1 = Parameter::new(&skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
-        let param_2 = Parameter::new(&skip_whitespace(&mut reader, &mut buf)?, &mut reader)?;
+        let param_0 = Parameter::new(
+            &skip_whitespace(&mut reader, &mut buf)?,
+            &mut reader,
+            &mut buf,
+        )?;
+        let param_1 = Parameter::new(
+            &skip_whitespace(&mut reader, &mut buf)?,
+            &mut reader,
+            &mut buf,
+        )?;
+        let param_2 = Parameter::new(
+            &skip_whitespace(&mut reader, &mut buf)?,
+            &mut reader,
+            &mut buf,
+        )?;
         let parameters: Vec<Parameter> = vec![param_0, param_1, param_2];
 
         next_event = skip_whitespace(&mut reader, &mut buf)?;
@@ -102,7 +114,11 @@ pub struct Parameter {
 impl Parameter {
     const TAG: &'static [u8] = b"parameter";
 
-    pub fn new<R: BufRead>(event: &Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
+    pub fn new<'e, 'b: 'e, R: BufRead>(
+        event: &'e Event<'b>,
+        reader: &mut Reader<R>,
+        buf: &'b mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
         let start = read_start(Self::TAG, event)?;
 
         let attr_map = get_attributes(start, reader);
@@ -111,8 +127,8 @@ impl Parameter {
         let label = get_opt_attr("label", &attr_map);
         let alias = get_opt_attr("alias", &attr_map);
 
-        let mut buf = Vec::new();
-        let (value, next_elem) = read_value(reader, &mut buf)?;
+        // let mut buf = Vec::new();
+        let (value, next_elem) = read_value(reader, buf)?;
 
         check_end(Self::TAG, &next_elem)?;
 

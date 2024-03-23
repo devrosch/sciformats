@@ -69,25 +69,24 @@ pub fn skip_xml_decl<'b, R: BufRead>(
     }
 }
 
-pub fn skip_whitespace<'b, R: BufRead>(
+pub fn skip_whitespace<R: BufRead>(
     reader: &mut Reader<R>,
-    buf: &'b mut Vec<u8>,
-) -> Result<Event<'b>, GamlError> {
-    // TODO: more efficient way than to call e.into_owned()?
-    let mut event: Result<Event<'_>, quick_xml::Error> =
-        reader.read_event_into(buf).map(|e| e.into_owned());
-
-    let is_ws = match &event {
-        Err(_) => false,
-        Ok(Event::Text(ws)) => ws.unescape()?.trim().is_empty(),
-        Ok(_) => false,
-    };
-
-    if is_ws {
-        event = reader.read_event_into(buf);
+    buf: &mut Vec<u8>,
+) -> Result<Event<'static>, GamlError> {
+    loop {
+        let event: Event<'_> = reader.read_event_into(buf)?;
+        match event {
+            Event::Text(bytes) => {
+                if !bytes.unescape()?.trim().is_empty() {
+                    // TODO: more efficient way than to call into_owned()?
+                    return Ok(Event::Text(bytes.into_owned()));
+                };
+            }
+            Event::Comment(_) => (),
+            // TODO: more efficient way than to call into_owned()?
+            any_other => return Ok(any_other.into_owned()),
+        }
     }
-
-    event.map_err(|e| GamlError::from_source(e, "Error skipping whitespace."))
 }
 
 pub fn read_value<'b, R: BufRead>(
@@ -186,3 +185,20 @@ pub fn read_opt_elem<'r, R: BufRead + 'r, T>(
         _ => Ok(None),
     }
 }
+
+// pub fn read_sequence<'r, R: BufRead + 'r, T>(
+//     tag_name: &[u8],
+//     next_event: Event<'r>,
+//     reader: &'r mut Reader<R>,
+//     constructor: ElemConstructor<'r, R, T>,
+// ) -> Result<(Vec<T>, Event<'static>), GamlError> {
+
+//     let mut ret = vec![];
+//     loop {
+//         match read_opt_elem(tag_name, &next_event, reader, constructor)? {
+//             None => return Ok((ret, next_event.into_owned())),
+//             Some(elem) => ret.push(elem),
+//         }
+
+//     }
+// }

@@ -1,10 +1,10 @@
-use super::GamlError;
+use super::{gaml_parser::Parameter, GamlError};
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
     Reader,
 };
-use std::{collections::HashMap, io::BufRead, str};
+use std::{collections::HashMap, io::BufRead, str, vec};
 
 pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
     if let Event::Start(e) = event {
@@ -89,6 +89,23 @@ pub fn skip_whitespace<R: BufRead>(
     }
 }
 
+pub fn next_non_whitespace<'r, R: BufRead + 'r>(
+    event: Event<'r>,
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+) -> Result<Event<'r>, GamlError> {
+    let is_ws = match &event {
+        Event::Text(bytes) => bytes.unescape()?.trim().is_empty(),
+        Event::Comment(_) => true,
+        _ => false,
+    };
+
+    match is_ws {
+        true => skip_whitespace(reader, buf),
+        false => Ok(event),
+    }
+}
+
 pub fn read_value<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
@@ -133,21 +150,24 @@ pub fn consume_end<R: BufRead>(
     check_end(tag_name, &event)
 }
 
-type ElemConstructor<'r, R, T> =
-    &'r (dyn Fn(&Event<'r>, &'r mut Reader<R>) -> Result<T, GamlError>);
+type ElemConstructor<'f, R, T> =
+    &'f (dyn Fn(&Event<'_>, &mut Reader<R>, &mut Vec<u8>) -> Result<T, GamlError>);
 
-pub fn read_req_elem<'r, R: BufRead + 'r, T>(
+pub fn read_req_elem<'reader, 'buf, 'f, R: BufRead + 'buf, T>(
     tag_name: &[u8],
-    next_event: &Event<'r>,
-    reader: &'r mut Reader<R>,
-    constructor: ElemConstructor<'r, R, T>,
-) -> Result<T, GamlError> {
+    next_event: Event<'_>,
+    reader: &'reader mut Reader<R>,
+    buf: &'buf mut Vec<u8>,
+    constructor: ElemConstructor<R, T>,
+) -> Result<(T, Event<'buf>), GamlError> {
     match next_event {
         Event::Start(e) => {
             let name = e.name().as_ref().to_owned();
             if name == tag_name {
-                let elem = constructor(next_event, reader)?;
-                Ok(elem)
+                let evt = Event::Start(e);
+                let elem = constructor(&evt, reader, buf)?;
+                let next = reader.read_event_into(buf)?;
+                Ok((elem, next))
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected start tag: {:?}",
@@ -162,43 +182,48 @@ pub fn read_req_elem<'r, R: BufRead + 'r, T>(
     }
 }
 
-pub fn read_opt_elem<'r, R: BufRead + 'r, T>(
+pub fn read_opt_elem<'buf, 'reader, 'f, R: BufRead + 'buf, T>(
     tag_name: &[u8],
-    next_event: &Event<'r>,
-    reader: &'r mut Reader<R>,
-    constructor: ElemConstructor<'r, R, T>,
-) -> Result<Option<T>, GamlError> {
+    next_event: Event<'buf>,
+    reader: &'reader mut Reader<R>,
+    buf: &'buf mut Vec<u8>,
+    constructor: ElemConstructor<'f, R, T>,
+) -> Result<(Option<T>, Event<'buf>), GamlError> {
     match next_event {
         Event::Start(e) => {
             let name = e.name().as_ref().to_owned();
             if name == tag_name {
-                Ok(Some(read_req_elem(
-                    tag_name,
-                    next_event,
-                    reader,
-                    constructor,
-                )?))
+                let (elem, next) =
+                    read_req_elem(tag_name, Event::Start(e), reader, buf, constructor)?;
+                Ok((Some(elem), next))
             } else {
-                Ok(None)
+                Ok((None, Event::Start(e)))
             }
         }
-        _ => Ok(None),
+        e => Ok((None, e)),
     }
 }
 
-// pub fn read_sequence<'r, R: BufRead + 'r, T>(
-//     tag_name: &[u8],
-//     next_event: Event<'r>,
-//     reader: &'r mut Reader<R>,
-//     constructor: ElemConstructor<'r, R, T>,
-// ) -> Result<(Vec<T>, Event<'static>), GamlError> {
-
-//     let mut ret = vec![];
-//     loop {
-//         match read_opt_elem(tag_name, &next_event, reader, constructor)? {
-//             None => return Ok((ret, next_event.into_owned())),
-//             Some(elem) => ret.push(elem),
-//         }
-
-//     }
-// }
+pub fn read_params<'e, 'r: 'e, R: BufRead + 'r>(
+    tag_name: &[u8],
+    mut next_event: Event<'e>,
+    reader: &'r mut Reader<R>,
+) -> Result<(Vec<Parameter>, Event<'r>), GamlError> {
+    let mut ret = vec![];
+    let mut buf = vec![];
+    loop {
+        match next_event {
+            Event::Start(ref bytes) => {
+                let name = bytes.name().as_ref().to_owned();
+                if name == tag_name {
+                    let param = Parameter::new(&next_event, reader, &mut buf)?;
+                    ret.push(param);
+                    next_event = skip_whitespace(reader, &mut buf)?;
+                } else {
+                    return Ok((ret, Event::Start(bytes.to_owned())));
+                }
+            }
+            any_other => return Ok((ret, any_other.into_owned())),
+        }
+    }
+}

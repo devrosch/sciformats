@@ -1,6 +1,6 @@
 use super::gaml_utils::{
-    check_end, get_attributes, get_opt_attr, get_req_attr, read_opt_elem, read_start, read_value,
-    skip_whitespace, skip_xml_decl,
+    check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_opt_elem,
+    read_params, read_start, read_value, skip_whitespace, skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
@@ -38,35 +38,23 @@ impl Gaml {
         let mut buf = Vec::new();
 
         // skip <?xml> element
-        let start_event = skip_xml_decl(&mut reader, &mut buf)?;
+        let next = skip_xml_decl(&mut reader, &mut buf)?;
 
-        let start = read_start(Self::TAG, &start_event)?;
+        // attributes
+        let start = read_start(Self::TAG, &next)?;
         let attr_map = get_attributes(start, &reader);
         let version = get_req_attr("version", &attr_map)?;
         let name = get_opt_attr("name", &attr_map);
+        let next = skip_whitespace(&mut reader, &mut buf)?;
 
-        let mut next_event = skip_whitespace(&mut reader, &mut buf)?;
-        let integrity = read_opt_elem(b"integrity", &next_event, &mut reader, &Integrity::new)?;
+        // nested elements
+        let (integrity, next) =
+            read_opt_elem(b"integrity", next, &mut reader, &mut buf, &Integrity::new)?;
+        let next = next_non_whitespace(next.into_owned(), &mut reader, &mut buf)?;
+        let (parameters, next) = read_params(b"parameter", next, &mut reader)?;
+        let next = next_non_whitespace(next.into_owned(), &mut reader, &mut buf)?;
 
-        let param_0 = Parameter::new(
-            &skip_whitespace(&mut reader, &mut buf)?,
-            &mut reader,
-            &mut buf,
-        )?;
-        let param_1 = Parameter::new(
-            &skip_whitespace(&mut reader, &mut buf)?,
-            &mut reader,
-            &mut buf,
-        )?;
-        let param_2 = Parameter::new(
-            &skip_whitespace(&mut reader, &mut buf)?,
-            &mut reader,
-            &mut buf,
-        )?;
-        let parameters: Vec<Parameter> = vec![param_0, param_1, param_2];
-
-        next_event = skip_whitespace(&mut reader, &mut buf)?;
-        check_end(Self::TAG, &next_event)?;
+        check_end(Self::TAG, &next)?;
 
         Ok(Self {
             version,
@@ -87,14 +75,20 @@ pub struct Integrity {
 impl Integrity {
     const TAG: &'static [u8] = b"integrity";
 
-    pub fn new<R: BufRead>(event: &Event<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
         let start = read_start(Self::TAG, event)?;
 
+        // attributes
         let attr_map = get_attributes(start, reader);
         let algorithm = get_req_attr("algorithm", &attr_map)?;
 
-        let mut buf = Vec::new();
-        let (value, next_elem) = read_value(reader, &mut buf)?;
+        // value
+        let (value, next_elem) = read_value(reader, buf)?;
+
         check_end(Self::TAG, &next_elem)?;
 
         Ok(Self { algorithm, value })
@@ -121,13 +115,14 @@ impl Parameter {
     ) -> Result<Self, GamlError> {
         let start = read_start(Self::TAG, event)?;
 
+        // attributes
         let attr_map = get_attributes(start, reader);
         let group = get_opt_attr("group", &attr_map);
         let name = get_req_attr("name", &attr_map)?;
         let label = get_opt_attr("label", &attr_map);
         let alias = get_opt_attr("alias", &attr_map);
 
-        // let mut buf = Vec::new();
+        // value
         let (value, next_elem) = read_value(reader, buf)?;
 
         check_end(Self::TAG, &next_elem)?;

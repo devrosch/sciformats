@@ -89,7 +89,7 @@ pub fn skip_whitespace<R: BufRead>(
     }
 }
 
-pub fn next_non_whitespace<'r, R: BufRead + 'r>(
+pub fn next_non_whitespace<'r, R: BufRead>(
     event: Event<'r>,
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
@@ -153,10 +153,10 @@ pub fn consume_end<R: BufRead>(
 type ElemConstructor<'f, R, T> =
     &'f (dyn Fn(&Event<'_>, &mut Reader<R>, &mut Vec<u8>) -> Result<T, GamlError>);
 
-pub fn read_req_elem<'reader, 'buf, 'f, R: BufRead + 'buf, T>(
+pub fn read_req_elem<'buf, R: BufRead, T>(
     tag_name: &[u8],
     next_event: Event<'_>,
-    reader: &'reader mut Reader<R>,
+    reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
     constructor: ElemConstructor<R, T>,
 ) -> Result<(T, Event<'buf>), GamlError> {
@@ -182,12 +182,12 @@ pub fn read_req_elem<'reader, 'buf, 'f, R: BufRead + 'buf, T>(
     }
 }
 
-pub fn read_opt_elem<'buf, 'reader, 'f, R: BufRead + 'buf, T>(
+pub fn read_opt_elem<'buf, R: BufRead, T>(
     tag_name: &[u8],
     next_event: Event<'buf>,
-    reader: &'reader mut Reader<R>,
+    reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
-    constructor: ElemConstructor<'f, R, T>,
+    constructor: ElemConstructor<R, T>,
 ) -> Result<(Option<T>, Event<'buf>), GamlError> {
     match next_event {
         Event::Start(e) => {
@@ -204,26 +204,26 @@ pub fn read_opt_elem<'buf, 'reader, 'f, R: BufRead + 'buf, T>(
     }
 }
 
-pub fn read_params<'e, 'r: 'e, R: BufRead + 'r>(
+pub fn read_params<'e, R: BufRead>(
     tag_name: &[u8],
     mut next_event: Event<'e>,
-    reader: &'r mut Reader<R>,
-) -> Result<(Vec<Parameter>, Event<'r>), GamlError> {
+    reader: &mut Reader<R>,
+) -> Result<(Vec<Parameter>, Event<'e>), GamlError> {
     let mut ret = vec![];
     let mut buf = vec![];
     loop {
         match next_event {
-            Event::Start(ref bytes) => {
+            Event::Start(bytes) => {
                 let name = bytes.name().as_ref().to_owned();
                 if name == tag_name {
-                    let param = Parameter::new(&next_event, reader, &mut buf)?;
+                    let param = Parameter::new(&Event::Start(bytes), reader, &mut buf)?;
                     ret.push(param);
                     next_event = skip_whitespace(reader, &mut buf)?;
                 } else {
-                    return Ok((ret, Event::Start(bytes.to_owned())));
+                    return Ok((ret, Event::Start(bytes)));
                 }
             }
-            any_other => return Ok((ret, any_other.into_owned())),
+            any_other => return Ok((ret, any_other)),
         }
     }
 }

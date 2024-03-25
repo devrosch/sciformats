@@ -208,17 +208,17 @@ pub fn read_params<'e, R: BufRead>(
     tag_name: &[u8],
     mut next_event: Event<'e>,
     reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
 ) -> Result<(Vec<Parameter>, Event<'e>), GamlError> {
     let mut ret = vec![];
-    let mut buf = vec![];
     loop {
         match next_event {
             Event::Start(bytes) => {
                 let name = bytes.name().as_ref().to_owned();
                 if name == tag_name {
-                    let param = Parameter::new(&Event::Start(bytes), reader, &mut buf)?;
+                    let param = Parameter::new(&Event::Start(bytes), reader, buf)?;
                     ret.push(param);
-                    next_event = skip_whitespace(reader, &mut buf)?;
+                    next_event = skip_whitespace(reader, buf)?;
                 } else {
                     return Ok((ret, Event::Start(bytes)));
                 }

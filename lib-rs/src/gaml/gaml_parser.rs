@@ -51,7 +51,7 @@ impl Gaml {
         let (integrity, next) =
             read_opt_elem(b"integrity", next, &mut reader, &mut buf, &Integrity::new)?;
         let next = next_non_whitespace(next.into_owned(), &mut reader, &mut buf)?;
-        let (parameters, next) = read_params(b"parameter", next, &mut reader)?;
+        let (parameters, next) = read_params(b"parameter", next, &mut reader, &mut buf)?;
         let next = next_non_whitespace(next, &mut reader, &mut buf)?;
 
         check_end(Self::TAG, &next)?;
@@ -108,10 +108,10 @@ pub struct Parameter {
 impl Parameter {
     const TAG: &'static [u8] = b"parameter";
 
-    pub fn new<'e, 'b: 'e, R: BufRead>(
-        event: &'e Event<'b>,
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
         reader: &mut Reader<R>,
-        buf: &'b mut Vec<u8>,
+        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         let start = read_start(Self::TAG, event)?;
 

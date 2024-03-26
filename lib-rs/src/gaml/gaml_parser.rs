@@ -50,7 +50,7 @@ impl Gaml {
         // nested elements
         let (integrity, next) =
             read_opt_elem(b"integrity", next, &mut reader, &mut buf, &Integrity::new)?;
-        let next = next_non_whitespace(next.into_owned(), &mut reader, &mut buf)?;
+        let next = next_non_whitespace(next, &mut reader, &mut buf)?;
         let (parameters, next) = read_params(b"parameter", next, &mut reader, &mut buf)?;
         let next = next_non_whitespace(next, &mut reader, &mut buf)?;
 
@@ -87,9 +87,9 @@ impl Integrity {
         let algorithm = get_req_attr("algorithm", &attr_map)?;
 
         // value
-        let (value, next_elem) = read_value(reader, buf)?;
+        let (value, next) = read_value(reader, buf)?;
 
-        check_end(Self::TAG, &next_elem)?;
+        check_end(Self::TAG, &next)?;
 
         Ok(Self { algorithm, value })
     }
@@ -123,9 +123,9 @@ impl Parameter {
         let alias = get_opt_attr("alias", &attr_map);
 
         // value
-        let (value, next_elem) = read_value(reader, buf)?;
+        let (value, next) = read_value(reader, buf)?;
 
-        check_end(Self::TAG, &next_elem)?;
+        check_end(Self::TAG, &next)?;
 
         Ok(Parameter {
             group,

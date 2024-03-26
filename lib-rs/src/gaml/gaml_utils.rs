@@ -1,4 +1,4 @@
-use super::{gaml_parser::Parameter, GamlError};
+use super::GamlError;
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
@@ -213,20 +213,21 @@ pub fn read_opt_elem<'e, R: BufRead, T>(
     }
 }
 
-pub fn read_params<'e, R: BufRead>(
+pub fn read_sequence<'e, R: BufRead, T>(
     tag_name: &[u8],
     mut next: Event<'e>,
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
-) -> Result<(Vec<Parameter>, Event<'e>), GamlError> {
+    constructor: ElemConstructor<R, T>,
+) -> Result<(Vec<T>, Event<'e>), GamlError> {
     let mut ret = vec![];
     loop {
         match next {
             Event::Start(bytes) => {
                 let name = bytes.name().as_ref().to_owned();
                 if name == tag_name {
-                    let param = Parameter::new(&Event::Start(bytes), reader, buf)?;
-                    ret.push(param);
+                    let elem = constructor(&Event::Start(bytes), reader, buf)?;
+                    ret.push(elem);
                     next = skip_whitespace(reader, buf)?;
                 } else {
                     return Ok((ret, Event::Start(bytes)));

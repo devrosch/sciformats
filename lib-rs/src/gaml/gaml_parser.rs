@@ -1,6 +1,6 @@
 use super::gaml_utils::{
     check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_opt_elem,
-    read_params, read_start, read_value, skip_whitespace, skip_xml_decl,
+    read_sequence, read_start, read_value, skip_whitespace, skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
@@ -51,7 +51,8 @@ impl Gaml {
         let (integrity, next) =
             read_opt_elem(b"integrity", next, &mut reader, &mut buf, &Integrity::new)?;
         let next = next_non_whitespace(next, &mut reader, &mut buf)?;
-        let (parameters, next) = read_params(b"parameter", next, &mut reader, &mut buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, &mut buf, &Parameter::new)?;
         let next = next_non_whitespace(next, &mut reader, &mut buf)?;
 
         check_end(Self::TAG, &next)?;

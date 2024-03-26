@@ -143,46 +143,15 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
-    fn parsing_simple_gaml_with_linebreaks_succeeds() {
-        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
-                        <GAML version="1.20" name="Gaml test file">
-                            <integrity algorithm="SHA1">03cfd743661f07975fa2f1220c5194cbaff48451</integrity>
-                            <parameter name="parameter0" label="Parameter label 0" group="Parameter group 0">Parameter value 0</parameter>
-                            <parameter name="parameter1" label="Parameter label 1" group="Parameter group 1">Parameter value 1</parameter>
-                            <parameter name="parameter2" label="Parameter label 2" group="Parameter group 2">Parameter value 2</parameter>
-                        </GAML>"#;
-        let cursor = Cursor::new(xml);
-
-        let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
-
-        assert_eq!("1.20", gaml.version);
-        assert_eq!(Some("Gaml test file".into()), gaml.name);
-        let integrity = &gaml.integrity.unwrap();
-        assert_eq!("SHA1", integrity.algorithm);
-        let parameters = &gaml.parameters;
-        assert_eq!(3, parameters.len());
-        assert_eq!("parameter0", &parameters[0].name);
-        assert_eq!(Some("Parameter label 0".into()), parameters[0].label);
-        assert_eq!(Some("Parameter group 0".into()), parameters[0].group);
-        assert_eq!("Parameter value 0", &parameters[0].value);
-        assert_eq!("parameter1", &parameters[1].name);
-        assert_eq!(Some("Parameter label 1".into()), parameters[1].label);
-        assert_eq!(Some("Parameter group 1".into()), parameters[1].group);
-        assert_eq!("Parameter value 1", &parameters[1].value);
-        assert_eq!("parameter2", &parameters[2].name);
-        assert_eq!(Some("Parameter label 2".into()), parameters[2].label);
-        assert_eq!(Some("Parameter group 2".into()), parameters[2].group);
-        assert_eq!("Parameter value 2", &parameters[2].value);
-    }
-
-    #[test]
-    fn parsing_simple_gaml_without_linebreaks_succeeds() {
-        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
-                        <GAML version=\"1.20\" name=\"Gaml test file\">\
-                            <integrity algorithm=\"SHA1\">03cfd743661f07975fa2f1220c5194cbaff48451</integrity>\
-                            <parameter name=\"parameter0\" label=\"Parameter label 0\" group=\"Parameter group 0\">Parameter value 0</parameter>\
-                            <parameter name=\"parameter1\" label=\"Parameter label 1\" group=\"Parameter group 1\">Parameter value 1</parameter>\
-                            <parameter name=\"parameter2\" label=\"Parameter label 2\" group=\"Parameter group 2\">Parameter value 2</parameter>\
+    fn parsing_simple_gaml_succeeds() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <integrity algorithm=\"SHA1\">03cfd743661f07975fa2f1220c5194cbaff48451</integrity>\n
+                            <parameter name=\"parameter0\" label=\"Parameter label 0\" group=\"Parameter group 0\">Parameter value 0</parameter>\n
+                            <!-- A comment -->
+                            <parameter name=\"parameter1\" label=\"Parameter label 1\" group=\"Parameter group 1\">\
+                            <!-- A comment -->Parameter <!-- A comment -->value 1<!-- A comment --></parameter>\
+                            <parameter name=\"parameter2\" label=\"Parameter label 2\" group=\"Parameter group 2\">Parameter value 2</parameter>\n
                         </GAML>";
         let cursor = Cursor::new(xml);
 

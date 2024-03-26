@@ -110,15 +110,23 @@ pub fn read_value<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
 ) -> Result<(String, Event<'b>), GamlError> {
-    let value = match reader.read_event_into(buf) {
-        Ok(Event::Text(e)) => Ok(e.unescape()?.into_owned()),
-        Ok(e) => Err(GamlError::new(&format!("Unexpected event: {:?}", &e))),
-        Err(e) => Err(GamlError::from_source(e, "Error reading GAML.")),
-    }?;
+    let mut value = String::new();
+    let next = loop {
+        let event = match reader.read_event_into(buf)? {
+            Event::Text(bytes) => {
+                value += &bytes.unescape()?;
+                None
+            }
+            Event::Comment(_) => None,
+            any_other => Some(any_other.into_owned()),
+        };
 
-    let ret = (value, reader.read_event_into(buf).map(|e| e.into_owned())?);
+        if let Some(e) = event {
+            break e;
+        }
+    };
 
-    Ok(ret)
+    Ok((value, next))
 }
 
 pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {

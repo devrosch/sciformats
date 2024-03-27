@@ -4,6 +4,7 @@ use super::gaml_utils::{
 };
 use super::GamlError;
 use crate::api::Parser;
+use chrono::{DateTime, FixedOffset};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::io::{BufRead, BufReader, Read, Seek};
@@ -29,6 +30,7 @@ pub struct Gaml {
     // Elements
     pub integrity: Option<Integrity>,
     pub parameters: Vec<Parameter>,
+    pub experiments: Vec<Experiment>,
 }
 
 impl Gaml {
@@ -54,6 +56,9 @@ impl Gaml {
         let (parameters, next) =
             read_sequence(b"parameter", next, &mut reader, &mut buf, &Parameter::new)?;
         let next = next_non_whitespace(next, &mut reader, &mut buf)?;
+        let (experiments, next) =
+            read_sequence(b"experiment", next, &mut reader, &mut buf, &Experiment::new)?;
+        let next = next_non_whitespace(next, &mut reader, &mut buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -62,6 +67,7 @@ impl Gaml {
             name,
             integrity,
             parameters,
+            experiments,
         })
     }
 }
@@ -138,8 +144,80 @@ impl Parameter {
     }
 }
 
+pub struct Experiment {
+    // Attributes
+    pub name: Option<String>,
+    // Elements
+    pub collectdate: Option<DateTime<FixedOffset>>,
+    pub parameters: Vec<Parameter>,
+    // todo:
+    // pub traces: Vec<Trace>,
+}
+
+impl Experiment {
+    const TAG: &'static [u8] = b"experiment";
+
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let name = get_opt_attr("name", &attr_map);
+
+        // nested elements
+        let next = skip_whitespace(reader, buf)?;
+        let (datetime, next) = read_opt_elem(b"collectdate", next, reader, buf, &Collectdate::new)?;
+        let collectdate = match datetime {
+            None => None,
+            Some(dt) => Some(DateTime::parse_from_rfc3339(&dt.value)?),
+        };
+        let next = next_non_whitespace(next, reader, buf)?;
+        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+
+        // todo: read sequence of traces
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            name,
+            collectdate,
+            parameters,
+        })
+    }
+}
+
+struct Collectdate {
+    pub value: String,
+}
+
+impl Collectdate {
+    const TAG: &'static [u8] = b"collectdate";
+
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        read_start(Self::TAG, event)?;
+        // value
+        let (value, next) = read_value(reader, buf)?;
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            value: value.trim().into(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+
     use super::*;
     use std::io::Cursor;
 
@@ -153,6 +231,10 @@ mod tests {
                             <parameter name=\"parameter1\" label=\"Parameter label 1\" group=\"Parameter group 1\">\
                             <!-- A comment -->Parameter <!-- A comment -->value 1<!-- A comment --></parameter>\
                             <parameter name=\"parameter2\" label=\"Parameter label 2\" group=\"Parameter group 2\">Parameter value 2</parameter>\n
+                            <experiment name=\"Experiment name\">
+                                <collectdate>2024-03-27T06:46:00Z</collectdate>
+                                <parameter name=\"exp-parameter0\" label=\"Experiment parameter label 0\">Experiment parameter value 0</parameter>
+                            </experiment>
                         </GAML>";
         let cursor = Cursor::new(xml);
 
@@ -176,5 +258,28 @@ mod tests {
         assert_eq!(Some("Parameter label 2".into()), parameters[2].label);
         assert_eq!(Some("Parameter group 2".into()), parameters[2].group);
         assert_eq!("Parameter value 2", &parameters[2].value);
+        let experiments = &gaml.experiments;
+        assert_eq!(1, experiments.len());
+        let date = NaiveDate::from_ymd_opt(2024, 03, 27).unwrap();
+        let time = NaiveTime::from_hms_opt(06, 46, 0).unwrap();
+        assert_eq!(
+            DateTime::<FixedOffset>::from_naive_utc_and_offset(
+                NaiveDateTime::new(date, time),
+                FixedOffset::east_opt(0).unwrap()
+            ),
+            experiments[0].collectdate.unwrap()
+        );
+        let experiment_parameters = &experiments[0].parameters;
+        assert_eq!(1, experiment_parameters.len());
+        assert_eq!("exp-parameter0", &experiment_parameters[0].name);
+        assert_eq!(
+            Some("Experiment parameter label 0".into()),
+            experiment_parameters[0].label
+        );
+        assert_eq!(None, experiment_parameters[0].group);
+        assert_eq!(
+            "Experiment parameter value 0",
+            &experiment_parameters[0].value
+        );
     }
 }

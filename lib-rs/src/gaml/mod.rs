@@ -37,20 +37,14 @@ impl fmt::Display for GamlError {
     }
 }
 
-// impl From<AttrError> for GamlError {
-//     fn from(value: AttrError) -> Self {
-//         Self::from_source(value, "Error parsing attribute.")
-//     }
-// }
-
-// impl From<Utf8Error> for GamlError {
-//     fn from(value: Utf8Error) -> Self {
-//         Self::from_source(value, "Error parsing attribute.")
-//     }
-// }
-
 impl From<quick_xml::Error> for GamlError {
     fn from(value: quick_xml::Error) -> Self {
         Self::from_source(value, "Error parsing GAML.")
+    }
+}
+
+impl From<chrono::ParseError> for GamlError {
+    fn from(value: chrono::ParseError) -> Self {
+        Self::from_source(value, "Error parsing date/time.")
     }
 }

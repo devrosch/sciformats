@@ -8,7 +8,8 @@ use chrono::{DateTime, FixedOffset};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::io::{BufRead, BufReader, Read, Seek};
-use std::str;
+use std::str::{self, FromStr};
+use strum::EnumString;
 
 pub struct GamlParser {}
 
@@ -150,8 +151,7 @@ pub struct Experiment {
     // Elements
     pub collectdate: Option<DateTime<FixedOffset>>,
     pub parameters: Vec<Parameter>,
-    // todo:
-    // pub traces: Vec<Trace>,
+    pub traces: Vec<Trace>,
 }
 
 impl Experiment {
@@ -178,8 +178,8 @@ impl Experiment {
         let next = next_non_whitespace(next, reader, buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
         let next = next_non_whitespace(next, reader, buf)?;
-
-        // todo: read sequence of traces
+        let (traces, next) = read_sequence(b"trace", next, reader, buf, &Trace::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -187,6 +187,7 @@ impl Experiment {
             name,
             collectdate,
             parameters,
+            traces,
         })
     }
 }
@@ -214,6 +215,86 @@ impl Collectdate {
     }
 }
 
+#[derive(EnumString)]
+pub enum Technique {
+    #[strum(serialize = "ATOMIC")]
+    Atomic,
+    #[strum(serialize = "CHROM")]
+    Chrom,
+    #[strum(serialize = "FLUOR")]
+    Fluor,
+    #[strum(serialize = "IR")]
+    Ir,
+    #[strum(serialize = "MS")]
+    Ms,
+    #[strum(serialize = "NIR")]
+    Nir,
+    #[strum(serialize = "NMR")]
+    Nmr,
+    #[strum(serialize = "PDA")]
+    Pda,
+    #[strum(serialize = "PARTICLE")]
+    Particle,
+    #[strum(serialize = "POLAR")]
+    Polar,
+    #[strum(serialize = "RAMAN")]
+    Raman,
+    #[strum(serialize = "THERMAL")]
+    Thermal,
+    #[strum(serialize = "UNKNOWN")]
+    Unknown,
+    #[strum(serialize = "UVVIS")]
+    Uvvis,
+    #[strum(serialize = "XRAY")]
+    Xray,
+}
+
+pub struct Trace {
+    // Attributes
+    pub name: Option<String>,
+    pub technique: Technique,
+    // Elements
+    pub parameters: Vec<Parameter>,
+    // todo:
+    // coordinates
+    // xdata
+}
+
+impl Trace {
+    const TAG: &'static [u8] = b"trace";
+
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let name = get_opt_attr("name", &attr_map);
+        let technique_str = get_req_attr("technique", &attr_map)?;
+        let technique = Technique::from_str(&technique_str).map_err(|e| {
+            GamlError::from_source(e, format!("Unexpected technique: {}", &technique_str))
+        })?;
+
+        // nested elements
+        let next = skip_whitespace(reader, buf)?;
+        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+
+        // todo: read sequences of coordinates, xdata
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            name,
+            technique,
+            parameters,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -234,6 +315,10 @@ mod tests {
                             <experiment name=\"Experiment name\">
                                 <collectdate>2024-03-27T06:46:00Z</collectdate>
                                 <parameter name=\"exp-parameter0\" label=\"Experiment parameter label 0\">Experiment parameter value 0</parameter>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <parameter name=\"trace-parameter0\" label=\"Trace parameter 0\" group=\"Trace 0 group\">Parameter value 0</parameter>
+                                    <parameter name=\"trace-parameter1\" label=\"Trace parameter 1\" group=\"Trace 1 group\">Parameter value 1</parameter>
+                                </trace>
                             </experiment>
                         </GAML>";
         let cursor = Cursor::new(xml);

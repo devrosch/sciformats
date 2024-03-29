@@ -215,7 +215,7 @@ impl Collectdate {
     }
 }
 
-#[derive(EnumString)]
+#[derive(EnumString, PartialEq, Debug)]
 pub enum Technique {
     #[strum(serialize = "ATOMIC")]
     Atomic,
@@ -255,6 +255,7 @@ pub struct Trace {
     pub technique: Technique,
     // Elements
     pub parameters: Vec<Parameter>,
+    pub coordinates: Vec<Coordinates>,
     // todo:
     // coordinates
     // xdata
@@ -275,15 +276,24 @@ impl Trace {
         let name = get_opt_attr("name", &attr_map);
         let technique_str = get_req_attr("technique", &attr_map)?;
         let technique = Technique::from_str(&technique_str).map_err(|e| {
-            GamlError::from_source(e, format!("Unexpected technique: {}", &technique_str))
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing trace. Unexpected technique attribute: {}",
+                    &technique_str
+                ),
+            )
         })?;
 
         // nested elements
         let next = skip_whitespace(reader, buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
         let next = next_non_whitespace(next, reader, buf)?;
+        let (coordinates, next) =
+            read_sequence(b"coordinates", next, reader, buf, &Coordinates::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
 
-        // todo: read sequences of coordinates, xdata
+        // todo: read sequences of xdata
 
         check_end(Self::TAG, &next)?;
 
@@ -291,6 +301,223 @@ impl Trace {
             name,
             technique,
             parameters,
+            coordinates,
+        })
+    }
+}
+
+#[derive(EnumString, PartialEq, Debug)]
+pub enum Units {
+    #[strum(serialize = "ABSORBANCE")]
+    Absorbance,
+    #[strum(serialize = "AMPERES")]
+    Amperes,
+    #[strum(serialize = "ANGSTROMS")]
+    Angstroms,
+    #[strum(serialize = "ATOMICMASSUNITS")]
+    Atomicmassunits,
+    #[strum(serialize = "CALORIES")]
+    Calories,
+    #[strum(serialize = "CELSIUS")]
+    Celsius,
+    #[strum(serialize = "CENTIMETERS")]
+    Centimeters,
+    #[strum(serialize = "DAYS")]
+    Days,
+    #[strum(serialize = "DECIBELS")]
+    Decibels,
+    #[strum(serialize = "DEGREES")]
+    Degrees,
+    #[strum(serialize = "ELECTRONVOLTS")]
+    Electronvolts,
+    #[strum(serialize = "EMISSION")]
+    Emission,
+    #[strum(serialize = "FAHRENHEIT")]
+    Fahrenheit,
+    #[strum(serialize = "GHERTZ")]
+    Ghertz,
+    #[strum(serialize = "GRAMS")]
+    Grams,
+    #[strum(serialize = "HERTZ")]
+    Hertz,
+    #[strum(serialize = "HOURS")]
+    Hours,
+    #[strum(serialize = "JOULES")]
+    Joules,
+    #[strum(serialize = "KELVIN")]
+    Kelvin,
+    #[strum(serialize = "KILOCALORIES")]
+    Kilocalories,
+    #[strum(serialize = "KILOGRAMS")]
+    Kilograms,
+    #[strum(serialize = "KILOHERTZ")]
+    Kilohertz,
+    #[strum(serialize = "KILOMETERS")]
+    Kilometers,
+    #[strum(serialize = "KILOWATTS")]
+    Kilowatts,
+    #[strum(serialize = "KUBELKAMUNK")]
+    Kubelkamunk,
+    #[strum(serialize = "LITERS")]
+    Liters,
+    #[strum(serialize = "LOGREFLECTANCE")]
+    Logreflectance,
+    #[strum(serialize = "MASSCHARGERATIO")]
+    Masschargeratio,
+    #[strum(serialize = "MEGAHERTZ")]
+    Megahertz,
+    #[strum(serialize = "MEGAWATTS")]
+    Megawatts,
+    #[strum(serialize = "METERS")]
+    Meters,
+    #[strum(serialize = "MICROGRAMS")]
+    Micrograms,
+    #[strum(serialize = "MICRONS")]
+    Microns,
+    #[strum(serialize = "MICROSECONDS")]
+    Microseconds,
+    #[strum(serialize = "MILLIABSORBANCE")]
+    Milliabsorbance,
+    #[strum(serialize = "MILLIAMPS")]
+    Milliamps,
+    #[strum(serialize = "MILLIGRAMS")]
+    Milligrams,
+    #[strum(serialize = "MILLILITERS")]
+    Milliliters,
+    #[strum(serialize = "MILLIMETERS")]
+    Millimeters,
+    #[strum(serialize = "MILLIMOLAR")]
+    Millimolar,
+    #[strum(serialize = "MILLISECONDS")]
+    Milliseconds,
+    #[strum(serialize = "MILLIVOLTS")]
+    Millivolts,
+    #[strum(serialize = "MILLIWATTS")]
+    Milliwatts,
+    #[strum(serialize = "MINUTES")]
+    Minutes,
+    #[strum(serialize = "MOLAR")]
+    Molar,
+    #[strum(serialize = "MOLES")]
+    Moles,
+    #[strum(serialize = "NANOGRAMS")]
+    Nanograms,
+    #[strum(serialize = "NANOMETERS")]
+    Nanometers,
+    #[strum(serialize = "NANOSECONDS")]
+    Nanoseconds,
+    #[strum(serialize = "PPB")]
+    Ppb,
+    #[strum(serialize = "PPM")]
+    Ppm,
+    #[strum(serialize = "PPT")]
+    Ppt,
+    #[strum(serialize = "RADIANS")]
+    Radians,
+    #[strum(serialize = "RAMANSHIFT")]
+    Ramanshift,
+    #[strum(serialize = "REFLECTANCE")]
+    Reflectance,
+    #[strum(serialize = "SECONDS")]
+    Seconds,
+    #[strum(serialize = "TRANSMISSIONPERCENT")]
+    Transmissionpercent,
+    #[strum(serialize = "TRANSMITTANCE")]
+    Transmittance,
+    #[strum(serialize = "UNKNOWN")]
+    Unknown,
+    #[strum(serialize = "VOLTS")]
+    Volts,
+    #[strum(serialize = "WATTS")]
+    Watts,
+    #[strum(serialize = "WAVENUMBER")]
+    Wavenumber,
+    #[strum(serialize = "YEARS")]
+    Years,
+    #[strum(serialize = "INCHES")]
+    Inches,
+    #[strum(serialize = "MICROABSORBANCE")]
+    Microabsorbance,
+    #[strum(serialize = "MICROVOLTS")]
+    Microvolts,
+    #[strum(serialize = "PERCENT")]
+    Percent,
+    #[strum(serialize = "PSI")]
+    Psi,
+    #[strum(serialize = "TESLA")]
+    Tesla,
+}
+
+#[derive(EnumString, PartialEq, Debug)]
+pub enum Valueorder {
+    #[strum(serialize = "EVEN")]
+    Even,
+    #[strum(serialize = "ORDERED")]
+    Ordered,
+    #[strum(serialize = "UNSPECIFIED")]
+    Unspecified,
+}
+
+pub struct Coordinates {
+    // Attributes
+    pub units: Units,
+    pub label: Option<String>,
+    pub linkid: Option<String>,
+    pub valueorder: Valueorder,
+    // Elements
+    // todo:
+    // link
+    // pub parameters: Vec<Parameter>,
+    // value
+}
+
+impl Coordinates {
+    const TAG: &'static [u8] = b"coordinates";
+
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let units_str = get_req_attr("units", &attr_map)?;
+        let units = Units::from_str(&units_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing coordinates. Unexpected units attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+        let label = get_opt_attr("label", &attr_map);
+        let linkid = get_opt_attr("linkid", &attr_map);
+        let valueorder_str = get_req_attr("valueorder", &attr_map)?;
+        let valueorder = Valueorder::from_str(&valueorder_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing coordinates. Unexpected valueorder attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+
+        // nested elements
+        let next = skip_whitespace(reader, buf)?;
+
+        // todo: read sequences of links, parameters, values
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            units,
+            label,
+            linkid,
+            valueorder,
         })
     }
 }
@@ -316,15 +543,15 @@ mod tests {
                                 <collectdate>2024-03-27T06:46:00Z</collectdate>
                                 <parameter name=\"exp-parameter0\" label=\"Experiment parameter label 0\">Experiment parameter value 0</parameter>
                                 <trace name=\"Trace 0\" technique=\"UNKNOWN\">
-                                    <parameter name=\"trace-parameter0\" label=\"Trace parameter 0\" group=\"Trace 0 group\">Parameter value 0</parameter>
-                                    <parameter name=\"trace-parameter1\" label=\"Trace parameter 1\" group=\"Trace 1 group\">Parameter value 1</parameter>
+                                    <parameter name=\"trace-parameter0\" label=\"Trace parameter label 0\">Trace parameter value 0</parameter>
+                                    <coordinates label=\"Coordinate label\" units=\"MICRONS\" linkid=\"coordinates-linkid\" valueorder=\"UNSPECIFIED\">
+                                    </coordinates>
                                 </trace>
                             </experiment>
                         </GAML>";
         let cursor = Cursor::new(xml);
 
         let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
-
         assert_eq!("1.20", gaml.version);
         assert_eq!(Some("Gaml test file".into()), gaml.name);
         let integrity = &gaml.integrity.unwrap();
@@ -343,6 +570,7 @@ mod tests {
         assert_eq!(Some("Parameter label 2".into()), parameters[2].label);
         assert_eq!(Some("Parameter group 2".into()), parameters[2].group);
         assert_eq!("Parameter value 2", &parameters[2].value);
+
         let experiments = &gaml.experiments;
         assert_eq!(1, experiments.len());
         let date = NaiveDate::from_ymd_opt(2024, 03, 27).unwrap();
@@ -366,5 +594,27 @@ mod tests {
             "Experiment parameter value 0",
             &experiment_parameters[0].value
         );
+
+        let traces = &experiments[0].traces;
+        assert_eq!(1, traces.len());
+        let trace = &traces[0];
+        assert_eq!(Some("Trace 0".into()), trace.name);
+        assert_eq!(Technique::Unknown, trace.technique);
+        let trace_parameters = &trace.parameters;
+        assert_eq!(1, trace_parameters.len());
+        assert_eq!("trace-parameter0", &trace_parameters[0].name);
+        assert_eq!(
+            Some("Trace parameter label 0".into()),
+            trace_parameters[0].label
+        );
+        assert_eq!(None, trace_parameters[0].group);
+        assert_eq!("Trace parameter value 0", trace_parameters[0].value);
+
+        let coordinates = &trace.coordinates;
+        assert_eq!(1, coordinates.len());
+        assert_eq!(Some("Coordinate label".into()), coordinates[0].label);
+        assert_eq!(Units::Microns, coordinates[0].units);
+        assert_eq!(Some("coordinates-linkid".into()), coordinates[0].linkid);
+        assert_eq!(Valueorder::Unspecified, coordinates[0].valueorder);
     }
 }

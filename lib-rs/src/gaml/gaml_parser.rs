@@ -1,6 +1,7 @@
 use super::gaml_utils::{
     check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
-    read_opt_elem, read_sequence, read_start, read_value, skip_whitespace, skip_xml_decl,
+    read_opt_elem, read_sequence, read_start, read_start_or_empty, read_value, skip_whitespace,
+    skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
@@ -110,7 +111,7 @@ pub struct Parameter {
     pub label: Option<String>,
     pub alias: Option<String>,
     // Content
-    pub value: String,
+    pub value: Option<String>,
 }
 
 impl Parameter {
@@ -121,7 +122,7 @@ impl Parameter {
         reader: &mut Reader<R>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        let start = read_start(Self::TAG, event)?;
+        let (start, is_empty) = read_start_or_empty(Self::TAG, event)?;
 
         // attributes
         let attr_map = get_attributes(start, reader);
@@ -131,9 +132,14 @@ impl Parameter {
         let alias = get_opt_attr("alias", &attr_map);
 
         // value
-        let (value, next) = read_value(reader, buf)?;
-
-        check_end(Self::TAG, &next)?;
+        let value = match is_empty {
+            true => None,
+            false => {
+                let (value, next) = read_value(reader, buf)?;
+                check_end(Self::TAG, &next)?;
+                Some(value)
+            }
+        };
 
         Ok(Parameter {
             group,
@@ -564,7 +570,7 @@ mod tests {
                             <!-- A comment -->
                             <parameter name=\"parameter1\" label=\"Parameter label 1\" group=\"Parameter group 1\">\
                             <!-- A comment -->Parameter <!-- A comment -->value 1<!-- A comment --></parameter>\
-                            <parameter name=\"parameter2\" label=\"Parameter label 2\" group=\"Parameter group 2\">Parameter value 2</parameter>\n
+                            <parameter name=\"parameter2\" label=\"Parameter label 2\" group=\"Parameter group 2\"/>\n
                             <experiment name=\"Experiment name\">
                                 <collectdate>2024-03-27T06:46:00Z</collectdate>
                                 <parameter name=\"exp-parameter0\" label=\"Experiment parameter label 0\">Experiment parameter value 0</parameter>
@@ -588,15 +594,15 @@ mod tests {
         assert_eq!("parameter0", &parameters[0].name);
         assert_eq!(Some("Parameter label 0".into()), parameters[0].label);
         assert_eq!(Some("Parameter group 0".into()), parameters[0].group);
-        assert_eq!("Parameter value 0", &parameters[0].value);
+        assert_eq!(Some("Parameter value 0".into()), parameters[0].value);
         assert_eq!("parameter1", &parameters[1].name);
         assert_eq!(Some("Parameter label 1".into()), parameters[1].label);
         assert_eq!(Some("Parameter group 1".into()), parameters[1].group);
-        assert_eq!("Parameter value 1", &parameters[1].value);
+        assert_eq!(Some("Parameter value 1".into()), parameters[1].value);
         assert_eq!("parameter2", &parameters[2].name);
         assert_eq!(Some("Parameter label 2".into()), parameters[2].label);
         assert_eq!(Some("Parameter group 2".into()), parameters[2].group);
-        assert_eq!("Parameter value 2", &parameters[2].value);
+        assert_eq!(None, parameters[2].value);
 
         let experiments = &gaml.experiments;
         assert_eq!(1, experiments.len());
@@ -618,8 +624,8 @@ mod tests {
         );
         assert_eq!(None, experiment_parameters[0].group);
         assert_eq!(
-            "Experiment parameter value 0",
-            &experiment_parameters[0].value
+            Some("Experiment parameter value 0".into()),
+            experiment_parameters[0].value
         );
 
         let traces = &experiments[0].traces;
@@ -635,7 +641,10 @@ mod tests {
             trace_parameters[0].label
         );
         assert_eq!(None, trace_parameters[0].group);
-        assert_eq!("Trace parameter value 0", trace_parameters[0].value);
+        assert_eq!(
+            Some("Trace parameter value 0".into()),
+            trace_parameters[0].value
+        );
 
         let coordinates = &trace.coordinates;
         assert_eq!(1, coordinates.len());

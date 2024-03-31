@@ -6,7 +6,7 @@ use quick_xml::{
 };
 use std::{collections::HashMap, io::BufRead, str, vec};
 
-fn check_maches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), GamlError> {
+fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), GamlError> {
     if bytes_start.name().as_ref() != tag {
         Err(GamlError::new(&format!(
             "Unexpected tag instead of \"{}\": {:?}",
@@ -20,7 +20,7 @@ fn check_maches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(),
 
 pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
     if let Event::Start(bytes_start) = event {
-        check_maches_tag_name(tag, bytes_start)?;
+        check_matches_tag_name(tag, bytes_start)?;
         Ok(bytes_start)
     } else {
         Err(GamlError::new(&format!("Unexpected event: {:?}", event)))
@@ -29,7 +29,7 @@ pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart
 
 pub fn read_empty<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
     if let Event::Empty(bytes_start) = event {
-        check_maches_tag_name(tag, bytes_start)?;
+        check_matches_tag_name(tag, bytes_start)?;
         Ok(bytes_start)
     } else {
         Err(GamlError::new(&format!("Unexpected event: {:?}", event)))
@@ -42,11 +42,11 @@ pub fn read_start_or_empty<'b>(
 ) -> Result<(&'b BytesStart<'b>, bool), GamlError> {
     match event {
         Event::Start(bytes_start) => {
-            check_maches_tag_name(tag, bytes_start)?;
+            check_matches_tag_name(tag, bytes_start)?;
             Ok((bytes_start, false))
         }
         Event::Empty(bytes_start) => {
-            check_maches_tag_name(tag, bytes_start)?;
+            check_matches_tag_name(tag, bytes_start)?;
             Ok((bytes_start, true))
         }
         _ => Err(GamlError::new(&format!("Unexpected event: {:?}", event))),

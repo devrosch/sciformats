@@ -211,7 +211,7 @@ impl Collectdate {
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         read_start(Self::TAG, event)?;
-        // value
+        // Content
         let (value, next) = read_value(reader, buf)?;
         check_end(Self::TAG, &next)?;
 
@@ -473,8 +473,7 @@ pub struct Coordinates {
     // Elements
     pub links: Vec<Link>,
     pub parameters: Vec<Parameter>,
-    // todo:
-    // values
+    pub values: Values,
 }
 
 impl Coordinates {
@@ -517,8 +516,9 @@ impl Coordinates {
         let (links, next) = read_sequence(b"link", next, reader, buf, &Link::new)?;
         let next = next_non_whitespace(next, reader, buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
-
-        // todo: read sequence of values
+        let next = next_non_whitespace(next, reader, buf)?;
+        let values = Values::new(&next, reader, buf)?;
+        let next = skip_whitespace(reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -529,6 +529,7 @@ impl Coordinates {
             valueorder,
             links,
             parameters,
+            values,
         })
     }
 }
@@ -557,6 +558,75 @@ impl Link {
     }
 }
 
+#[derive(EnumString, PartialEq, Debug)]
+pub enum Format {
+    #[strum(serialize = "FLOAT32")]
+    Float32,
+    #[strum(serialize = "FLOAT64")]
+    Float64,
+}
+
+#[derive(EnumString, PartialEq, Debug)]
+pub enum Byteorder {
+    #[strum(serialize = "INTEL")]
+    Intel,
+}
+
+pub struct Values {
+    // Attributes
+    pub format: Format,
+    pub byteorder: Byteorder,
+    // Value
+    pub value: String,
+}
+
+impl Values {
+    const TAG: &'static [u8] = b"values";
+
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let format_str = get_req_attr("format", &attr_map)?;
+        let format = Format::from_str(&format_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing coordinates. Unexpected format attribute: {}",
+                    &format_str
+                ),
+            )
+        })?;
+        let byteorder_str = get_req_attr("byteorder", &attr_map)?;
+        let byteorder = Byteorder::from_str(&byteorder_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing coordinates. Unexpected byteorder attribute: {}",
+                    &byteorder_str
+                ),
+            )
+        })?;
+
+        // Content
+        let (mut value, next) = read_value(reader, buf)?;
+        value.retain(|c| !c.is_whitespace());
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            format,
+            byteorder,
+            value,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -582,6 +652,9 @@ mod tests {
                                     <coordinates label=\"Coordinate label\" units=\"MICRONS\" linkid=\"coordinates-linkid\" valueorder=\"UNSPECIFIED\">
                                         <link linkref=\"co-linkref\"/>
                                         <parameter name=\"co-parameter0\" label=\"Coordinates parameter label 0\">Coordinates parameter value 0</parameter>
+                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                            MTIzI\nDQ1Ng==
+                                        </values>
                                     </coordinates>
                                 </trace>
                             </experiment>
@@ -660,6 +733,7 @@ mod tests {
         let links = &coordinates[0].links;
         assert_eq!(1, links.len());
         assert_eq!("co-linkref", links[0].linkref);
+
         let co_parameters = &coordinates[0].parameters;
         assert_eq!("co-parameter0", &co_parameters[0].name);
         assert_eq!(
@@ -671,5 +745,10 @@ mod tests {
             Some("Coordinates parameter value 0".into()),
             co_parameters[0].value
         );
+
+        let co_values = &coordinates[0].values;
+        assert_eq!(Format::Float32, co_values.format);
+        assert_eq!(Byteorder::Intel, co_values.byteorder);
+        assert_eq!("MTIzIDQ1Ng==", co_values.value);
     }
 }

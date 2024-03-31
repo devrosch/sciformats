@@ -1,6 +1,6 @@
 use super::gaml_utils::{
-    check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_opt_elem,
-    read_sequence, read_start, read_value, skip_whitespace, skip_xml_decl,
+    check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
+    read_opt_elem, read_sequence, read_start, read_value, skip_whitespace, skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
@@ -465,8 +465,8 @@ pub struct Coordinates {
     pub linkid: Option<String>,
     pub valueorder: Valueorder,
     // Elements
+    pub links: Vec<Link>,
     // todo:
-    // link
     // pub parameters: Vec<Parameter>,
     // value
 }
@@ -508,8 +508,9 @@ impl Coordinates {
 
         // nested elements
         let next = skip_whitespace(reader, buf)?;
+        let (links, next) = read_sequence(b"link", next, reader, buf, &Link::new)?;
 
-        // todo: read sequences of links, parameters, values
+        // todo: read sequences of parameters, values
 
         check_end(Self::TAG, &next)?;
 
@@ -518,7 +519,32 @@ impl Coordinates {
             label,
             linkid,
             valueorder,
+            links,
         })
+    }
+}
+
+pub struct Link {
+    // Attributes
+    pub linkref: String,
+}
+
+impl Link {
+    const TAG: &'static [u8] = b"link";
+
+    pub fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        // keep buf in function signature so it can be used as function ptr by aggregarting functions
+        #[allow(clippy::ptr_arg)] _buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_empty(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let linkref = get_req_attr("linkref", &attr_map)?;
+
+        Ok(Self { linkref })
     }
 }
 
@@ -545,6 +571,7 @@ mod tests {
                                 <trace name=\"Trace 0\" technique=\"UNKNOWN\">
                                     <parameter name=\"trace-parameter0\" label=\"Trace parameter label 0\">Trace parameter value 0</parameter>
                                     <coordinates label=\"Coordinate label\" units=\"MICRONS\" linkid=\"coordinates-linkid\" valueorder=\"UNSPECIFIED\">
+                                        <link linkref=\"co-linkref\"/>
                                     </coordinates>
                                 </trace>
                             </experiment>

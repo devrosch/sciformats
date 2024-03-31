@@ -5,6 +5,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Cargo test",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--manifest-path=${workspaceFolder}/lib-rs/Cargo.toml"
+        ]
+      },
+      "args": []
+    },
+    {
       "name": "(gdb) Launch jdx_test",
       "type": "cppdbg",
       "request": "launch",

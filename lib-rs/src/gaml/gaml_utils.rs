@@ -21,6 +21,21 @@ pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart
     }
 }
 
+pub fn read_empty<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
+    if let Event::Empty(e) = event {
+        if e.name().as_ref() != tag {
+            return Err(GamlError::new(&format!(
+                "Unexpected tag instead of \"{}\": {:?}",
+                str::from_utf8(tag).unwrap_or_default(),
+                str::from_utf8(e.name().as_ref())
+            )));
+        }
+        Ok(e)
+    } else {
+        Err(GamlError::new(&format!("Unexpected event: {:?}", event)))
+    }
+}
+
 pub fn get_attributes<'a, R>(
     bytes_start: &'a BytesStart<'a>,
     reader: &Reader<R>,
@@ -222,18 +237,18 @@ pub fn read_sequence<'e, R: BufRead, T>(
 ) -> Result<(Vec<T>, Event<'e>), GamlError> {
     let mut ret = vec![];
     loop {
-        match next {
-            Event::Start(bytes) => {
+        match &next {
+            Event::Start(bytes) | Event::Empty(bytes) => {
                 let name = bytes.name().as_ref().to_owned();
                 if name == tag_name {
-                    let elem = constructor(&Event::Start(bytes), reader, buf)?;
+                    let elem = constructor(&next, reader, buf)?;
                     ret.push(elem);
                     next = skip_whitespace(reader, buf)?;
                 } else {
-                    return Ok((ret, Event::Start(bytes)));
+                    return Ok((ret, next));
                 }
             }
-            any_other => return Ok((ret, any_other)),
+            _ => return Ok((ret, next)),
         }
     }
 }

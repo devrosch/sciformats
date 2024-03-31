@@ -472,9 +472,9 @@ pub struct Coordinates {
     pub valueorder: Valueorder,
     // Elements
     pub links: Vec<Link>,
+    pub parameters: Vec<Parameter>,
     // todo:
-    // pub parameters: Vec<Parameter>,
-    // value
+    // values
 }
 
 impl Coordinates {
@@ -515,8 +515,10 @@ impl Coordinates {
         // nested elements
         let next = skip_whitespace(reader, buf)?;
         let (links, next) = read_sequence(b"link", next, reader, buf, &Link::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
 
-        // todo: read sequences of parameters, values
+        // todo: read sequence of values
 
         check_end(Self::TAG, &next)?;
 
@@ -526,6 +528,7 @@ impl Coordinates {
             linkid,
             valueorder,
             links,
+            parameters,
         })
     }
 }
@@ -578,6 +581,7 @@ mod tests {
                                     <parameter name=\"trace-parameter0\" label=\"Trace parameter label 0\">Trace parameter value 0</parameter>
                                     <coordinates label=\"Coordinate label\" units=\"MICRONS\" linkid=\"coordinates-linkid\" valueorder=\"UNSPECIFIED\">
                                         <link linkref=\"co-linkref\"/>
+                                        <parameter name=\"co-parameter0\" label=\"Coordinates parameter label 0\">Coordinates parameter value 0</parameter>
                                     </coordinates>
                                 </trace>
                             </experiment>
@@ -652,5 +656,20 @@ mod tests {
         assert_eq!(Units::Microns, coordinates[0].units);
         assert_eq!(Some("coordinates-linkid".into()), coordinates[0].linkid);
         assert_eq!(Valueorder::Unspecified, coordinates[0].valueorder);
+
+        let links = &coordinates[0].links;
+        assert_eq!(1, links.len());
+        assert_eq!("co-linkref", links[0].linkref);
+        let co_parameters = &coordinates[0].parameters;
+        assert_eq!("co-parameter0", &co_parameters[0].name);
+        assert_eq!(
+            Some("Coordinates parameter label 0".into()),
+            co_parameters[0].label
+        );
+        assert_eq!(None, co_parameters[0].group);
+        assert_eq!(
+            Some("Coordinates parameter value 0".into()),
+            co_parameters[0].value
+        );
     }
 }

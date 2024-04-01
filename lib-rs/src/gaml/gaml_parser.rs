@@ -1,7 +1,7 @@
 use super::gaml_utils::{
     check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
-    read_opt_elem, read_sequence, read_start, read_start_or_empty, read_value, skip_whitespace,
-    skip_xml_decl,
+    read_opt_elem, read_sequence, read_start, read_start_or_empty, read_value, read_value_and_pos,
+    skip_whitespace, skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
@@ -578,6 +578,9 @@ pub struct Values {
     pub byteorder: Byteorder,
     // Value
     pub value: String,
+
+    value_start_pos: u64,
+    value_end_pos: u64,
 }
 
 impl Values {
@@ -614,7 +617,7 @@ impl Values {
         })?;
 
         // Content
-        let (mut value, next) = read_value(reader, buf)?;
+        let (mut value, value_start_pos, value_end_pos, next) = read_value_and_pos(reader, buf)?;
         value.retain(|c| !c.is_whitespace());
 
         check_end(Self::TAG, &next)?;
@@ -623,6 +626,8 @@ impl Values {
             format,
             byteorder,
             value,
+            value_start_pos,
+            value_end_pos,
         })
     }
 }
@@ -750,5 +755,8 @@ mod tests {
         assert_eq!(Format::Float32, co_values.format);
         assert_eq!(Byteorder::Intel, co_values.byteorder);
         assert_eq!("MTIzIDQ1Ng==", co_values.value);
+        // private properties
+        assert_eq!(1645, co_values.value_start_pos);
+        assert_eq!(1744, co_values.value_end_pos);
     }
 }

@@ -161,6 +161,32 @@ pub fn read_value<'b, R: BufRead>(
     Ok((value, next))
 }
 
+pub fn read_value_and_pos<'b, R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &'b mut Vec<u8>,
+) -> Result<(String, u64, u64, Event<'b>), GamlError> {
+    let mut value = String::new();
+    let start_pos = reader.buffer_position() as u64;
+    let mut end_pos = start_pos;
+    let next = loop {
+        let event = match reader.read_event_into(buf)? {
+            Event::Text(bytes) => {
+                value += &bytes.unescape()?;
+                end_pos = reader.buffer_position() as u64;
+                None
+            }
+            Event::Comment(_) => None,
+            any_other => Some(any_other.into_owned()),
+        };
+
+        if let Some(e) = event {
+            break e;
+        }
+    };
+
+    Ok((value, start_pos, end_pos, next))
+}
+
 pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
     match event {
         Event::End(e) => {

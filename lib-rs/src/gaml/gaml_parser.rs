@@ -5,6 +5,7 @@ use super::gaml_utils::{
 };
 use super::GamlError;
 use crate::api::Parser;
+use base64::prelude::*;
 use chrono::{DateTime, FixedOffset};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
@@ -576,6 +577,7 @@ pub struct Values {
     // Attributes
     pub format: Format,
     pub byteorder: Byteorder,
+    pub numvalues: Option<u64>,
     // Value
     pub value: String,
 
@@ -615,6 +617,22 @@ impl Values {
                 ),
             )
         })?;
+        let numvalues_str = get_opt_attr("numvalues", &attr_map);
+        let numvalues = match numvalues_str {
+            None => None,
+            Some(v) => {
+                let r = v.parse::<u64>().map_err(|e| {
+                    GamlError::from_source(
+                        e,
+                        format!(
+                            "Error parsing numvalues. Unexpected numvalues attribute: {}",
+                            &v
+                        ),
+                    )
+                })?;
+                Some(r)
+            }
+        };
 
         // Content
         let (mut value, value_start_pos, value_end_pos, next) = read_value_and_pos(reader, buf)?;
@@ -625,10 +643,61 @@ impl Values {
         Ok(Self {
             format,
             byteorder,
+            numvalues,
             value,
             value_start_pos,
             value_end_pos,
         })
+    }
+
+    pub fn get_data(&self) -> Result<Vec<f64>, GamlError> {
+        // todo: implement lazy loading of the raw data
+        let _start = self.value_start_pos;
+        let _end = self.value_end_pos;
+        let raw_data = BASE64_STANDARD
+            .decode(self.value.as_bytes())
+            .map_err(|e| GamlError::from_source(e, "Error decoding base64 data."))?;
+
+        let multiple = match &self.format {
+            Format::Float32 => 4u64,
+            Format::Float64 => 8u64,
+        };
+        if raw_data.len() as u64 % multiple != 0 {
+            return Err(GamlError::new(&format!(
+                "Illegal number of data bytes: {}",
+                raw_data.len()
+            )));
+        }
+        if let Some(n) = self.numvalues {
+            if n != raw_data.len() as u64 / multiple as u64 {
+                return Err(GamlError::new(&format!(
+                    "Number of data bytes does not match numvalues attribute: {}",
+                    raw_data.len()
+                )));
+            }
+        }
+
+        let data = if Format::Float32 == self.format {
+            // see https://stackoverflow.com/a/77388975 for a more elegant solution in the future
+            // f32
+            raw_data
+                .chunks_exact(4)
+                .map(TryInto::try_into)
+                .map(Result::unwrap)
+                .map(f32::from_le_bytes)
+                .map(|v| v as f64)
+                .collect()
+        } else {
+            // f64
+            raw_data
+                .chunks_exact(8)
+                .map(TryInto::try_into)
+                .map(Result::unwrap)
+                .map(f64::from_le_bytes)
+                .collect()
+        };
+
+        Ok(data)
     }
 }
 
@@ -658,7 +727,7 @@ mod tests {
                                         <link linkref=\"co-linkref\"/>
                                         <parameter name=\"co-parameter0\" label=\"Coordinates parameter label 0\">Coordinates parameter value 0</parameter>
                                         <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
-                                            MTIzI\nDQ1Ng==
+                                            AACAPw\nAAAEA=
                                         </values>
                                     </coordinates>
                                 </trace>
@@ -754,9 +823,15 @@ mod tests {
         let co_values = &coordinates[0].values;
         assert_eq!(Format::Float32, co_values.format);
         assert_eq!(Byteorder::Intel, co_values.byteorder);
-        assert_eq!("MTIzIDQ1Ng==", co_values.value);
+        assert_eq!(Some(2), co_values.numvalues);
+        assert_eq!("AACAPwAAAEA=", co_values.value);
         // private properties
         assert_eq!(1645, co_values.value_start_pos);
         assert_eq!(1744, co_values.value_end_pos);
+        // converted data
+        let decoded_values = co_values.get_data().unwrap();
+        assert_eq!(2, decoded_values.len());
+        assert_eq!(1.0f32 as f64, decoded_values[0]);
+        assert_eq!(2.0f32 as f64, decoded_values[1]);
     }
 }

@@ -48,3 +48,9 @@ impl From<chrono::ParseError> for GamlError {
         Self::from_source(value, "Error parsing date/time.")
     }
 }
+
+impl From<std::io::Error> for GamlError {
+    fn from(value: std::io::Error) -> Self {
+        Self::from_source(value, "I/O error when reading GAML.")
+    }
+}

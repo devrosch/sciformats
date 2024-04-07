@@ -1,4 +1,4 @@
-use super::GamlError;
+use super::{gaml_parser::SeekBufRead, GamlError};
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
@@ -298,7 +298,7 @@ pub fn read_sequence<'e, R: BufRead, T>(
 
 type ElemConstructorRc<'f, T> = &'f (dyn Fn(
     &Event<'_>,
-    Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+    Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     &mut Vec<u8>,
 ) -> Result<T, GamlError>);
 
@@ -306,7 +306,7 @@ type ElemConstructorRc<'f, T> = &'f (dyn Fn(
 pub fn read_sequence_rc<'e, T>(
     tag_name: &[u8],
     mut next: Event<'e>,
-    reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     buf: &mut Vec<u8>,
     constructor: ElemConstructorRc<T>,
 ) -> Result<(Vec<T>, Event<'e>), GamlError> {

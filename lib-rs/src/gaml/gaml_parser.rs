@@ -10,10 +10,14 @@ use chrono::{DateTime, FixedOffset};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::cell::RefCell;
-use std::io::{BufRead, BufReader, Read, Seek};
+use std::io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use std::str::{self, FromStr};
 use strum::EnumString;
+
+// todo: check if can be moved and visibility can be limited
+pub trait SeekBufRead: Seek + BufRead {}
+impl<T: Seek + BufRead> SeekBufRead for T {}
 
 pub struct GamlParser {}
 
@@ -22,7 +26,7 @@ impl<T: Seek + Read + 'static> Parser<T> for GamlParser {
     type E = GamlError;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
-        let buf_reader: Box<dyn BufRead> = Box::new(BufReader::new(input));
+        let buf_reader: Box<dyn SeekBufRead> = Box::new(BufReader::new(input));
         let reader = Reader::from_reader(buf_reader);
         let reader_ref = Rc::new(RefCell::new(reader));
         Self::R::new(name, reader_ref)
@@ -44,7 +48,7 @@ impl Gaml {
 
     pub fn new(
         _name: &str,
-        reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     ) -> Result<Self, GamlError> {
         let mut reader = reader_ref.borrow_mut();
         let mut buf = Vec::new();
@@ -180,7 +184,7 @@ impl Experiment {
 
     pub fn new(
         event: &Event<'_>,
-        reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         let mut reader = reader_ref.borrow_mut();
@@ -294,7 +298,7 @@ impl Trace {
 
     pub fn new(
         event: &Event<'_>,
-        reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         let mut reader = reader_ref.borrow_mut();
@@ -513,7 +517,7 @@ impl Coordinates {
 
     pub fn new(
         event: &Event<'_>,
-        reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         let mut reader = reader_ref.borrow_mut();
@@ -614,12 +618,11 @@ pub struct Values {
     pub format: Format,
     pub byteorder: Byteorder,
     pub numvalues: Option<u64>,
-    // Value
-    pub value: String,
-
+    // Value is lazily read
+    // pub value: String,
     value_start_pos: u64,
     value_end_pos: u64,
-    _reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
 }
 
 impl Values {
@@ -627,7 +630,7 @@ impl Values {
 
     pub fn new(
         event: &Event<'_>,
-        reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         let mut reader = reader_ref.borrow_mut();
@@ -673,10 +676,12 @@ impl Values {
             }
         };
 
-        // Content
-        let (mut value, value_start_pos, value_end_pos, next) =
-            read_value_and_pos(&mut reader, buf)?;
-        value.retain(|c| !c.is_whitespace());
+        // skip content
+        // todo: make more efficient by just reading positions
+        let (_value, value_start_pos, value_end_pos, next) = read_value_and_pos(&mut reader, buf)?;
+        // let (mut value, value_start_pos, value_end_pos, next) =
+        //     read_value_and_pos(&mut reader, buf)?;
+        // value.retain(|c| !c.is_whitespace());
 
         check_end(Self::TAG, &next)?;
 
@@ -686,19 +691,29 @@ impl Values {
             format,
             byteorder,
             numvalues,
-            value,
+            // value,
             value_start_pos,
             value_end_pos,
-            _reader_ref: reader_ref,
+            reader_ref,
         })
     }
 
     pub fn get_data(&self) -> Result<Vec<f64>, GamlError> {
-        // todo: implement lazy loading of the raw data
-        let _start = self.value_start_pos;
-        let _end = self.value_end_pos;
+        let mut reader = self.reader_ref.borrow_mut();
+        let start = self.value_start_pos;
+        let end = self.value_end_pos;
+        let input = reader.get_mut();
+        input.seek(SeekFrom::Start(start))?;
+        // todo: try and make more efficient
+        let mut input_buffer = vec![0u8; (end - start) as usize];
+        input.read_exact(&mut input_buffer)?;
+        let mut reader = Reader::from_reader(Cursor::new(input_buffer));
+        let mut buf = Vec::<u8>::new();
+        let (mut value, _next) = read_value(&mut reader, &mut buf)?;
+        value.retain(|c| !c.is_whitespace());
+
         let raw_data = BASE64_STANDARD
-            .decode(self.value.as_bytes())
+            .decode(value.as_bytes())
             .map_err(|e| GamlError::from_source(e, "Error decoding base64 data."))?;
 
         let multiple = match &self.format {
@@ -867,7 +882,8 @@ mod tests {
         assert_eq!(Format::Float32, co_values.format);
         assert_eq!(Byteorder::Intel, co_values.byteorder);
         assert_eq!(Some(2), co_values.numvalues);
-        assert_eq!("AACAPwAAAEA=", co_values.value);
+        // value is lazily read
+        // assert_eq!("AACAPwAAAEA=", co_values.value);
         // private properties
         assert_eq!(1645, co_values.value_start_pos);
         assert_eq!(1744, co_values.value_end_pos);

@@ -4,7 +4,7 @@ use quick_xml::{
     name::QName,
     Reader,
 };
-use std::{collections::HashMap, io::BufRead, str, vec};
+use std::{cell::RefCell, collections::HashMap, io::BufRead, rc::Rc, str, vec};
 
 fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), GamlError> {
     if bytes_start.name().as_ref() != tag {
@@ -287,6 +287,39 @@ pub fn read_sequence<'e, R: BufRead, T>(
                     let elem = constructor(&next, reader, buf)?;
                     ret.push(elem);
                     next = skip_whitespace(reader, buf)?;
+                } else {
+                    return Ok((ret, next));
+                }
+            }
+            _ => return Ok((ret, next)),
+        }
+    }
+}
+
+type ElemConstructorRc<'f, T> = &'f (dyn Fn(
+    &Event<'_>,
+    Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+    &mut Vec<u8>,
+) -> Result<T, GamlError>);
+
+// todo: avoid code duplication with read_sequence
+pub fn read_sequence_rc<'e, T>(
+    tag_name: &[u8],
+    mut next: Event<'e>,
+    reader_ref: Rc<RefCell<Reader<Box<dyn BufRead>>>>,
+    buf: &mut Vec<u8>,
+    constructor: ElemConstructorRc<T>,
+) -> Result<(Vec<T>, Event<'e>), GamlError> {
+    let mut ret = vec![];
+    loop {
+        match &next {
+            Event::Start(bytes) | Event::Empty(bytes) => {
+                let name = bytes.name().as_ref().to_owned();
+                if name == tag_name {
+                    let elem = constructor(&next, Rc::clone(&reader_ref), buf)?;
+                    ret.push(elem);
+                    let mut reader = reader_ref.borrow_mut();
+                    next = skip_whitespace(&mut reader, buf)?;
                 } else {
                     return Ok((ret, next));
                 }

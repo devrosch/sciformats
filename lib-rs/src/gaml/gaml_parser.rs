@@ -284,9 +284,7 @@ pub struct Trace {
     // Elements
     pub parameters: Vec<Parameter>,
     pub coordinates: Vec<Coordinates>,
-    // todo:
-    // coordinates
-    // xdata
+    pub xdata: Vec<Xdata>,
 }
 
 impl Trace {
@@ -330,8 +328,11 @@ impl Trace {
         )?;
         let mut reader = reader_ref.borrow_mut();
         let next = next_non_whitespace(next, &mut reader, buf)?;
-
-        // todo: read sequences of xdata
+        drop(reader);
+        let (xdata, next) =
+            read_sequence_rc(b"Xdata", next, Rc::clone(&reader_ref), buf, &Xdata::new)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -340,6 +341,7 @@ impl Trace {
             technique,
             parameters,
             coordinates,
+            xdata,
         })
     }
 }
@@ -754,6 +756,173 @@ impl Values {
     }
 }
 
+pub struct Xdata {
+    // Attributes
+    pub units: Units,
+    pub label: Option<String>,
+    pub linkid: Option<String>,
+    pub valueorder: Valueorder,
+    // Elements
+    pub links: Vec<Link>,
+    pub parameters: Vec<Parameter>,
+    pub values: Values,
+    pub alt_x_data: Vec<AltXdata>,
+    // todo:
+    // Ydata
+}
+
+// todo: reduce code duplication w.r.t. coordinates
+impl Xdata {
+    const TAG: &'static [u8] = b"Xdata";
+
+    fn new(
+        event: &Event<'_>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let mut reader = reader_ref.borrow_mut();
+
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, &reader);
+        let units_str = get_req_attr("units", &attr_map)?;
+        let units = Units::from_str(&units_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing Xdata. Unexpected units attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+        let label = get_opt_attr("label", &attr_map);
+        let linkid = get_opt_attr("linkid", &attr_map);
+        let valueorder_str = get_req_attr("valueorder", &attr_map)?;
+        let valueorder = Valueorder::from_str(&valueorder_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing Xdata. Unexpected valueorder attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+
+        // nested elements
+        let next = skip_whitespace(&mut reader, buf)?;
+        let (links, next) = read_sequence(b"link", next, &mut reader, buf, &Link::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        drop(reader);
+        let values = Values::new(&next, Rc::clone(&reader_ref), buf)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = skip_whitespace(&mut reader, buf)?;
+        drop(reader);
+        let (alt_x_data, next) = read_sequence_rc(
+            b"altXdata",
+            next,
+            Rc::clone(&reader_ref),
+            buf,
+            &AltXdata::new,
+        )?;
+
+        // todo: parse Ydata
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            units,
+            label,
+            linkid,
+            valueorder,
+            links,
+            parameters,
+            values,
+            alt_x_data,
+        })
+    }
+}
+
+// todo: reduce code duplication w.r.t. Xdata
+pub struct AltXdata {
+    // Attributes
+    pub units: Units,
+    pub label: Option<String>,
+    pub linkid: Option<String>,
+    pub valueorder: Valueorder,
+    // Elements
+    pub links: Vec<Link>,
+    pub parameters: Vec<Parameter>,
+    pub values: Values,
+}
+
+// todo: reduce code duplication w.r.t. Xdata
+impl AltXdata {
+    const TAG: &'static [u8] = b"altXdata";
+
+    fn new(
+        event: &Event<'_>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let mut reader = reader_ref.borrow_mut();
+
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, &reader);
+        let units_str = get_req_attr("units", &attr_map)?;
+        let units = Units::from_str(&units_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing altXdata. Unexpected units attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+        let label = get_opt_attr("label", &attr_map);
+        let linkid = get_opt_attr("linkid", &attr_map);
+        let valueorder_str = get_req_attr("valueorder", &attr_map)?;
+        let valueorder = Valueorder::from_str(&valueorder_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing altXdata. Unexpected valueorder attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+
+        // nested elements
+        let next = skip_whitespace(&mut reader, buf)?;
+        let (links, next) = read_sequence(b"link", next, &mut reader, buf, &Link::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        drop(reader);
+        let values = Values::new(&next, Rc::clone(&reader_ref), buf)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = skip_whitespace(&mut reader, buf)?;
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            units,
+            label,
+            linkid,
+            valueorder,
+            links,
+            parameters,
+            values,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -784,6 +953,22 @@ mod tests {
                                             AACAPw\nAAAEA=
                                         </values>
                                     </coordinates>
+                                    <Xdata label=\"Xdata label\" units=\"MICRONS\" linkid=\"xdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                        <link linkref=\"xdata-linkref\"/>
+                                        <parameter name=\"xdata-parameter0\" label=\"Xdata parameter label 0\">Xdata parameter value 0</parameter>
+                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                            <!-- A values comment -->
+                                            AACAPw\nAAAEA=
+                                        </values>
+                                        <altXdata label=\"altXdata label\" units=\"MICRONS\" linkid=\"altxdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                            <link linkref=\"altxdata-linkref\"/>
+                                            <parameter name=\"altxdata-parameter0\" label=\"altXdata parameter label 0\">altXdata parameter value 0</parameter>
+                                            <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                                <!-- A values comment -->
+                                                AACAPw\nAAAEA=
+                                            </values>
+                                        </altXdata>
+                                    </Xdata>
                                 </trace>
                             </experiment>
                         </GAML>";
@@ -878,13 +1063,86 @@ mod tests {
         assert_eq!(Format::Float32, co_values.format);
         assert_eq!(Byteorder::Intel, co_values.byteorder);
         assert_eq!(Some(2), co_values.numvalues);
-        // value is lazily read
-        // assert_eq!("AACAPwAAAEA=", co_values.value);
         // private properties
         assert_eq!(1645, co_values.value_start_pos);
         assert_eq!(1814, co_values.value_end_pos);
+        // value is lazily read
         // converted data
         let decoded_values = co_values.get_data().unwrap();
+        assert_eq!(2, decoded_values.len());
+        assert_eq!(1.0f32 as f64, decoded_values[0]);
+        assert_eq!(2.0f32 as f64, decoded_values[1]);
+
+        let xdata = &trace.xdata;
+        assert_eq!(1, xdata.len());
+        assert_eq!(Some("Xdata label".into()), xdata[0].label);
+        assert_eq!(Units::Microns, xdata[0].units);
+        assert_eq!(Some("xdata-linkid".into()), xdata[0].linkid);
+        assert_eq!(Valueorder::Unspecified, xdata[0].valueorder);
+
+        let xdata_links = &xdata[0].links;
+        assert_eq!(1, xdata_links.len());
+        assert_eq!("xdata-linkref", xdata_links[0].linkref);
+
+        let xdata_parameters = &xdata[0].parameters;
+        assert_eq!("xdata-parameter0", &xdata_parameters[0].name);
+        assert_eq!(
+            Some("Xdata parameter label 0".into()),
+            xdata_parameters[0].label
+        );
+        assert_eq!(None, xdata_parameters[0].group);
+        assert_eq!(
+            Some("Xdata parameter value 0".into()),
+            xdata_parameters[0].value
+        );
+
+        let xdata_values = &xdata[0].values;
+        assert_eq!(Format::Float32, xdata_values.format);
+        assert_eq!(Byteorder::Intel, xdata_values.byteorder);
+        assert_eq!(Some(2), xdata_values.numvalues);
+        // private properties
+        assert_eq!(2314, xdata_values.value_start_pos);
+        assert_eq!(2483, xdata_values.value_end_pos);
+        // value is lazily read
+        // converted data
+        let decoded_values = xdata_values.get_data().unwrap();
+        assert_eq!(2, decoded_values.len());
+        assert_eq!(1.0f32 as f64, decoded_values[0]);
+        assert_eq!(2.0f32 as f64, decoded_values[1]);
+
+        let alt_x_data = &xdata[0].alt_x_data;
+        assert_eq!(1, alt_x_data.len());
+        assert_eq!(Some("altXdata label".into()), alt_x_data[0].label);
+        assert_eq!(Units::Microns, alt_x_data[0].units);
+        assert_eq!(Some("altxdata-linkid".into()), alt_x_data[0].linkid);
+        assert_eq!(Valueorder::Unspecified, alt_x_data[0].valueorder);
+
+        let alt_x_data_links = &alt_x_data[0].links;
+        assert_eq!(1, alt_x_data_links.len());
+        assert_eq!("altxdata-linkref", alt_x_data_links[0].linkref);
+
+        let alt_x_data_parameters = &alt_x_data[0].parameters;
+        assert_eq!("altxdata-parameter0", &alt_x_data_parameters[0].name);
+        assert_eq!(
+            Some("altXdata parameter label 0".into()),
+            alt_x_data_parameters[0].label
+        );
+        assert_eq!(None, alt_x_data_parameters[0].group);
+        assert_eq!(
+            Some("altXdata parameter value 0".into()),
+            alt_x_data_parameters[0].value
+        );
+
+        let alt_x_data_values = &alt_x_data[0].values;
+        assert_eq!(Format::Float32, alt_x_data_values.format);
+        assert_eq!(Byteorder::Intel, alt_x_data_values.byteorder);
+        assert_eq!(Some(2), alt_x_data_values.numvalues);
+        // private properties
+        assert_eq!(2969, alt_x_data_values.value_start_pos);
+        assert_eq!(3150, alt_x_data_values.value_end_pos);
+        // value is lazily read
+        // converted data
+        let decoded_values = alt_x_data_values.get_data().unwrap();
         assert_eq!(2, decoded_values.len());
         assert_eq!(1.0f32 as f64, decoded_values[0]);
         assert_eq!(2.0f32 as f64, decoded_values[1]);

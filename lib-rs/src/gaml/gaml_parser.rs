@@ -1,7 +1,7 @@
 use super::gaml_utils::{
     check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
     read_opt_elem, read_sequence, read_sequence_rc, read_start, read_start_or_empty, read_value,
-    read_value_and_pos, skip_whitespace, skip_xml_decl,
+    read_value_pos, skip_whitespace, skip_xml_decl,
 };
 use super::GamlError;
 use crate::api::Parser;
@@ -586,7 +586,7 @@ impl Link {
     pub fn new<R: BufRead>(
         event: &Event<'_>,
         reader: &mut Reader<R>,
-        // keep buf in function signature so it can be used as function ptr by aggregarting functions
+        // keep buf in function signature so it can be used as function ptr by aggregating functions
         #[allow(clippy::ptr_arg)] _buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
         let start = read_empty(Self::TAG, event)?;
@@ -618,8 +618,8 @@ pub struct Values {
     pub format: Format,
     pub byteorder: Byteorder,
     pub numvalues: Option<u64>,
+
     // Value is lazily read
-    // pub value: String,
     value_start_pos: u64,
     value_end_pos: u64,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
@@ -677,11 +677,7 @@ impl Values {
         };
 
         // skip content
-        // todo: make more efficient by just reading positions
-        let (_value, value_start_pos, value_end_pos, next) = read_value_and_pos(&mut reader, buf)?;
-        // let (mut value, value_start_pos, value_end_pos, next) =
-        //     read_value_and_pos(&mut reader, buf)?;
-        // value.retain(|c| !c.is_whitespace());
+        let (value_start_pos, value_end_pos, next) = read_value_pos(&mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -704,6 +700,9 @@ impl Values {
         let end = self.value_end_pos;
         let input = reader.get_mut();
         input.seek(SeekFrom::Start(start))?;
+
+        // read value bytes into owned buffer to allow quickxml deserialization; when using reader directly,
+        // quickxml returns an error when it encounters a closing element after the value text
         // todo: try and make more efficient
         let mut input_buffer = vec![0u8; (end - start) as usize];
         input.read_exact(&mut input_buffer)?;
@@ -785,6 +784,7 @@ mod tests {
                                         <link linkref=\"co-linkref\"/>
                                         <parameter name=\"co-parameter0\" label=\"Coordinates parameter label 0\">Coordinates parameter value 0</parameter>
                                         <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                            <!-- A values comment -->
                                             AACAPw\nAAAEA=
                                         </values>
                                     </coordinates>
@@ -886,7 +886,7 @@ mod tests {
         // assert_eq!("AACAPwAAAEA=", co_values.value);
         // private properties
         assert_eq!(1645, co_values.value_start_pos);
-        assert_eq!(1744, co_values.value_end_pos);
+        assert_eq!(1814, co_values.value_end_pos);
         // converted data
         let decoded_values = co_values.get_data().unwrap();
         assert_eq!(2, decoded_values.len());

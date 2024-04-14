@@ -1,4 +1,4 @@
-use super::{gaml_parser::SeekBufRead, GamlError};
+use super::{GamlError, SeekBufRead};
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
@@ -18,7 +18,10 @@ fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<()
     }
 }
 
-pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
+pub(super) fn read_start<'b>(
+    tag: &[u8],
+    event: &'b Event<'b>,
+) -> Result<&'b BytesStart<'b>, GamlError> {
     if let Event::Start(bytes_start) = event {
         check_matches_tag_name(tag, bytes_start)?;
         Ok(bytes_start)
@@ -27,7 +30,10 @@ pub fn read_start<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart
     }
 }
 
-pub fn read_empty<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart<'b>, GamlError> {
+pub(super) fn read_empty<'b>(
+    tag: &[u8],
+    event: &'b Event<'b>,
+) -> Result<&'b BytesStart<'b>, GamlError> {
     if let Event::Empty(bytes_start) = event {
         check_matches_tag_name(tag, bytes_start)?;
         Ok(bytes_start)
@@ -36,7 +42,7 @@ pub fn read_empty<'b>(tag: &[u8], event: &'b Event<'b>) -> Result<&'b BytesStart
     }
 }
 
-pub fn read_start_or_empty<'b>(
+pub(super) fn read_start_or_empty<'b>(
     tag: &[u8],
     event: &'b Event<'b>,
 ) -> Result<(&'b BytesStart<'b>, bool), GamlError> {
@@ -53,7 +59,7 @@ pub fn read_start_or_empty<'b>(
     }
 }
 
-pub fn get_attributes<'a, R>(
+pub(super) fn get_attributes<'a, R>(
     bytes_start: &'a BytesStart<'a>,
     reader: &Reader<R>,
 ) -> HashMap<QName<'a>, std::borrow::Cow<'a, str>> {
@@ -70,7 +76,7 @@ pub fn get_attributes<'a, R>(
         .collect::<HashMap<_, _>>()
 }
 
-pub fn get_req_attr<'a>(
+pub(super) fn get_req_attr<'a>(
     name: &str,
     attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
 ) -> Result<String, GamlError> {
@@ -81,7 +87,7 @@ pub fn get_req_attr<'a>(
         .into_owned())
 }
 
-pub fn get_opt_attr<'a>(
+pub(super) fn get_opt_attr<'a>(
     name: &str,
     attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
 ) -> Option<String> {
@@ -90,7 +96,7 @@ pub fn get_opt_attr<'a>(
         .map(|name| name.clone().into_owned())
 }
 
-pub fn skip_xml_decl<'b, R: BufRead>(
+pub(super) fn skip_xml_decl<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
 ) -> Result<Event<'b>, GamlError> {
@@ -101,7 +107,7 @@ pub fn skip_xml_decl<'b, R: BufRead>(
     }
 }
 
-pub fn skip_whitespace<R: BufRead>(
+pub(super) fn skip_whitespace<R: BufRead>(
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
 ) -> Result<Event<'static>, GamlError> {
@@ -121,7 +127,7 @@ pub fn skip_whitespace<R: BufRead>(
     }
 }
 
-pub fn next_non_whitespace<'r, R: BufRead>(
+pub(super) fn next_non_whitespace<'r, R: BufRead>(
     event: Event<'r>,
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
@@ -138,7 +144,7 @@ pub fn next_non_whitespace<'r, R: BufRead>(
     }
 }
 
-pub fn read_value<'b, R: BufRead>(
+pub(super) fn read_value<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
 ) -> Result<(String, Event<'b>), GamlError> {
@@ -161,7 +167,7 @@ pub fn read_value<'b, R: BufRead>(
     Ok((value, next))
 }
 
-pub fn read_value_pos<'b, R: BufRead>(
+pub(super) fn read_value_pos<'b, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'b mut Vec<u8>,
 ) -> Result<(u64, u64, Event<'b>), GamlError> {
@@ -185,7 +191,7 @@ pub fn read_value_pos<'b, R: BufRead>(
     Ok((start_pos, end_pos, next))
 }
 
-pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
+pub(super) fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
     match event {
         Event::End(e) => {
             let name = e.name().as_ref().to_owned();
@@ -205,19 +211,10 @@ pub fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
     }
 }
 
-pub fn consume_end<R: BufRead>(
-    tag_name: &[u8],
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-) -> Result<(), GamlError> {
-    let event = reader.read_event_into(buf)?;
-    check_end(tag_name, &event)
-}
-
 type ElemConstructor<'f, R, T> =
     &'f (dyn Fn(&Event<'_>, &mut Reader<R>, &mut Vec<u8>) -> Result<T, GamlError>);
 
-pub fn read_req_elem<'buf, R: BufRead, T>(
+pub(super) fn read_req_elem<'buf, R: BufRead, T>(
     tag_name: &[u8],
     next: Event<'_>,
     reader: &mut Reader<R>,
@@ -246,7 +243,7 @@ pub fn read_req_elem<'buf, R: BufRead, T>(
     }
 }
 
-pub fn read_opt_elem<'e, R: BufRead, T>(
+pub(super) fn read_opt_elem<'e, R: BufRead, T>(
     tag_name: &[u8],
     next: Event<'e>,
     reader: &mut Reader<R>,
@@ -269,7 +266,7 @@ pub fn read_opt_elem<'e, R: BufRead, T>(
     }
 }
 
-pub fn read_sequence<'e, R: BufRead, T>(
+pub(super) fn read_sequence<'e, R: BufRead, T>(
     tag_name: &[u8],
     mut next: Event<'e>,
     reader: &mut Reader<R>,
@@ -301,7 +298,7 @@ type ElemConstructorRc<'f, T> = &'f (dyn Fn(
 ) -> Result<T, GamlError>);
 
 // todo: avoid code duplication with read_sequence
-pub fn read_sequence_rc<'e, T>(
+pub(super) fn read_sequence_rc<'e, T>(
     tag_name: &[u8],
     mut next: Event<'e>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,

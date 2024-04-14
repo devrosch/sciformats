@@ -1,7 +1,14 @@
-use std::{error::Error, fmt};
+use std::{
+    error::Error,
+    fmt,
+    io::{BufRead, Seek},
+};
 
 pub mod gaml_parser;
 pub mod gaml_utils;
+
+trait SeekBufRead: Seek + BufRead {}
+impl<T: Seek + BufRead> SeekBufRead for T {}
 
 #[derive(Debug)]
 pub struct GamlError {

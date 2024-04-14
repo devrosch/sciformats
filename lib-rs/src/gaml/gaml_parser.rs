@@ -3,7 +3,7 @@ use super::gaml_utils::{
     read_opt_elem, read_sequence, read_sequence_rc, read_start, read_start_or_empty, read_value,
     read_value_pos, skip_whitespace, skip_xml_decl,
 };
-use super::GamlError;
+use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
 use base64::prelude::*;
 use chrono::{DateTime, FixedOffset};
@@ -14,10 +14,6 @@ use std::io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use std::str::{self, FromStr};
 use strum::EnumString;
-
-// todo: check if can be moved and visibility can be limited
-pub trait SeekBufRead: Seek + BufRead {}
-impl<T: Seek + BufRead> SeekBufRead for T {}
 
 pub struct GamlParser {}
 
@@ -46,7 +42,7 @@ pub struct Gaml {
 impl Gaml {
     const TAG: &'static [u8] = b"GAML";
 
-    pub fn new(
+    fn new(
         _name: &str,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     ) -> Result<Self, GamlError> {
@@ -103,7 +99,7 @@ pub struct Integrity {
 impl Integrity {
     const TAG: &'static [u8] = b"integrity";
 
-    pub fn new<R: BufRead>(
+    fn new<R: BufRead>(
         event: &Event<'_>,
         reader: &mut Reader<R>,
         buf: &mut Vec<u8>,
@@ -182,7 +178,7 @@ pub struct Experiment {
 impl Experiment {
     const TAG: &'static [u8] = b"experiment";
 
-    pub fn new(
+    fn new(
         event: &Event<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
@@ -296,7 +292,7 @@ pub struct Trace {
 impl Trace {
     const TAG: &'static [u8] = b"trace";
 
-    pub fn new(
+    fn new(
         event: &Event<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
@@ -515,7 +511,7 @@ pub struct Coordinates {
 impl Coordinates {
     const TAG: &'static [u8] = b"coordinates";
 
-    pub fn new(
+    fn new(
         event: &Event<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
@@ -628,7 +624,7 @@ pub struct Values {
 impl Values {
     const TAG: &'static [u8] = b"values";
 
-    pub fn new(
+    fn new(
         event: &Event<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
@@ -696,14 +692,14 @@ impl Values {
 
     pub fn get_data(&self) -> Result<Vec<f64>, GamlError> {
         let mut reader = self.reader_ref.borrow_mut();
-        let start = self.value_start_pos;
-        let end = self.value_end_pos;
-        let input = reader.get_mut();
-        input.seek(SeekFrom::Start(start))?;
 
         // read value bytes into owned buffer to allow quickxml deserialization; when using reader directly,
         // quickxml returns an error when it encounters a closing element after the value text
         // todo: try and make more efficient
+        let start = self.value_start_pos;
+        let end = self.value_end_pos;
+        let input = reader.get_mut();
+        input.seek(SeekFrom::Start(start))?;
         let mut input_buffer = vec![0u8; (end - start) as usize];
         input.read_exact(&mut input_buffer)?;
         let mut reader = Reader::from_reader(Cursor::new(input_buffer));
@@ -728,7 +724,7 @@ impl Values {
         if let Some(n) = self.numvalues {
             if n != raw_data.len() as u64 / multiple {
                 return Err(GamlError::new(&format!(
-                    "Number of data bytes does not match numvalues attribute: {}",
+                    "Number of data bytes does not correspond to numvalues and format attributes: {}",
                     raw_data.len()
                 )));
             }

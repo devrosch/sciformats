@@ -767,8 +767,7 @@ pub struct Xdata {
     pub parameters: Vec<Parameter>,
     pub values: Values,
     pub alt_x_data: Vec<AltXdata>,
-    // todo:
-    // Ydata
+    pub y_data: Vec<Ydata>,
 }
 
 // todo: reduce code duplication w.r.t. coordinates
@@ -828,8 +827,16 @@ impl Xdata {
             buf,
             &AltXdata::new,
         )?;
-
-        // todo: parse Ydata
+        let mut reader = reader_ref.borrow_mut();
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        drop(reader);
+        let (y_data, next) =
+            read_sequence_rc(b"Ydata", next, Rc::clone(&reader_ref), buf, &Ydata::new)?;
+        if y_data.is_empty() {
+            return Err(GamlError::new("No Ydata found for Xdata."));
+        }
+        let mut reader = reader_ref.borrow_mut();
+        let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -842,6 +849,7 @@ impl Xdata {
             parameters,
             values,
             alt_x_data,
+            y_data,
         })
     }
 }
@@ -923,6 +931,67 @@ impl AltXdata {
     }
 }
 
+// todo: reduce code duplication w.r.t. Xdata
+pub struct Ydata {
+    // Attributes
+    pub units: Units,
+    pub label: Option<String>,
+    // Elements
+    pub parameters: Vec<Parameter>,
+    pub values: Values,
+    // todo: peaktables
+}
+
+// todo: reduce code duplication w.r.t. Xdata
+impl Ydata {
+    const TAG: &'static [u8] = b"Ydata";
+
+    fn new(
+        event: &Event<'_>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let mut reader = reader_ref.borrow_mut();
+
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, &reader);
+        let units_str = get_req_attr("units", &attr_map)?;
+        let units = Units::from_str(&units_str).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing Ydata. Unexpected units attribute: {}",
+                    &units_str
+                ),
+            )
+        })?;
+        let label = get_opt_attr("label", &attr_map);
+
+        // nested elements
+        let next = skip_whitespace(&mut reader, buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        drop(reader);
+        let values = Values::new(&next, Rc::clone(&reader_ref), buf)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = skip_whitespace(&mut reader, buf)?;
+
+        // todo: peaktables
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            units,
+            label,
+            parameters,
+            values,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -964,10 +1033,18 @@ mod tests {
                                             <link linkref=\"altxdata-linkref\"/>
                                             <parameter name=\"altxdata-parameter0\" label=\"altXdata parameter label 0\">altXdata parameter value 0</parameter>
                                             <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                                AACAPw\nAAAEA=
+                                                <!-- A values comment -->
+                                            </values>
+                                        </altXdata>
+                                        <Ydata label=\"Ydata label\" units=\"MICRONS\" linkid=\"altxdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                            <parameter name=\"ydata-parameter0\" label=\"Ydata parameter label 0\">Ydata parameter value 0</parameter>
+                                            <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
                                                 <!-- A values comment -->
                                                 AACAPw\nAAAEA=
                                             </values>
-                                        </altXdata>
+                                            <!-- todo: peaktable -->
+                                        </Ydata>
                                     </Xdata>
                                 </trace>
                             </experiment>
@@ -1143,6 +1220,37 @@ mod tests {
         // value is lazily read
         // converted data
         let decoded_values = alt_x_data_values.get_data().unwrap();
+        assert_eq!(2, decoded_values.len());
+        assert_eq!(1.0f32 as f64, decoded_values[0]);
+        assert_eq!(2.0f32 as f64, decoded_values[1]);
+
+        let y_data = &xdata[0].y_data;
+        assert_eq!(1, y_data.len());
+        assert_eq!(Some("Ydata label".into()), y_data[0].label);
+        assert_eq!(Units::Microns, y_data[0].units);
+
+        let y_data_parameters = &y_data[0].parameters;
+        assert_eq!("ydata-parameter0", &y_data_parameters[0].name);
+        assert_eq!(
+            Some("Ydata parameter label 0".into()),
+            y_data_parameters[0].label
+        );
+        assert_eq!(None, y_data_parameters[0].group);
+        assert_eq!(
+            Some("Ydata parameter value 0".into()),
+            y_data_parameters[0].value
+        );
+
+        let y_data_values = &y_data[0].values;
+        assert_eq!(Format::Float32, y_data_values.format);
+        assert_eq!(Byteorder::Intel, y_data_values.byteorder);
+        assert_eq!(Some(2), y_data_values.numvalues);
+        // private properties
+        assert_eq!(3594, y_data_values.value_start_pos);
+        assert_eq!(3775, y_data_values.value_end_pos);
+        // value is lazily read
+        // converted data
+        let decoded_values = y_data_values.get_data().unwrap();
         assert_eq!(2, decoded_values.len());
         assert_eq!(1.0f32 as f64, decoded_values[0]);
         assert_eq!(2.0f32 as f64, decoded_values[1]);

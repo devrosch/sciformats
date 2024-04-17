@@ -939,7 +939,7 @@ pub struct Ydata {
     // Elements
     pub parameters: Vec<Parameter>,
     pub values: Values,
-    // todo: peaktables
+    pub peaktables: Vec<Peaktable>,
 }
 
 // todo: reduce code duplication w.r.t. Xdata
@@ -979,7 +979,9 @@ impl Ydata {
         let mut reader = reader_ref.borrow_mut();
         let next = skip_whitespace(&mut reader, buf)?;
 
-        // todo: peaktables
+        let (peaktables, next) =
+            read_sequence(b"peaktable", next, &mut reader, buf, &Peaktable::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -988,7 +990,157 @@ impl Ydata {
             label,
             parameters,
             values,
+            peaktables,
         })
+    }
+}
+
+pub struct Peaktable {
+    // Attributes
+    pub name: Option<String>,
+    // Elements
+    pub parameters: Vec<Parameter>,
+    pub peaks: Vec<Peak>,
+}
+
+impl Peaktable {
+    const TAG: &'static [u8] = b"peaktable";
+
+    fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let name = get_opt_attr("name", &attr_map);
+
+        // nested elements
+        let next = skip_whitespace(reader, buf)?;
+        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+        let (peaks, next) = read_sequence(b"peak", next, reader, buf, &Peak::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            name,
+            parameters,
+            peaks,
+        })
+    }
+}
+
+pub struct Peak {
+    // Attributes
+    pub number: u64,
+    pub group: Option<String>,
+    pub name: Option<String>,
+    // Elements
+    pub parameters: Vec<Parameter>,
+    pub peak_x_value: f64,
+    pub peak_y_value: f64,
+    // todo: baseline
+}
+
+impl Peak {
+    const TAG: &'static [u8] = b"peak";
+
+    fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let start = read_start(Self::TAG, event)?;
+
+        // attributes
+        let attr_map = get_attributes(start, reader);
+        let number_str = get_req_attr("number", &attr_map)?;
+        let number = number_str.parse::<u64>().map_err(|e| {
+            GamlError::from_source(e, format!("Illegal peak number attribute: {}", number_str))
+        })?;
+        if number == 0 {
+            // only strictly positive peak numbers allowed by schema
+            return Err(GamlError::new("Illegal peak number: 0"));
+        }
+        let group = get_opt_attr("group", &attr_map);
+        let name = get_opt_attr("name", &attr_map);
+
+        // nested elements
+        let next = skip_whitespace(reader, buf)?;
+        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+        let peak_x_value_str = PeakXvalue::new(&next, reader, buf)?.value;
+        let peak_x_value = peak_x_value_str.parse::<f64>().map_err(|e| {
+            GamlError::from_source(e, format!("Illegal peak x value: {}", peak_x_value_str))
+        })?;
+        let next = skip_whitespace(reader, buf)?;
+        let peak_y_value_str = PeakYvalue::new(&next, reader, buf)?.value;
+        let peak_y_value = peak_y_value_str.parse::<f64>().map_err(|e| {
+            GamlError::from_source(e, format!("Illegal peak y value: {}", peak_y_value_str))
+        })?;
+        let next = skip_whitespace(reader, buf)?;
+
+        // todo: baseline
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            number,
+            group,
+            name,
+            parameters,
+            peak_x_value,
+            peak_y_value,
+        })
+    }
+}
+
+// todo: struct required?
+struct PeakXvalue {
+    value: String,
+}
+
+impl PeakXvalue {
+    const TAG: &'static [u8] = b"peakXvalue";
+
+    fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let _start = read_start(Self::TAG, event)?;
+        // nested elements
+        let (value, next) = read_value(reader, buf)?;
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self { value })
+    }
+}
+
+// todo: struct required?
+struct PeakYvalue {
+    value: String,
+}
+
+// todo: avoid code duplication w.r.t. PeakXvalue
+impl PeakYvalue {
+    const TAG: &'static [u8] = b"peakYvalue";
+
+    fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let _start = read_start(Self::TAG, event)?;
+        // nested elements
+        let (value, next) = read_value(reader, buf)?;
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self { value })
     }
 }
 
@@ -1043,7 +1195,15 @@ mod tests {
                                                 <!-- A values comment -->
                                                 AACAPw\nAAAEA=
                                             </values>
-                                            <!-- todo: peaktable -->
+                                            <peaktable name=\"pt-name\">
+                                                <parameter name=\"pt-parameter0\" label=\"Peaktable parameter label 0\">Peaktable parameter value 0</parameter>
+                                                <peak number=\"1\" group=\"p0-group\" name=\"p0-name\">
+                                                    <parameter name=\"p0-parameter0\" label=\"Peak 0 parameter label 0\">Peak 0 parameter value 0</parameter>
+                                                    <peakXvalue>0.1</peakXvalue>
+                                                    <peakYvalue>100.0</peakYvalue>
+                                                    <!-- todo: baseline -->
+                                                </peak>
+                                            </peaktable>
                                         </Ydata>
                                     </Xdata>
                                 </trace>
@@ -1254,5 +1414,40 @@ mod tests {
         assert_eq!(2, decoded_values.len());
         assert_eq!(1.0f32 as f64, decoded_values[0]);
         assert_eq!(2.0f32 as f64, decoded_values[1]);
+
+        let peaktables = &y_data[0].peaktables;
+        assert_eq!(1, peaktables.len());
+        let peaktable = &peaktables[0];
+        let peaktable_parameters = &peaktable.parameters;
+        assert_eq!("pt-parameter0", &peaktable_parameters[0].name);
+        assert_eq!(
+            Some("Peaktable parameter label 0".into()),
+            peaktable_parameters[0].label
+        );
+        assert_eq!(None, xdata_parameters[0].group);
+        assert_eq!(
+            Some("Peaktable parameter value 0".into()),
+            peaktable_parameters[0].value
+        );
+
+        let peaks = &peaktable.peaks;
+        assert_eq!(1, peaks.len());
+        let peak = &peaks[0];
+        assert_eq!(1, peak.number);
+        assert_eq!(Some("p0-group".into()), peak.group);
+        assert_eq!(Some("p0-name".into()), peak.name);
+        let peak_parameters = &peak.parameters;
+        assert_eq!("p0-parameter0", &peak_parameters[0].name);
+        assert_eq!(
+            Some("Peak 0 parameter label 0".into()),
+            peak_parameters[0].label
+        );
+        assert_eq!(None, xdata_parameters[0].group);
+        assert_eq!(
+            Some("Peak 0 parameter value 0".into()),
+            peak_parameters[0].value
+        );
+        assert_eq!(0.1, peak.peak_x_value);
+        assert_eq!(100.0, peak.peak_y_value);
     }
 }

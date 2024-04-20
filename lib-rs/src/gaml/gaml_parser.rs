@@ -1,7 +1,7 @@
 use super::gaml_utils::{
     check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
-    read_opt_elem, read_sequence, read_sequence_rc, read_start, read_start_or_empty, read_value,
-    read_value_pos, skip_whitespace, skip_xml_decl,
+    read_opt_elem, read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start,
+    read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl,
 };
 use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
@@ -1073,15 +1073,9 @@ impl Peak {
         let next = skip_whitespace(reader, buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
         let next = next_non_whitespace(next, reader, buf)?;
-        let peak_x_value_str = PeakXvalue::new(&next, reader, buf)?.value;
-        let peak_x_value = peak_x_value_str.parse::<f64>().map_err(|e| {
-            GamlError::from_source(e, format!("Illegal peak x value: {}", peak_x_value_str))
-        })?;
+        let peak_x_value = read_req_elem_value_f64(b"peakXvalue", &next, reader, buf)?;
         let next = skip_whitespace(reader, buf)?;
-        let peak_y_value_str = PeakYvalue::new(&next, reader, buf)?.value;
-        let peak_y_value = peak_y_value_str.parse::<f64>().map_err(|e| {
-            GamlError::from_source(e, format!("Illegal peak y value: {}", peak_y_value_str))
-        })?;
+        let peak_y_value = read_req_elem_value_f64(b"peakYvalue", &next, reader, buf)?;
         let next = skip_whitespace(reader, buf)?;
 
         // todo: baseline
@@ -1096,51 +1090,6 @@ impl Peak {
             peak_x_value,
             peak_y_value,
         })
-    }
-}
-
-// todo: struct required?
-struct PeakXvalue {
-    value: String,
-}
-
-impl PeakXvalue {
-    const TAG: &'static [u8] = b"peakXvalue";
-
-    fn new<R: BufRead>(
-        event: &Event<'_>,
-        reader: &mut Reader<R>,
-        buf: &mut Vec<u8>,
-    ) -> Result<Self, GamlError> {
-        let _start = read_start(Self::TAG, event)?;
-        // nested elements
-        let (value, next) = read_value(reader, buf)?;
-        check_end(Self::TAG, &next)?;
-
-        Ok(Self { value })
-    }
-}
-
-// todo: struct required?
-struct PeakYvalue {
-    value: String,
-}
-
-// todo: avoid code duplication w.r.t. PeakXvalue
-impl PeakYvalue {
-    const TAG: &'static [u8] = b"peakYvalue";
-
-    fn new<R: BufRead>(
-        event: &Event<'_>,
-        reader: &mut Reader<R>,
-        buf: &mut Vec<u8>,
-    ) -> Result<Self, GamlError> {
-        let _start = read_start(Self::TAG, event)?;
-        // nested elements
-        let (value, next) = read_value(reader, buf)?;
-        check_end(Self::TAG, &next)?;
-
-        Ok(Self { value })
     }
 }
 

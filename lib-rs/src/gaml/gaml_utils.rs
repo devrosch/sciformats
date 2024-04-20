@@ -323,3 +323,31 @@ pub(super) fn read_sequence_rc<'e, T>(
         }
     }
 }
+
+pub(super) fn read_req_elem_value<R: BufRead>(
+    tag_name: &[u8],
+    next: &Event<'_>,
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+) -> Result<String, GamlError> {
+    let _start = read_start(tag_name, next)?;
+    let (value, next) = read_value(reader, buf)?;
+    check_end(tag_name, &next)?;
+
+    Ok(value)
+}
+
+pub(super) fn read_req_elem_value_f64<R: BufRead>(
+    tag_name: &[u8],
+    next: &Event<'_>,
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+) -> Result<f64, GamlError> {
+    let value = read_req_elem_value(tag_name, next, reader, buf)?;
+    let value_f64 = value.parse::<f64>().map_err(|e| {
+        let tag = String::from_utf8_lossy(tag_name);
+        GamlError::from_source(e, format!("Illegal value for {}: {}", tag, value))
+    })?;
+
+    Ok(value_f64)
+}

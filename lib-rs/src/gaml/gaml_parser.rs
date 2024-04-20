@@ -1043,7 +1043,7 @@ pub struct Peak {
     pub parameters: Vec<Parameter>,
     pub peak_x_value: f64,
     pub peak_y_value: f64,
-    // todo: baseline
+    pub baseline: Option<Baseline>,
 }
 
 impl Peak {
@@ -1077,8 +1077,8 @@ impl Peak {
         let next = skip_whitespace(reader, buf)?;
         let peak_y_value = read_req_elem_value_f64(b"peakYvalue", &next, reader, buf)?;
         let next = skip_whitespace(reader, buf)?;
-
-        // todo: baseline
+        let (baseline, next) = read_opt_elem(b"baseline", next, reader, buf, &Baseline::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1089,6 +1089,54 @@ impl Peak {
             parameters,
             peak_x_value,
             peak_y_value,
+            baseline,
+        })
+    }
+}
+
+pub struct Baseline {
+    // Elements
+    pub parameters: Vec<Parameter>,
+    pub start_x_value: f64,
+    pub start_y_value: f64,
+    pub end_x_value: f64,
+    pub end_y_value: f64,
+    // todo: basecurve
+}
+
+impl Baseline {
+    const TAG: &'static [u8] = b"baseline";
+
+    fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader: &mut Reader<R>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let _start = read_start(Self::TAG, event)?;
+
+        // nested elements
+        let next = skip_whitespace(reader, buf)?;
+        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, reader, buf)?;
+        let start_x_value = read_req_elem_value_f64(b"startXvalue", &next, reader, buf)?;
+        let next = skip_whitespace(reader, buf)?;
+        let start_y_value = read_req_elem_value_f64(b"startYvalue", &next, reader, buf)?;
+        let next = skip_whitespace(reader, buf)?;
+        let end_x_value = read_req_elem_value_f64(b"endXvalue", &next, reader, buf)?;
+        let next = skip_whitespace(reader, buf)?;
+        let end_y_value = read_req_elem_value_f64(b"endYvalue", &next, reader, buf)?;
+        let next = skip_whitespace(reader, buf)?;
+
+        // todo: basecurve
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            parameters,
+            start_x_value,
+            start_y_value,
+            end_x_value,
+            end_y_value,
         })
     }
 }
@@ -1150,7 +1198,13 @@ mod tests {
                                                     <parameter name=\"p0-parameter0\" label=\"Peak 0 parameter label 0\">Peak 0 parameter value 0</parameter>
                                                     <peakXvalue>0.1</peakXvalue>
                                                     <peakYvalue>100.0</peakYvalue>
-                                                    <!-- todo: baseline -->
+                                                    <baseline>
+                                                        <startXvalue>1.1</startXvalue>
+                                                        <startYvalue>11.1</startYvalue>
+                                                        <endXvalue>2.2</endXvalue>
+                                                        <endYvalue>22.2</endYvalue>
+                                                        <!-- todo: basecurve -->
+                                                    </baseline>
                                                 </peak>
                                             </peaktable>
                                         </Ydata>
@@ -1398,5 +1452,12 @@ mod tests {
         );
         assert_eq!(0.1, peak.peak_x_value);
         assert_eq!(100.0, peak.peak_y_value);
+
+        let baseline = peak.baseline.as_ref().unwrap();
+        assert!(baseline.parameters.is_empty());
+        assert_eq!(1.1, baseline.start_x_value);
+        assert_eq!(11.1, baseline.start_y_value);
+        assert_eq!(2.2, baseline.end_x_value);
+        assert_eq!(22.2, baseline.end_y_value);
     }
 }

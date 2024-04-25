@@ -1153,8 +1153,15 @@ impl Baseline {
         let end_y_value = read_req_elem_value_f64(b"endYvalue", &next, &mut reader, buf)?;
         let next = skip_whitespace(&mut reader, buf)?;
         drop(reader);
-        let (basecurve, next) =
-            read_opt_elem_rc(b"basecurve", next, reader_ref, buf, &Basecurve::new)?;
+        let (basecurve, next) = read_opt_elem_rc(
+            b"basecurve",
+            next,
+            Rc::clone(&reader_ref),
+            buf,
+            &Basecurve::new,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1306,7 +1313,24 @@ mod tests {
                                                         <startYvalue>11.1</startYvalue>
                                                         <endXvalue>2.2</endXvalue>
                                                         <endYvalue>22.2</endYvalue>
-                                                        <!-- todo: basecurve -->
+                                                        <basecurve>
+                                                            <baseXdata>
+                                                                <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                                                    AACAPw\nAAAEA=
+                                                                </values>
+                                                                <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                                                    AACAPw\nAAAEA=
+                                                                </values>
+                                                            </baseXdata>
+                                                            <baseYdata>
+                                                                <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                                                    AACAPw\nAAAEA=
+                                                                </values>
+                                                                <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                                                    AACAPw\nAAAEA=
+                                                                </values>
+                                                            </baseYdata>
+                                                        </basecurve>
                                                     </baseline>
                                                 </peak>
                                             </peaktable>
@@ -1562,5 +1586,9 @@ mod tests {
         assert_eq!(11.1, baseline.start_y_value);
         assert_eq!(2.2, baseline.end_x_value);
         assert_eq!(22.2, baseline.end_y_value);
+
+        let basecurve = baseline.basecurve.as_ref().unwrap();
+        assert_eq!(vec![1.0, 2.0, 1.0, 2.0], basecurve.get_x_data().unwrap());
+        assert_eq!(vec![1.0, 2.0, 1.0, 2.0], basecurve.get_y_data().unwrap());
     }
 }

@@ -978,9 +978,15 @@ impl Ydata {
         let values = Values::new(&next, Rc::clone(&reader_ref), buf)?;
         let mut reader = reader_ref.borrow_mut();
         let next = skip_whitespace(&mut reader, buf)?;
-
-        let (peaktables, next) =
-            read_sequence(b"peaktable", next, &mut reader, buf, &Peaktable::new)?;
+        drop(reader);
+        let (peaktables, next) = read_sequence_rc(
+            b"peaktable",
+            next,
+            Rc::clone(&reader_ref),
+            buf,
+            &Peaktable::new,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
         let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
@@ -1006,23 +1012,29 @@ pub struct Peaktable {
 impl Peaktable {
     const TAG: &'static [u8] = b"peaktable";
 
-    fn new<R: BufRead>(
+    fn new(
         event: &Event<'_>,
-        reader: &mut Reader<R>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
+        let mut reader = reader_ref.borrow_mut();
+
         let start = read_start(Self::TAG, event)?;
 
         // attributes
-        let attr_map = get_attributes(start, reader);
+        let attr_map = get_attributes(start, &reader);
         let name = get_opt_attr("name", &attr_map);
 
         // nested elements
-        let next = skip_whitespace(reader, buf)?;
-        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
-        let next = next_non_whitespace(next, reader, buf)?;
-        let (peaks, next) = read_sequence(b"peak", next, reader, buf, &Peak::new)?;
-        let next = next_non_whitespace(next, reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        drop(reader);
+        let (peaks, next) =
+            read_sequence_rc(b"peak", next, Rc::clone(&reader_ref), buf, &Peak::new)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1049,15 +1061,17 @@ pub struct Peak {
 impl Peak {
     const TAG: &'static [u8] = b"peak";
 
-    fn new<R: BufRead>(
+    fn new(
         event: &Event<'_>,
-        reader: &mut Reader<R>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
+        let mut reader = reader_ref.borrow_mut();
+
         let start = read_start(Self::TAG, event)?;
 
         // attributes
-        let attr_map = get_attributes(start, reader);
+        let attr_map = get_attributes(start, &reader);
         let number_str = get_req_attr("number", &attr_map)?;
         let number = number_str.parse::<u64>().map_err(|e| {
             GamlError::from_source(e, format!("Illegal peak number attribute: {}", number_str))
@@ -1070,15 +1084,24 @@ impl Peak {
         let name = get_opt_attr("name", &attr_map);
 
         // nested elements
-        let next = skip_whitespace(reader, buf)?;
-        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
-        let next = next_non_whitespace(next, reader, buf)?;
-        let peak_x_value = read_req_elem_value_f64(b"peakXvalue", &next, reader, buf)?;
-        let next = skip_whitespace(reader, buf)?;
-        let peak_y_value = read_req_elem_value_f64(b"peakYvalue", &next, reader, buf)?;
-        let next = skip_whitespace(reader, buf)?;
-        let (baseline, next) = read_opt_elem(b"baseline", next, reader, buf, &Baseline::new)?;
-        let next = next_non_whitespace(next, reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        let peak_x_value = read_req_elem_value_f64(b"peakXvalue", &next, &mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let peak_y_value = read_req_elem_value_f64(b"peakYvalue", &next, &mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        drop(reader);
+        let (baseline, next) = read_opt_elem_rc(
+            b"baseline",
+            next,
+            Rc::clone(&reader_ref),
+            buf,
+            &Baseline::new,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = next_non_whitespace(next, &mut reader, buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1101,35 +1124,37 @@ pub struct Baseline {
     pub start_y_value: f64,
     pub end_x_value: f64,
     pub end_y_value: f64,
-    // pub basecurve: Option<Basecurve>,
+    pub basecurve: Option<Basecurve>,
 }
 
 impl Baseline {
     const TAG: &'static [u8] = b"baseline";
 
-    fn new<R: BufRead>(
+    fn new(
         event: &Event<'_>,
-        reader: &mut Reader<R>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
+        let mut reader = reader_ref.borrow_mut();
+
         let _start = read_start(Self::TAG, event)?;
 
         // nested elements
-        let next = skip_whitespace(reader, buf)?;
-        let (parameters, next) = read_sequence(b"parameter", next, reader, buf, &Parameter::new)?;
-        let next = next_non_whitespace(next, reader, buf)?;
-        let start_x_value = read_req_elem_value_f64(b"startXvalue", &next, reader, buf)?;
-        let next = skip_whitespace(reader, buf)?;
-        let start_y_value = read_req_elem_value_f64(b"startYvalue", &next, reader, buf)?;
-        let next = skip_whitespace(reader, buf)?;
-        let end_x_value = read_req_elem_value_f64(b"endXvalue", &next, reader, buf)?;
-        let next = skip_whitespace(reader, buf)?;
-        let end_y_value = read_req_elem_value_f64(b"endYvalue", &next, reader, buf)?;
-        let next = skip_whitespace(reader, buf)?;
-
-        // todo: basecurve
-        // let (basecurve, event) =
-        //     read_opt_elem_rc(b"basecurve", next, reader, buf, &Basecurve::new)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let (parameters, next) =
+            read_sequence(b"parameter", next, &mut reader, buf, &Parameter::new)?;
+        let next = next_non_whitespace(next, &mut reader, buf)?;
+        let start_x_value = read_req_elem_value_f64(b"startXvalue", &next, &mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let start_y_value = read_req_elem_value_f64(b"startYvalue", &next, &mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let end_x_value = read_req_elem_value_f64(b"endXvalue", &next, &mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        let end_y_value = read_req_elem_value_f64(b"endYvalue", &next, &mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, buf)?;
+        drop(reader);
+        let (basecurve, next) =
+            read_opt_elem_rc(b"basecurve", next, reader_ref, buf, &Basecurve::new)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1139,7 +1164,7 @@ impl Baseline {
             start_y_value,
             end_x_value,
             end_y_value,
-            // basecurve,
+            basecurve,
         })
     }
 }
@@ -1153,7 +1178,7 @@ pub struct Basecurve {
 impl Basecurve {
     const TAG: &'static [u8] = b"basecurve";
 
-    fn new<R: BufRead>(
+    fn new(
         event: &Event<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
         buf: &mut Vec<u8>,
@@ -1199,7 +1224,7 @@ impl Basecurve {
     }
 }
 
-fn read_base_values<'e>(
+fn read_base_values(
     tag_name: &[u8],
     event: &Event<'_>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,

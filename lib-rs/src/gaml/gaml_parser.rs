@@ -1,7 +1,7 @@
 use super::gaml_utils::{
     check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
-    read_opt_elem, read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start,
-    read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl,
+    read_opt_elem, read_opt_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc,
+    read_start, read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl,
 };
 use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
@@ -1101,7 +1101,7 @@ pub struct Baseline {
     pub start_y_value: f64,
     pub end_x_value: f64,
     pub end_y_value: f64,
-    // todo: basecurve
+    // pub basecurve: Option<Basecurve>,
 }
 
 impl Baseline {
@@ -1128,6 +1128,8 @@ impl Baseline {
         let next = skip_whitespace(reader, buf)?;
 
         // todo: basecurve
+        // let (basecurve, event) =
+        //     read_opt_elem_rc(b"basecurve", next, reader, buf, &Basecurve::new)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1137,8 +1139,84 @@ impl Baseline {
             start_y_value,
             end_x_value,
             end_y_value,
+            // basecurve,
         })
     }
+}
+
+pub struct Basecurve {
+    // Elements
+    pub base_x_data: Vec<Values>,
+    pub base_y_data: Vec<Values>,
+}
+
+impl Basecurve {
+    const TAG: &'static [u8] = b"basecurve";
+
+    fn new<R: BufRead>(
+        event: &Event<'_>,
+        reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+        buf: &mut Vec<u8>,
+    ) -> Result<Self, GamlError> {
+        let _start = read_start(Self::TAG, event)?;
+
+        let mut reader = reader_ref.borrow_mut();
+        // nested elements
+        let next = skip_whitespace(&mut reader, buf)?;
+        drop(reader);
+        let base_x_data = read_base_values(b"baseXdata", &next, Rc::clone(&reader_ref), buf)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = skip_whitespace(&mut reader, buf)?;
+        drop(reader);
+        let base_y_data = read_base_values(b"baseYdata", &next, Rc::clone(&reader_ref), buf)?;
+        let mut reader = reader_ref.borrow_mut();
+        let next = skip_whitespace(&mut reader, buf)?;
+
+        check_end(Self::TAG, &next)?;
+
+        Ok(Self {
+            base_x_data,
+            base_y_data,
+        })
+    }
+
+    fn get_data(&self, values: &[Values]) -> Result<Vec<f64>, GamlError> {
+        let mut ret = Vec::<f64>::new();
+        for values_elem in values {
+            let mut arr = values_elem.get_data()?;
+            ret.append(&mut arr);
+        }
+
+        Ok(ret)
+    }
+
+    pub fn get_x_data(&self) -> Result<Vec<f64>, GamlError> {
+        self.get_data(&self.base_x_data)
+    }
+
+    pub fn get_y_data(&self) -> Result<Vec<f64>, GamlError> {
+        self.get_data(&self.base_y_data)
+    }
+}
+
+fn read_base_values<'e>(
+    tag_name: &[u8],
+    event: &Event<'_>,
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+    buf: &mut Vec<u8>,
+) -> Result<Vec<Values>, GamlError> {
+    let _start = read_start(tag_name, event)?;
+    let mut reader = reader_ref.borrow_mut();
+    let next = skip_whitespace(&mut reader, buf)?;
+    drop(reader);
+    let (values, next) =
+        read_sequence_rc(b"values", next, Rc::clone(&reader_ref), buf, &Values::new)?;
+    let mut reader = reader_ref.borrow_mut();
+    let next = next_non_whitespace(next, &mut reader, buf)?;
+
+    check_end(tag_name, &next)?;
+
+    Ok(values)
 }
 
 #[cfg(test)]

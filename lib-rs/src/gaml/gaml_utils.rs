@@ -297,6 +297,37 @@ type ElemConstructorRc<'f, T> = &'f (dyn Fn(
     &mut Vec<u8>,
 ) -> Result<T, GamlError>);
 
+// todo: avoid code duplication with read_req_elem
+pub(super) fn read_req_elem_rc<'buf, T>(
+    tag_name: &[u8],
+    next: Event<'_>,
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+    buf: &'buf mut Vec<u8>,
+    constructor: ElemConstructorRc<T>,
+) -> Result<(T, Event<'buf>), GamlError> {
+    match next {
+        Event::Start(e) => {
+            let name = e.name().as_ref().to_owned();
+            if name == tag_name {
+                let evt = Event::Start(e);
+                let elem = constructor(&evt, Rc::clone(&reader_ref), buf)?;
+                let mut reader = reader_ref.borrow_mut();
+                let next = reader.read_event_into(buf)?;
+                Ok((elem, next))
+            } else {
+                Err(GamlError::new(&format!(
+                    "Unexpected start tag: {:?}",
+                    std::str::from_utf8(&name)
+                )))
+            }
+        }
+        e => Err(GamlError::new(&format!(
+            "Unexpected event instead of start tag: {:?}",
+            &e
+        ))),
+    }
+}
+
 // todo: avoid code duplication with read_sequence
 pub(super) fn read_sequence_rc<'e, T>(
     tag_name: &[u8],
@@ -321,6 +352,30 @@ pub(super) fn read_sequence_rc<'e, T>(
             }
             _ => return Ok((ret, next)),
         }
+    }
+}
+
+// todo: avoid code duplication with read_opt_elem
+pub(super) fn read_opt_elem_rc<'e, T>(
+    tag_name: &[u8],
+    next: Event<'e>,
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+    buf: &mut Vec<u8>,
+    constructor: ElemConstructorRc<T>,
+) -> Result<(Option<T>, Event<'e>), GamlError> {
+    match next {
+        Event::Start(e) => {
+            let name = e.name().as_ref().to_owned();
+            if name == tag_name {
+                let (elem, next) =
+                    read_req_elem_rc(tag_name, Event::Start(e), reader_ref, buf, constructor)?;
+                // todo: avoid into_owned()?
+                Ok((Some(elem), next.into_owned()))
+            } else {
+                Ok((None, Event::Start(e)))
+            }
+        }
+        e => Ok((None, e)),
     }
 }
 

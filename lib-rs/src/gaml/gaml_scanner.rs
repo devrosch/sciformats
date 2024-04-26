@@ -15,6 +15,8 @@ pub struct GamlScanner {}
 
 impl GamlScanner {
     const ACCEPTED_EXTENSIONS: [&'static str; 1] = ["gaml"];
+    const MAGIC_BYTES: &'static [u8; 4] = b"GAML";
+    const NUM_START_BYTES: u64 = 128;
 }
 
 impl GamlScanner {
@@ -28,7 +30,7 @@ impl GamlScanner {
     ) -> Result<Vec<u8>, Box<dyn Error>> {
         let len = input.seek(SeekFrom::End(0))?;
         input.seek(SeekFrom::Start(0))?;
-        let len = cmp::min(len, 64);
+        let len = cmp::min(len, Self::NUM_START_BYTES);
         let mut buf = vec![0; len as usize];
         input.read_exact(&mut buf)?;
 
@@ -42,11 +44,14 @@ impl<T: Seek + Read + 'static> Scanner<T> for GamlScanner {
             return false;
         };
 
+        // start of file contains magic bytes "GAML"?
         match self.read_start(input) {
             Err(_) => false,
             Ok(bytes) => {
-                let str = String::from_utf8_lossy(&bytes);
-                str.contains("GAML")
+                let pos = bytes
+                    .windows(Self::MAGIC_BYTES.len())
+                    .position(|window| window == Self::MAGIC_BYTES);
+                pos.is_some()
             }
         }
     }

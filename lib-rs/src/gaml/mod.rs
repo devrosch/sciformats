@@ -5,6 +5,8 @@ use std::{
 };
 
 pub mod gaml_parser;
+pub mod gaml_reader;
+pub mod gaml_scanner;
 pub mod gaml_utils;
 
 trait SeekBufRead: Seek + BufRead {}

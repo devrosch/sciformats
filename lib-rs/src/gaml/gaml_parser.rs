@@ -503,7 +503,7 @@ pub struct Coordinates {
     pub units: Units,
     pub label: Option<String>,
     pub linkid: Option<String>,
-    pub valueorder: Valueorder,
+    pub valueorder: Option<Valueorder>,
     // Elements
     pub links: Vec<Link>,
     pub parameters: Vec<Parameter>,
@@ -536,16 +536,18 @@ impl Coordinates {
         })?;
         let label = get_opt_attr("label", &attr_map);
         let linkid = get_opt_attr("linkid", &attr_map);
-        let valueorder_str = get_req_attr("valueorder", &attr_map)?;
-        let valueorder = Valueorder::from_str(&valueorder_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing coordinates. Unexpected valueorder attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let valueorder = get_opt_attr("valueorder", &attr_map)
+            .map(|s| Valueorder::from_str(&s))
+            .transpose()
+            .map_err(|e| {
+                GamlError::from_source(
+                    e,
+                    format!(
+                        "Error parsing coordinates. Unexpected valueorder attribute: {}",
+                        &units_str
+                    ),
+                )
+            })?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
@@ -761,7 +763,7 @@ pub struct Xdata {
     pub units: Units,
     pub label: Option<String>,
     pub linkid: Option<String>,
-    pub valueorder: Valueorder,
+    pub valueorder: Option<Valueorder>,
     // Elements
     pub links: Vec<Link>,
     pub parameters: Vec<Parameter>,
@@ -797,16 +799,18 @@ impl Xdata {
         })?;
         let label = get_opt_attr("label", &attr_map);
         let linkid = get_opt_attr("linkid", &attr_map);
-        let valueorder_str = get_req_attr("valueorder", &attr_map)?;
-        let valueorder = Valueorder::from_str(&valueorder_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing Xdata. Unexpected valueorder attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let valueorder = get_opt_attr("valueorder", &attr_map)
+            .map(|s| Valueorder::from_str(&s))
+            .transpose()
+            .map_err(|e| {
+                GamlError::from_source(
+                    e,
+                    format!(
+                        "Error parsing Xdata. Unexpected valueorder attribute: {}",
+                        &units_str
+                    ),
+                )
+            })?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
@@ -860,7 +864,7 @@ pub struct AltXdata {
     pub units: Units,
     pub label: Option<String>,
     pub linkid: Option<String>,
-    pub valueorder: Valueorder,
+    pub valueorder: Option<Valueorder>,
     // Elements
     pub links: Vec<Link>,
     pub parameters: Vec<Parameter>,
@@ -894,16 +898,18 @@ impl AltXdata {
         })?;
         let label = get_opt_attr("label", &attr_map);
         let linkid = get_opt_attr("linkid", &attr_map);
-        let valueorder_str = get_req_attr("valueorder", &attr_map)?;
-        let valueorder = Valueorder::from_str(&valueorder_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing altXdata. Unexpected valueorder attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let valueorder = get_opt_attr("valueorder", &attr_map)
+            .map(|s| Valueorder::from_str(&s))
+            .transpose()
+            .map_err(|e| {
+                GamlError::from_source(
+                    e,
+                    format!(
+                        "Error parsing altXdata. Unexpected valueorder attribute: {}",
+                        &units_str
+                    ),
+                )
+            })?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
@@ -1408,7 +1414,10 @@ mod tests {
         assert_eq!(Some("Coordinate label".into()), coordinates[0].label);
         assert_eq!(Units::Microns, coordinates[0].units);
         assert_eq!(Some("coordinates-linkid".into()), coordinates[0].linkid);
-        assert_eq!(Valueorder::Unspecified, coordinates[0].valueorder);
+        assert_eq!(
+            &Valueorder::Unspecified,
+            coordinates[0].valueorder.as_ref().unwrap()
+        );
 
         let links = &coordinates[0].links;
         assert_eq!(1, links.len());
@@ -1445,7 +1454,10 @@ mod tests {
         assert_eq!(Some("Xdata label".into()), xdata[0].label);
         assert_eq!(Units::Microns, xdata[0].units);
         assert_eq!(Some("xdata-linkid".into()), xdata[0].linkid);
-        assert_eq!(Valueorder::Unspecified, xdata[0].valueorder);
+        assert_eq!(
+            &Valueorder::Unspecified,
+            xdata[0].valueorder.as_ref().unwrap()
+        );
 
         let xdata_links = &xdata[0].links;
         assert_eq!(1, xdata_links.len());
@@ -1482,7 +1494,10 @@ mod tests {
         assert_eq!(Some("altXdata label".into()), alt_x_data[0].label);
         assert_eq!(Units::Microns, alt_x_data[0].units);
         assert_eq!(Some("altxdata-linkid".into()), alt_x_data[0].linkid);
-        assert_eq!(Valueorder::Unspecified, alt_x_data[0].valueorder);
+        assert_eq!(
+            &Valueorder::Unspecified,
+            alt_x_data[0].valueorder.as_ref().unwrap()
+        );
 
         let alt_x_data_links = &alt_x_data[0].links;
         assert_eq!(1, alt_x_data_links.len());

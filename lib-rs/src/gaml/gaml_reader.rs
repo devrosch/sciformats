@@ -1,4 +1,4 @@
-use super::{gaml_parser::Gaml, GamlError};
+use super::{gaml_parser::Gaml, gaml_utils::map_gaml_parameters, GamlError};
 use crate::{
     api::{Node, Parameter, Reader},
     utils::convert_path_to_node_indices,
@@ -49,29 +49,7 @@ impl GamlReader {
             );
             parameters.push(param);
         }
-        for raw_param in &self.file.parameters {
-            let key = if [&raw_param.group, &raw_param.label, &raw_param.alias]
-                .iter()
-                .any(|s| s.is_some())
-            {
-                let mut attributes = vec![];
-                if let Some(group) = &raw_param.group {
-                    attributes.push(format!("group={group}"));
-                }
-                if let Some(label) = &raw_param.label {
-                    attributes.push(format!("label={label}"));
-                }
-                if let Some(alias) = &raw_param.alias {
-                    attributes.push(format!("alias={alias}"));
-                }
-                format!("{} ({})", raw_param.name, attributes.join(", "))
-            } else {
-                raw_param.name.to_string()
-            };
-            let param =
-                Parameter::from_str_str(key, raw_param.value.as_deref().unwrap_or_default());
-            parameters.push(param);
-        }
+        parameters.extend(map_gaml_parameters(&self.file.parameters));
 
         let child_node_names = self
             .file

@@ -406,3 +406,36 @@ pub(super) fn read_req_elem_value_f64<R: BufRead>(
 
     Ok(value_f64)
 }
+
+pub(super) fn map_gaml_parameters(
+    raw_params: &[super::gaml_parser::Parameter],
+) -> Vec<crate::api::Parameter> {
+    let mut parameters = Vec::with_capacity(raw_params.len());
+    for raw_param in raw_params {
+        let key = if [&raw_param.group, &raw_param.label, &raw_param.alias]
+            .iter()
+            .any(|s| s.is_some())
+        {
+            let mut attributes = vec![];
+            if let Some(group) = &raw_param.group {
+                attributes.push(format!("group={group}"));
+            }
+            if let Some(label) = &raw_param.label {
+                attributes.push(format!("label={label}"));
+            }
+            if let Some(alias) = &raw_param.alias {
+                attributes.push(format!("alias={alias}"));
+            }
+            format!("{} ({})", raw_param.name, attributes.join(", "))
+        } else {
+            raw_param.name.to_string()
+        };
+        let param = crate::api::Parameter::from_str_str(
+            key,
+            raw_param.value.as_deref().unwrap_or_default(),
+        );
+        parameters.push(param);
+    }
+
+    parameters
+}

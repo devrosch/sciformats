@@ -346,7 +346,7 @@ impl Trace {
     }
 }
 
-#[derive(EnumString, PartialEq, Debug)]
+#[derive(EnumString, PartialEq, Debug, Display)]
 pub enum Units {
     #[strum(serialize = "ABSORBANCE")]
     Absorbance,
@@ -488,7 +488,7 @@ pub enum Units {
     Tesla,
 }
 
-#[derive(EnumString, PartialEq, Debug)]
+#[derive(EnumString, PartialEq, Debug, Display)]
 pub enum Valueorder {
     #[strum(serialize = "EVEN")]
     Even,

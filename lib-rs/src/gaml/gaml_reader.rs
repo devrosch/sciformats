@@ -15,10 +15,7 @@ impl Reader for GamlReader {
         let path_indices = convert_path_to_node_indices(path)?;
         match path_indices[..] {
             [] => Ok(self.read_root()?), // "", "/"
-            [n] => {
-                // todo: add logic
-                Err(GamlError::new(&format!("Illegal node index: {n}")).into())
-            }
+            [n] => Ok(self.read_experiment(n)?),
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
@@ -71,6 +68,56 @@ impl GamlReader {
 
         Ok(Node {
             name: file_name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names,
+        })
+    }
+
+    fn read_experiment(&self, index: usize) -> Result<Node, GamlError> {
+        let experiment = self
+            .file
+            .experiments
+            .get(index)
+            .ok_or(GamlError::new(&format!(
+                "Illegal experiment index: {index}"
+            )))?;
+
+        let name = match &experiment.name {
+            None => index.to_string(),
+            Some(exp_name) => format!("{index}, {exp_name}"),
+        };
+
+        let mut parameters = vec![];
+        if let Some(name) = &experiment.name {
+            parameters.push(Parameter::from_str_str("Name", name));
+        }
+        if let Some(date) = &experiment.collectdate {
+            parameters.push(Parameter::from_str_str("Collectdate", date.to_rfc3339()));
+        }
+        parameters.extend(map_gaml_parameters(&experiment.parameters));
+
+        let child_node_names = experiment
+            .traces
+            .iter()
+            .enumerate()
+            .map(|(i, trace)| {
+                format!(
+                    "{}{}",
+                    i,
+                    trace
+                        .name
+                        .as_ref()
+                        .map(|name| String::from(", ") + &name)
+                        .unwrap_or_default()
+                )
+            })
+            .collect();
+
+        Ok(Node {
+            name,
             parameters,
             data: vec![],
             metadata: vec![],

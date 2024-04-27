@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use std::str::{self, FromStr};
-use strum::EnumString;
+use strum::{Display, EnumString};
 
 pub struct GamlParser {}
 
@@ -243,7 +243,7 @@ impl Collectdate {
     }
 }
 
-#[derive(EnumString, PartialEq, Debug)]
+#[derive(EnumString, PartialEq, Debug, Display)]
 pub enum Technique {
     #[strum(serialize = "ATOMIC")]
     Atomic,
@@ -284,7 +284,7 @@ pub struct Trace {
     // Elements
     pub parameters: Vec<Parameter>,
     pub coordinates: Vec<Coordinates>,
-    pub xdata: Vec<Xdata>,
+    pub x_data: Vec<Xdata>,
 }
 
 impl Trace {
@@ -329,7 +329,7 @@ impl Trace {
         let mut reader = reader_ref.borrow_mut();
         let next = next_non_whitespace(next, &mut reader, buf)?;
         drop(reader);
-        let (xdata, next) =
+        let (x_data, next) =
             read_sequence_rc(b"Xdata", next, Rc::clone(&reader_ref), buf, &Xdata::new)?;
         let mut reader = reader_ref.borrow_mut();
         let next = next_non_whitespace(next, &mut reader, buf)?;
@@ -341,7 +341,7 @@ impl Trace {
             technique,
             parameters,
             coordinates,
-            xdata,
+            x_data,
         })
     }
 }
@@ -1449,21 +1449,21 @@ mod tests {
         assert_eq!(1.0f32 as f64, decoded_values[0]);
         assert_eq!(2.0f32 as f64, decoded_values[1]);
 
-        let xdata = &trace.xdata;
-        assert_eq!(1, xdata.len());
-        assert_eq!(Some("Xdata label".into()), xdata[0].label);
-        assert_eq!(Units::Microns, xdata[0].units);
-        assert_eq!(Some("xdata-linkid".into()), xdata[0].linkid);
+        let x_data = &trace.x_data;
+        assert_eq!(1, x_data.len());
+        assert_eq!(Some("Xdata label".into()), x_data[0].label);
+        assert_eq!(Units::Microns, x_data[0].units);
+        assert_eq!(Some("xdata-linkid".into()), x_data[0].linkid);
         assert_eq!(
             &Valueorder::Unspecified,
-            xdata[0].valueorder.as_ref().unwrap()
+            x_data[0].valueorder.as_ref().unwrap()
         );
 
-        let xdata_links = &xdata[0].links;
+        let xdata_links = &x_data[0].links;
         assert_eq!(1, xdata_links.len());
         assert_eq!("xdata-linkref", xdata_links[0].linkref);
 
-        let xdata_parameters = &xdata[0].parameters;
+        let xdata_parameters = &x_data[0].parameters;
         assert_eq!("xdata-parameter0", &xdata_parameters[0].name);
         assert_eq!(
             Some("Xdata parameter label 0".into()),
@@ -1475,7 +1475,7 @@ mod tests {
             xdata_parameters[0].value
         );
 
-        let xdata_values = &xdata[0].values;
+        let xdata_values = &x_data[0].values;
         assert_eq!(Format::Float32, xdata_values.format);
         assert_eq!(Byteorder::Intel, xdata_values.byteorder);
         assert_eq!(Some(2), xdata_values.numvalues);
@@ -1489,7 +1489,7 @@ mod tests {
         assert_eq!(1.0f32 as f64, decoded_values[0]);
         assert_eq!(2.0f32 as f64, decoded_values[1]);
 
-        let alt_x_data = &xdata[0].alt_x_data;
+        let alt_x_data = &x_data[0].alt_x_data;
         assert_eq!(1, alt_x_data.len());
         assert_eq!(Some("altXdata label".into()), alt_x_data[0].label);
         assert_eq!(Units::Microns, alt_x_data[0].units);
@@ -1529,7 +1529,7 @@ mod tests {
         assert_eq!(1.0f32 as f64, decoded_values[0]);
         assert_eq!(2.0f32 as f64, decoded_values[1]);
 
-        let y_data = &xdata[0].y_data;
+        let y_data = &x_data[0].y_data;
         assert_eq!(1, y_data.len());
         assert_eq!(Some("Ydata label".into()), y_data[0].label);
         assert_eq!(Units::Microns, y_data[0].units);

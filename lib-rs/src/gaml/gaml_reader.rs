@@ -15,7 +15,8 @@ impl Reader for GamlReader {
         let path_indices = convert_path_to_node_indices(path)?;
         match path_indices[..] {
             [] => Ok(self.read_root()?), // "", "/"
-            [n] => Ok(self.read_experiment(n)?),
+            [exp_idx] => Ok(self.read_experiment(exp_idx)?),
+            [exp_idx, trace_idx] => Ok(self.read_trace((exp_idx, trace_idx))?),
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
@@ -115,6 +116,79 @@ impl GamlReader {
                 )
             })
             .collect();
+
+        Ok(Node {
+            name,
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names,
+        })
+    }
+
+    fn read_trace(&self, (exp_idx, trace_idx): (usize, usize)) -> Result<Node, GamlError> {
+        let experiment = self
+            .file
+            .experiments
+            .get(exp_idx)
+            .ok_or(GamlError::new(&format!(
+                "Illegal experiment index: {exp_idx}"
+            )))?;
+        let trace = experiment
+            .traces
+            .get(trace_idx)
+            .ok_or(GamlError::new(&format!("Illegal trace index: {exp_idx}")))?;
+
+        let name = match &trace.name {
+            None => trace_idx.to_string(),
+            Some(trace_name) => format!("{trace_idx}, {trace_name}"),
+        };
+
+        let mut parameters = vec![];
+        if let Some(name) = &trace.name {
+            parameters.push(Parameter::from_str_str("Name", name));
+        }
+        parameters.push(Parameter::from_str_str(
+            "Technique",
+            trace.technique.to_string(),
+        ));
+        parameters.extend(map_gaml_parameters(&experiment.parameters));
+
+        let mut child_node_names: Vec<_> = trace
+            .coordinates
+            .iter()
+            .enumerate()
+            .map(|(i, coordinates)| {
+                format!(
+                    "{}{}",
+                    i,
+                    coordinates
+                        .label
+                        .as_ref()
+                        .map(|label| String::from(", ") + &label)
+                        .unwrap_or_default()
+                )
+            })
+            .collect();
+
+        let x_data_names: Vec<_> = trace
+            .x_data
+            .iter()
+            .enumerate()
+            .map(|(i, x_data)| {
+                format!(
+                    "{}{}",
+                    i,
+                    x_data
+                        .label
+                        .as_ref()
+                        .map(|label| String::from(", ") + &label)
+                        .unwrap_or_default()
+                )
+            })
+            .collect();
+        child_node_names.extend(x_data_names);
 
         Ok(Node {
             name,

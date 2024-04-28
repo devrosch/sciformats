@@ -103,7 +103,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, exper)| {
                 format!(
-                    "{}{}",
+                    "Experiment {}{}",
                     i,
                     exper
                         .name
@@ -135,7 +135,7 @@ impl GamlReader {
 
         let name = match &experiment.name {
             None => index.to_string(),
-            Some(exp_name) => format!("{index}, {exp_name}"),
+            Some(exp_name) => format!("Experiment {index}, {exp_name}"),
         };
 
         let mut parameters = vec![];
@@ -153,7 +153,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, trace)| {
                 format!(
-                    "{}{}",
+                    "Trace {}{}",
                     i,
                     trace
                         .name
@@ -189,7 +189,7 @@ impl GamlReader {
 
         let name = match &trace.name {
             None => trace_idx.to_string(),
-            Some(trace_name) => format!("{trace_idx}, {trace_name}"),
+            Some(trace_name) => format!("Trace {trace_idx}, {trace_name}"),
         };
 
         let mut parameters = vec![];
@@ -208,7 +208,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, coordinates)| {
                 format!(
-                    "{}{}",
+                    "Coordinates {}{}",
                     i,
                     coordinates
                         .label
@@ -225,7 +225,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, x_data)| {
                 format!(
-                    "{}{}",
+                    "Xdata {}{}",
                     i,
                     x_data
                         .label
@@ -271,7 +271,7 @@ impl GamlReader {
 
         let name = match &coordinates.label {
             None => coordinates_idx.to_string(),
-            Some(label) => format!("{coordinates_idx}, {label}"),
+            Some(label) => format!("Coordinates {coordinates_idx}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -340,7 +340,7 @@ impl GamlReader {
 
         let name = match &x_data.label {
             None => x_data_idx.to_string(),
-            Some(label) => format!("{x_data_idx}, {label}"),
+            Some(label) => format!("Xdata {x_data_idx}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -370,7 +370,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, alt_x_data)| {
                 format!(
-                    "{}{}",
+                    "altXdata {}{}",
                     i,
                     alt_x_data
                         .label
@@ -386,7 +386,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, y_data)| {
                 format!(
-                    "{}{}",
+                    "Ydata {}{}",
                     i,
                     y_data
                         .label
@@ -434,9 +434,9 @@ impl GamlReader {
                 "Illegal alt_x_data index: {alt_x_data_idx}"
             )))?;
 
-        let name = match &x_data.label {
-            None => x_data_idx.to_string(),
-            Some(label) => format!("{x_data_idx}, {label}"),
+        let name = match &alt_x_data.label {
+            None => alt_x_data_idx.to_string(),
+            Some(label) => format!("altXdata {alt_x_data_idx}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -509,7 +509,7 @@ impl GamlReader {
 
         let name = match &y_data.label {
             None => y_data_idx.to_string(),
-            Some(label) => format!("{y_data_idx}, {label}"),
+            Some(label) => format!("Ydata {y_data_idx}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -533,7 +533,7 @@ impl GamlReader {
             .enumerate()
             .map(|(i, peaktable)| {
                 format!(
-                    "{}{}",
+                    "Peaktable {}{}",
                     i,
                     peaktable
                         .name

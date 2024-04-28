@@ -1,6 +1,6 @@
 use super::{gaml_parser::Gaml, gaml_utils::map_gaml_parameters, GamlError};
 use crate::{
-    api::{Column, Node, Parameter, Reader, Table, Value},
+    api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
     utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path};
@@ -37,6 +37,31 @@ impl Reader for GamlReader {
                 } else {
                     let x_data_idx = n - num_coordinates;
                     Ok(self.read_x_data((exp_idx, trace_idx, x_data_idx))?)
+                }
+            }
+            [exp_idx, trace_idx, x_data_or_coord_idx, n] => {
+                let experiment =
+                    self.file
+                        .experiments
+                        .get(exp_idx)
+                        .ok_or(GamlError::new(&format!(
+                            "Illegal experiment index: {exp_idx}"
+                        )))?;
+                let trace = experiment
+                    .traces
+                    .get(trace_idx)
+                    .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
+                let x_data_idx = x_data_or_coord_idx - trace.coordinates.len();
+                let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
+                    "Illegal x_data index: {x_data_idx}"
+                )))?;
+                let num_alt_x_data = x_data.alt_x_data.len();
+                if n < num_alt_x_data {
+                    let alt_x_data_idx = n;
+                    Ok(self.read_alt_x_data((exp_idx, trace_idx, x_data_idx, alt_x_data_idx))?)
+                } else {
+                    let y_data_idx = n - num_alt_x_data;
+                    Ok(self.read_y_data((exp_idx, trace_idx, x_data_idx, y_data_idx))?)
                 }
             }
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
@@ -378,6 +403,151 @@ impl GamlReader {
             parameters,
             // provide values as part of Ydata instead
             data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names,
+        })
+    }
+
+    fn read_alt_x_data(
+        &self,
+        (exp_idx, trace_idx, x_data_idx, alt_x_data_idx): (usize, usize, usize, usize),
+    ) -> Result<Node, GamlError> {
+        let experiment = self
+            .file
+            .experiments
+            .get(exp_idx)
+            .ok_or(GamlError::new(&format!(
+                "Illegal experiment index: {exp_idx}"
+            )))?;
+        let trace = experiment
+            .traces
+            .get(trace_idx)
+            .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
+        let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
+            "Illegal x_data index: {x_data_idx}"
+        )))?;
+        let alt_x_data = x_data
+            .alt_x_data
+            .get(alt_x_data_idx)
+            .ok_or(GamlError::new(&format!(
+                "Illegal alt_x_data index: {alt_x_data_idx}"
+            )))?;
+
+        let name = match &x_data.label {
+            None => x_data_idx.to_string(),
+            Some(label) => format!("{x_data_idx}, {label}"),
+        };
+
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("Units", x_data.units.to_string()));
+        if let Some(label) = &x_data.label {
+            parameters.push(Parameter::from_str_str("Label", label));
+        }
+        if let Some(linkid) = &x_data.linkid {
+            parameters.push(Parameter::from_str_str("Linkid", linkid));
+        }
+        if let Some(valueorder) = &x_data.valueorder {
+            parameters.push(Parameter::from_str_str(
+                "Valueorder",
+                valueorder.to_string(),
+            ));
+        }
+        for link in &x_data.links {
+            parameters.push(Parameter::from_str_str("Link linkref", &link.linkref));
+        }
+        parameters.extend(map_gaml_parameters(&x_data.parameters));
+
+        // map altXdata values as table
+        let mut table = Table {
+            column_names: vec![Column::new("value", "Value")],
+            rows: vec![],
+        };
+        let values = alt_x_data.values.get_data()?;
+        for value in values {
+            let mut row = HashMap::new();
+            row.insert("value".to_owned(), Value::F64(value));
+            table.rows.push(row);
+        }
+
+        // no child nodes
+
+        Ok(Node {
+            name,
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: Some(table),
+            child_node_names: vec![],
+        })
+    }
+
+    fn read_y_data(
+        &self,
+        (exp_idx, trace_idx, x_data_idx, y_data_idx): (usize, usize, usize, usize),
+    ) -> Result<Node, GamlError> {
+        let experiment = self
+            .file
+            .experiments
+            .get(exp_idx)
+            .ok_or(GamlError::new(&format!(
+                "Illegal experiment index: {exp_idx}"
+            )))?;
+        let trace = experiment
+            .traces
+            .get(trace_idx)
+            .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
+        let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
+            "Illegal x_data index: {x_data_idx}"
+        )))?;
+        let y_data = x_data
+            .y_data
+            .get(y_data_idx)
+            .ok_or(GamlError::new(&format!(
+                "Illegal y_data index: {y_data_idx}"
+            )))?;
+
+        let name = match &y_data.label {
+            None => y_data_idx.to_string(),
+            Some(label) => format!("{y_data_idx}, {label}"),
+        };
+
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("Units", y_data.units.to_string()));
+        if let Some(label) = &y_data.label {
+            parameters.push(Parameter::from_str_str("Label", label));
+        }
+        parameters.extend(map_gaml_parameters(&y_data.parameters));
+
+        let x_values = x_data.values.get_data()?;
+        let y_values = y_data.values.get_data()?;
+        let data = x_values
+            .into_iter()
+            .zip(y_values)
+            .map(|(x, y)| PointXy::new(x, y))
+            .collect();
+
+        let child_node_names: Vec<_> = y_data
+            .peaktables
+            .iter()
+            .enumerate()
+            .map(|(i, peaktable)| {
+                format!(
+                    "{}{}",
+                    i,
+                    peaktable
+                        .name
+                        .as_ref()
+                        .map(|name| String::from(", ") + &name)
+                        .unwrap_or_default()
+                )
+            })
+            .collect();
+
+        Ok(Node {
+            name,
+            parameters,
+            data,
             metadata: vec![],
             table: None,
             child_node_names,

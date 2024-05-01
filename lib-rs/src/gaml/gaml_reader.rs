@@ -1,9 +1,13 @@
-use super::{gaml_parser::Gaml, gaml_utils::map_gaml_parameters, GamlError};
+use super::{
+    gaml_parser::{Gaml, Peaktable},
+    gaml_utils::map_gaml_parameters,
+    GamlError,
+};
 use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
     utils::convert_path_to_node_indices,
 };
-use std::{collections::HashMap, error::Error, path::Path};
+use std::{collections::HashMap, error::Error, path::Path, vec};
 
 pub struct GamlReader {
     path: String,
@@ -64,6 +68,40 @@ impl Reader for GamlReader {
                     Ok(self.read_y_data((exp_idx, trace_idx, x_data_idx, y_data_idx))?)
                 }
             }
+            [exp_idx, trace_idx, x_data_idx, alt_x_data_or_y_data_idx, peaktable_idx] => {
+                let experiment =
+                    self.file
+                        .experiments
+                        .get(exp_idx)
+                        .ok_or(GamlError::new(&format!(
+                            "Illegal experiment index: {exp_idx}"
+                        )))?;
+                let trace = experiment
+                    .traces
+                    .get(trace_idx)
+                    .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
+                let x_data_idx = x_data_idx - trace.coordinates.len();
+                let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
+                    "Illegal x_data index: {x_data_idx}"
+                )))?;
+                let y_data_idx = alt_x_data_or_y_data_idx - x_data.alt_x_data.len();
+                let y_data = x_data
+                    .y_data
+                    .get(y_data_idx)
+                    .ok_or(GamlError::new(&format!(
+                        "Illegal y_data index: {y_data_idx}"
+                    )))?;
+                let peaktable =
+                    y_data
+                        .peaktables
+                        .get(peaktable_idx)
+                        .ok_or(GamlError::new(&format!(
+                            "Illegal peaktable index: {peaktable_idx}"
+                        )))?;
+
+                Ok(self.read_peaktable(peaktable, peaktable_idx)?)
+            }
+            // todo: read basecurve
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
@@ -550,6 +588,95 @@ impl GamlReader {
             data,
             metadata: vec![],
             table: None,
+            child_node_names,
+        })
+    }
+
+    fn read_peaktable(&self, peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
+        let name = match &peaktable.name {
+            None => format!("Peaktable {index}"),
+            Some(name) => format!("Peaktable {index}, {}", name),
+        };
+
+        let mut parameters = vec![];
+        // peaktable attributes and parameters
+        if let Some(name) = &peaktable.name {
+            parameters.push(Parameter::from_str_str("Name", name));
+        }
+        parameters.extend(map_gaml_parameters(&peaktable.parameters));
+        // peak parameters
+        for (i, peak) in peaktable.peaks.iter().enumerate() {
+            let mut peak_params = map_gaml_parameters(&peaktable.parameters);
+            for param in &mut peak_params {
+                param
+                    .key
+                    .insert_str(0, &format!("Peak {}, number {}, ", i, peak.number));
+            }
+            parameters.extend(peak_params);
+        }
+
+        // map peaks as table
+        let mut table = Table {
+            column_names: vec![
+                Column::new("number", "Number"),
+                Column::new("group", "Group"),
+                Column::new("name", "Name"),
+                Column::new("peak_x_value", "peakXvalue"),
+                Column::new("peak_y_value", "peakYvalue"),
+                Column::new("baseline_start_x_value", "Baseline Start X Value"),
+                Column::new("baseline_start_y_value", "Baseline Start Y Value"),
+                Column::new("baseline_end_x_value", "Baseline End X Value"),
+                Column::new("baseline_end_y_value", "Baseline End Y Value"),
+            ],
+            rows: vec![],
+        };
+        for peak in &peaktable.peaks {
+            let mut row = HashMap::new();
+            row.insert("number".to_owned(), Value::U64(peak.number));
+            if let Some(group) = &peak.group {
+                row.insert("group".to_owned(), Value::String(group.to_owned()));
+            }
+            if let Some(name) = &peak.name {
+                row.insert("name".to_owned(), Value::String(name.to_owned()));
+            }
+            row.insert("peak_x_value".to_owned(), Value::F64(peak.peak_x_value));
+            row.insert("peak_y_value".to_owned(), Value::F64(peak.peak_y_value));
+
+            // add baseline values (except basecurve) to table
+            if let Some(baseline) = &peak.baseline {
+                row.insert(
+                    "baseline_start_x_value".to_owned(),
+                    Value::F64(baseline.start_x_value),
+                );
+                row.insert(
+                    "baseline_start_y_value".to_owned(),
+                    Value::F64(baseline.start_y_value),
+                );
+                row.insert(
+                    "baseline_end_x_value".to_owned(),
+                    Value::F64(baseline.end_x_value),
+                );
+                row.insert(
+                    "baseline_end_y_value".to_owned(),
+                    Value::F64(baseline.end_y_value),
+                );
+            }
+            table.rows.push(row);
+        }
+
+        let mut child_node_names = vec![];
+        for (i, peak) in peaktable.peaks.iter().enumerate() {
+            if let Some(_basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
+                child_node_names.push(format!("Basecurve Peak {}, number {}", i, peak.number));
+            }
+        }
+
+        Ok(Node {
+            name,
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: Some(table),
             child_node_names,
         })
     }

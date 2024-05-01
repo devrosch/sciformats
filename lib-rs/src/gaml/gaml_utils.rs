@@ -439,3 +439,13 @@ pub(super) fn map_gaml_parameters(
 
     parameters
 }
+
+pub(super) fn read_elem<'a, T>(
+    elem_name: &str,
+    slice: &'a [T],
+    index: usize,
+) -> Result<&'a T, GamlError> {
+    slice.get(index).ok_or(GamlError::new(&format!(
+        "Illegal {elem_name} index: {index}"
+    )))
+}

@@ -1,6 +1,6 @@
 use super::{
-    gaml_parser::{Gaml, Peaktable},
-    gaml_utils::map_gaml_parameters,
+    gaml_parser::{AltXdata, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata, Ydata},
+    gaml_utils::{map_gaml_parameters, read_elem},
     GamlError,
 };
 use crate::{
@@ -18,90 +18,74 @@ impl Reader for GamlReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
         let path_indices = convert_path_to_node_indices(path)?;
         match path_indices[..] {
-            [] => Ok(self.read_root()?), // "", "/"
-            [exp_idx] => Ok(self.read_experiment(exp_idx)?),
-            [exp_idx, trace_idx] => Ok(self.read_trace((exp_idx, trace_idx))?),
+            [] => Ok(self.map_root()?), // "", "/"
+            [exp_idx] => {
+                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                Ok(self.map_experiment(experiment, exp_idx)?)
+            }
+            [exp_idx, trace_idx] => {
+                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                Ok(self.map_trace(trace, trace_idx)?)
+            }
             [exp_idx, trace_idx, n] => {
-                let experiment =
-                    self.file
-                        .experiments
-                        .get(exp_idx)
-                        .ok_or(GamlError::new(&format!(
-                            "Illegal experiment index: {exp_idx}"
-                        )))?;
-                let trace = experiment
-                    .traces
-                    .get(trace_idx)
-                    .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
+                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
 
                 let num_coordinates = trace.coordinates.len();
                 if n < num_coordinates {
                     let coordinates_idx = n;
-                    Ok(self.read_coordinates((exp_idx, trace_idx, coordinates_idx))?)
+                    let coordinates =
+                        read_elem("coordinates", &trace.coordinates, coordinates_idx)?;
+                    Ok(self.map_coordinates(coordinates, coordinates_idx)?)
                 } else {
                     let x_data_idx = n - num_coordinates;
-                    Ok(self.read_x_data((exp_idx, trace_idx, x_data_idx))?)
+                    let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
+                    Ok(self.map_x_data(x_data, x_data_idx)?)
                 }
             }
             [exp_idx, trace_idx, x_data_or_coord_idx, n] => {
-                let experiment =
-                    self.file
-                        .experiments
-                        .get(exp_idx)
-                        .ok_or(GamlError::new(&format!(
-                            "Illegal experiment index: {exp_idx}"
-                        )))?;
-                let trace = experiment
-                    .traces
-                    .get(trace_idx)
-                    .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
+                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                if x_data_or_coord_idx < trace.coordinates.len() {
+                    return Err(GamlError::new(&format!(
+                        "Illegal x_data index: {x_data_or_coord_idx}"
+                    )))?;
+                }
                 let x_data_idx = x_data_or_coord_idx - trace.coordinates.len();
-                let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
-                    "Illegal x_data index: {x_data_idx}"
-                )))?;
+                let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
                 let num_alt_x_data = x_data.alt_x_data.len();
                 if n < num_alt_x_data {
                     let alt_x_data_idx = n;
-                    Ok(self.read_alt_x_data((exp_idx, trace_idx, x_data_idx, alt_x_data_idx))?)
+                    let alt_x_data = read_elem("alt_x_data", &x_data.alt_x_data, alt_x_data_idx)?;
+                    Ok(self.map_alt_x_data(alt_x_data, alt_x_data_idx)?)
                 } else {
                     let y_data_idx = n - num_alt_x_data;
-                    Ok(self.read_y_data((exp_idx, trace_idx, x_data_idx, y_data_idx))?)
+                    let y_data = read_elem("y_data", &x_data.y_data, y_data_idx)?;
+                    Ok(self.map_y_data(x_data, y_data, y_data_idx)?)
                 }
             }
-            [exp_idx, trace_idx, x_data_idx, alt_x_data_or_y_data_idx, peaktable_idx] => {
-                let experiment =
-                    self.file
-                        .experiments
-                        .get(exp_idx)
-                        .ok_or(GamlError::new(&format!(
-                            "Illegal experiment index: {exp_idx}"
-                        )))?;
-                let trace = experiment
-                    .traces
-                    .get(trace_idx)
-                    .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
-                let x_data_idx = x_data_idx - trace.coordinates.len();
-                let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
-                    "Illegal x_data index: {x_data_idx}"
-                )))?;
-                let y_data_idx = alt_x_data_or_y_data_idx - x_data.alt_x_data.len();
-                let y_data = x_data
-                    .y_data
-                    .get(y_data_idx)
-                    .ok_or(GamlError::new(&format!(
-                        "Illegal y_data index: {y_data_idx}"
+            [exp_idx, trace_idx, x_data_or_coord_idx, alt_x_data_or_y_data_idx, peaktable_idx] => {
+                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                if x_data_or_coord_idx < trace.coordinates.len() {
+                    return Err(GamlError::new(&format!(
+                        "Illegal x_data index: {x_data_or_coord_idx}"
                     )))?;
-                let peaktable =
-                    y_data
-                        .peaktables
-                        .get(peaktable_idx)
-                        .ok_or(GamlError::new(&format!(
-                            "Illegal peaktable index: {peaktable_idx}"
-                        )))?;
-
-                Ok(self.read_peaktable(peaktable, peaktable_idx)?)
+                }
+                let x_data_idx = x_data_or_coord_idx - trace.coordinates.len();
+                let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
+                if alt_x_data_or_y_data_idx < x_data.alt_x_data.len() {
+                    return Err(GamlError::new(&format!(
+                        "Illegal y_data index: {alt_x_data_or_y_data_idx}"
+                    )))?;
+                }
+                let y_data_idx = alt_x_data_or_y_data_idx - x_data.alt_x_data.len();
+                let y_data = read_elem("y_data", &x_data.y_data, y_data_idx)?;
+                let peaktable = read_elem("peaktable", &y_data.peaktables, peaktable_idx)?;
+                Ok(self.map_peaktable(peaktable, peaktable_idx)?)
             }
-            // todo: read basecurve
+            // todo: map basecurve
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
@@ -115,7 +99,7 @@ impl GamlReader {
         }
     }
 
-    fn read_root(&self) -> Result<Node, GamlError> {
+    fn map_root(&self) -> Result<Node, GamlError> {
         let path = Path::new(&self.path);
         let file_name = path.file_name().map_or("", |f| f.to_str().unwrap_or(""));
 
@@ -162,15 +146,7 @@ impl GamlReader {
         })
     }
 
-    fn read_experiment(&self, index: usize) -> Result<Node, GamlError> {
-        let experiment = self
-            .file
-            .experiments
-            .get(index)
-            .ok_or(GamlError::new(&format!(
-                "Illegal experiment index: {index}"
-            )))?;
-
+    fn map_experiment(&self, experiment: &Experiment, index: usize) -> Result<Node, GamlError> {
         let name = match &experiment.name {
             None => index.to_string(),
             Some(exp_name) => format!("Experiment {index}, {exp_name}"),
@@ -212,22 +188,10 @@ impl GamlReader {
         })
     }
 
-    fn read_trace(&self, (exp_idx, trace_idx): (usize, usize)) -> Result<Node, GamlError> {
-        let experiment = self
-            .file
-            .experiments
-            .get(exp_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal experiment index: {exp_idx}"
-            )))?;
-        let trace = experiment
-            .traces
-            .get(trace_idx)
-            .ok_or(GamlError::new(&format!("Illegal trace index: {exp_idx}")))?;
-
+    fn map_trace(&self, trace: &Trace, index: usize) -> Result<Node, GamlError> {
         let name = match &trace.name {
-            None => trace_idx.to_string(),
-            Some(trace_name) => format!("Trace {trace_idx}, {trace_name}"),
+            None => index.to_string(),
+            Some(trace_name) => format!("Trace {index}, {trace_name}"),
         };
 
         let mut parameters = vec![];
@@ -238,7 +202,7 @@ impl GamlReader {
             "Technique",
             trace.technique.to_string(),
         ));
-        parameters.extend(map_gaml_parameters(&experiment.parameters));
+        parameters.extend(map_gaml_parameters(&trace.parameters));
 
         let mut child_node_names: Vec<_> = trace
             .coordinates
@@ -285,31 +249,10 @@ impl GamlReader {
         })
     }
 
-    fn read_coordinates(
-        &self,
-        (exp_idx, trace_idx, coordinates_idx): (usize, usize, usize),
-    ) -> Result<Node, GamlError> {
-        let experiment = self
-            .file
-            .experiments
-            .get(exp_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal experiment index: {exp_idx}"
-            )))?;
-        let trace = experiment
-            .traces
-            .get(trace_idx)
-            .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
-        let coordinates = trace
-            .coordinates
-            .get(coordinates_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal coordinates index: {coordinates_idx}"
-            )))?;
-
+    fn map_coordinates(&self, coordinates: &Coordinates, index: usize) -> Result<Node, GamlError> {
         let name = match &coordinates.label {
-            None => coordinates_idx.to_string(),
-            Some(label) => format!("Coordinates {coordinates_idx}, {label}"),
+            None => index.to_string(),
+            Some(label) => format!("Coordinates {index}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -357,28 +300,10 @@ impl GamlReader {
         })
     }
 
-    fn read_x_data(
-        &self,
-        (exp_idx, trace_idx, x_data_idx): (usize, usize, usize),
-    ) -> Result<Node, GamlError> {
-        let experiment = self
-            .file
-            .experiments
-            .get(exp_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal experiment index: {exp_idx}"
-            )))?;
-        let trace = experiment
-            .traces
-            .get(trace_idx)
-            .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
-        let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
-            "Illegal x_data index: {x_data_idx}"
-        )))?;
-
+    fn map_x_data(&self, x_data: &Xdata, index: usize) -> Result<Node, GamlError> {
         let name = match &x_data.label {
-            None => x_data_idx.to_string(),
-            Some(label) => format!("Xdata {x_data_idx}, {label}"),
+            None => index.to_string(),
+            Some(label) => format!("Xdata {index}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -447,54 +372,33 @@ impl GamlReader {
         })
     }
 
-    fn read_alt_x_data(
-        &self,
-        (exp_idx, trace_idx, x_data_idx, alt_x_data_idx): (usize, usize, usize, usize),
-    ) -> Result<Node, GamlError> {
-        let experiment = self
-            .file
-            .experiments
-            .get(exp_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal experiment index: {exp_idx}"
-            )))?;
-        let trace = experiment
-            .traces
-            .get(trace_idx)
-            .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
-        let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
-            "Illegal x_data index: {x_data_idx}"
-        )))?;
-        let alt_x_data = x_data
-            .alt_x_data
-            .get(alt_x_data_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal alt_x_data index: {alt_x_data_idx}"
-            )))?;
-
+    fn map_alt_x_data(&self, alt_x_data: &AltXdata, index: usize) -> Result<Node, GamlError> {
         let name = match &alt_x_data.label {
-            None => alt_x_data_idx.to_string(),
-            Some(label) => format!("altXdata {alt_x_data_idx}, {label}"),
+            None => index.to_string(),
+            Some(label) => format!("altXdata {index}, {label}"),
         };
 
         let mut parameters = vec![];
-        parameters.push(Parameter::from_str_str("Units", x_data.units.to_string()));
-        if let Some(label) = &x_data.label {
+        parameters.push(Parameter::from_str_str(
+            "Units",
+            alt_x_data.units.to_string(),
+        ));
+        if let Some(label) = &alt_x_data.label {
             parameters.push(Parameter::from_str_str("Label", label));
         }
-        if let Some(linkid) = &x_data.linkid {
+        if let Some(linkid) = &alt_x_data.linkid {
             parameters.push(Parameter::from_str_str("Linkid", linkid));
         }
-        if let Some(valueorder) = &x_data.valueorder {
+        if let Some(valueorder) = &alt_x_data.valueorder {
             parameters.push(Parameter::from_str_str(
                 "Valueorder",
                 valueorder.to_string(),
             ));
         }
-        for link in &x_data.links {
+        for link in &alt_x_data.links {
             parameters.push(Parameter::from_str_str("Link linkref", &link.linkref));
         }
-        parameters.extend(map_gaml_parameters(&x_data.parameters));
+        parameters.extend(map_gaml_parameters(&alt_x_data.parameters));
 
         // map altXdata values as table
         let mut table = Table {
@@ -520,34 +424,10 @@ impl GamlReader {
         })
     }
 
-    fn read_y_data(
-        &self,
-        (exp_idx, trace_idx, x_data_idx, y_data_idx): (usize, usize, usize, usize),
-    ) -> Result<Node, GamlError> {
-        let experiment = self
-            .file
-            .experiments
-            .get(exp_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal experiment index: {exp_idx}"
-            )))?;
-        let trace = experiment
-            .traces
-            .get(trace_idx)
-            .ok_or(GamlError::new(&format!("Illegal trace index: {trace_idx}")))?;
-        let x_data = trace.x_data.get(x_data_idx).ok_or(GamlError::new(&format!(
-            "Illegal x_data index: {x_data_idx}"
-        )))?;
-        let y_data = x_data
-            .y_data
-            .get(y_data_idx)
-            .ok_or(GamlError::new(&format!(
-                "Illegal y_data index: {y_data_idx}"
-            )))?;
-
+    fn map_y_data(&self, x_data: &Xdata, y_data: &Ydata, index: usize) -> Result<Node, GamlError> {
         let name = match &y_data.label {
-            None => y_data_idx.to_string(),
-            Some(label) => format!("Ydata {y_data_idx}, {label}"),
+            None => index.to_string(),
+            Some(label) => format!("Ydata {index}, {label}"),
         };
 
         let mut parameters = vec![];
@@ -592,7 +472,7 @@ impl GamlReader {
         })
     }
 
-    fn read_peaktable(&self, peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
+    fn map_peaktable(&self, peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
         let name = match &peaktable.name {
             None => format!("Peaktable {index}"),
             Some(name) => format!("Peaktable {index}, {}", name),

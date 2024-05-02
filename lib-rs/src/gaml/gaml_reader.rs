@@ -1,5 +1,7 @@
 use super::{
-    gaml_parser::{AltXdata, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata, Ydata},
+    gaml_parser::{
+        AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata, Ydata,
+    },
     gaml_utils::{map_gaml_parameters, read_elem},
     GamlError,
 };
@@ -85,7 +87,38 @@ impl Reader for GamlReader {
                 let peaktable = read_elem("peaktable", &y_data.peaktables, peaktable_idx)?;
                 Ok(self.map_peaktable(peaktable, peaktable_idx)?)
             }
-            // todo: map basecurve
+            [exp_idx, trace_idx, x_data_or_coord_idx, alt_x_data_or_y_data_idx, peaktable_idx, basecurve_idx] =>
+            {
+                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                if x_data_or_coord_idx < trace.coordinates.len() {
+                    return Err(GamlError::new(&format!(
+                        "Illegal x_data index: {x_data_or_coord_idx}"
+                    )))?;
+                }
+                let x_data_idx = x_data_or_coord_idx - trace.coordinates.len();
+                let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
+                if alt_x_data_or_y_data_idx < x_data.alt_x_data.len() {
+                    return Err(GamlError::new(&format!(
+                        "Illegal y_data index: {alt_x_data_or_y_data_idx}"
+                    )))?;
+                }
+                let y_data_idx = alt_x_data_or_y_data_idx - x_data.alt_x_data.len();
+                let y_data = read_elem("y_data", &x_data.y_data, y_data_idx)?;
+                let peaktable = read_elem("peaktable", &y_data.peaktables, peaktable_idx)?;
+                for (i, peak) in peaktable.peaks.iter().enumerate() {
+                    if let Some(basecurve) =
+                        peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref())
+                    {
+                        if i == basecurve_idx {
+                            return Ok(self.map_basecurve(basecurve)?);
+                        }
+                    }
+                }
+                Err(GamlError::new(&format!(
+                    "Illegal basecure index: {basecurve_idx}"
+                )))?
+            }
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
@@ -558,6 +591,43 @@ impl GamlReader {
             metadata: vec![],
             table: Some(table),
             child_node_names,
+        })
+    }
+
+    fn map_basecurve(&self, basecurve: &Basecurve) -> Result<Node, GamlError> {
+        let name = "Basecurve".to_owned();
+
+        let x_values = basecurve
+            .base_x_data
+            .iter()
+            .map(|v| v.get_data())
+            .collect::<Result<Vec<_>, GamlError>>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+
+        let y_values = basecurve
+            .base_y_data
+            .iter()
+            .map(|v| v.get_data())
+            .collect::<Result<Vec<_>, GamlError>>()?
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
+
+        let data = x_values
+            .into_iter()
+            .zip(y_values)
+            .map(|(x, y)| PointXy::new(x, y))
+            .collect();
+
+        Ok(Node {
+            name,
+            parameters: vec![],
+            data,
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
         })
     }
 }

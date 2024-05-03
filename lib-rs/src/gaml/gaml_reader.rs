@@ -2,7 +2,7 @@ use super::{
     gaml_parser::{
         AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata, Ydata,
     },
-    gaml_utils::{map_gaml_parameters, read_elem},
+    gaml_utils::{map_gaml_parameters, map_values_attributes, read_elem},
     GamlError,
 };
 use crate::{
@@ -309,6 +309,7 @@ impl GamlReader {
             parameters.push(Parameter::from_str_str("Link linkref", &link.linkref));
         }
         parameters.extend(map_gaml_parameters(&coordinates.parameters));
+        parameters.extend(map_values_attributes("Values", &coordinates.values));
 
         // map coordinate values as table
         let mut table = Table {
@@ -432,6 +433,7 @@ impl GamlReader {
             parameters.push(Parameter::from_str_str("Link linkref", &link.linkref));
         }
         parameters.extend(map_gaml_parameters(&alt_x_data.parameters));
+        parameters.extend(map_values_attributes("Values", &alt_x_data.values));
 
         // map altXdata values as table
         let mut table = Table {
@@ -469,6 +471,8 @@ impl GamlReader {
             parameters.push(Parameter::from_str_str("Label", label));
         }
         parameters.extend(map_gaml_parameters(&y_data.parameters));
+        parameters.extend(map_values_attributes("Xdata values", &x_data.values));
+        parameters.extend(map_values_attributes("Ydata values", &y_data.values));
 
         let x_values = x_data.values.get_data()?;
         let y_values = y_data.values.get_data()?;
@@ -597,6 +601,21 @@ impl GamlReader {
     fn map_basecurve(&self, basecurve: &Basecurve) -> Result<Node, GamlError> {
         let name = "Basecurve".to_owned();
 
+        let mut parameters = vec![];
+        // Values attributes
+        for (i, values) in basecurve.base_x_data.iter().enumerate() {
+            parameters.extend(map_values_attributes(
+                &format!("BaseXdata values {i}"),
+                values,
+            ));
+        }
+        for (i, values) in basecurve.base_y_data.iter().enumerate() {
+            parameters.extend(map_values_attributes(
+                &format!("BaseYdata values {i}"),
+                values,
+            ));
+        }
+
         let x_values = basecurve
             .base_x_data
             .iter()
@@ -623,7 +642,7 @@ impl GamlReader {
 
         Ok(Node {
             name,
-            parameters: vec![],
+            parameters,
             data,
             metadata: vec![],
             table: None,

@@ -1,4 +1,6 @@
-use super::{GamlError, SeekBufRead};
+use crate::api::Parameter;
+
+use super::{gaml_parser::Values, GamlError, SeekBufRead};
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
@@ -435,6 +437,22 @@ pub(super) fn map_gaml_parameters(
             raw_param.value.as_deref().unwrap_or_default(),
         );
         parameters.push(param);
+    }
+
+    parameters
+}
+
+pub(crate) fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    // Values attributes
+    let format = Parameter::from_str_str(format!("{prefix} format"), values.format.to_string());
+    parameters.push(format);
+    let byteorder =
+        Parameter::from_str_str(format!("{prefix} byteorder"), values.byteorder.to_string());
+    parameters.push(byteorder);
+    if let Some(numvalues) = values.numvalues {
+        let numvalues = Parameter::from_str_u64(format!("{prefix} numvalues"), numvalues);
+        parameters.push(numvalues);
     }
 
     parameters

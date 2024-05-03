@@ -599,7 +599,7 @@ impl Link {
     }
 }
 
-#[derive(EnumString, PartialEq, Debug)]
+#[derive(EnumString, PartialEq, Debug, Display)]
 pub enum Format {
     #[strum(serialize = "FLOAT32")]
     Float32,
@@ -607,7 +607,7 @@ pub enum Format {
     Float64,
 }
 
-#[derive(EnumString, PartialEq, Debug)]
+#[derive(EnumString, PartialEq, Debug, Display)]
 pub enum Byteorder {
     #[strum(serialize = "INTEL")]
     Intel,

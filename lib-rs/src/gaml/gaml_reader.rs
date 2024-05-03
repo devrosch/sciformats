@@ -116,7 +116,7 @@ impl Reader for GamlReader {
                     }
                 }
                 Err(GamlError::new(&format!(
-                    "Illegal basecure index: {basecurve_idx}"
+                    "Illegal basecurve index: {basecurve_idx}"
                 )))?
             }
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),

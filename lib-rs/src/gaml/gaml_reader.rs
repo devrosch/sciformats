@@ -55,66 +55,63 @@ pub struct GamlReader {
 impl Reader for GamlReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
         let path_indices = convert_path_to_node_indices(path)?;
-        match path_indices[..] {
+        match &path_indices[..] {
             [] => Ok(self.map_root()?), // "", "/"
-            [exp_idx] => {
-                let experiment = read_elem(&self.file.experiments, exp_idx)?;
-                Ok(self.map_experiment(experiment, exp_idx)?)
-            }
-            [exp_idx, trace_idx] => {
-                let experiment = read_elem(&self.file.experiments, exp_idx)?;
-                let trace = read_elem(&experiment.traces, trace_idx)?;
-                Ok(self.map_trace(trace, trace_idx)?)
-            }
-            [exp_idx, trace_idx, xy_data_idx] => {
-                let experiment = read_elem(&self.file.experiments, exp_idx)?;
-                let trace = read_elem(&experiment.traces, trace_idx)?;
-                let coordinates = trace.coordinates.as_slice();
+            [exp_idx, tail @ ..] => {
+                let experiment = read_elem(&self.file.experiments, *exp_idx)?;
+                if tail.is_empty() {
+                    return Ok(self.map_experiment(experiment, *exp_idx)?);
+                }
 
-                let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    Self::find_xy_indices(trace, xy_data_idx)?;
-                let x_data = read_elem(&trace.x_data, x_data_idx)?;
-                match alt_x_data_idx {
-                    None => Ok(self.map_xy_data(
-                        x_data,
-                        (x_data_idx, y_data_idx, xy_data_idx),
-                        coordinates,
-                    )?),
-                    Some(alt_x_idx) => Ok(self.map_alt_xy_data(
-                        x_data,
-                        (x_data_idx, alt_x_idx, y_data_idx, xy_data_idx),
-                        coordinates,
-                    )?),
+                let (trace_idx, tail) = tail.split_first().unwrap();
+                let trace = read_elem(&experiment.traces, *trace_idx)?;
+                if tail.is_empty() {
+                    return Ok(self.map_trace(trace, *trace_idx)?);
                 }
-            }
-            [exp_idx, trace_idx, xy_data_idx, peaktable_idx] => {
-                let experiment = read_elem(&self.file.experiments, exp_idx)?;
-                let trace = read_elem(&experiment.traces, trace_idx)?;
+
+                let (xy_data_idx, tail) = tail.split_first().unwrap();
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    Self::find_xy_indices(trace, xy_data_idx)?;
+                    Self::find_xy_indices(trace, *xy_data_idx)?;
+                let x_data = read_elem(&trace.x_data, x_data_idx)?;
+                if tail.is_empty() {
+                    let coordinates = trace.coordinates.as_slice();
+                    match alt_x_data_idx {
+                        None => {
+                            return Ok(self.map_xy_data(
+                                x_data,
+                                (x_data_idx, y_data_idx, *xy_data_idx),
+                                coordinates,
+                            )?)
+                        }
+                        Some(alt_x_idx) => {
+                            return Ok(self.map_alt_xy_data(
+                                x_data,
+                                (x_data_idx, alt_x_idx, y_data_idx, *xy_data_idx),
+                                coordinates,
+                            )?)
+                        }
+                    }
+                }
                 if alt_x_data_idx.is_some() {
+                    // no children for altXdata
                     return Err(GamlError::new(&format!("Illegal node path: {}", path)).into());
                 }
-                let x_data = read_elem(&trace.x_data, x_data_idx)?;
+
+                let (peaktable_idx, tail) = tail.split_first().unwrap();
                 let y_data = read_elem(&x_data.y_data, y_data_idx)?;
-                let peaktable = read_elem(&y_data.peaktables, peaktable_idx)?;
-                Ok(self.map_peaktable(peaktable, peaktable_idx)?)
-            }
-            [exp_idx, trace_idx, xy_data_idx, peaktable_idx, basecurve_idx] => {
-                let experiment = read_elem(&self.file.experiments, exp_idx)?;
-                let trace = read_elem(&experiment.traces, trace_idx)?;
-                let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    Self::find_xy_indices(trace, xy_data_idx)?;
-                if alt_x_data_idx.is_some() {
-                    return Err(GamlError::new(&format!("Illegal node path: {}", path)).into());
+                let peaktable = read_elem(&y_data.peaktables, *peaktable_idx)?;
+                if tail.is_empty() {
+                    return Ok(self.map_peaktable(peaktable, *peaktable_idx)?);
                 }
-                let x_data = read_elem(&trace.x_data, x_data_idx)?;
-                let y_data = read_elem(&x_data.y_data, y_data_idx)?;
-                let peaktable = read_elem(&y_data.peaktables, peaktable_idx)?;
-                let basecurve = Self::find_basecurve(peaktable, basecurve_idx)?;
-                Ok(self.map_basecurve(basecurve)?)
+
+                let (basecurve_idx, tail) = tail.split_first().unwrap();
+                let basecurve = Self::find_basecurve(peaktable, *basecurve_idx)?;
+                if tail.is_empty() {
+                    return Ok(self.map_basecurve(basecurve)?);
+                }
+
+                Err(GamlError::new(&format!("Illegal node path: {}", path)).into())
             }
-            _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
 }

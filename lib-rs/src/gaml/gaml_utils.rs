@@ -458,12 +458,14 @@ pub(crate) fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parame
     parameters
 }
 
-pub(super) fn read_elem<'a, T>(
-    elem_name: &str,
-    slice: &'a [T],
-    index: usize,
-) -> Result<&'a T, GamlError> {
+pub(super) trait TypeName {
+    fn display_type_name() -> &'static str;
+}
+
+pub(super) fn read_elem<T: TypeName>(slice: &[T], index: usize) -> Result<&T, GamlError> {
     slice.get(index).ok_or(GamlError::new(&format!(
-        "Illegal {elem_name} index: {index}"
+        "Illegal {} index: {}",
+        T::display_type_name(),
+        index
     )))
 }

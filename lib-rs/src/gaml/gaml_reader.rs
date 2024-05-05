@@ -1,6 +1,6 @@
 use super::{
-    gaml_parser::{Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata},
-    gaml_utils::{map_gaml_parameters, map_values_attributes, read_elem},
+    gaml_parser::{Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata, Ydata},
+    gaml_utils::{map_gaml_parameters, map_values_attributes, read_elem, TypeName},
     GamlError,
 };
 use crate::{
@@ -9,8 +9,16 @@ use crate::{
 };
 use std::{collections::HashMap, error::Error, path::Path, vec};
 
-trait TypeName {
-    fn display_type_name() -> &'static str;
+impl TypeName for Experiment {
+    fn display_type_name() -> &'static str {
+        "experiment"
+    }
+}
+
+impl TypeName for Trace {
+    fn display_type_name() -> &'static str {
+        "trace"
+    }
 }
 
 impl TypeName for Coordinates {
@@ -25,6 +33,18 @@ impl TypeName for Xdata {
     }
 }
 
+impl TypeName for Ydata {
+    fn display_type_name() -> &'static str {
+        "Ydata"
+    }
+}
+
+impl TypeName for Peaktable {
+    fn display_type_name() -> &'static str {
+        "peaktable"
+    }
+}
+
 pub struct GamlReader {
     path: String,
     file: Gaml,
@@ -36,22 +56,22 @@ impl Reader for GamlReader {
         match path_indices[..] {
             [] => Ok(self.map_root()?), // "", "/"
             [exp_idx] => {
-                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
+                let experiment = read_elem(&self.file.experiments, exp_idx)?;
                 Ok(self.map_experiment(experiment, exp_idx)?)
             }
             [exp_idx, trace_idx] => {
-                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
-                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                let experiment = read_elem(&self.file.experiments, exp_idx)?;
+                let trace = read_elem(&experiment.traces, trace_idx)?;
                 Ok(self.map_trace(trace, trace_idx)?)
             }
             [exp_idx, trace_idx, xy_data_idx] => {
-                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
-                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                let experiment = read_elem(&self.file.experiments, exp_idx)?;
+                let trace = read_elem(&experiment.traces, trace_idx)?;
                 let coordinates = trace.coordinates.as_slice();
 
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    self.find_xy_indices(trace, xy_data_idx)?;
-                let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
+                    Self::find_xy_indices(trace, xy_data_idx)?;
+                let x_data = read_elem(&trace.x_data, x_data_idx)?;
                 match alt_x_data_idx {
                     None => Ok(self.map_xy_data(
                         x_data,
@@ -66,42 +86,31 @@ impl Reader for GamlReader {
                 }
             }
             [exp_idx, trace_idx, xy_data_idx, peaktable_idx] => {
-                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
-                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                let experiment = read_elem(&self.file.experiments, exp_idx)?;
+                let trace = read_elem(&experiment.traces, trace_idx)?;
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    self.find_xy_indices(trace, xy_data_idx)?;
+                    Self::find_xy_indices(trace, xy_data_idx)?;
                 if alt_x_data_idx.is_some() {
                     return Err(GamlError::new(&format!("Illegal node path: {}", path)).into());
                 }
-                let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
-                let y_data = read_elem("y_data", &x_data.y_data, y_data_idx)?;
-                let peaktable = read_elem("peaktable", &y_data.peaktables, peaktable_idx)?;
+                let x_data = read_elem(&trace.x_data, x_data_idx)?;
+                let y_data = read_elem(&x_data.y_data, y_data_idx)?;
+                let peaktable = read_elem(&y_data.peaktables, peaktable_idx)?;
                 Ok(self.map_peaktable(peaktable, peaktable_idx)?)
             }
             [exp_idx, trace_idx, xy_data_idx, peaktable_idx, basecurve_idx] => {
-                let experiment = read_elem("experiment", &self.file.experiments, exp_idx)?;
-                let trace = read_elem("trace", &experiment.traces, trace_idx)?;
+                let experiment = read_elem(&self.file.experiments, exp_idx)?;
+                let trace = read_elem(&experiment.traces, trace_idx)?;
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    self.find_xy_indices(trace, xy_data_idx)?;
+                    Self::find_xy_indices(trace, xy_data_idx)?;
                 if alt_x_data_idx.is_some() {
                     return Err(GamlError::new(&format!("Illegal node path: {}", path)).into());
                 }
-                let x_data = read_elem("x_data", &trace.x_data, x_data_idx)?;
-                let y_data = read_elem("y_data", &x_data.y_data, y_data_idx)?;
-                let peaktable = read_elem("peaktable", &y_data.peaktables, peaktable_idx)?;
-                // todo: extract into function
-                for (i, peak) in peaktable.peaks.iter().enumerate() {
-                    if let Some(basecurve) =
-                        peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref())
-                    {
-                        if i == basecurve_idx {
-                            return Ok(self.map_basecurve(basecurve)?);
-                        }
-                    }
-                }
-                Err(GamlError::new(&format!(
-                    "Illegal basecurve index: {basecurve_idx}"
-                )))?
+                let x_data = read_elem(&trace.x_data, x_data_idx)?;
+                let y_data = read_elem(&x_data.y_data, y_data_idx)?;
+                let peaktable = read_elem(&y_data.peaktables, peaktable_idx)?;
+                let basecurve = Self::find_basecurve(peaktable, basecurve_idx)?;
+                Ok(self.map_basecurve(basecurve)?)
             }
             _ => Err(GamlError::new(&format!("Illegal node path: {}", path)).into()),
         }
@@ -110,7 +119,6 @@ impl Reader for GamlReader {
 
 impl GamlReader {
     fn find_xy_indices(
-        &self,
         trace: &Trace,
         xy_data_idx: usize,
     ) -> Result<(usize, Option<usize>, usize), GamlError> {
@@ -139,7 +147,6 @@ impl GamlReader {
     }
 
     fn generate_xy_name(
-        &self,
         coordinates: &[Coordinates],
         x_index: usize,
         alt_x_index: Option<usize>,
@@ -181,20 +188,20 @@ impl GamlReader {
         Ok(name)
     }
 
-    fn generate_xy_names(&self, trace: &Trace) -> Result<Vec<String>, GamlError> {
+    fn generate_xy_names(trace: &Trace) -> Result<Vec<String>, GamlError> {
         let coordinates = trace.coordinates.as_slice();
         let mut names = vec![];
         let mut overall_index = 0;
         for (x_index, x_data) in trace.x_data.iter().enumerate() {
             for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
                 let name =
-                    self.generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
+                    Self::generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
                 names.push(name);
                 overall_index += 1;
             }
             for (alt_x_index, _alt_x_data) in x_data.alt_x_data.iter().enumerate() {
                 for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-                    let name = self.generate_xy_name(
+                    let name = Self::generate_xy_name(
                         coordinates,
                         x_index,
                         Some(alt_x_index),
@@ -253,6 +260,22 @@ impl GamlReader {
         }
 
         Ok(parameters)
+    }
+
+    fn find_basecurve(
+        peaktable: &Peaktable,
+        basecurve_idx: usize,
+    ) -> Result<&Basecurve, GamlError> {
+        for (i, peak) in peaktable.peaks.iter().enumerate() {
+            if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
+                if i == basecurve_idx {
+                    return Ok(basecurve);
+                }
+            }
+        }
+        Err(GamlError::new(&format!(
+            "Illegal basecurve index: {basecurve_idx}"
+        )))?
     }
 
     pub fn new(path: &str, file: Gaml) -> Self {
@@ -367,7 +390,7 @@ impl GamlReader {
         ));
         parameters.extend(map_gaml_parameters(&trace.parameters));
 
-        let child_node_names = self.generate_xy_names(trace)?;
+        let child_node_names = Self::generate_xy_names(trace)?;
 
         Ok(Node {
             name,
@@ -390,7 +413,7 @@ impl GamlReader {
             x_index, y_index
         )))?;
 
-        let name = self.generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
+        let name = Self::generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
 
         let mut parameters = vec![];
         // attributes
@@ -491,7 +514,7 @@ impl GamlReader {
             x_index, y_index
         )))?;
 
-        let name = self.generate_xy_name(
+        let name = Self::generate_xy_name(
             coordinates,
             x_index,
             Some(alt_x_index),

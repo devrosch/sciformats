@@ -1,5 +1,7 @@
 use super::{
-    gaml_parser::{Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Xdata, Ydata},
+    gaml_parser::{
+        Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Units, Xdata, Ydata,
+    },
     gaml_utils::{map_gaml_parameters, map_values_attributes, read_elem, TypeName},
     GamlError,
 };
@@ -278,6 +280,36 @@ impl GamlReader {
         )))?
     }
 
+    fn generate_xy_plot_hints(
+        x_label: Option<&str>,
+        x_units: &Units,
+        y_label: Option<&str>,
+        y_units: &Units,
+    ) -> Vec<(String, String)> {
+        let mut metadata = Vec::<(String, String)>::new();
+        if let Some(label) = x_label {
+            metadata.push(("x.label".to_owned(), label.to_owned()));
+        };
+        if x_units != &Units::Unknown {
+            metadata.push(("x.unit".to_owned(), x_units.to_string()));
+        }
+        if let Some(label) = y_label {
+            metadata.push(("y.label".to_owned(), label.to_owned()));
+        };
+        if y_units != &Units::Unknown {
+            metadata.push(("y.unit".to_owned(), y_units.to_string()));
+        }
+        if x_units == &Units::Masschargeratio {
+            // possibly use more refined heuristic in the future
+            metadata.push(("plot.style".to_owned(), "sticks".to_owned()));
+        }
+        if x_units == &Units::Wavenumber || x_units == &Units::Ramanshift {
+            metadata.push(("x.reverse".to_owned(), "true".to_owned()));
+        }
+
+        metadata
+    }
+
     pub fn new(path: &str, file: Gaml) -> Self {
         Self {
             path: path.to_owned(),
@@ -467,7 +499,12 @@ impl GamlReader {
             .map(|(x, y)| PointXy::new(x, y))
             .collect();
 
-        // todo: add metadata
+        let metadata = Self::generate_xy_plot_hints(
+            x_data.label.as_deref(),
+            &x_data.units,
+            y_data.label.as_deref(),
+            &y_data.units,
+        );
 
         let child_node_names: Vec<_> = y_data
             .peaktables
@@ -490,7 +527,7 @@ impl GamlReader {
             name,
             parameters,
             data,
-            metadata: vec![],
+            metadata,
             table: None,
             child_node_names,
         })
@@ -577,7 +614,12 @@ impl GamlReader {
             .map(|(x, y)| PointXy::new(x, y))
             .collect();
 
-        // todo: add metadata
+        let metadata = Self::generate_xy_plot_hints(
+            alt_x_data.label.as_deref(),
+            &alt_x_data.units,
+            y_data.label.as_deref(),
+            &y_data.units,
+        );
 
         // do not map peaktables for altXdata
 
@@ -585,7 +627,7 @@ impl GamlReader {
             name,
             parameters,
             data,
-            metadata: vec![],
+            metadata,
             table: None,
             child_node_names: vec![],
         })

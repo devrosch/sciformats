@@ -469,3 +469,14 @@ pub(super) fn read_elem<T: TypeName>(slice: &[T], index: usize) -> Result<&T, Ga
         index
     )))
 }
+
+pub(super) fn generate_child_node_names<T>(
+    slice: &[T],
+    name_generator: &dyn Fn(&T, usize) -> String,
+) -> Vec<String> {
+    slice
+        .iter()
+        .enumerate()
+        .map(|(i, item)| name_generator(item, i))
+        .collect()
+}

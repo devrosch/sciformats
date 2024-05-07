@@ -1,8 +1,10 @@
 use super::{
     gaml_parser::{
-        Basecurve, Coordinates, Experiment, Gaml, Peaktable, Trace, Units, Xdata, Ydata,
+        Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Xdata, Ydata,
     },
-    gaml_utils::{map_gaml_parameters, map_values_attributes, read_elem, TypeName},
+    gaml_utils::{
+        generate_child_node_names, map_gaml_parameters, map_values_attributes, read_elem, TypeName,
+    },
     GamlError,
 };
 use crate::{
@@ -105,9 +107,10 @@ impl Reader for GamlReader {
                 }
 
                 let (basecurve_idx, tail) = tail.split_first().unwrap();
-                let basecurve = Self::find_basecurve(peaktable, *basecurve_idx)?;
+                let (basecurve, peak, peak_index) =
+                    Self::find_basecurve(peaktable, *basecurve_idx)?;
                 if tail.is_empty() {
-                    return Ok(self.map_basecurve(basecurve)?);
+                    return Ok(self.map_basecurve(basecurve, peak_index, peak.number)?);
                 }
 
                 Err(GamlError::new(&format!("Illegal node path: {}", path)).into())
@@ -264,11 +267,11 @@ impl GamlReader {
     fn find_basecurve(
         peaktable: &Peaktable,
         basecurve_idx: usize,
-    ) -> Result<&Basecurve, GamlError> {
+    ) -> Result<(&Basecurve, &Peak, usize), GamlError> {
         for (i, peak) in peaktable.peaks.iter().enumerate() {
             if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
                 if i == basecurve_idx {
-                    return Ok(basecurve);
+                    return Ok((basecurve, peak, i));
                 }
             }
         }
@@ -333,23 +336,8 @@ impl GamlReader {
         }
         parameters.extend(map_gaml_parameters(&self.file.parameters));
 
-        let child_node_names = self
-            .file
-            .experiments
-            .iter()
-            .enumerate()
-            .map(|(i, exper)| {
-                format!(
-                    "Experiment {}{}",
-                    i,
-                    exper
-                        .name
-                        .as_ref()
-                        .map(|name| String::from(", ") + &name)
-                        .unwrap_or_default()
-                )
-            })
-            .collect();
+        let child_node_names =
+            generate_child_node_names(&self.file.experiments, &Self::generate_experiment_name);
 
         Ok(Node {
             name: file_name.to_owned(),
@@ -361,11 +349,15 @@ impl GamlReader {
         })
     }
 
+    fn generate_experiment_name(experiment: &Experiment, index: usize) -> String {
+        match &experiment.name {
+            None => format!("Experiment {index}"),
+            Some(experiment_name) => format!("Experiment {index}, {experiment_name}"),
+        }
+    }
+
     fn map_experiment(&self, experiment: &Experiment, index: usize) -> Result<Node, GamlError> {
-        let name = match &experiment.name {
-            None => index.to_string(),
-            Some(exp_name) => format!("Experiment {index}, {exp_name}"),
-        };
+        let name = Self::generate_experiment_name(experiment, index);
 
         let mut parameters = vec![];
         if let Some(name) = &experiment.name {
@@ -376,22 +368,8 @@ impl GamlReader {
         }
         parameters.extend(map_gaml_parameters(&experiment.parameters));
 
-        let child_node_names = experiment
-            .traces
-            .iter()
-            .enumerate()
-            .map(|(i, trace)| {
-                format!(
-                    "Trace {}{}",
-                    i,
-                    trace
-                        .name
-                        .as_ref()
-                        .map(|name| String::from(", ") + &name)
-                        .unwrap_or_default()
-                )
-            })
-            .collect();
+        let child_node_names =
+            generate_child_node_names(&experiment.traces, &Self::generate_trace_name);
 
         Ok(Node {
             name,
@@ -403,11 +381,15 @@ impl GamlReader {
         })
     }
 
-    fn map_trace(&self, trace: &Trace, index: usize) -> Result<Node, GamlError> {
-        let name = match &trace.name {
-            None => index.to_string(),
+    fn generate_trace_name(trace: &Trace, index: usize) -> String {
+        match &trace.name {
+            None => format!("Trace {index}"),
             Some(trace_name) => format!("Trace {index}, {trace_name}"),
-        };
+        }
+    }
+
+    fn map_trace(&self, trace: &Trace, index: usize) -> Result<Node, GamlError> {
+        let name = Self::generate_trace_name(trace, index);
 
         let mut parameters = vec![];
         if let Some(name) = &trace.name {
@@ -503,22 +485,8 @@ impl GamlReader {
             &y_data.units,
         );
 
-        let child_node_names: Vec<_> = y_data
-            .peaktables
-            .iter()
-            .enumerate()
-            .map(|(i, peaktable)| {
-                format!(
-                    "Peaktable {}{}",
-                    i,
-                    peaktable
-                        .name
-                        .as_ref()
-                        .map(|name| String::from(", ") + &name)
-                        .unwrap_or_default()
-                )
-            })
-            .collect();
+        let child_node_names =
+            generate_child_node_names(&y_data.peaktables, &Self::generate_peaktable_name);
 
         Ok(Node {
             name,
@@ -630,11 +598,15 @@ impl GamlReader {
         })
     }
 
-    fn map_peaktable(&self, peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
-        let name = match &peaktable.name {
+    fn generate_peaktable_name(peaktable: &Peaktable, index: usize) -> String {
+        match &peaktable.name {
             None => format!("Peaktable {index}"),
             Some(name) => format!("Peaktable {index}, {}", name),
-        };
+        }
+    }
+
+    fn map_peaktable(&self, peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
+        let name = Self::generate_peaktable_name(peaktable, index);
 
         let mut parameters = vec![];
         // peaktable attributes and parameters
@@ -705,7 +677,7 @@ impl GamlReader {
         let mut child_node_names = vec![];
         for (i, peak) in peaktable.peaks.iter().enumerate() {
             if let Some(_basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
-                child_node_names.push(format!("Basecurve Peak {}, number {}", i, peak.number));
+                child_node_names.push(Self::generate_basecurve_name(i, peak.number));
             }
         }
 
@@ -719,8 +691,17 @@ impl GamlReader {
         })
     }
 
-    fn map_basecurve(&self, basecurve: &Basecurve) -> Result<Node, GamlError> {
-        let name = "Basecurve".to_owned();
+    fn generate_basecurve_name(peak_index: usize, peak_number: u64) -> String {
+        format!("Basecurve Peak {}, number {}", peak_index, peak_number)
+    }
+
+    fn map_basecurve(
+        &self,
+        basecurve: &Basecurve,
+        peak_index: usize,
+        peak_number: u64,
+    ) -> Result<Node, GamlError> {
+        let name = Self::generate_basecurve_name(peak_index, peak_number);
 
         let mut parameters = vec![];
         // Values attributes

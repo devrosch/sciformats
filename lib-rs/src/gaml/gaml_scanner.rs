@@ -62,3 +62,65 @@ impl<T: Seek + Read + 'static> Scanner<T> for GamlScanner {
         Ok(Box::new(GamlReader::new(path, gaml)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn accepts_valid_gaml() {
+        let path = "valid.gaml";
+        let gaml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                            <GAML version=\"1.20\" name=\"Gaml test file\"></GAML>";
+        let mut reader = Cursor::new(gaml);
+        let scanner = GamlScanner::new();
+
+        assert_eq!(true, scanner.is_recognized(path, &mut reader));
+    }
+
+    #[test]
+    fn accepts_valid_gaml_upper_case_extension() {
+        let path = "valid.GAML";
+        let gaml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                            <GAML version=\"1.20\" name=\"Gaml test file\"></GAML>";
+        let mut reader = Cursor::new(gaml);
+        let scanner = GamlScanner::new();
+
+        assert_eq!(true, scanner.is_recognized(path, &mut reader));
+    }
+
+    #[test]
+    fn rejects_invalid_extension() {
+        let path = "invalid.notgaml";
+        let gaml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                            <GAML version=\"1.20\" name=\"Gaml test file\"></GAML>";
+        let mut reader = Cursor::new(gaml);
+        let scanner = GamlScanner::new();
+
+        assert_eq!(false, scanner.is_recognized(path, &mut reader));
+    }
+
+    #[test]
+    fn rejects_invalid_content() {
+        let path = "invalid.gaml";
+        let gaml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                            <some><other><xml>content</xml></other></some>";
+        let mut reader = Cursor::new(gaml);
+        let scanner = GamlScanner::new();
+
+        assert_eq!(false, scanner.is_recognized(path, &mut reader));
+    }
+
+    #[test]
+    fn provides_reader_for_valid_gaml() {
+        let path = "valid.gaml";
+        let gaml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                            <GAML version=\"1.20\" name=\"Gaml test file\"></GAML>";
+        let reader = Cursor::new(gaml);
+        let scanner = GamlScanner::new();
+
+        assert!(scanner.get_reader(path, reader).is_ok());
+    }
+}

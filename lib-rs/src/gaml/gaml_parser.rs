@@ -1265,7 +1265,7 @@ mod tests {
     use std::io::Cursor;
 
     #[test]
-    fn parsing_simple_gaml_succeeds() {
+    fn parses_utf8_gaml_xml_1_0() {
         let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
                         <GAML version=\"1.20\" name=\"Gaml test file\">\n
                             <integrity algorithm=\"SHA1\">03cfd743661f07975fa2f1220c5194cbaff48451</integrity>\n
@@ -1605,5 +1605,41 @@ mod tests {
         let basecurve = baseline.basecurve.as_ref().unwrap();
         assert_eq!(vec![1.0, 2.0, 1.0, 2.0], basecurve.get_x_data().unwrap());
         assert_eq!(vec![1.0, 2.0, 1.0, 2.0], basecurve.get_y_data().unwrap());
+    }
+
+    #[test]
+    fn parses_iso_8859_1_gaml_xml_1_0() {
+        // GAML name="Gaml umlaut ÄÖÜäöü test file"
+        let xml = b"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml umlaut \xc4\xd6\xdc\xe4\xf6\xfc test file\">\n
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
+        assert_eq!("1.20", gaml.version);
+        assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
+    }
+
+    #[test]
+    fn parses_iso_8859_1_gaml_xml_1_1() {
+        // GAML name="Gaml umlaut ÄÖÜäöü test file"
+        let xml = b"<?xml version=\"1.1\" encoding=\"iso-8859-1\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml umlaut \xc4\xd6\xdc\xe4\xf6\xfc test file\">\n
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
+        assert_eq!("1.20", gaml.version);
+        assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
+    }
+
+    #[test]
+    fn parses_utf8_gaml_no_xml_declaration() {
+        let xml = "<GAML version=\"1.20\" name=\"Gaml umlaut ÄÖÜäöü test file\"></GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
+        assert_eq!("1.20", gaml.version);
+        assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
     }
 }

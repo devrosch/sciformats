@@ -752,3 +752,57 @@ impl GamlReader {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::gaml::gaml_parser::Integrity;
+    use crate::gaml::gaml_parser::Parameter as RawParameter;
+
+    use super::*;
+
+    #[test]
+    fn accepts_valid_gaml() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: Some("GAML name".into()),
+            integrity: Some(Integrity {
+                algorithm: "SHA1".into(),
+                value: "03cfd743661f07975fa2f1220c5194cbaff48451".into(),
+            }),
+            parameters: vec![RawParameter {
+                group: Some("param 0 group".into()),
+                name: "param 0 name".into(),
+                label: Some("param 0 label".into()),
+                alias: Some("param 0 alias".into()),
+                value: Some("param 0 value".into()),
+            }],
+            experiments: vec![],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let root = reader.read("/").unwrap();
+        assert_eq!(
+            Node {
+                name: "gaml_file.gaml".into(),
+                parameters: vec![
+                    Parameter::from_str_str("Version", "1.20"),
+                    Parameter::from_str_str("Name", "GAML name"),
+                    Parameter::from_str_str(
+                        "Integrity (algorithm=SHA1)",
+                        "03cfd743661f07975fa2f1220c5194cbaff48451"
+                    ),
+                    Parameter::from_str_str(
+                        "param 0 name (group=param 0 group, label=param 0 label, alias=param 0 alias)",
+                        "param 0 value"
+                    ),
+                ],
+                data: vec![],
+                metadata: vec![],
+                table: None,
+                child_node_names: vec![],
+            },
+            root
+        );
+    }
+}

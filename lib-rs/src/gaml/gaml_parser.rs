@@ -756,6 +756,31 @@ impl Values {
 
         Ok(data)
     }
+
+    /// #[cfg(test)] and pub(super) to allow creating Values in unit tests
+    #[cfg(test)]
+    pub(super) fn create_values_with(bytes: &[u8], format: Format, byteorder: Byteorder) -> Values {
+        let base64 = BASE64_STANDARD.encode(bytes);
+        let base64_len = base64.len();
+        let input = Cursor::new(base64);
+        let buf_reader: Box<dyn SeekBufRead> = Box::new(BufReader::new(input));
+        let reader = quick_xml::Reader::from_reader(buf_reader);
+        let reader_ref = Rc::new(RefCell::new(reader));
+
+        let numvalues = match &format {
+            Format::Float32 => bytes.len() / 4,
+            Format::Float64 => bytes.len() / 8,
+        };
+
+        Values {
+            format,
+            byteorder,
+            numvalues: Some(numvalues as u64),
+            value_start_pos: 0,
+            value_end_pos: base64_len as u64,
+            reader_ref,
+        }
+    }
 }
 
 pub struct Xdata {

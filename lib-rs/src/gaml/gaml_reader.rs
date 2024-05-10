@@ -756,10 +756,24 @@ impl GamlReader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gaml::gaml_parser::Byteorder;
+    use crate::gaml::gaml_parser::Format;
     use crate::gaml::gaml_parser::Integrity;
     use crate::gaml::gaml_parser::Parameter as RawParameter;
     use crate::gaml::gaml_parser::Technique;
+    use crate::gaml::gaml_parser::Valueorder;
+    use crate::gaml::gaml_parser::Values;
     use chrono::DateTime;
+
+    fn create_values_f32(data: &[f32]) -> Values {
+        let bytes: Vec<u8> = data.iter().map(|v| v.to_le_bytes()).flatten().collect();
+        Values::create_values_with(bytes.as_slice(), Format::Float32, Byteorder::Intel)
+    }
+
+    // fn create_values_f64(data: &[f64]) -> Values {
+    //     let bytes: Vec<u8> = data.iter().map(|v| v.to_le_bytes()).flatten().collect();
+    //     Values::create_values_with(bytes.as_slice(), Format::Float64, Byteorder::Intel)
+    // }
 
     #[test]
     fn maps_gaml_root() {
@@ -931,5 +945,101 @@ mod tests {
             },
             trace_node
         );
+    }
+
+    #[test]
+    fn maps_gaml_xydata() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![Experiment {
+                name: None,
+                collectdate: None,
+                parameters: vec![],
+                traces: vec![Trace {
+                    name: None,
+                    technique: Technique::Unknown,
+                    parameters: vec![],
+                    coordinates: vec![],
+                    x_data: vec![Xdata {
+                        units: Units::Nanometers,
+                        label: Some("xdata label".into()),
+                        linkid: Some("xdata linkid".into()),
+                        valueorder: Some(Valueorder::Unspecified),
+                        links: vec![],
+                        parameters: vec![RawParameter {
+                            group: None,
+                            name: "param 0 name".into(),
+                            label: None,
+                            alias: None,
+                            value: Some("param 0 value".into()),
+                        }],
+                        values: create_values_f32(&[1f32, 2f32, 3f32]),
+                        alt_x_data: vec![],
+                        y_data: vec![Ydata {
+                            units: Units::Absorbance,
+                            label: Some("ydata label".into()),
+                            parameters: vec![RawParameter {
+                                group: None,
+                                name: "param 0 name".into(),
+                                label: None,
+                                alias: None,
+                                value: Some("param 0 value".into()),
+                            }],
+                            values: create_values_f32(&[10f32, 20f32, 30f32]),
+                            peaktables: vec![],
+                        }],
+                    }],
+                }],
+            }],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let trace_node = reader.read("/0/0").unwrap();
+        assert_eq!(1, trace_node.child_node_names.len());
+
+        let xydata_node = reader.read("/0/0/0").unwrap();
+        assert_eq!("XYData 0, 0", &xydata_node.name);
+        assert_eq!(
+            &vec![
+                Parameter::from_str_str("Xdata units", "NANOMETERS"),
+                Parameter::from_str_str("Xdata label", "xdata label"),
+                Parameter::from_str_str("Xdata linkid", "xdata linkid"),
+                Parameter::from_str_str("Xdata valueorder", "UNSPECIFIED"),
+                Parameter::from_str_str("Ydata units", "ABSORBANCE"),
+                Parameter::from_str_str("Ydata label", "ydata label"),
+                Parameter::from_str_str("Xdata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Ydata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Xdata values format", "FLOAT32"),
+                Parameter::from_str_str("Xdata values byteorder", "INTEL"),
+                Parameter::from_str_u64("Xdata values numvalues", 3),
+                Parameter::from_str_str("Ydata values format", "FLOAT32"),
+                Parameter::from_str_str("Ydata values byteorder", "INTEL"),
+                Parameter::from_str_u64("Ydata values numvalues", 3),
+            ],
+            &xydata_node.parameters
+        );
+        assert_eq!(
+            &vec![
+                PointXy::new(1.0f32 as f64, 10.0f32 as f64),
+                PointXy::new(2.0f32 as f64, 20.0f32 as f64),
+                PointXy::new(3.0f32 as f64, 30.0f32 as f64)
+            ],
+            &xydata_node.data,
+        );
+        assert_eq!(
+            &vec![
+                ("x.label".into(), "xdata label".into()),
+                ("x.unit".into(), "NANOMETERS".into()),
+                ("y.label".into(), "ydata label".into()),
+                ("y.unit".into(), "ABSORBANCE".into()),
+            ],
+            &xydata_node.metadata
+        );
+        assert_eq!(&None, &xydata_node.table);
+        assert!(&xydata_node.child_node_names.is_empty());
     }
 }

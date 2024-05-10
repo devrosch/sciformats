@@ -543,7 +543,7 @@ impl GamlReader {
             ));
         }
         parameters.push(Parameter::from_str_str(
-            "AltXdata units",
+            "Ydata units",
             y_data.units.to_string(),
         ));
         if let Some(label) = &y_data.label {
@@ -756,6 +756,7 @@ impl GamlReader {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::gaml::gaml_parser::AltXdata;
     use crate::gaml::gaml_parser::Byteorder;
     use crate::gaml::gaml_parser::Format;
     use crate::gaml::gaml_parser::Integrity;
@@ -770,10 +771,10 @@ mod tests {
         Values::create_values_with(bytes.as_slice(), Format::Float32, Byteorder::Intel)
     }
 
-    // fn create_values_f64(data: &[f64]) -> Values {
-    //     let bytes: Vec<u8> = data.iter().map(|v| v.to_le_bytes()).flatten().collect();
-    //     Values::create_values_with(bytes.as_slice(), Format::Float64, Byteorder::Intel)
-    // }
+    fn create_values_f64(data: &[f64]) -> Values {
+        let bytes: Vec<u8> = data.iter().map(|v| v.to_le_bytes()).flatten().collect();
+        Values::create_values_with(bytes.as_slice(), Format::Float64, Byteorder::Intel)
+    }
 
     #[test]
     fn maps_gaml_root() {
@@ -1041,5 +1042,194 @@ mod tests {
         );
         assert_eq!(&None, &xydata_node.table);
         assert!(&xydata_node.child_node_names.is_empty());
+    }
+
+    #[test]
+    fn maps_gaml_xydata_with_coordinates_and_altxdata() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![Experiment {
+                name: None,
+                collectdate: None,
+                parameters: vec![],
+                traces: vec![Trace {
+                    name: None,
+                    technique: Technique::Unknown,
+                    parameters: vec![],
+                    coordinates: vec![Coordinates {
+                        units: Units::Seconds,
+                        label: Some("coordinates label".into()),
+                        linkid: Some("coordinates".into()),
+                        valueorder: Some(Valueorder::Unspecified),
+                        links: vec![],
+                        parameters: vec![RawParameter {
+                            group: None,
+                            name: "param 0 name".into(),
+                            label: None,
+                            alias: None,
+                            value: Some("param 0 value".into()),
+                        }],
+                        values: create_values_f64(&[100.0, 200.0]),
+                    }],
+                    x_data: vec![Xdata {
+                        units: Units::Nanometers,
+                        label: Some("xdata label".into()),
+                        linkid: Some("xdata linkid".into()),
+                        valueorder: Some(Valueorder::Unspecified),
+                        links: vec![],
+                        parameters: vec![RawParameter {
+                            group: None,
+                            name: "param 0 name".into(),
+                            label: None,
+                            alias: None,
+                            value: Some("param 0 value".into()),
+                        }],
+                        values: create_values_f64(&[1.0, 2.0, 3.0]),
+                        alt_x_data: vec![AltXdata {
+                            units: Units::Meters,
+                            label: Some("altxdata label".into()),
+                            linkid: Some("altxdata linkid".into()),
+                            valueorder: Some(Valueorder::Unspecified),
+                            links: vec![],
+                            parameters: vec![RawParameter {
+                                group: None,
+                                name: "param 0 name".into(),
+                                label: None,
+                                alias: None,
+                                value: Some("param 0 value".into()),
+                            }],
+                            values: create_values_f64(&[1.1, 2.1, 3.1]),
+                        }],
+                        y_data: vec![Ydata {
+                            units: Units::Absorbance,
+                            label: Some("ydata label".into()),
+                            parameters: vec![RawParameter {
+                                group: None,
+                                name: "param 0 name".into(),
+                                label: None,
+                                alias: None,
+                                value: Some("param 0 value".into()),
+                            }],
+                            values: create_values_f64(&[10.0, 20.0, 30.0]),
+                            peaktables: vec![],
+                        }],
+                    }],
+                }],
+            }],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let trace_node = reader.read("/0/0").unwrap();
+        assert_eq!(2, trace_node.child_node_names.len());
+
+        let xydata_node_0 = reader.read("/0/0/0").unwrap();
+        assert_eq!(
+            "XYData 0, 0 (coordinates label=100 SECONDS)",
+            &xydata_node_0.name
+        );
+        assert_eq!(
+            &vec![
+                Parameter::from_str_str("Xdata units", "NANOMETERS"),
+                Parameter::from_str_str("Xdata label", "xdata label"),
+                Parameter::from_str_str("Xdata linkid", "xdata linkid"),
+                Parameter::from_str_str("Xdata valueorder", "UNSPECIFIED"),
+                Parameter::from_str_str("Ydata units", "ABSORBANCE"),
+                Parameter::from_str_str("Ydata label", "ydata label"),
+                Parameter::from_str_str("Coordinate 0 units", "SECONDS"),
+                Parameter::from_str_str("Coordinate 0 label", "coordinates label"),
+                Parameter::from_str_str("Coordinate 0 linkid", "coordinates"),
+                Parameter::from_str_str("Coordinate 0 valueorder", "UNSPECIFIED"),
+                // todo: rearrange
+                Parameter::from_str_str("Coordinate 0 param 0 name", "param 0 value"),
+                Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
+                Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
+                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+                Parameter::from_str_str("Xdata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Ydata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Xdata values format", "FLOAT64"),
+                Parameter::from_str_str("Xdata values byteorder", "INTEL"),
+                Parameter::from_str_u64("Xdata values numvalues", 3),
+                Parameter::from_str_str("Ydata values format", "FLOAT64"),
+                Parameter::from_str_str("Ydata values byteorder", "INTEL"),
+                Parameter::from_str_u64("Ydata values numvalues", 3),
+            ],
+            &xydata_node_0.parameters
+        );
+        assert_eq!(
+            &vec![
+                PointXy::new(1.0, 10.0),
+                PointXy::new(2.0, 20.0),
+                PointXy::new(3.0, 30.0)
+            ],
+            &xydata_node_0.data,
+        );
+        assert_eq!(
+            &vec![
+                ("x.label".into(), "xdata label".into()),
+                ("x.unit".into(), "NANOMETERS".into()),
+                ("y.label".into(), "ydata label".into()),
+                ("y.unit".into(), "ABSORBANCE".into()),
+            ],
+            &xydata_node_0.metadata
+        );
+        assert_eq!(&None, &xydata_node_0.table);
+        assert!(&xydata_node_0.child_node_names.is_empty());
+
+        let xydata_node_1 = reader.read("/0/0/1").unwrap();
+        assert_eq!(
+            "AltXYData 0, 0, 0 (coordinates label=200 SECONDS)",
+            &xydata_node_1.name
+        );
+        assert_eq!(
+            &vec![
+                Parameter::from_str_str("AltXdata units", "METERS"),
+                Parameter::from_str_str("AltXdata label", "altxdata label"),
+                Parameter::from_str_str("AltXdata linkid", "altxdata linkid"),
+                Parameter::from_str_str("AltXdata valueorder", "UNSPECIFIED"),
+                Parameter::from_str_str("Ydata units", "ABSORBANCE"),
+                Parameter::from_str_str("Ydata label", "ydata label"),
+                Parameter::from_str_str("Coordinate 0 units", "SECONDS"),
+                Parameter::from_str_str("Coordinate 0 label", "coordinates label"),
+                Parameter::from_str_str("Coordinate 0 linkid", "coordinates"),
+                Parameter::from_str_str("Coordinate 0 valueorder", "UNSPECIFIED"),
+                // todo: rearrange
+                Parameter::from_str_str("Coordinate 0 param 0 name", "param 0 value"),
+                Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
+                Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
+                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+                Parameter::from_str_str("AltXdata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Ydata param 0 name", "param 0 value"),
+                Parameter::from_str_str("AltXdata values format", "FLOAT64"),
+                Parameter::from_str_str("AltXdata values byteorder", "INTEL"),
+                Parameter::from_str_u64("AltXdata values numvalues", 3),
+                Parameter::from_str_str("Ydata values format", "FLOAT64"),
+                Parameter::from_str_str("Ydata values byteorder", "INTEL"),
+                Parameter::from_str_u64("Ydata values numvalues", 3),
+            ],
+            &xydata_node_1.parameters
+        );
+        assert_eq!(
+            &vec![
+                PointXy::new(1.1, 10.0),
+                PointXy::new(2.1, 20.0),
+                PointXy::new(3.1, 30.0),
+            ],
+            &xydata_node_1.data,
+        );
+        assert_eq!(
+            &vec![
+                ("x.label".into(), "altxdata label".into()),
+                ("x.unit".into(), "METERS".into()),
+                ("y.label".into(), "ydata label".into()),
+                ("y.unit".into(), "ABSORBANCE".into()),
+            ],
+            &xydata_node_1.metadata
+        );
+        assert_eq!(&None, &xydata_node_1.table);
+        assert!(&xydata_node_1.child_node_names.is_empty());
     }
 }

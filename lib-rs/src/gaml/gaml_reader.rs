@@ -1232,4 +1232,142 @@ mod tests {
         assert_eq!(&None, &xydata_node_1.table);
         assert!(&xydata_node_1.child_node_names.is_empty());
     }
+
+    #[test]
+    fn maps_gaml_peaktable() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![Experiment {
+                name: None,
+                collectdate: None,
+                parameters: vec![],
+                traces: vec![Trace {
+                    name: None,
+                    technique: Technique::Unknown,
+                    parameters: vec![],
+                    coordinates: vec![],
+                    x_data: vec![Xdata {
+                        units: Units::Nanometers,
+                        label: None,
+                        linkid: None,
+                        valueorder: None,
+                        links: vec![],
+                        parameters: vec![],
+                        values: create_values_f64(&[1.0, 2.0, 3.0]),
+                        alt_x_data: vec![],
+                        y_data: vec![Ydata {
+                            units: Units::Absorbance,
+                            label: None,
+                            parameters: vec![],
+                            values: create_values_f64(&[10.0, 20.0, 30.0]),
+                            peaktables: vec![Peaktable {
+                                name: Some("peaktable name".into()),
+                                parameters: vec![RawParameter {
+                                    group: None,
+                                    name: "param 0 name".into(),
+                                    label: None,
+                                    alias: None,
+                                    value: Some("param 0 value".into()),
+                                }],
+                                peaks: vec![
+                                    Peak {
+                                        number: 1,
+                                        group: Some("peak group".into()),
+                                        name: Some("peak name 1".into()),
+                                        parameters: vec![RawParameter {
+                                            group: None,
+                                            name: "param 0 name".into(),
+                                            label: None,
+                                            alias: None,
+                                            value: Some("param 0 value".into()),
+                                        }],
+                                        peak_x_value: 1.0,
+                                        peak_y_value: 10.0,
+                                        baseline: None,
+                                    },
+                                    Peak {
+                                        number: 2,
+                                        group: Some("peak group".into()),
+                                        name: Some("peak name 2".into()),
+                                        parameters: vec![RawParameter {
+                                            group: None,
+                                            name: "param 0 name".into(),
+                                            label: None,
+                                            alias: None,
+                                            value: Some("param 0 value".into()),
+                                        }],
+                                        peak_x_value: 2.0,
+                                        peak_y_value: 20.0,
+                                        baseline: None,
+                                    },
+                                ],
+                            }],
+                        }],
+                    }],
+                }],
+            }],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let xydata_node = reader.read("/0/0/0").unwrap();
+        assert_eq!("XYData 0, 0", &xydata_node.name);
+        assert_eq!(1, xydata_node.child_node_names.len());
+        assert_eq!(
+            "Peaktable 0, peaktable name",
+            xydata_node.child_node_names[0]
+        );
+
+        let peaktable_node = reader.read("/0/0/0/0").unwrap();
+        assert_eq!("Peaktable 0, peaktable name", &peaktable_node.name);
+
+        assert_eq!(
+            &vec![
+                // todo: harmonize naming, capitalization and commas/blanks with other names
+                Parameter::from_str_str("Name", "peaktable name"),
+                Parameter::from_str_str("param 0 name", "param 0 value"),
+                Parameter::from_str_str("Peak 0, number 1, param 0 name", "param 0 value"),
+                Parameter::from_str_str("Peak 1, number 2, param 0 name", "param 0 value"),
+            ],
+            &peaktable_node.parameters
+        );
+        assert!(&peaktable_node.data.is_empty());
+        assert!(&peaktable_node.metadata.is_empty());
+        assert_eq!(
+            &Table {
+                column_names: vec![
+                    Column::new("number", "Number"),
+                    Column::new("group", "Group"),
+                    Column::new("name", "Name"),
+                    Column::new("peak_x_value", "peakXvalue"),
+                    Column::new("peak_y_value", "peakYvalue"),
+                    Column::new("baseline_start_x_value", "Baseline Start X Value"),
+                    Column::new("baseline_start_y_value", "Baseline Start Y Value"),
+                    Column::new("baseline_end_x_value", "Baseline End X Value"),
+                    Column::new("baseline_end_y_value", "Baseline End Y Value"),
+                ],
+                rows: vec![
+                    HashMap::from([
+                        ("number".into(), Value::U64(1)),
+                        ("group".into(), Value::String("peak group".into())),
+                        ("name".into(), Value::String("peak name 1".into())),
+                        ("peak_x_value".into(), Value::F64(1.0)),
+                        ("peak_y_value".into(), Value::F64(10.0)),
+                    ]),
+                    HashMap::from([
+                        ("number".into(), Value::U64(2)),
+                        ("group".into(), Value::String("peak group".into())),
+                        ("name".into(), Value::String("peak name 2".into())),
+                        ("peak_x_value".into(), Value::F64(2.0)),
+                        ("peak_y_value".into(), Value::F64(20.0)),
+                    ]),
+                ]
+            },
+            &peaktable_node.table.unwrap(),
+        );
+        assert!(&peaktable_node.child_node_names.is_empty());
+    }
 }

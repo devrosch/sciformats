@@ -758,6 +758,7 @@ mod tests {
     use super::*;
     use crate::gaml::gaml_parser::Integrity;
     use crate::gaml::gaml_parser::Parameter as RawParameter;
+    use crate::gaml::gaml_parser::Technique;
     use chrono::DateTime;
 
     #[test]
@@ -877,6 +878,58 @@ mod tests {
                 child_node_names: vec![]
             },
             exp_node
+        );
+    }
+
+    #[test]
+    fn maps_gaml_trace() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![Experiment {
+                name: None,
+                collectdate: None,
+                parameters: vec![],
+                traces: vec![Trace {
+                    name: Some("trace 0 name".into()),
+                    technique: Technique::Ir,
+                    parameters: vec![RawParameter {
+                        group: None,
+                        name: "param 0 name".into(),
+                        label: None,
+                        alias: None,
+                        value: Some("param 0 value".into()),
+                    }],
+                    coordinates: vec![],
+                    x_data: vec![],
+                }],
+            }],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let exp_node = reader.read("/0").unwrap();
+        assert_eq!(1, exp_node.child_node_names.len());
+        assert_eq!("Trace 0, trace 0 name", exp_node.child_node_names[0]);
+
+        let trace_node = reader.read("/0/0").unwrap();
+
+        assert_eq!(
+            Node {
+                name: "Trace 0, trace 0 name".into(),
+                parameters: vec![
+                    Parameter::from_str_str("Name", "trace 0 name"),
+                    Parameter::from_str_str("Technique", "IR"),
+                    Parameter::from_str_str("param 0 name", "param 0 value"),
+                ],
+                data: vec![],
+                metadata: vec![],
+                table: None,
+                child_node_names: vec![]
+            },
+            trace_node
         );
     }
 }

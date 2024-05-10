@@ -755,13 +755,13 @@ impl GamlReader {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::gaml::gaml_parser::Integrity;
     use crate::gaml::gaml_parser::Parameter as RawParameter;
-
-    use super::*;
+    use chrono::DateTime;
 
     #[test]
-    fn accepts_valid_gaml() {
+    fn maps_gaml_root() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
             version: "1.20".into(),
@@ -781,7 +781,7 @@ mod tests {
         };
         let reader = GamlReader::new(path, gaml);
 
-        let root = reader.read("/").unwrap();
+        let root_node = reader.read("/").unwrap();
         assert_eq!(
             Node {
                 name: "gaml_file.gaml".into(),
@@ -802,7 +802,81 @@ mod tests {
                 table: None,
                 child_node_names: vec![],
             },
-            root
+            root_node
+        );
+    }
+
+    #[test]
+    fn maps_gaml_root_minimal() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let root_node = reader.read("/").unwrap();
+        assert_eq!(
+            Node {
+                name: "gaml_file.gaml".into(),
+                parameters: vec![Parameter::from_str_str("Version", "1.20"),],
+                data: vec![],
+                metadata: vec![],
+                table: None,
+                child_node_names: vec![],
+            },
+            root_node
+        );
+    }
+
+    #[test]
+    fn maps_gaml_experiment() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![Experiment {
+                name: Some("experiment 0 name".into()),
+                collectdate: Some(DateTime::parse_from_rfc3339("2024-03-27T06:46:00Z").unwrap()),
+                parameters: vec![RawParameter {
+                    group: None,
+                    name: "param 0 name".into(),
+                    label: None,
+                    alias: None,
+                    value: Some("param 0 value".into()),
+                }],
+                traces: vec![],
+            }],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let root_node = reader.read("/").unwrap();
+        assert_eq!(1, root_node.child_node_names.len());
+        assert_eq!(
+            "Experiment 0, experiment 0 name",
+            root_node.child_node_names[0]
+        );
+
+        let exp_node = reader.read("/0").unwrap();
+        assert_eq!(
+            Node {
+                name: "Experiment 0, experiment 0 name".into(),
+                parameters: vec![
+                    Parameter::from_str_str("Name", "experiment 0 name"),
+                    Parameter::from_str_str("Collectdate", "2024-03-27T06:46:00+00:00"),
+                    Parameter::from_str_str("param 0 name", "param 0 value"),
+                ],
+                data: vec![],
+                metadata: vec![],
+                table: None,
+                child_node_names: vec![]
+            },
+            exp_node
         );
     }
 }

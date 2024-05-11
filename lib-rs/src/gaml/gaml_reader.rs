@@ -757,6 +757,7 @@ impl GamlReader {
 mod tests {
     use super::*;
     use crate::gaml::gaml_parser::AltXdata;
+    use crate::gaml::gaml_parser::Baseline;
     use crate::gaml::gaml_parser::Byteorder;
     use crate::gaml::gaml_parser::Format;
     use crate::gaml::gaml_parser::Integrity;
@@ -1369,5 +1370,148 @@ mod tests {
             &peaktable_node.table.unwrap(),
         );
         assert!(&peaktable_node.child_node_names.is_empty());
+    }
+
+    #[test]
+    fn maps_gaml_baseline_and_basecurve() {
+        let path = "gaml_file.gaml";
+        let gaml = Gaml {
+            version: "1.20".into(),
+            name: None,
+            integrity: None,
+            parameters: vec![],
+            experiments: vec![Experiment {
+                name: None,
+                collectdate: None,
+                parameters: vec![],
+                traces: vec![Trace {
+                    name: None,
+                    technique: Technique::Unknown,
+                    parameters: vec![],
+                    coordinates: vec![],
+                    x_data: vec![Xdata {
+                        units: Units::Nanometers,
+                        label: None,
+                        linkid: None,
+                        valueorder: None,
+                        links: vec![],
+                        parameters: vec![],
+                        values: create_values_f64(&[]),
+                        alt_x_data: vec![],
+                        y_data: vec![Ydata {
+                            units: Units::Absorbance,
+                            label: None,
+                            parameters: vec![],
+                            values: create_values_f64(&[]),
+                            peaktables: vec![Peaktable {
+                                name: None,
+                                parameters: vec![],
+                                peaks: vec![Peak {
+                                    number: 1,
+                                    group: None,
+                                    name: None,
+                                    parameters: vec![],
+                                    peak_x_value: 1.0,
+                                    peak_y_value: 10.0,
+                                    baseline: Some(Baseline {
+                                        parameters: vec![RawParameter {
+                                            group: None,
+                                            name: "param 0 name".into(),
+                                            label: None,
+                                            alias: None,
+                                            value: Some("param 0 value".into()),
+                                        }],
+                                        start_x_value: 0.5,
+                                        start_y_value: 4.5,
+                                        end_x_value: 1.5,
+                                        end_y_value: 5.5,
+                                        basecurve: Some(Basecurve {
+                                            base_x_data: vec![
+                                                create_values_f64(&[0.5, 1.0]),
+                                                create_values_f64(&[1.5]),
+                                            ],
+                                            base_y_data: vec![
+                                                create_values_f64(&[0.0, 0.1]),
+                                                create_values_f64(&[0.0]),
+                                            ],
+                                        }),
+                                    }),
+                                }],
+                            }],
+                        }],
+                    }],
+                }],
+            }],
+        };
+        let reader = GamlReader::new(path, gaml);
+
+        let peaktable_node = reader.read("/0/0/0/0").unwrap();
+        assert_eq!("Peaktable 0", &peaktable_node.name);
+        assert!(&peaktable_node.parameters.is_empty());
+        assert!(&peaktable_node.data.is_empty());
+        assert!(&peaktable_node.metadata.is_empty());
+        assert_eq!(
+            &Table {
+                column_names: vec![
+                    Column::new("number", "Number"),
+                    Column::new("group", "Group"),
+                    Column::new("name", "Name"),
+                    Column::new("peak_x_value", "peakXvalue"),
+                    Column::new("peak_y_value", "peakYvalue"),
+                    Column::new("baseline_start_x_value", "Baseline Start X Value"),
+                    Column::new("baseline_start_y_value", "Baseline Start Y Value"),
+                    Column::new("baseline_end_x_value", "Baseline End X Value"),
+                    Column::new("baseline_end_y_value", "Baseline End Y Value"),
+                ],
+                rows: vec![HashMap::from([
+                    ("number".into(), Value::U64(1)),
+                    ("peak_x_value".into(), Value::F64(1.0)),
+                    ("peak_y_value".into(), Value::F64(10.0)),
+                    ("baseline_start_x_value".into(), Value::F64(0.5)),
+                    ("baseline_start_y_value".into(), Value::F64(4.5)),
+                    ("baseline_end_x_value".into(), Value::F64(1.5)),
+                    ("baseline_end_y_value".into(), Value::F64(5.5)),
+                ]),]
+            },
+            &peaktable_node.table.unwrap(),
+        );
+        assert_eq!(1, peaktable_node.child_node_names.len());
+        assert_eq!(
+            "Basecurve Peak 0, number 1",
+            peaktable_node.child_node_names[0]
+        );
+
+        let basecurve_node = reader.read("/0/0/0/0/0").unwrap();
+        assert_eq!("Basecurve Peak 0, number 1", &basecurve_node.name);
+        assert_eq!(
+            &vec![
+                // todo: include baseline parameters
+                // Parameter::from_str_str("param 0 name", "param 0 value"),
+                Parameter::from_str_str("BaseXdata values 0 format", "FLOAT64"),
+                Parameter::from_str_str("BaseXdata values 0 byteorder", "INTEL"),
+                Parameter::from_str_u64("BaseXdata values 0 numvalues", 2),
+                Parameter::from_str_str("BaseXdata values 1 format", "FLOAT64"),
+                Parameter::from_str_str("BaseXdata values 1 byteorder", "INTEL"),
+                Parameter::from_str_u64("BaseXdata values 1 numvalues", 1),
+                Parameter::from_str_str("BaseYdata values 0 format", "FLOAT64"),
+                Parameter::from_str_str("BaseYdata values 0 byteorder", "INTEL"),
+                Parameter::from_str_u64("BaseYdata values 0 numvalues", 2),
+                Parameter::from_str_str("BaseYdata values 1 format", "FLOAT64"),
+                Parameter::from_str_str("BaseYdata values 1 byteorder", "INTEL"),
+                Parameter::from_str_u64("BaseYdata values 1 numvalues", 1),
+            ],
+            &basecurve_node.parameters
+        );
+        assert_eq!(
+            &vec![
+                PointXy { x: 0.5, y: 0.0 },
+                PointXy { x: 1.0, y: 0.1 },
+                PointXy { x: 1.5, y: 0.0 }
+            ],
+            &basecurve_node.data
+        );
+        assert!(&basecurve_node.metadata.is_empty());
+        assert_eq!(&None, &basecurve_node.table);
+        assert!(&basecurve_node.child_node_names.is_empty());
     }
 }

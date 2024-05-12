@@ -1,7 +1,8 @@
 use super::gaml_utils::{
-    check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, read_empty,
-    read_opt_elem, read_opt_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc,
-    read_start, read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl,
+    check_end, get_attributes, get_opt_attr, get_req_attr, next_non_whitespace, parse_opt_attr,
+    parse_req_attr, read_empty, read_opt_elem, read_opt_elem_rc, read_req_elem_value_f64,
+    read_sequence, read_sequence_rc, read_start, read_start_or_empty, read_value, read_value_pos,
+    skip_whitespace, skip_xml_decl, TypeName,
 };
 use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
@@ -10,6 +11,7 @@ use chrono::{DateTime, FixedOffset};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use std::str::{self, FromStr};
@@ -29,6 +31,7 @@ impl<T: Seek + Read + 'static> Parser<T> for GamlParser {
     }
 }
 
+#[derive(Debug)]
 pub struct Gaml {
     // Attributes
     pub version: String,
@@ -89,6 +92,7 @@ impl Gaml {
     }
 }
 
+#[derive(Debug)]
 pub struct Integrity {
     // Attributes
     pub algorithm: String,
@@ -119,6 +123,7 @@ impl Integrity {
     }
 }
 
+#[derive(Debug)]
 pub struct Parameter {
     // Attributes
     pub group: Option<String>,
@@ -166,6 +171,7 @@ impl Parameter {
     }
 }
 
+#[derive(Debug)]
 pub struct Experiment {
     // Attributes
     pub name: Option<String>,
@@ -220,6 +226,7 @@ impl Experiment {
     }
 }
 
+#[derive(Debug)]
 struct Collectdate {
     pub value: String,
 }
@@ -277,6 +284,7 @@ pub enum Technique {
     Xray,
 }
 
+#[derive(Debug)]
 pub struct Trace {
     // Attributes
     pub name: Option<String>,
@@ -302,16 +310,12 @@ impl Trace {
         // attributes
         let attr_map = get_attributes(start, &reader);
         let name = get_opt_attr("name", &attr_map);
-        let technique_str = get_req_attr("technique", &attr_map)?;
-        let technique = Technique::from_str(&technique_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing trace. Unexpected technique attribute: {}",
-                    &technique_str
-                ),
-            )
-        })?;
+        let technique = parse_req_attr(
+            "technique",
+            &attr_map,
+            &Technique::from_str,
+            Trace::display_type_name(),
+        )?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
@@ -498,6 +502,7 @@ pub enum Valueorder {
     Unspecified,
 }
 
+#[derive(Debug)]
 pub struct Coordinates {
     // Attributes
     pub units: Units,
@@ -524,31 +529,20 @@ impl Coordinates {
 
         // attributes
         let attr_map = get_attributes(start, &reader);
-        let units_str = get_req_attr("units", &attr_map)?;
-        let units = Units::from_str(&units_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing coordinates. Unexpected units attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let units = parse_req_attr(
+            "units",
+            &attr_map,
+            &Units::from_str,
+            Coordinates::display_type_name(),
+        )?;
         let label = get_opt_attr("label", &attr_map);
         let linkid = get_opt_attr("linkid", &attr_map);
-        let valueorder = get_opt_attr("valueorder", &attr_map)
-            .map(|s| Valueorder::from_str(&s))
-            .transpose()
-            .map_err(|e| {
-                GamlError::from_source(
-                    e,
-                    format!(
-                        "Error parsing coordinates. Unexpected valueorder attribute: {}",
-                        &units_str
-                    ),
-                )
-            })?;
-
+        let valueorder = parse_opt_attr(
+            "valueorder",
+            &attr_map,
+            &Valueorder::from_str,
+            Coordinates::display_type_name(),
+        )?;
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
         let (links, next) = read_sequence(b"link", next, &mut reader, buf, &Link::new)?;
@@ -575,6 +569,7 @@ impl Coordinates {
     }
 }
 
+#[derive(Debug)]
 pub struct Link {
     // Attributes
     pub linkref: String,
@@ -625,6 +620,19 @@ pub struct Values {
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
 }
 
+impl std::fmt::Debug for Values {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Values")
+            .field("format", &self.format)
+            .field("byteorder", &self.byteorder)
+            .field("numvalues", &self.numvalues)
+            .field("value_start_pos", &self.value_start_pos)
+            .field("value_end_pos", &self.value_end_pos)
+            // skip reader_ref as quickxml::Reader does not implement Debug
+            .finish()
+    }
+}
+
 impl Values {
     const TAG: &'static [u8] = b"values";
 
@@ -639,42 +647,24 @@ impl Values {
 
         // attributes
         let attr_map = get_attributes(start, &reader);
-        let format_str = get_req_attr("format", &attr_map)?;
-        let format = Format::from_str(&format_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing coordinates. Unexpected format attribute: {}",
-                    &format_str
-                ),
-            )
-        })?;
-        let byteorder_str = get_req_attr("byteorder", &attr_map)?;
-        let byteorder = Byteorder::from_str(&byteorder_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing coordinates. Unexpected byteorder attribute: {}",
-                    &byteorder_str
-                ),
-            )
-        })?;
-        let numvalues_str = get_opt_attr("numvalues", &attr_map);
-        let numvalues = match numvalues_str {
-            None => None,
-            Some(v) => {
-                let r = v.parse::<u64>().map_err(|e| {
-                    GamlError::from_source(
-                        e,
-                        format!(
-                            "Error parsing numvalues. Unexpected numvalues attribute: {}",
-                            &v
-                        ),
-                    )
-                })?;
-                Some(r)
-            }
-        };
+        let format = parse_req_attr(
+            "format",
+            &attr_map,
+            &Format::from_str,
+            Values::display_type_name(),
+        )?;
+        let byteorder = parse_req_attr(
+            "byteorder",
+            &attr_map,
+            &Byteorder::from_str,
+            Values::display_type_name(),
+        )?;
+        let numvalues = parse_opt_attr(
+            "numvalues",
+            &attr_map,
+            &|v: &str| v.parse::<u64>(),
+            Values::display_type_name(),
+        )?;
 
         // skip content
         let (value_start_pos, value_end_pos, next) = read_value_pos(&mut reader, buf)?;
@@ -783,6 +773,7 @@ impl Values {
     }
 }
 
+#[derive(Debug)]
 pub struct Xdata {
     // Attributes
     pub units: Units,
@@ -812,30 +803,20 @@ impl Xdata {
 
         // attributes
         let attr_map = get_attributes(start, &reader);
-        let units_str = get_req_attr("units", &attr_map)?;
-        let units = Units::from_str(&units_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing Xdata. Unexpected units attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let units = parse_req_attr(
+            "units",
+            &attr_map,
+            &Units::from_str,
+            Xdata::display_type_name(),
+        )?;
         let label = get_opt_attr("label", &attr_map);
         let linkid = get_opt_attr("linkid", &attr_map);
-        let valueorder = get_opt_attr("valueorder", &attr_map)
-            .map(|s| Valueorder::from_str(&s))
-            .transpose()
-            .map_err(|e| {
-                GamlError::from_source(
-                    e,
-                    format!(
-                        "Error parsing Xdata. Unexpected valueorder attribute: {}",
-                        &units_str
-                    ),
-                )
-            })?;
+        let valueorder = parse_opt_attr(
+            "valueorder",
+            &attr_map,
+            &Valueorder::from_str,
+            Xdata::display_type_name(),
+        )?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
@@ -884,6 +865,7 @@ impl Xdata {
 }
 
 // todo: reduce code duplication w.r.t. Xdata
+#[derive(Debug)]
 pub struct AltXdata {
     // Attributes
     pub units: Units,
@@ -911,30 +893,20 @@ impl AltXdata {
 
         // attributes
         let attr_map = get_attributes(start, &reader);
-        let units_str = get_req_attr("units", &attr_map)?;
-        let units = Units::from_str(&units_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing altXdata. Unexpected units attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let units = parse_req_attr(
+            "units",
+            &attr_map,
+            &Units::from_str,
+            AltXdata::display_type_name(),
+        )?;
         let label = get_opt_attr("label", &attr_map);
         let linkid = get_opt_attr("linkid", &attr_map);
-        let valueorder = get_opt_attr("valueorder", &attr_map)
-            .map(|s| Valueorder::from_str(&s))
-            .transpose()
-            .map_err(|e| {
-                GamlError::from_source(
-                    e,
-                    format!(
-                        "Error parsing altXdata. Unexpected valueorder attribute: {}",
-                        &units_str
-                    ),
-                )
-            })?;
+        let valueorder = parse_opt_attr(
+            "valueorder",
+            &attr_map,
+            &Valueorder::from_str,
+            AltXdata::display_type_name(),
+        )?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, buf)?;
@@ -963,6 +935,7 @@ impl AltXdata {
 }
 
 // todo: reduce code duplication w.r.t. Xdata
+#[derive(Debug)]
 pub struct Ydata {
     // Attributes
     pub units: Units,
@@ -988,16 +961,12 @@ impl Ydata {
 
         // attributes
         let attr_map = get_attributes(start, &reader);
-        let units_str = get_req_attr("units", &attr_map)?;
-        let units = Units::from_str(&units_str).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing Ydata. Unexpected units attribute: {}",
-                    &units_str
-                ),
-            )
-        })?;
+        let units = parse_req_attr(
+            "units",
+            &attr_map,
+            &Units::from_str,
+            Ydata::display_type_name(),
+        )?;
         let label = get_opt_attr("label", &attr_map);
 
         // nested elements
@@ -1032,6 +1001,7 @@ impl Ydata {
     }
 }
 
+#[derive(Debug)]
 pub struct Peaktable {
     // Attributes
     pub name: Option<String>,
@@ -1077,6 +1047,7 @@ impl Peaktable {
     }
 }
 
+#[derive(Debug)]
 pub struct Peak {
     // Attributes
     pub number: u64,
@@ -1148,6 +1119,7 @@ impl Peak {
     }
 }
 
+#[derive(Debug)]
 pub struct Baseline {
     // Elements
     pub parameters: Vec<Parameter>,
@@ -1207,6 +1179,7 @@ impl Baseline {
     }
 }
 
+#[derive(Debug)]
 pub struct Basecurve {
     // Elements
     pub base_x_data: Vec<Values>,
@@ -1284,9 +1257,8 @@ fn read_base_values(
 
 #[cfg(test)]
 mod tests {
-    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-
     use super::*;
+    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
     use std::io::Cursor;
 
     #[test]
@@ -1666,5 +1638,173 @@ mod tests {
         let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
         assert_eq!("1.20", gaml.version);
         assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_trace_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"ILLEGAL_TECHNIQUE\">
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_TECHNIQUE"));
+        assert!(gaml_err.message.contains("technique"));
+        assert!(gaml_err.message.contains("trace"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_coordinates_unit_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <coordinates units=\"ILLEGAL_UNITS\" valueorder=\"UNSPECIFIED\">
+                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                            AACAPw\nAAAEA=
+                                        </values>
+                                    </coordinates>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_UNITS"));
+        assert!(gaml_err.message.contains("units"));
+        assert!(gaml_err.message.contains("coordinates"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_coordinates_valueorder_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <coordinates units=\"MICRONS\" valueorder=\"ILLEGAL_VALUEORDER\">
+                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                            AACAPw\nAAAEA=
+                                        </values>
+                                    </coordinates>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_VALUEORDER"));
+        assert!(gaml_err.message.contains("valueorder"));
+        assert!(gaml_err.message.contains("coordinates"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_xdata_units_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <Xdata label=\"Xdata label\" units=\"ILLEGAL_UNITS\" linkid=\"xdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                    </Xdata>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_UNITS"));
+        assert!(gaml_err.message.contains("units"));
+        assert!(gaml_err.message.contains("Xdata"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_xdata_valueorder_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <Xdata label=\"Xdata label\" units=\"MICRONS\" linkid=\"xdata-linkid\" valueorder=\"ILLEGAL_VALUEORDER\">
+                                    </Xdata>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_VALUEORDER"));
+        assert!(gaml_err.message.contains("valueorder"));
+        assert!(gaml_err.message.contains("Xdata"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_values_byteorder_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <Xdata label=\"Xdata label\" units=\"MICRONS\" linkid=\"xdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                        <values byteorder=\"ILLEGAL_BYTEORDER\" format=\"FLOAT32\" numvalues=\"2\">
+                                            <!-- A values comment -->
+                                            AACAPw\nAAAEA=
+                                        </values>
+                                    </Xdata>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_BYTEORDER"));
+        assert!(gaml_err.message.contains("byteorder"));
+        assert!(gaml_err.message.contains("values"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_values_format_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <Xdata label=\"Xdata label\" units=\"MICRONS\" linkid=\"xdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                        <values byteorder=\"INTEL\" format=\"ILLEGAL_FORMAT\" numvalues=\"2\">
+                                            <!-- A values comment -->
+                                            AACAPw\nAAAEA=
+                                        </values>
+                                    </Xdata>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_FORMAT"));
+        assert!(gaml_err.message.contains("format"));
+        assert!(gaml_err.message.contains("values"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_values_numvalues_attribute() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"Gaml test file\">\n
+                            <experiment>
+                                <trace name=\"Trace 0\" technique=\"UNKNOWN\">
+                                    <Xdata label=\"Xdata label\" units=\"MICRONS\" linkid=\"xdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"ILLEGAL_NUMVALUES\">
+                                            <!-- A values comment -->
+                                            AACAPw\nAAAEA=
+                                        </values>
+                                    </Xdata>
+                                </trace>
+                            </experiment>
+                        </GAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("ILLEGAL_NUMVALUES"));
+        assert!(gaml_err.message.contains("numvalues"));
+        assert!(gaml_err.message.contains("values"));
     }
 }

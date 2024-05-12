@@ -1,6 +1,7 @@
 use super::{
     gaml_parser::{
-        Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Xdata, Ydata,
+        AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
+        Xdata, Ydata,
     },
     gaml_utils::{
         generate_child_node_names, map_gaml_parameters, map_values_attributes, read_elem, TypeName,
@@ -37,9 +38,21 @@ impl TypeName for Xdata {
     }
 }
 
+impl TypeName for AltXdata {
+    fn display_type_name() -> &'static str {
+        "altXdata"
+    }
+}
+
 impl TypeName for Ydata {
     fn display_type_name() -> &'static str {
         "Ydata"
+    }
+}
+
+impl TypeName for Values {
+    fn display_type_name() -> &'static str {
+        "values"
     }
 }
 

@@ -1,12 +1,11 @@
-use crate::api::Parameter;
-
 use super::{gaml_parser::Values, GamlError, SeekBufRead};
+use crate::api::Parameter;
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
     Reader,
 };
-use std::{cell::RefCell, collections::HashMap, io::BufRead, rc::Rc, str, vec};
+use std::{cell::RefCell, collections::HashMap, error::Error, io::BufRead, rc::Rc, str, vec};
 
 fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), GamlError> {
     if bytes_start.name().as_ref() != tag {
@@ -89,6 +88,24 @@ pub(super) fn get_req_attr<'a>(
         .into_owned())
 }
 
+pub(super) fn parse_req_attr<'a, T, E: Error + 'static>(
+    name: &str,
+    attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
+    parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+    context: &str,
+) -> Result<T, GamlError> {
+    let attr = get_req_attr(name, attr_map)?;
+    parse_fn(&attr).map_err(|e| {
+        GamlError::from_source(
+            e,
+            format!(
+                "Error parsing {}. Unexpected {} attribute: {}",
+                context, name, &attr
+            ),
+        )
+    })
+}
+
 pub(super) fn get_opt_attr<'a>(
     name: &str,
     attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
@@ -96,6 +113,27 @@ pub(super) fn get_opt_attr<'a>(
     attr_map
         .get(&QName(name.as_bytes()))
         .map(|name| name.clone().into_owned())
+}
+
+pub(super) fn parse_opt_attr<'a, T, E: Error + 'static>(
+    name: &str,
+    attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
+    parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+    context: &str,
+) -> Result<Option<T>, GamlError> {
+    get_opt_attr(name, attr_map)
+        .map(|s| {
+            parse_fn(&s).map_err(|e| {
+                GamlError::from_source(
+                    e,
+                    format!(
+                        "Error parsing {}. Unexpected {} attribute: {}",
+                        context, name, &s
+                    ),
+                )
+            })
+        })
+        .transpose()
 }
 
 pub(super) fn skip_xml_decl<'b, R: BufRead>(

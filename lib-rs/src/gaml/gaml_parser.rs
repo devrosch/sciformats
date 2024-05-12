@@ -1641,6 +1641,28 @@ mod tests {
     }
 
     #[test]
+    fn fails_to_parse_illegal_gaml_missing_root() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <NOGAML version=\"1.20\" name=\"NoGaml test file\"></NOGAML>";
+        let cursor = Cursor::new(xml);
+
+        let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
+        assert!(gaml_err.message.contains("Unexpected tag"));
+    }
+
+    #[test]
+    fn fails_to_parse_illegal_gaml_wrong_closing_tag() {
+        let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
+                        <GAML version=\"1.20\" name=\"NoGaml test file\"></NOGAML>";
+        let cursor = Cursor::new(xml);
+
+        // error does not contain "Unexpected end tag" as quickxml already errors
+        // when encountering a close tag without corresponding open tag
+        let gaml_res = GamlParser::parse("test.gaml", cursor);
+        assert!(gaml_res.is_err());
+    }
+
+    #[test]
     fn fails_to_parse_illegal_trace_attribute() {
         let xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n
                         <GAML version=\"1.20\" name=\"Gaml test file\">\n

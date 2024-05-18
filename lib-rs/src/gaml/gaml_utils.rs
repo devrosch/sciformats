@@ -7,6 +7,189 @@ use quick_xml::{
 };
 use std::{cell::RefCell, collections::HashMap, error::Error, io::BufRead, rc::Rc, str, vec};
 
+pub(super) struct BufEvent<'buf> {
+    pub event: Event<'buf>,
+    pub buf: &'buf mut Vec<u8>,
+}
+
+impl<'buf> BufEvent<'buf> {
+    pub fn new(event: Event<'buf>, buf: &'buf mut Vec<u8>) -> BufEvent<'buf> {
+        Self { event, buf }
+    }
+}
+
+pub(super) struct AttributedElement<'buf> {
+    attributes: HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>,
+}
+
+impl<'buf> AttributedElement<'buf> {
+    pub fn read_start<R>(
+        tag: &[u8],
+        reader: &Reader<R>,
+        buf_event: &'buf BufEvent<'buf>,
+    ) -> Result<AttributedElement<'buf>, GamlError> {
+        if let Event::Start(bytes_start) = &buf_event.event {
+            check_matches_tag_name(tag, bytes_start)?;
+            let attributes = Self::get_attributes(bytes_start, reader);
+            Ok(Self { attributes })
+        } else {
+            Err(GamlError::new(&format!(
+                "Unexpected event: {:?}",
+                buf_event.event
+            )))
+        }
+    }
+
+    pub fn read_empty<R>(
+        tag: &[u8],
+        reader: &Reader<R>,
+        buf_event: &'buf BufEvent<'buf>,
+    ) -> Result<AttributedElement<'buf>, GamlError> {
+        if let Event::Empty(bytes_start) = &buf_event.event {
+            check_matches_tag_name(tag, bytes_start)?;
+            let attributes = Self::get_attributes(bytes_start, reader);
+            Ok(Self { attributes })
+        } else {
+            Err(GamlError::new(&format!(
+                "Unexpected event: {:?}",
+                buf_event.event
+            )))
+        }
+    }
+
+    pub fn read_start_or_empty<R>(
+        tag: &[u8],
+        reader: &Reader<R>,
+        buf_event: &'buf BufEvent<'buf>,
+    ) -> Result<(AttributedElement<'buf>, bool), GamlError> {
+        match &buf_event.event {
+            Event::Start(_) => Ok((Self::read_start(tag, reader, buf_event)?, false)),
+            Event::Empty(_) => Ok((Self::read_empty(tag, reader, buf_event)?, true)),
+            _ => Err(GamlError::new(&format!(
+                "Unexpected event: {:?}",
+                buf_event.event
+            ))),
+        }
+    }
+
+    fn get_attributes<R>(
+        bytes_start: &'buf BytesStart<'buf>,
+        reader: &Reader<R>,
+    ) -> HashMap<QName<'buf>, std::borrow::Cow<'buf, str>> {
+        bytes_start
+            .attributes()
+            .filter(|a| a.is_ok())
+            .map(|a| {
+                let attr = a.unwrap();
+                (
+                    attr.key,
+                    attr.decode_and_unescape_value(reader).unwrap_or_default(),
+                )
+            })
+            .collect::<HashMap<_, _>>()
+    }
+
+    pub fn get_req_attr(&self, name: &str) -> Result<String, GamlError> {
+        Ok(self
+            .attributes
+            .get(&QName(name.as_bytes()))
+            .ok_or(GamlError::new(&format!("Missing attribute: {:?}", name)))?
+            .clone()
+            .into_owned())
+    }
+
+    pub fn parse_req_attr<T, E: Error + 'static>(
+        &self,
+        name: &str,
+        parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+        context: &str,
+    ) -> Result<T, GamlError> {
+        let attr = self.get_req_attr(name)?;
+        parse_fn(&attr).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing {}. Unexpected {} attribute: {}",
+                    context, name, &attr
+                ),
+            )
+        })
+    }
+
+    pub fn get_opt_attr(&self, name: &str) -> Option<String> {
+        self.attributes
+            .get(&QName(name.as_bytes()))
+            .map(|value| value.clone().into_owned())
+    }
+
+    pub fn parse_opt_attr<T, E: Error + 'static>(
+        &self,
+        name: &str,
+        parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+        context: &str,
+    ) -> Result<Option<T>, GamlError> {
+        self.get_opt_attr(name)
+            .map(|s| {
+                parse_fn(&s).map_err(|e| {
+                    GamlError::from_source(
+                        e,
+                        format!(
+                            "Error parsing {}. Unexpected {} attribute: {}",
+                            context, name, &s
+                        ),
+                    )
+                })
+            })
+            .transpose()
+    }
+}
+
+pub(super) fn skip_xml_decl<'buf, R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &'buf mut Vec<u8>,
+) -> Result<BufEvent<'buf>, GamlError> {
+    let buf_event = skip_whitespace(reader, buf)?;
+    match &buf_event.event {
+        Event::Decl(_) => skip_whitespace(reader, buf_event.buf),
+        _ => Ok(buf_event),
+    }
+}
+
+pub(super) fn skip_whitespace<'buf, R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &'buf mut Vec<u8>,
+) -> Result<BufEvent<'buf>, GamlError> {
+    let event = loop {
+        match reader.read_event_into(buf)? {
+            Event::Text(bytes) => {
+                if !bytes.unescape()?.trim().is_empty() {
+                    break Event::Text(bytes);
+                }
+            }
+            Event::Comment(_) => (),
+            other_event => break other_event,
+        }
+    };
+    // todo: avoid owning?
+    Ok(BufEvent::new(event.into_owned(), buf))
+}
+
+pub(super) fn next_non_whitespace<'buf, R: BufRead>(
+    next: BufEvent<'buf>,
+    reader: &mut Reader<R>,
+) -> Result<BufEvent<'buf>, GamlError> {
+    let is_ws = match &next.event {
+        Event::Text(bytes) => bytes.unescape()?.trim().is_empty(),
+        Event::Comment(_) => true,
+        _ => false,
+    };
+
+    match is_ws {
+        true => skip_whitespace(reader, next.buf),
+        false => Ok(next),
+    }
+}
+
 fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), GamlError> {
     if bytes_start.name().as_ref() != tag {
         Err(GamlError::new(&format!(
@@ -19,175 +202,10 @@ fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<()
     }
 }
 
-pub(super) fn read_start<'b>(
-    tag: &[u8],
-    event: &'b Event<'b>,
-) -> Result<&'b BytesStart<'b>, GamlError> {
-    if let Event::Start(bytes_start) = event {
-        check_matches_tag_name(tag, bytes_start)?;
-        Ok(bytes_start)
-    } else {
-        Err(GamlError::new(&format!("Unexpected event: {:?}", event)))
-    }
-}
-
-pub(super) fn read_empty<'b>(
-    tag: &[u8],
-    event: &'b Event<'b>,
-) -> Result<&'b BytesStart<'b>, GamlError> {
-    if let Event::Empty(bytes_start) = event {
-        check_matches_tag_name(tag, bytes_start)?;
-        Ok(bytes_start)
-    } else {
-        Err(GamlError::new(&format!("Unexpected event: {:?}", event)))
-    }
-}
-
-pub(super) fn read_start_or_empty<'b>(
-    tag: &[u8],
-    event: &'b Event<'b>,
-) -> Result<(&'b BytesStart<'b>, bool), GamlError> {
-    match event {
-        Event::Start(bytes_start) => {
-            check_matches_tag_name(tag, bytes_start)?;
-            Ok((bytes_start, false))
-        }
-        Event::Empty(bytes_start) => {
-            check_matches_tag_name(tag, bytes_start)?;
-            Ok((bytes_start, true))
-        }
-        _ => Err(GamlError::new(&format!("Unexpected event: {:?}", event))),
-    }
-}
-
-pub(super) fn get_attributes<'a, R>(
-    bytes_start: &'a BytesStart<'a>,
-    reader: &Reader<R>,
-) -> HashMap<QName<'a>, std::borrow::Cow<'a, str>> {
-    bytes_start
-        .attributes()
-        .filter(|a| a.is_ok())
-        .map(|a| {
-            let attr = a.unwrap();
-            (
-                attr.key,
-                attr.decode_and_unescape_value(reader).unwrap_or_default(),
-            )
-        })
-        .collect::<HashMap<_, _>>()
-}
-
-pub(super) fn get_req_attr<'a>(
-    name: &str,
-    attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
-) -> Result<String, GamlError> {
-    Ok(attr_map
-        .get(&QName(name.as_bytes()))
-        .ok_or(GamlError::new(&format!("Missing attribute: {:?}", name)))?
-        .clone()
-        .into_owned())
-}
-
-pub(super) fn parse_req_attr<'a, T, E: Error + 'static>(
-    name: &str,
-    attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
-    parse_fn: &(dyn Fn(&str) -> Result<T, E>),
-    context: &str,
-) -> Result<T, GamlError> {
-    let attr = get_req_attr(name, attr_map)?;
-    parse_fn(&attr).map_err(|e| {
-        GamlError::from_source(
-            e,
-            format!(
-                "Error parsing {}. Unexpected {} attribute: {}",
-                context, name, &attr
-            ),
-        )
-    })
-}
-
-pub(super) fn get_opt_attr<'a>(
-    name: &str,
-    attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
-) -> Option<String> {
-    attr_map
-        .get(&QName(name.as_bytes()))
-        .map(|name| name.clone().into_owned())
-}
-
-pub(super) fn parse_opt_attr<'a, T, E: Error + 'static>(
-    name: &str,
-    attr_map: &HashMap<QName<'a>, std::borrow::Cow<'a, str>>,
-    parse_fn: &(dyn Fn(&str) -> Result<T, E>),
-    context: &str,
-) -> Result<Option<T>, GamlError> {
-    get_opt_attr(name, attr_map)
-        .map(|s| {
-            parse_fn(&s).map_err(|e| {
-                GamlError::from_source(
-                    e,
-                    format!(
-                        "Error parsing {}. Unexpected {} attribute: {}",
-                        context, name, &s
-                    ),
-                )
-            })
-        })
-        .transpose()
-}
-
-pub(super) fn skip_xml_decl<'b, R: BufRead>(
+pub(super) fn read_value<'buf, R: BufRead>(
     reader: &mut Reader<R>,
-    buf: &'b mut Vec<u8>,
-) -> Result<Event<'b>, GamlError> {
-    let event = skip_whitespace(reader, buf).map(|e| e.into_owned())?;
-    match &event {
-        Event::Decl(_) => skip_whitespace(reader, buf),
-        _ => Ok(event),
-    }
-}
-
-pub(super) fn skip_whitespace<R: BufRead>(
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-) -> Result<Event<'static>, GamlError> {
-    loop {
-        let event: Event<'_> = reader.read_event_into(buf)?;
-        match event {
-            Event::Text(bytes) => {
-                if !bytes.unescape()?.trim().is_empty() {
-                    // TODO: more efficient way than to call into_owned()?
-                    return Ok(Event::Text(bytes.into_owned()));
-                };
-            }
-            Event::Comment(_) => (),
-            // TODO: more efficient way than to call into_owned()?
-            any_other => return Ok(any_other.into_owned()),
-        }
-    }
-}
-
-pub(super) fn next_non_whitespace<'r, R: BufRead>(
-    event: Event<'r>,
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-) -> Result<Event<'r>, GamlError> {
-    let is_ws = match &event {
-        Event::Text(bytes) => bytes.unescape()?.trim().is_empty(),
-        Event::Comment(_) => true,
-        _ => false,
-    };
-
-    match is_ws {
-        true => skip_whitespace(reader, buf),
-        false => Ok(event),
-    }
-}
-
-pub(super) fn read_value<'b, R: BufRead>(
-    reader: &mut Reader<R>,
-    buf: &'b mut Vec<u8>,
-) -> Result<(String, Event<'b>), GamlError> {
+    buf: &'buf mut Vec<u8>,
+) -> Result<(String, BufEvent<'buf>), GamlError> {
     let mut value = String::new();
     let next = loop {
         let event = match reader.read_event_into(buf)? {
@@ -196,7 +214,7 @@ pub(super) fn read_value<'b, R: BufRead>(
                 None
             }
             Event::Comment(_) => None,
-            any_other => Some(any_other.into_owned()),
+            any_other => Some(any_other),
         };
 
         if let Some(e) = event {
@@ -204,13 +222,13 @@ pub(super) fn read_value<'b, R: BufRead>(
         }
     };
 
-    Ok((value, next))
+    Ok((value, BufEvent::new(next.into_owned(), buf)))
 }
 
-pub(super) fn read_value_pos<'b, R: BufRead>(
+pub(super) fn read_value_pos<'buf, R: BufRead>(
     reader: &mut Reader<R>,
-    buf: &'b mut Vec<u8>,
-) -> Result<(u64, u64, Event<'b>), GamlError> {
+    buf: &'buf mut Vec<u8>,
+) -> Result<(u64, u64, BufEvent<'buf>), GamlError> {
     let start_pos = reader.buffer_position() as u64;
     let mut end_pos = start_pos;
     let next = loop {
@@ -228,25 +246,24 @@ pub(super) fn read_value_pos<'b, R: BufRead>(
         }
     };
 
-    Ok((start_pos, end_pos, next))
+    Ok((start_pos, end_pos, BufEvent::new(next, buf)))
 }
 
-pub(super) fn check_end(tag_name: &[u8], event: &Event<'_>) -> Result<(), GamlError> {
-    match event {
+pub(super) fn check_end(tag_name: &[u8], next: &BufEvent<'_>) -> Result<(), GamlError> {
+    match &next.event {
         Event::End(e) => {
-            let name = e.name().as_ref().to_owned();
-            if name == tag_name {
+            if e.name().as_ref() == tag_name {
                 Ok(())
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected end tag: {:?}",
-                    std::str::from_utf8(&name)
+                    std::str::from_utf8(e.name().as_ref())
                 )))
             }
         }
         e => Err(GamlError::new(&format!(
             "Unexpected event instead of end tag: {:?}",
-            &e
+            e
         ))),
     }
 }
@@ -256,23 +273,23 @@ type ElemConstructor<'f, R, T> =
 
 pub(super) fn read_req_elem<'buf, R: BufRead, T>(
     tag_name: &[u8],
-    next: Event<'_>,
+    next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-    buf: &'buf mut Vec<u8>,
     constructor: ElemConstructor<R, T>,
-) -> Result<(T, Event<'buf>), GamlError> {
-    match next {
+) -> Result<(T, BufEvent<'buf>), GamlError> {
+    match next.event {
         Event::Start(e) => {
-            let name = e.name().as_ref().to_owned();
-            if name == tag_name {
+            if e.name().as_ref() == tag_name {
                 let evt = Event::Start(e);
+                let buf = next.buf;
                 let elem = constructor(&evt, reader, buf)?;
-                let next = reader.read_event_into(buf)?;
-                Ok((elem, next))
+                // todo: avoid owning?
+                let next = reader.read_event_into(buf)?.into_owned();
+                Ok((elem, BufEvent::new(next, buf)))
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected start tag: {:?}",
-                    std::str::from_utf8(&name)
+                    std::str::from_utf8(e.name().as_ref())
                 )))
             }
         }
@@ -283,45 +300,39 @@ pub(super) fn read_req_elem<'buf, R: BufRead, T>(
     }
 }
 
-pub(super) fn read_opt_elem<'e, R: BufRead, T>(
+pub(super) fn read_opt_elem<'buf, R: BufRead, T>(
     tag_name: &[u8],
-    next: Event<'e>,
+    next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
     constructor: ElemConstructor<R, T>,
-) -> Result<(Option<T>, Event<'e>), GamlError> {
-    match next {
+) -> Result<(Option<T>, BufEvent<'buf>), GamlError> {
+    match &next.event {
         Event::Start(e) => {
-            let name = e.name().as_ref().to_owned();
-            if name == tag_name {
-                let (elem, next) =
-                    read_req_elem(tag_name, Event::Start(e), reader, buf, constructor)?;
-                // todo: avoid into_owned()?
-                Ok((Some(elem), next.into_owned()))
+            if e.name().as_ref() == tag_name {
+                let (elem, next) = read_req_elem(tag_name, next, reader, constructor)?;
+                Ok((Some(elem), next))
             } else {
-                Ok((None, Event::Start(e)))
+                Ok((None, next))
             }
         }
-        e => Ok((None, e)),
+        _ => Ok((None, next)),
     }
 }
 
-pub(super) fn read_sequence<'e, R: BufRead, T>(
+pub(super) fn read_sequence<'buf, R: BufRead, T>(
     tag_name: &[u8],
-    mut next: Event<'e>,
+    mut next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
     constructor: ElemConstructor<R, T>,
-) -> Result<(Vec<T>, Event<'e>), GamlError> {
+) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
     let mut ret = vec![];
     loop {
-        match &next {
+        match &next.event {
             Event::Start(bytes) | Event::Empty(bytes) => {
-                let name = bytes.name().as_ref().to_owned();
-                if name == tag_name {
-                    let elem = constructor(&next, reader, buf)?;
+                if bytes.name().as_ref() == tag_name {
+                    let elem = constructor(&next.event, reader, next.buf)?;
                     ret.push(elem);
-                    next = skip_whitespace(reader, buf)?;
+                    next = skip_whitespace(reader, next.buf)?;
                 } else {
                     return Ok((ret, next));
                 }
@@ -340,24 +351,24 @@ type ElemConstructorRc<'f, T> = &'f (dyn Fn(
 // todo: avoid code duplication with read_req_elem
 pub(super) fn read_req_elem_rc<'buf, T>(
     tag_name: &[u8],
-    next: Event<'_>,
+    next: BufEvent<'buf>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    buf: &'buf mut Vec<u8>,
     constructor: ElemConstructorRc<T>,
-) -> Result<(T, Event<'buf>), GamlError> {
-    match next {
+) -> Result<(T, BufEvent<'buf>), GamlError> {
+    match next.event {
         Event::Start(e) => {
-            let name = e.name().as_ref().to_owned();
-            if name == tag_name {
+            if e.name().as_ref() == tag_name {
                 let evt = Event::Start(e);
+                let buf = next.buf;
                 let elem = constructor(&evt, Rc::clone(&reader_ref), buf)?;
                 let mut reader = reader_ref.borrow_mut();
-                let next = reader.read_event_into(buf)?;
-                Ok((elem, next))
+                // todo: avoid owning?
+                let next = reader.read_event_into(buf)?.into_owned();
+                Ok((elem, BufEvent::new(next, buf)))
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected start tag: {:?}",
-                    std::str::from_utf8(&name)
+                    std::str::from_utf8(e.name().as_ref())
                 )))
             }
         }
@@ -369,23 +380,21 @@ pub(super) fn read_req_elem_rc<'buf, T>(
 }
 
 // todo: avoid code duplication with read_sequence
-pub(super) fn read_sequence_rc<'e, T>(
+pub(super) fn read_sequence_rc<'buf, T>(
     tag_name: &[u8],
-    mut next: Event<'e>,
+    mut next: BufEvent<'buf>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    buf: &mut Vec<u8>,
     constructor: ElemConstructorRc<T>,
-) -> Result<(Vec<T>, Event<'e>), GamlError> {
+) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
     let mut ret = vec![];
     loop {
-        match &next {
+        match &next.event {
             Event::Start(bytes) | Event::Empty(bytes) => {
-                let name = bytes.name().as_ref().to_owned();
-                if name == tag_name {
-                    let elem = constructor(&next, Rc::clone(&reader_ref), buf)?;
+                if bytes.name().as_ref() == tag_name {
+                    let elem = constructor(&next.event, Rc::clone(&reader_ref), next.buf)?;
                     ret.push(elem);
                     let mut reader = reader_ref.borrow_mut();
-                    next = skip_whitespace(&mut reader, buf)?;
+                    next = skip_whitespace(&mut reader, next.buf)?;
                 } else {
                     return Ok((ret, next));
                 }
@@ -396,37 +405,32 @@ pub(super) fn read_sequence_rc<'e, T>(
 }
 
 // todo: avoid code duplication with read_opt_elem
-pub(super) fn read_opt_elem_rc<'e, T>(
+pub(super) fn read_opt_elem_rc<'buf, T>(
     tag_name: &[u8],
-    next: Event<'e>,
+    next: BufEvent<'buf>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    buf: &mut Vec<u8>,
     constructor: ElemConstructorRc<T>,
-) -> Result<(Option<T>, Event<'e>), GamlError> {
-    match next {
+) -> Result<(Option<T>, BufEvent<'buf>), GamlError> {
+    match &next.event {
         Event::Start(e) => {
-            let name = e.name().as_ref().to_owned();
-            if name == tag_name {
-                let (elem, next) =
-                    read_req_elem_rc(tag_name, Event::Start(e), reader_ref, buf, constructor)?;
-                // todo: avoid into_owned()?
-                Ok((Some(elem), next.into_owned()))
+            if e.name().as_ref() == tag_name {
+                let (elem, next) = read_req_elem_rc(tag_name, next, reader_ref, constructor)?;
+                Ok((Some(elem), next))
             } else {
-                Ok((None, Event::Start(e)))
+                Ok((None, next))
             }
         }
-        e => Ok((None, e)),
+        _ => Ok((None, next)),
     }
 }
 
 pub(super) fn read_req_elem_value<R: BufRead>(
     tag_name: &[u8],
-    next: &Event<'_>,
+    next: BufEvent<'_>,
     reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
 ) -> Result<String, GamlError> {
-    let _start = read_start(tag_name, next)?;
-    let (value, next) = read_value(reader, buf)?;
+    AttributedElement::read_start(tag_name, reader, &next)?;
+    let (value, next) = read_value(reader, next.buf)?;
     check_end(tag_name, &next)?;
 
     Ok(value)
@@ -434,11 +438,10 @@ pub(super) fn read_req_elem_value<R: BufRead>(
 
 pub(super) fn read_req_elem_value_f64<R: BufRead>(
     tag_name: &[u8],
-    next: &Event<'_>,
+    next: BufEvent<'_>,
     reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
 ) -> Result<f64, GamlError> {
-    let value = read_req_elem_value(tag_name, next, reader, buf)?;
+    let value = read_req_elem_value(tag_name, next, reader)?;
     let value_f64 = value.parse::<f64>().map_err(|e| {
         let tag = String::from_utf8_lossy(tag_name);
         GamlError::from_source(e, format!("Illegal value for {}: {}", tag, value))

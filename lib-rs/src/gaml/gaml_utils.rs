@@ -269,23 +269,20 @@ pub(super) fn check_end(tag_name: &[u8], next: &BufEvent<'_>) -> Result<(), Gaml
 }
 
 type ElemConstructor<'f, R, T> =
-    &'f (dyn Fn(&Event<'_>, &mut Reader<R>, &mut Vec<u8>) -> Result<T, GamlError>);
+    &'f (dyn Fn(&mut BufEvent<'_>, &mut Reader<R>) -> Result<T, GamlError>);
 
 pub(super) fn read_req_elem<'buf, R: BufRead, T>(
     tag_name: &[u8],
-    next: BufEvent<'buf>,
+    mut next: BufEvent<'buf>,
     reader: &mut Reader<R>,
     constructor: ElemConstructor<R, T>,
 ) -> Result<(T, BufEvent<'buf>), GamlError> {
-    match next.event {
+    match &next.event {
         Event::Start(e) => {
             if e.name().as_ref() == tag_name {
-                let evt = Event::Start(e);
-                let buf = next.buf;
-                let elem = constructor(&evt, reader, buf)?;
-                // todo: avoid owning?
-                let next = reader.read_event_into(buf)?.into_owned();
-                Ok((elem, BufEvent::new(next, buf)))
+                let elem = constructor(&mut next, reader)?;
+                let next_raw = reader.read_event_into(next.buf)?.into_owned();
+                Ok((elem, BufEvent::new(next_raw, next.buf)))
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected start tag: {:?}",
@@ -330,7 +327,7 @@ pub(super) fn read_sequence<'buf, R: BufRead, T>(
         match &next.event {
             Event::Start(bytes) | Event::Empty(bytes) => {
                 if bytes.name().as_ref() == tag_name {
-                    let elem = constructor(&next.event, reader, next.buf)?;
+                    let elem = constructor(&mut next, reader)?;
                     ret.push(elem);
                     next = skip_whitespace(reader, next.buf)?;
                 } else {
@@ -343,28 +340,24 @@ pub(super) fn read_sequence<'buf, R: BufRead, T>(
 }
 
 type ElemConstructorRc<'f, T> = &'f (dyn Fn(
-    &Event<'_>,
+    &mut BufEvent<'_>,
     Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    &mut Vec<u8>,
 ) -> Result<T, GamlError>);
 
 // todo: avoid code duplication with read_req_elem
 pub(super) fn read_req_elem_rc<'buf, T>(
     tag_name: &[u8],
-    next: BufEvent<'buf>,
+    mut next: BufEvent<'buf>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     constructor: ElemConstructorRc<T>,
 ) -> Result<(T, BufEvent<'buf>), GamlError> {
-    match next.event {
+    match &next.event {
         Event::Start(e) => {
             if e.name().as_ref() == tag_name {
-                let evt = Event::Start(e);
-                let buf = next.buf;
-                let elem = constructor(&evt, Rc::clone(&reader_ref), buf)?;
+                let elem = constructor(&mut next, Rc::clone(&reader_ref))?;
                 let mut reader = reader_ref.borrow_mut();
-                // todo: avoid owning?
-                let next = reader.read_event_into(buf)?.into_owned();
-                Ok((elem, BufEvent::new(next, buf)))
+                let next_raw = reader.read_event_into(next.buf)?.into_owned();
+                Ok((elem, BufEvent::new(next_raw, next.buf)))
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected start tag: {:?}",
@@ -391,7 +384,7 @@ pub(super) fn read_sequence_rc<'buf, T>(
         match &next.event {
             Event::Start(bytes) | Event::Empty(bytes) => {
                 if bytes.name().as_ref() == tag_name {
-                    let elem = constructor(&next.event, Rc::clone(&reader_ref), next.buf)?;
+                    let elem = constructor(&mut next, Rc::clone(&reader_ref))?;
                     ret.push(elem);
                     let mut reader = reader_ref.borrow_mut();
                     next = skip_whitespace(&mut reader, next.buf)?;
@@ -426,10 +419,10 @@ pub(super) fn read_opt_elem_rc<'buf, T>(
 
 pub(super) fn read_req_elem_value<R: BufRead>(
     tag_name: &[u8],
-    next: BufEvent<'_>,
+    next: &mut BufEvent<'_>,
     reader: &mut Reader<R>,
 ) -> Result<String, GamlError> {
-    AttributedElement::read_start(tag_name, reader, &next)?;
+    AttributedElement::read_start(tag_name, reader, next)?;
     let (value, next) = read_value(reader, next.buf)?;
     check_end(tag_name, &next)?;
 
@@ -438,7 +431,7 @@ pub(super) fn read_req_elem_value<R: BufRead>(
 
 pub(super) fn read_req_elem_value_f64<R: BufRead>(
     tag_name: &[u8],
-    next: BufEvent<'_>,
+    next: &mut BufEvent<'_>,
     reader: &mut Reader<R>,
 ) -> Result<f64, GamlError> {
     let value = read_req_elem_value(tag_name, next, reader)?;

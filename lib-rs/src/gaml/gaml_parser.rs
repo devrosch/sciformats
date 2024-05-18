@@ -7,7 +7,6 @@ use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
 use base64::prelude::*;
 use chrono::{DateTime, FixedOffset};
-use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use std::cell::RefCell;
 use std::fmt::Debug;
@@ -98,20 +97,14 @@ pub struct Integrity {
 impl Integrity {
     const TAG: &'static [u8] = b"integrity";
 
-    fn new<R: BufRead>(
-        next: &Event<'_>,
-        reader: &mut Reader<R>,
-        buf: &mut Vec<u8>,
-    ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
-        let start = AttributedElement::read_start(Self::TAG, reader, &buf_event)?;
+    fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
+        let start = AttributedElement::read_start(Self::TAG, reader, next)?;
 
         // attributes
         let algorithm = start.get_req_attr("algorithm")?;
 
         // value
-        let (value, next) = read_value(reader, buf)?;
+        let (value, next) = read_value(reader, next.buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -133,17 +126,9 @@ pub struct Parameter {
 impl Parameter {
     const TAG: &'static [u8] = b"parameter";
 
-    pub fn new<R: BufRead>(
-        next: &Event<'_>,
-        reader: &mut Reader<R>,
-        buf: &mut Vec<u8>,
-    ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
-
+    fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
         // attributes
-        let (start, is_empty) =
-            AttributedElement::read_start_or_empty(Self::TAG, reader, &buf_event)?;
+        let (start, is_empty) = AttributedElement::read_start_or_empty(Self::TAG, reader, next)?;
         let group = start.get_opt_attr("group");
         let name = start.get_req_attr("name")?;
         let label = start.get_opt_attr("label");
@@ -153,7 +138,7 @@ impl Parameter {
         let value = match is_empty {
             true => None,
             false => {
-                let (value, next) = read_value(reader, buf_event.buf)?;
+                let (value, next) = read_value(reader, next.buf)?;
                 check_end(Self::TAG, &next)?;
                 Some(value)
             }
@@ -183,20 +168,17 @@ impl Experiment {
     const TAG: &'static [u8] = b"experiment";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let name = start.get_opt_attr("name");
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (datetime, next) = read_opt_elem(b"collectdate", next, &mut reader, &Collectdate::new)?;
         let collectdate = match datetime {
             None => None,
@@ -230,15 +212,12 @@ impl Collectdate {
     const TAG: &'static [u8] = b"collectdate";
 
     pub fn new<R: BufRead>(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader: &mut Reader<R>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
-        AttributedElement::read_start(Self::TAG, reader, &buf_event)?;
+        AttributedElement::read_start(Self::TAG, reader, next)?;
         // Content
-        let (value, next) = read_value(reader, buf)?;
+        let (value, next) = read_value(reader, next.buf)?;
         check_end(Self::TAG, &next)?;
 
         Ok(Self {
@@ -296,16 +275,13 @@ impl Trace {
     const TAG: &'static [u8] = b"trace";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let name = start.get_opt_attr("name");
         let technique = start.parse_req_attr(
             "technique",
@@ -314,7 +290,7 @@ impl Trace {
         )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         let next = next_non_whitespace(next, &mut reader)?;
         drop(reader);
@@ -512,16 +488,13 @@ impl Coordinates {
     const TAG: &'static [u8] = b"coordinates";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let units =
             start.parse_req_attr("units", &Units::from_str, Coordinates::display_type_name())?;
         let label = start.get_opt_attr("label");
@@ -533,15 +506,15 @@ impl Coordinates {
         )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
         let next = next_non_whitespace(next, &mut reader)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let next = next_non_whitespace(next, &mut reader)?;
+        let mut next = next_non_whitespace(next, &mut reader)?;
         drop(reader);
-        let values = Values::new(&next.event, Rc::clone(&reader_ref), next.buf)?;
+        let values = Values::new(&mut next, Rc::clone(&reader_ref))?;
         let mut reader = reader_ref.borrow_mut();
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -566,16 +539,9 @@ pub struct Link {
 impl Link {
     const TAG: &'static [u8] = b"link";
 
-    pub fn new<R: BufRead>(
-        next: &Event<'_>,
-        reader: &mut Reader<R>,
-        buf: &mut Vec<u8>,
-    ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
-
+    fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
         // attributes
-        let start = AttributedElement::read_empty(Self::TAG, reader, &buf_event)?;
+        let start = AttributedElement::read_empty(Self::TAG, reader, next)?;
         let linkref = start.get_req_attr("linkref")?;
 
         Ok(Self { linkref })
@@ -625,16 +591,13 @@ impl Values {
     const TAG: &'static [u8] = b"values";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let format =
             start.parse_req_attr("format", &Format::from_str, Values::display_type_name())?;
         let byteorder = start.parse_req_attr(
@@ -649,7 +612,7 @@ impl Values {
         )?;
 
         // skip content
-        let (value_start_pos, value_end_pos, next) = read_value_pos(&mut reader, buf)?;
+        let (value_start_pos, value_end_pos, next) = read_value_pos(&mut reader, next.buf)?;
         check_end(Self::TAG, &next)?;
         drop(reader);
 
@@ -773,16 +736,13 @@ impl Xdata {
     const TAG: &'static [u8] = b"Xdata";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let units = start.parse_req_attr("units", &Units::from_str, Xdata::display_type_name())?;
         let label = start.get_opt_attr("label");
         let linkid = start.get_opt_attr("linkid");
@@ -793,15 +753,15 @@ impl Xdata {
         )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
         let next = next_non_whitespace(next, &mut reader)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let next = next_non_whitespace(next, &mut reader)?;
+        let mut next = next_non_whitespace(next, &mut reader)?;
         drop(reader);
-        let values = Values::new(&next.event, Rc::clone(&reader_ref), next.buf)?;
+        let values = Values::new(&mut next, Rc::clone(&reader_ref))?;
         let mut reader = reader_ref.borrow_mut();
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         drop(reader);
         let (alt_x_data, next) =
             read_sequence_rc(b"altXdata", next, Rc::clone(&reader_ref), &AltXdata::new)?;
@@ -850,16 +810,13 @@ impl AltXdata {
     const TAG: &'static [u8] = b"altXdata";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let units =
             start.parse_req_attr("units", &Units::from_str, AltXdata::display_type_name())?;
         let label = start.get_opt_attr("label");
@@ -871,15 +828,15 @@ impl AltXdata {
         )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
         let next = next_non_whitespace(next, &mut reader)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let next = next_non_whitespace(next, &mut reader)?;
+        let mut next = next_non_whitespace(next, &mut reader)?;
         drop(reader);
-        let values = Values::new(&next.event, Rc::clone(&reader_ref), next.buf)?;
+        let values = Values::new(&mut next, Rc::clone(&reader_ref))?;
         let mut reader = reader_ref.borrow_mut();
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -912,27 +869,24 @@ impl Ydata {
     const TAG: &'static [u8] = b"Ydata";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let units = start.parse_req_attr("units", &Units::from_str, Ydata::display_type_name())?;
         let label = start.get_opt_attr("label");
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let next = next_non_whitespace(next, &mut reader)?;
+        let mut next = next_non_whitespace(next, &mut reader)?;
         drop(reader);
-        let values = Values::new(&next.event, Rc::clone(&reader_ref), next.buf)?;
+        let values = Values::new(&mut next, Rc::clone(&reader_ref))?;
         let mut reader = reader_ref.borrow_mut();
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         drop(reader);
         let (peaktables, next) =
             read_sequence_rc(b"peaktable", next, Rc::clone(&reader_ref), &Peaktable::new)?;
@@ -964,20 +918,17 @@ impl Peaktable {
     const TAG: &'static [u8] = b"peaktable";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let name = start.get_opt_attr("name");
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         let next = next_non_whitespace(next, &mut reader)?;
         drop(reader);
@@ -1012,16 +963,13 @@ impl Peak {
     const TAG: &'static [u8] = b"peak";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
         let number_str = start.get_req_attr("number")?;
         let number = number_str.parse::<u64>().map_err(|e| {
             GamlError::from_source(e, format!("Illegal peak number attribute: {}", number_str))
@@ -1034,13 +982,13 @@ impl Peak {
         let name = start.get_opt_attr("name");
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let next = next_non_whitespace(next, &mut reader)?;
-        let peak_x_value = read_req_elem_value_f64(b"peakXvalue", next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, buf)?;
-        let peak_y_value = read_req_elem_value_f64(b"peakYvalue", next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, buf)?;
+        let mut next = next_non_whitespace(next, &mut reader)?;
+        let peak_x_value = read_req_elem_value_f64(b"peakXvalue", &mut next, &mut reader)?;
+        let mut next = skip_whitespace(&mut reader, next.buf)?;
+        let peak_y_value = read_req_elem_value_f64(b"peakYvalue", &mut next, &mut reader)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         drop(reader);
         let (baseline, next) =
             read_opt_elem_rc(b"baseline", next, Rc::clone(&reader_ref), &Baseline::new)?;
@@ -1076,29 +1024,26 @@ impl Baseline {
     const TAG: &'static [u8] = b"baseline";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let _start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let _start = AttributedElement::read_start(Self::TAG, &reader, next)?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let next = next_non_whitespace(next, &mut reader)?;
-        let start_x_value = read_req_elem_value_f64(b"startXvalue", next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, buf)?;
-        let start_y_value = read_req_elem_value_f64(b"startYvalue", next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, buf)?;
-        let end_x_value = read_req_elem_value_f64(b"endXvalue", next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, buf)?;
-        let end_y_value = read_req_elem_value_f64(b"endYvalue", next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, buf)?;
+        let mut next = next_non_whitespace(next, &mut reader)?;
+        let start_x_value = read_req_elem_value_f64(b"startXvalue", &mut next, &mut reader)?;
+        let mut next = skip_whitespace(&mut reader, next.buf)?;
+        let start_y_value = read_req_elem_value_f64(b"startYvalue", &mut next, &mut reader)?;
+        let mut next = skip_whitespace(&mut reader, next.buf)?;
+        let end_x_value = read_req_elem_value_f64(b"endXvalue", &mut next, &mut reader)?;
+        let mut next = skip_whitespace(&mut reader, next.buf)?;
+        let end_y_value = read_req_elem_value_f64(b"endYvalue", &mut next, &mut reader)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
         drop(reader);
         let (basecurve, next) =
             read_opt_elem_rc(b"basecurve", next, Rc::clone(&reader_ref), &Basecurve::new)?;
@@ -1129,27 +1074,24 @@ impl Basecurve {
     const TAG: &'static [u8] = b"basecurve";
 
     fn new(
-        next: &Event<'_>,
+        next: &mut BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-        buf: &mut Vec<u8>,
     ) -> Result<Self, GamlError> {
-        // todo: change signature
-        let buf_event = BufEvent::new(next.to_owned(), buf);
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let _start = AttributedElement::read_start(Self::TAG, &reader, &buf_event)?;
+        let _start = AttributedElement::read_start(Self::TAG, &reader, next)?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, buf)?;
+        let mut next = skip_whitespace(&mut reader, next.buf)?;
         drop(reader);
-        let base_x_data = read_base_values(b"baseXdata", next, Rc::clone(&reader_ref))?;
+        let base_x_data = read_base_values(b"baseXdata", &mut next, Rc::clone(&reader_ref))?;
         let mut reader = reader_ref.borrow_mut();
-        let next = skip_whitespace(&mut reader, buf)?;
+        let mut next = skip_whitespace(&mut reader, next.buf)?;
         drop(reader);
-        let base_y_data = read_base_values(b"baseYdata", next, Rc::clone(&reader_ref))?;
+        let base_y_data = read_base_values(b"baseYdata", &mut next, Rc::clone(&reader_ref))?;
         let mut reader = reader_ref.borrow_mut();
-        let next = skip_whitespace(&mut reader, buf)?;
+        let next = skip_whitespace(&mut reader, next.buf)?;
 
         check_end(Self::TAG, &next)?;
 
@@ -1180,12 +1122,12 @@ impl Basecurve {
 
 fn read_base_values(
     tag_name: &[u8],
-    next: BufEvent<'_>,
+    next: &mut BufEvent<'_>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
 ) -> Result<Vec<Values>, GamlError> {
     let mut reader = reader_ref.borrow_mut();
 
-    let _start = AttributedElement::read_start(tag_name, &reader, &next)?;
+    let _start = AttributedElement::read_start(tag_name, &reader, next)?;
     let next = skip_whitespace(&mut reader, next.buf)?;
     drop(reader);
     let (values, next) = read_sequence_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;

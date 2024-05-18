@@ -170,7 +170,6 @@ pub(super) fn skip_whitespace<'buf, R: BufRead>(
             other_event => break other_event,
         }
     };
-    // todo: avoid owning?
     Ok(BufEvent::new(event.into_owned(), buf))
 }
 
@@ -238,7 +237,7 @@ pub(super) fn read_value_pos<'buf, R: BufRead>(
                 None
             }
             Event::Comment(_) => None,
-            any_other => Some(any_other.into_owned()),
+            any_other => Some(any_other),
         };
 
         if let Some(e) = event {
@@ -246,7 +245,7 @@ pub(super) fn read_value_pos<'buf, R: BufRead>(
         }
     };
 
-    Ok((start_pos, end_pos, BufEvent::new(next, buf)))
+    Ok((start_pos, end_pos, BufEvent::new(next.into_owned(), buf)))
 }
 
 pub(super) fn check_end(tag_name: &[u8], next: &BufEvent<'_>) -> Result<(), GamlError> {

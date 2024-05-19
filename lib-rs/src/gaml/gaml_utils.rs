@@ -18,18 +18,20 @@ impl<'buf> BufEvent<'buf> {
     }
 }
 
-pub(super) struct AttributedElement<'buf> {
-    attributes: HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>,
+pub(super) enum XmlTagStart<'buf> {
+    Start(HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>),
+    Empty(HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>),
 }
 
-impl<'buf> AttributedElement<'buf> {
+impl<'buf> XmlTagStart<'buf> {
     pub fn get_req_attr(&self, name: &str) -> Result<String, GamlError> {
-        Ok(self
-            .attributes
-            .get(&QName(name.as_bytes()))
-            .ok_or(GamlError::new(&format!("Missing attribute: {:?}", name)))?
-            .clone()
-            .into_owned())
+        match self {
+            Self::Start(attributes) | Self::Empty(attributes) => Ok(attributes
+                .get(&QName(name.as_bytes()))
+                .ok_or(GamlError::new(&format!("Missing attribute: {:?}", name)))?
+                .clone()
+                .into_owned()),
+        }
     }
 
     pub fn parse_req_attr<T, E: Error + 'static>(
@@ -38,24 +40,17 @@ impl<'buf> AttributedElement<'buf> {
         parse_fn: &(dyn Fn(&str) -> Result<T, E>),
         context: &str,
     ) -> Result<T, GamlError> {
-        let attr = self.get_req_attr(name)?;
-        parse_fn(&attr).map_err(|e| {
-            GamlError::from_source(
-                e,
-                format!(
-                    "Error parsing {}. Unexpected {} attribute: {}",
-                    context, name, &attr
-                ),
-            )
-        })
+        let value = self.get_req_attr(name)?;
+        Self::parse_attr_and_map_err(&value, name, parse_fn, context)
     }
 
     pub fn get_opt_attr(&self, name: &str) -> Option<String> {
-        self.attributes
-            .get(&QName(name.as_bytes()))
-            .map(|value| value.clone().into_owned())
+        match self {
+            Self::Start(attributes) | Self::Empty(attributes) => attributes
+                .get(&QName(name.as_bytes()))
+                .map(|value| value.clone().into_owned()),
+        }
     }
-
     pub fn parse_opt_attr<T, E: Error + 'static>(
         &self,
         name: &str,
@@ -63,18 +58,25 @@ impl<'buf> AttributedElement<'buf> {
         context: &str,
     ) -> Result<Option<T>, GamlError> {
         self.get_opt_attr(name)
-            .map(|s| {
-                parse_fn(&s).map_err(|e| {
-                    GamlError::from_source(
-                        e,
-                        format!(
-                            "Error parsing {}. Unexpected {} attribute: {}",
-                            context, name, &s
-                        ),
-                    )
-                })
-            })
+            .map(|value| Self::parse_attr_and_map_err(&value, name, parse_fn, context))
             .transpose()
+    }
+
+    fn parse_attr_and_map_err<T, E: Error + 'static>(
+        value: &str,
+        name: &str,
+        parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+        context: &str,
+    ) -> Result<T, GamlError> {
+        parse_fn(value).map_err(|e| {
+            GamlError::from_source(
+                e,
+                format!(
+                    "Error parsing {}. Unexpected {} attribute: {}",
+                    context, name, &value
+                ),
+            )
+        })
     }
 }
 
@@ -82,11 +84,11 @@ pub(super) fn read_start<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<AttributedElement<'buf>, GamlError> {
+) -> Result<XmlTagStart<'buf>, GamlError> {
     if let Event::Start(bytes_start) = &buf_event.event {
         check_matches_tag_name(tag, bytes_start)?;
         let attributes = read_attributes(bytes_start, reader);
-        Ok(AttributedElement { attributes })
+        Ok(XmlTagStart::Start(attributes))
     } else {
         Err(GamlError::new(&format!(
             "Unexpected event: {:?}",
@@ -99,11 +101,11 @@ pub(super) fn read_empty<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<AttributedElement<'buf>, GamlError> {
+) -> Result<XmlTagStart<'buf>, GamlError> {
     if let Event::Empty(bytes_start) = &buf_event.event {
         check_matches_tag_name(tag, bytes_start)?;
         let attributes = read_attributes(bytes_start, reader);
-        Ok(AttributedElement { attributes })
+        Ok(XmlTagStart::Empty(attributes))
     } else {
         Err(GamlError::new(&format!(
             "Unexpected event: {:?}",
@@ -116,7 +118,7 @@ pub(super) fn read_start_or_empty<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<(AttributedElement<'buf>, bool), GamlError> {
+) -> Result<(XmlTagStart<'buf>, bool), GamlError> {
     match &buf_event.event {
         Event::Start(_) => Ok((read_start(tag, reader, buf_event)?, false)),
         Event::Empty(_) => Ok((read_empty(tag, reader, buf_event)?, true)),

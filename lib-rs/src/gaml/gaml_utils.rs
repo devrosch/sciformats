@@ -23,72 +23,6 @@ pub(super) struct AttributedElement<'buf> {
 }
 
 impl<'buf> AttributedElement<'buf> {
-    pub fn read_start<R>(
-        tag: &[u8],
-        reader: &Reader<R>,
-        buf_event: &'buf BufEvent<'buf>,
-    ) -> Result<AttributedElement<'buf>, GamlError> {
-        if let Event::Start(bytes_start) = &buf_event.event {
-            check_matches_tag_name(tag, bytes_start)?;
-            let attributes = Self::get_attributes(bytes_start, reader);
-            Ok(Self { attributes })
-        } else {
-            Err(GamlError::new(&format!(
-                "Unexpected event: {:?}",
-                buf_event.event
-            )))
-        }
-    }
-
-    pub fn read_empty<R>(
-        tag: &[u8],
-        reader: &Reader<R>,
-        buf_event: &'buf BufEvent<'buf>,
-    ) -> Result<AttributedElement<'buf>, GamlError> {
-        if let Event::Empty(bytes_start) = &buf_event.event {
-            check_matches_tag_name(tag, bytes_start)?;
-            let attributes = Self::get_attributes(bytes_start, reader);
-            Ok(Self { attributes })
-        } else {
-            Err(GamlError::new(&format!(
-                "Unexpected event: {:?}",
-                buf_event.event
-            )))
-        }
-    }
-
-    pub fn read_start_or_empty<R>(
-        tag: &[u8],
-        reader: &Reader<R>,
-        buf_event: &'buf BufEvent<'buf>,
-    ) -> Result<(AttributedElement<'buf>, bool), GamlError> {
-        match &buf_event.event {
-            Event::Start(_) => Ok((Self::read_start(tag, reader, buf_event)?, false)),
-            Event::Empty(_) => Ok((Self::read_empty(tag, reader, buf_event)?, true)),
-            _ => Err(GamlError::new(&format!(
-                "Unexpected event: {:?}",
-                buf_event.event
-            ))),
-        }
-    }
-
-    fn get_attributes<R>(
-        bytes_start: &'buf BytesStart<'buf>,
-        reader: &Reader<R>,
-    ) -> HashMap<QName<'buf>, std::borrow::Cow<'buf, str>> {
-        bytes_start
-            .attributes()
-            .filter(|a| a.is_ok())
-            .map(|a| {
-                let attr = a.unwrap();
-                (
-                    attr.key,
-                    attr.decode_and_unescape_value(reader).unwrap_or_default(),
-                )
-            })
-            .collect::<HashMap<_, _>>()
-    }
-
     pub fn get_req_attr(&self, name: &str) -> Result<String, GamlError> {
         Ok(self
             .attributes
@@ -142,6 +76,72 @@ impl<'buf> AttributedElement<'buf> {
             })
             .transpose()
     }
+}
+
+pub(super) fn read_start<'buf, R>(
+    tag: &[u8],
+    reader: &Reader<R>,
+    buf_event: &'buf BufEvent<'buf>,
+) -> Result<AttributedElement<'buf>, GamlError> {
+    if let Event::Start(bytes_start) = &buf_event.event {
+        check_matches_tag_name(tag, bytes_start)?;
+        let attributes = read_attributes(bytes_start, reader);
+        Ok(AttributedElement { attributes })
+    } else {
+        Err(GamlError::new(&format!(
+            "Unexpected event: {:?}",
+            buf_event.event
+        )))
+    }
+}
+
+pub(super) fn read_empty<'buf, R>(
+    tag: &[u8],
+    reader: &Reader<R>,
+    buf_event: &'buf BufEvent<'buf>,
+) -> Result<AttributedElement<'buf>, GamlError> {
+    if let Event::Empty(bytes_start) = &buf_event.event {
+        check_matches_tag_name(tag, bytes_start)?;
+        let attributes = read_attributes(bytes_start, reader);
+        Ok(AttributedElement { attributes })
+    } else {
+        Err(GamlError::new(&format!(
+            "Unexpected event: {:?}",
+            buf_event.event
+        )))
+    }
+}
+
+pub(super) fn read_start_or_empty<'buf, R>(
+    tag: &[u8],
+    reader: &Reader<R>,
+    buf_event: &'buf BufEvent<'buf>,
+) -> Result<(AttributedElement<'buf>, bool), GamlError> {
+    match &buf_event.event {
+        Event::Start(_) => Ok((read_start(tag, reader, buf_event)?, false)),
+        Event::Empty(_) => Ok((read_empty(tag, reader, buf_event)?, true)),
+        _ => Err(GamlError::new(&format!(
+            "Unexpected event: {:?}",
+            buf_event.event
+        ))),
+    }
+}
+
+fn read_attributes<'buf, R>(
+    bytes_start: &'buf BytesStart<'buf>,
+    reader: &Reader<R>,
+) -> HashMap<QName<'buf>, std::borrow::Cow<'buf, str>> {
+    bytes_start
+        .attributes()
+        .filter(|a| a.is_ok())
+        .map(|a| {
+            let attr = a.unwrap();
+            (
+                attr.key,
+                attr.decode_and_unescape_value(reader).unwrap_or_default(),
+            )
+        })
+        .collect::<HashMap<_, _>>()
 }
 
 pub(super) fn skip_xml_decl<'buf, R: BufRead>(
@@ -421,7 +421,7 @@ pub(super) fn read_req_elem_value<R: BufRead>(
     next: &mut BufEvent<'_>,
     reader: &mut Reader<R>,
 ) -> Result<String, GamlError> {
-    AttributedElement::read_start(tag_name, reader, next)?;
+    read_start(tag_name, reader, next)?;
     let (value, next) = read_value(reader, next.buf)?;
     check_end(tag_name, &next)?;
 

@@ -1,7 +1,7 @@
 use super::gaml_utils::{
-    check_end, next_non_whitespace, read_opt_elem, read_opt_elem_rc, read_req_elem_value_f64,
-    read_sequence, read_sequence_rc, read_value, read_value_pos, skip_whitespace, skip_xml_decl,
-    AttributedElement, BufEvent, TypeName,
+    check_end, next_non_whitespace, read_empty, read_opt_elem, read_opt_elem_rc,
+    read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start, read_start_or_empty,
+    read_value, read_value_pos, skip_whitespace, skip_xml_decl, BufEvent, TypeName,
 };
 use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
@@ -54,7 +54,7 @@ impl Gaml {
         let next = skip_xml_decl(&mut reader, &mut buf)?;
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, &next)?;
+        let start = read_start(Self::TAG, &reader, &next)?;
         let version = start.get_req_attr("version")?;
         let name = start.get_opt_attr("name");
         let next = skip_whitespace(&mut reader, &mut buf)?;
@@ -98,7 +98,7 @@ impl Integrity {
     const TAG: &'static [u8] = b"integrity";
 
     fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
-        let start = AttributedElement::read_start(Self::TAG, reader, next)?;
+        let start = read_start(Self::TAG, reader, next)?;
 
         // attributes
         let algorithm = start.get_req_attr("algorithm")?;
@@ -128,7 +128,7 @@ impl Parameter {
 
     fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
         // attributes
-        let (start, is_empty) = AttributedElement::read_start_or_empty(Self::TAG, reader, next)?;
+        let (start, is_empty) = read_start_or_empty(Self::TAG, reader, next)?;
         let group = start.get_opt_attr("group");
         let name = start.get_req_attr("name")?;
         let label = start.get_opt_attr("label");
@@ -174,7 +174,7 @@ impl Experiment {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let name = start.get_opt_attr("name");
 
         // nested elements
@@ -215,7 +215,7 @@ impl Collectdate {
         next: &mut BufEvent<'_>,
         reader: &mut Reader<R>,
     ) -> Result<Self, GamlError> {
-        AttributedElement::read_start(Self::TAG, reader, next)?;
+        read_start(Self::TAG, reader, next)?;
         // Content
         let (value, next) = read_value(reader, next.buf)?;
         check_end(Self::TAG, &next)?;
@@ -281,7 +281,7 @@ impl Trace {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let name = start.get_opt_attr("name");
         let technique = start.parse_req_attr(
             "technique",
@@ -494,7 +494,7 @@ impl Coordinates {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let units =
             start.parse_req_attr("units", &Units::from_str, Coordinates::display_type_name())?;
         let label = start.get_opt_attr("label");
@@ -541,7 +541,7 @@ impl Link {
 
     fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
         // attributes
-        let start = AttributedElement::read_empty(Self::TAG, reader, next)?;
+        let start = read_empty(Self::TAG, reader, next)?;
         let linkref = start.get_req_attr("linkref")?;
 
         Ok(Self { linkref })
@@ -597,7 +597,7 @@ impl Values {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let format =
             start.parse_req_attr("format", &Format::from_str, Values::display_type_name())?;
         let byteorder = start.parse_req_attr(
@@ -742,7 +742,7 @@ impl Xdata {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let units = start.parse_req_attr("units", &Units::from_str, Xdata::display_type_name())?;
         let label = start.get_opt_attr("label");
         let linkid = start.get_opt_attr("linkid");
@@ -816,7 +816,7 @@ impl AltXdata {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let units =
             start.parse_req_attr("units", &Units::from_str, AltXdata::display_type_name())?;
         let label = start.get_opt_attr("label");
@@ -875,7 +875,7 @@ impl Ydata {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let units = start.parse_req_attr("units", &Units::from_str, Ydata::display_type_name())?;
         let label = start.get_opt_attr("label");
 
@@ -924,7 +924,7 @@ impl Peaktable {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let name = start.get_opt_attr("name");
 
         // nested elements
@@ -969,7 +969,7 @@ impl Peak {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let start = read_start(Self::TAG, &reader, next)?;
         let number_str = start.get_req_attr("number")?;
         let number = number_str.parse::<u64>().map_err(|e| {
             GamlError::from_source(e, format!("Illegal peak number attribute: {}", number_str))
@@ -1030,7 +1030,7 @@ impl Baseline {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let _start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let _start = read_start(Self::TAG, &reader, next)?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
@@ -1080,7 +1080,7 @@ impl Basecurve {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
-        let _start = AttributedElement::read_start(Self::TAG, &reader, next)?;
+        let _start = read_start(Self::TAG, &reader, next)?;
 
         // nested elements
         let mut next = skip_whitespace(&mut reader, next.buf)?;
@@ -1127,7 +1127,7 @@ fn read_base_values(
 ) -> Result<Vec<Values>, GamlError> {
     let mut reader = reader_ref.borrow_mut();
 
-    let _start = AttributedElement::read_start(tag_name, &reader, next)?;
+    let _start = read_start(tag_name, &reader, next)?;
     let next = skip_whitespace(&mut reader, next.buf)?;
     drop(reader);
     let (values, next) = read_sequence_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;

@@ -1,7 +1,7 @@
 use super::gaml_utils::{
     check_end, next_non_whitespace, read_empty, read_opt_elem, read_opt_elem_rc,
     read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start, read_start_or_empty,
-    read_value, read_value_pos, skip_whitespace, skip_xml_decl, BufEvent, TypeName,
+    read_value, read_value_pos, skip_whitespace, skip_xml_decl, BufEvent, TypeName, XmlTagStart,
 };
 use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
@@ -128,16 +128,16 @@ impl Parameter {
 
     fn new<R: BufRead>(next: &mut BufEvent<'_>, reader: &mut Reader<R>) -> Result<Self, GamlError> {
         // attributes
-        let (start, is_empty) = read_start_or_empty(Self::TAG, reader, next)?;
+        let start = read_start_or_empty(Self::TAG, reader, next)?;
         let group = start.get_opt_attr("group");
         let name = start.get_req_attr("name")?;
         let label = start.get_opt_attr("label");
         let alias = start.get_opt_attr("alias");
 
         // value
-        let value = match is_empty {
-            true => None,
-            false => {
+        let value = match start {
+            XmlTagStart::Empty(_) => None,
+            XmlTagStart::Start(_) => {
                 let (value, next) = read_value(reader, next.buf)?;
                 check_end(Self::TAG, &next)?;
                 Some(value)

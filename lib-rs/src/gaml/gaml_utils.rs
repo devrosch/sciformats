@@ -85,15 +85,13 @@ pub(super) fn read_start<'buf, R>(
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
 ) -> Result<XmlTagStart<'buf>, GamlError> {
-    if let Event::Start(bytes_start) = &buf_event.event {
-        check_matches_tag_name(tag, bytes_start)?;
-        let attributes = read_attributes(bytes_start, reader);
-        Ok(XmlTagStart::Start(attributes))
-    } else {
-        Err(GamlError::new(&format!(
-            "Unexpected event: {:?}",
-            buf_event.event
-        )))
+    match read_start_or_empty(tag, reader, buf_event) {
+        Ok(XmlTagStart::Start(attr)) => Ok(XmlTagStart::Start(attr)),
+        Ok(XmlTagStart::Empty(_)) => Err(GamlError::new(&format!(
+            "Empty XML tag instead of start tag found for: {}",
+            str::from_utf8(tag).unwrap_or_default()
+        ))),
+        Err(e) => Err(e),
     }
 }
 
@@ -102,15 +100,13 @@ pub(super) fn read_empty<'buf, R>(
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
 ) -> Result<XmlTagStart<'buf>, GamlError> {
-    if let Event::Empty(bytes_start) = &buf_event.event {
-        check_matches_tag_name(tag, bytes_start)?;
-        let attributes = read_attributes(bytes_start, reader);
-        Ok(XmlTagStart::Empty(attributes))
-    } else {
-        Err(GamlError::new(&format!(
-            "Unexpected event: {:?}",
-            buf_event.event
-        )))
+    match read_start_or_empty(tag, reader, buf_event) {
+        Ok(XmlTagStart::Start(_)) => Err(GamlError::new(&format!(
+            "Start XML tag instead of empty tag found for: {}",
+            str::from_utf8(tag).unwrap_or_default()
+        ))),
+        Ok(XmlTagStart::Empty(attr)) => Ok(XmlTagStart::Empty(attr)),
+        Err(e) => Err(e),
     }
 }
 
@@ -118,12 +114,19 @@ pub(super) fn read_start_or_empty<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<(XmlTagStart<'buf>, bool), GamlError> {
+) -> Result<XmlTagStart<'buf>, GamlError> {
     match &buf_event.event {
-        Event::Start(_) => Ok((read_start(tag, reader, buf_event)?, false)),
-        Event::Empty(_) => Ok((read_empty(tag, reader, buf_event)?, true)),
+        Event::Start(bytes_start) => {
+            check_matches_tag_name(tag, bytes_start)?;
+            Ok(XmlTagStart::Start(read_attributes(bytes_start, reader)))
+        }
+        Event::Empty(bytes_start) => {
+            check_matches_tag_name(tag, bytes_start)?;
+            Ok(XmlTagStart::Empty(read_attributes(bytes_start, reader)))
+        }
         _ => Err(GamlError::new(&format!(
-            "Unexpected event: {:?}",
+            "Unexpected event instead of start of {}: {:?}",
+            str::from_utf8(tag).unwrap_or_default(),
             buf_event.event
         ))),
     }

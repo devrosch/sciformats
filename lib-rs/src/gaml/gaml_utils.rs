@@ -253,25 +253,6 @@ pub(super) fn read_value_pos<'buf, R: BufRead>(
     Ok((start_pos, end_pos, BufEvent::new(next.into_owned(), buf)))
 }
 
-pub(super) fn check_end(tag_name: &[u8], next: &BufEvent<'_>) -> Result<(), GamlError> {
-    match &next.event {
-        Event::End(e) => {
-            if e.name().as_ref() == tag_name {
-                Ok(())
-            } else {
-                Err(GamlError::new(&format!(
-                    "Unexpected end tag: {:?}",
-                    std::str::from_utf8(e.name().as_ref())
-                )))
-            }
-        }
-        e => Err(GamlError::new(&format!(
-            "Unexpected event instead of end tag: {:?}",
-            e
-        ))),
-    }
-}
-
 pub(super) fn consume_end<'buf, R: BufRead>(
     tag_name: &[u8],
     reader: &mut Reader<R>,
@@ -317,6 +298,7 @@ pub(super) fn read_req_elem<'buf, R: BufRead, T>(
     reader: &mut Reader<R>,
     constructor: ElemConstructor<'_, 'buf, R, T>,
 ) -> Result<(T, BufEvent<'buf>), GamlError> {
+    let next = next_non_whitespace(next, reader)?;
     match &next.event {
         Event::Start(e) => {
             if e.name().as_ref() == tag_name {
@@ -447,6 +429,9 @@ pub(super) fn read_opt_elem_rc<'buf, T>(
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     constructor: ElemConstructorRc<'_, 'buf, T>,
 ) -> Result<(Option<T>, BufEvent<'buf>), GamlError> {
+    let mut reader = reader_ref.borrow_mut();
+    let next = next_non_whitespace(next, &mut reader)?;
+    drop(reader);
     match &next.event {
         Event::Start(e) => {
             if e.name().as_ref() == tag_name {
@@ -460,30 +445,31 @@ pub(super) fn read_opt_elem_rc<'buf, T>(
     }
 }
 
-pub(super) fn read_req_elem_value<R: BufRead>(
+pub(super) fn read_req_elem_value<'buf, R: BufRead>(
     tag_name: &[u8],
-    next: &mut BufEvent<'_>,
+    next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-) -> Result<String, GamlError> {
-    read_start(tag_name, reader, next)?;
+) -> Result<(String, BufEvent<'buf>), GamlError> {
+    let next = next_non_whitespace(next, reader)?;
+    read_start(tag_name, reader, &next)?;
     let (value, next) = read_value(reader, next.buf)?;
-    check_end(tag_name, &next)?;
+    let next = consume_end(tag_name, reader, next)?;
 
-    Ok(value)
+    Ok((value, next))
 }
 
-pub(super) fn read_req_elem_value_f64<R: BufRead>(
+pub(super) fn read_req_elem_value_f64<'buf, R: BufRead>(
     tag_name: &[u8],
-    next: &mut BufEvent<'_>,
+    next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-) -> Result<f64, GamlError> {
-    let value = read_req_elem_value(tag_name, next, reader)?;
+) -> Result<(f64, BufEvent<'buf>), GamlError> {
+    let (value, next) = read_req_elem_value(tag_name, next, reader)?;
     let value_f64 = value.parse::<f64>().map_err(|e| {
         let tag = String::from_utf8_lossy(tag_name);
         GamlError::from_source(e, format!("Illegal value for {}: {}", tag, value))
     })?;
 
-    Ok(value_f64)
+    Ok((value_f64, next))
 }
 
 pub(super) fn map_gaml_parameters(

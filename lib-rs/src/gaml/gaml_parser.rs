@@ -996,11 +996,8 @@ impl Peak {
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let mut next = next_non_whitespace(next, &mut reader)?;
-        let peak_x_value = read_req_elem_value_f64(b"peakXvalue", &mut next, &mut reader)?;
-        let mut next = skip_whitespace(&mut reader, next.buf)?;
-        let peak_y_value = read_req_elem_value_f64(b"peakYvalue", &mut next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, next.buf)?;
+        let (peak_x_value, next) = read_req_elem_value_f64(b"peakXvalue", next, &mut reader)?;
+        let (peak_y_value, next) = read_req_elem_value_f64(b"peakYvalue", next, &mut reader)?;
         drop(reader);
         let (baseline, next) =
             read_opt_elem_rc(b"baseline", next, Rc::clone(&reader_ref), &Baseline::new)?;
@@ -1048,15 +1045,11 @@ impl Baseline {
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        let mut next = next_non_whitespace(next, &mut reader)?;
-        let start_x_value = read_req_elem_value_f64(b"startXvalue", &mut next, &mut reader)?;
-        let mut next = skip_whitespace(&mut reader, next.buf)?;
-        let start_y_value = read_req_elem_value_f64(b"startYvalue", &mut next, &mut reader)?;
-        let mut next = skip_whitespace(&mut reader, next.buf)?;
-        let end_x_value = read_req_elem_value_f64(b"endXvalue", &mut next, &mut reader)?;
-        let mut next = skip_whitespace(&mut reader, next.buf)?;
-        let end_y_value = read_req_elem_value_f64(b"endYvalue", &mut next, &mut reader)?;
-        let next = skip_whitespace(&mut reader, next.buf)?;
+        let (start_x_value, next) = read_req_elem_value_f64(b"startXvalue", next, &mut reader)?;
+        let (start_y_value, next) = read_req_elem_value_f64(b"startYvalue", next, &mut reader)?;
+        let (end_x_value, next) = read_req_elem_value_f64(b"endXvalue", next, &mut reader)?;
+        let (end_y_value, next) = read_req_elem_value_f64(b"endYvalue", next, &mut reader)?;
+
         drop(reader);
         let (basecurve, next) =
             read_opt_elem_rc(b"basecurve", next, Rc::clone(&reader_ref), &Basecurve::new)?;

@@ -333,18 +333,37 @@ pub(super) fn read_opt_elem<'buf, R: BufRead, T>(
 pub(super) fn read_sequence<'buf, R: BufRead, T>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
-    reader: &mut Reader<R>,
+    mut reader: &mut Reader<R>,
     constructor: ElemConstructor<'_, 'buf, R, T>,
 ) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
-    let mut next = next_non_whitespace(next, reader)?;
+    read_seq(
+        tag_name,
+        next,
+        &mut reader,
+        &mut |e, r| next_non_whitespace(e, r),
+        &mut |e, r| constructor(e, r),
+    )
+}
+
+type SeqElemConstructor<'f, 'buf, Reader, T> =
+    &'f mut (dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<(T, BufEvent<'buf>), GamlError>);
+
+pub(super) fn read_seq<'buf, T, Reader>(
+    tag_name: &[u8],
+    next: BufEvent<'buf>,
+    reader: &mut Reader,
+    next_non_ws: &mut dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<BufEvent<'buf>, GamlError>,
+    wrapped_constructor: SeqElemConstructor<'_, 'buf, Reader, T>,
+) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
+    let mut next = next_non_ws(next, reader)?;
     let mut ret = vec![];
     loop {
         match &next.event {
             Event::Start(bytes) | Event::Empty(bytes) => {
                 if bytes.name().as_ref() == tag_name {
-                    let res = constructor(next, reader)?;
+                    let res = wrapped_constructor(next, reader)?;
                     ret.push(res.0);
-                    next = next_non_whitespace(res.1, reader)?;
+                    next = next_non_ws(res.1, reader)?;
                 } else {
                     return Ok((ret, next));
                 }
@@ -394,30 +413,19 @@ fn construct_req_elem<'buf, T>(
     }
 }
 
-// todo: avoid code duplication with read_sequence
 pub(super) fn read_sequence_rc<'buf, T>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
-    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+    mut reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     constructor: ElemConstructorRc<'_, 'buf, T>,
 ) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
-    let mut next = next_non_whitespace_rc(next, Rc::clone(&reader_ref))?;
-    let mut ret = vec![];
-    loop {
-        match &next.event {
-            Event::Start(bytes) | Event::Empty(bytes) => {
-                if bytes.name().as_ref() == tag_name {
-                    let res = constructor(next, Rc::clone(&reader_ref))?;
-                    ret.push(res.0);
-                    let mut reader = reader_ref.borrow_mut();
-                    next = next_non_whitespace(res.1, &mut reader)?;
-                } else {
-                    return Ok((ret, next));
-                }
-            }
-            _ => return Ok((ret, next)),
-        }
-    }
+    read_seq(
+        tag_name,
+        next,
+        &mut reader_ref,
+        &mut |e, r| next_non_whitespace_rc(e, Rc::clone(r)),
+        &mut |e, r| constructor(e, Rc::clone(r)),
+    )
 }
 
 // todo: avoid code duplication with read_opt_elem

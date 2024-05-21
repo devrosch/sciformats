@@ -3,9 +3,7 @@ use super::{
         AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
         Xdata, Ydata,
     },
-    gaml_utils::{
-        generate_child_node_names, map_gaml_parameters, map_values_attributes, read_elem, TypeName,
-    },
+    gaml_utils::{read_elem, TypeName},
     GamlError,
 };
 use crate::{
@@ -764,6 +762,64 @@ impl GamlReader {
             child_node_names: vec![],
         })
     }
+}
+
+fn map_gaml_parameters(raw_params: &[super::gaml_parser::Parameter]) -> Vec<crate::api::Parameter> {
+    let mut parameters = Vec::with_capacity(raw_params.len());
+    for raw_param in raw_params {
+        let key = if [&raw_param.group, &raw_param.label, &raw_param.alias]
+            .iter()
+            .any(|s| s.is_some())
+        {
+            let mut attributes = vec![];
+            if let Some(group) = &raw_param.group {
+                attributes.push(format!("group={group}"));
+            }
+            if let Some(label) = &raw_param.label {
+                attributes.push(format!("label={label}"));
+            }
+            if let Some(alias) = &raw_param.alias {
+                attributes.push(format!("alias={alias}"));
+            }
+            format!("{} ({})", raw_param.name, attributes.join(", "))
+        } else {
+            raw_param.name.to_string()
+        };
+        let param = crate::api::Parameter::from_str_str(
+            key,
+            raw_param.value.as_deref().unwrap_or_default(),
+        );
+        parameters.push(param);
+    }
+
+    parameters
+}
+
+fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    // Values attributes
+    let format = Parameter::from_str_str(format!("{prefix} format"), values.format.to_string());
+    parameters.push(format);
+    let byteorder =
+        Parameter::from_str_str(format!("{prefix} byteorder"), values.byteorder.to_string());
+    parameters.push(byteorder);
+    if let Some(numvalues) = values.numvalues {
+        let numvalues = Parameter::from_str_u64(format!("{prefix} numvalues"), numvalues);
+        parameters.push(numvalues);
+    }
+
+    parameters
+}
+
+pub(super) fn generate_child_node_names<T>(
+    slice: &[T],
+    name_generator: &dyn Fn(&T, usize) -> String,
+) -> Vec<String> {
+    slice
+        .iter()
+        .enumerate()
+        .map(|(i, item)| name_generator(item, i))
+        .collect()
 }
 
 #[cfg(test)]

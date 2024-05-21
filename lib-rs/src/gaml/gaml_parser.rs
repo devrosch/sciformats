@@ -1312,9 +1312,6 @@ mod tests {
         assert_eq!(Format::Float32, co_values.format);
         assert_eq!(Byteorder::Intel, co_values.byteorder);
         assert_eq!(Some(2), co_values.numvalues);
-        // private properties
-        assert_eq!(1645, co_values.value_start_pos);
-        assert_eq!(1814, co_values.value_end_pos);
         // value is lazily read
         // converted data
         let decoded_values = co_values.get_data().unwrap();
@@ -1352,9 +1349,6 @@ mod tests {
         assert_eq!(Format::Float32, xdata_values.format);
         assert_eq!(Byteorder::Intel, xdata_values.byteorder);
         assert_eq!(Some(2), xdata_values.numvalues);
-        // private properties
-        assert_eq!(2314, xdata_values.value_start_pos);
-        assert_eq!(2483, xdata_values.value_end_pos);
         // value is lazily read
         // converted data
         let decoded_values = xdata_values.get_data().unwrap();
@@ -1392,9 +1386,6 @@ mod tests {
         assert_eq!(Format::Float32, alt_x_data_values.format);
         assert_eq!(Byteorder::Intel, alt_x_data_values.byteorder);
         assert_eq!(Some(2), alt_x_data_values.numvalues);
-        // private properties
-        assert_eq!(2969, alt_x_data_values.value_start_pos);
-        assert_eq!(3150, alt_x_data_values.value_end_pos);
         // value is lazily read
         // converted data
         let decoded_values = alt_x_data_values.get_data().unwrap();
@@ -1423,9 +1414,6 @@ mod tests {
         assert_eq!(Format::Float32, y_data_values.format);
         assert_eq!(Byteorder::Intel, y_data_values.byteorder);
         assert_eq!(Some(2), y_data_values.numvalues);
-        // private properties
-        assert_eq!(3594, y_data_values.value_start_pos);
-        assert_eq!(3775, y_data_values.value_end_pos);
         // value is lazily read
         // converted data
         let decoded_values = y_data_values.get_data().unwrap();

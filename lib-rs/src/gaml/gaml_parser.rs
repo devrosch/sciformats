@@ -297,11 +297,8 @@ impl Trace {
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
         let name = start.get_opt_attr("name");
-        let technique = start.parse_req_attr(
-            "technique",
-            &Technique::from_str,
-            Trace::display_type_name(),
-        )?;
+        let technique =
+            start.parse_req_attr("technique", &Technique::from_str, Trace::display_name())?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
@@ -506,14 +503,13 @@ impl Coordinates {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let units =
-            start.parse_req_attr("units", &Units::from_str, Coordinates::display_type_name())?;
+        let units = start.parse_req_attr("units", &Units::from_str, Coordinates::display_name())?;
         let label = start.get_opt_attr("label");
         let linkid = start.get_opt_attr("linkid");
         let valueorder = start.parse_opt_attr(
             "valueorder",
             &Valueorder::from_str,
-            Coordinates::display_type_name(),
+            Coordinates::display_name(),
         )?;
 
         // nested elements
@@ -614,17 +610,13 @@ impl Values {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let format =
-            start.parse_req_attr("format", &Format::from_str, Values::display_type_name())?;
-        let byteorder = start.parse_req_attr(
-            "byteorder",
-            &Byteorder::from_str,
-            Values::display_type_name(),
-        )?;
+        let format = start.parse_req_attr("format", &Format::from_str, Values::display_name())?;
+        let byteorder =
+            start.parse_req_attr("byteorder", &Byteorder::from_str, Values::display_name())?;
         let numvalues = start.parse_opt_attr(
             "numvalues",
             &|v: &str| v.parse::<u64>(),
-            Values::display_type_name(),
+            Values::display_name(),
         )?;
 
         // skip content
@@ -763,14 +755,11 @@ impl Xdata {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let units = start.parse_req_attr("units", &Units::from_str, Xdata::display_type_name())?;
+        let units = start.parse_req_attr("units", &Units::from_str, Xdata::display_name())?;
         let label = start.get_opt_attr("label");
         let linkid = start.get_opt_attr("linkid");
-        let valueorder = start.parse_opt_attr(
-            "valueorder",
-            &Valueorder::from_str,
-            Xdata::display_type_name(),
-        )?;
+        let valueorder =
+            start.parse_opt_attr("valueorder", &Valueorder::from_str, Xdata::display_name())?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
@@ -831,14 +820,13 @@ impl AltXdata {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let units =
-            start.parse_req_attr("units", &Units::from_str, AltXdata::display_type_name())?;
+        let units = start.parse_req_attr("units", &Units::from_str, AltXdata::display_name())?;
         let label = start.get_opt_attr("label");
         let linkid = start.get_opt_attr("linkid");
         let valueorder = start.parse_opt_attr(
             "valueorder",
             &Valueorder::from_str,
-            AltXdata::display_type_name(),
+            AltXdata::display_name(),
         )?;
 
         // nested elements
@@ -890,7 +878,7 @@ impl Ydata {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let units = start.parse_req_attr("units", &Units::from_str, Ydata::display_type_name())?;
+        let units = start.parse_req_attr("units", &Units::from_str, Ydata::display_name())?;
         let label = start.get_opt_attr("label");
 
         // nested elements

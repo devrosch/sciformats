@@ -18,13 +18,13 @@ impl<'buf> BufEvent<'buf> {
 }
 
 pub(super) trait TypeName {
-    fn display_type_name() -> &'static str;
+    fn display_name() -> &'static str;
 }
 
 pub(super) fn read_elem<T: TypeName>(slice: &[T], index: usize) -> Result<&T, GamlError> {
     slice.get(index).ok_or(GamlError::new(&format!(
         "Illegal {} index: {}",
-        T::display_type_name(),
+        T::display_name(),
         index
     )))
 }
@@ -32,13 +32,13 @@ pub(super) fn read_elem<T: TypeName>(slice: &[T], index: usize) -> Result<&T, Ga
 type ElemConstructor<'f, 'buf, R, T> =
     &'f (dyn Fn(BufEvent<'buf>, &mut Reader<R>) -> Result<(T, BufEvent<'buf>), GamlError>);
 
-type SeqElemConstructor<'f, 'buf, Reader, T> =
-    &'f mut (dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<(T, BufEvent<'buf>), GamlError>);
-
 type ElemConstructorRc<'f, 'buf, T> = &'f (dyn Fn(
     BufEvent<'buf>,
     Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
 ) -> Result<(T, BufEvent<'buf>), GamlError>);
+
+type ElemConstructorCore<'f, 'buf, Reader, T> =
+    &'f mut (dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<(T, BufEvent<'buf>), GamlError>);
 
 pub(super) enum XmlTagStart<'buf> {
     Start(HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>),
@@ -119,13 +119,13 @@ pub(super) fn read_start_or_empty<'buf, R>(
     buf_event: &'buf BufEvent<'buf>,
 ) -> Result<XmlTagStart<'buf>, GamlError> {
     match &buf_event.event {
-        Event::Start(bytes_start) => {
-            check_matches_tag_name(tag, bytes_start)?;
-            Ok(XmlTagStart::Start(read_attributes(bytes_start, reader)))
+        Event::Start(bytes) => {
+            check_matches_tag_name(tag, bytes)?;
+            Ok(XmlTagStart::Start(read_attributes(bytes, reader)))
         }
-        Event::Empty(bytes_start) => {
-            check_matches_tag_name(tag, bytes_start)?;
-            Ok(XmlTagStart::Empty(read_attributes(bytes_start, reader)))
+        Event::Empty(bytes) => {
+            check_matches_tag_name(tag, bytes)?;
+            Ok(XmlTagStart::Empty(read_attributes(bytes, reader)))
         }
         _ => Err(GamlError::new(&format!(
             "Unexpected event instead of start of {}: {:?}",
@@ -261,15 +261,15 @@ pub(super) fn consume_end<'buf, R: BufRead>(
 ) -> Result<BufEvent<'buf>, GamlError> {
     let next = next_non_whitespace(next, reader)?;
     match &next.event {
-        Event::End(e) => {
-            if e.name().as_ref() == tag_name {
+        Event::End(bytes) => {
+            if bytes.name().as_ref() == tag_name {
                 let next_raw = reader.read_event_into(next.buf)?.into_owned();
                 Ok(BufEvent::new(next_raw, next.buf))
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected end tag for \"{}\": {}",
                     str::from_utf8(tag_name).unwrap_or_default(),
-                    std::str::from_utf8(e.name().as_ref()).unwrap_or_default(),
+                    std::str::from_utf8(bytes.name().as_ref()).unwrap_or_default(),
                 )))
             }
         }
@@ -298,7 +298,7 @@ pub(super) fn read_req_elem<'buf, R: BufRead, T>(
     constructor: ElemConstructor<'_, 'buf, R, T>,
 ) -> Result<(T, BufEvent<'buf>), GamlError> {
     let next = next_non_whitespace(next, reader)?;
-    construct_req_elem(tag_name, next, &mut |e| constructor(e, reader))
+    read_req_elem_core(tag_name, next, &mut |e| constructor(e, reader))
 }
 
 pub(super) fn read_req_elem_rc<'buf, T>(
@@ -308,7 +308,7 @@ pub(super) fn read_req_elem_rc<'buf, T>(
     constructor: ElemConstructorRc<'_, 'buf, T>,
 ) -> Result<(T, BufEvent<'buf>), GamlError> {
     let next = next_non_whitespace_rc(next, Rc::clone(&reader_ref))?;
-    construct_req_elem(tag_name, next, &mut |e| {
+    read_req_elem_core(tag_name, next, &mut |e| {
         constructor(e, Rc::clone(&reader_ref))
     })
 }
@@ -349,7 +349,7 @@ pub(super) fn read_sequence<'buf, R: BufRead, T>(
     mut reader: &mut Reader<R>,
     constructor: ElemConstructor<'_, 'buf, R, T>,
 ) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
-    read_seq(
+    read_sequence_core(
         tag_name,
         next,
         &mut reader,
@@ -364,7 +364,7 @@ pub(super) fn read_sequence_rc<'buf, T>(
     mut reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     constructor: ElemConstructorRc<'_, 'buf, T>,
 ) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
-    read_seq(
+    read_sequence_core(
         tag_name,
         next,
         &mut reader_ref,
@@ -433,19 +433,19 @@ fn read_attributes<'buf, R>(
         .collect::<HashMap<_, _>>()
 }
 
-fn construct_req_elem<'buf, T>(
+fn read_req_elem_core<'buf, T>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     wrapped_constructor: &mut dyn FnMut(BufEvent<'buf>) -> Result<(T, BufEvent<'buf>), GamlError>,
 ) -> Result<(T, BufEvent<'buf>), GamlError> {
     match &next.event {
-        Event::Start(e) => {
-            if e.name().as_ref() == tag_name {
+        Event::Start(bytes) => {
+            if bytes.name().as_ref() == tag_name {
                 wrapped_constructor(next)
             } else {
                 Err(GamlError::new(&format!(
                     "Unexpected start tag: {:?}",
-                    std::str::from_utf8(e.name().as_ref())
+                    std::str::from_utf8(bytes.name().as_ref())
                 )))
             }
         }
@@ -461,12 +461,12 @@ fn read_opt_elem_core<'buf, T, Reader>(
     next: BufEvent<'buf>,
     reader: &mut Reader,
     next_non_ws: &mut dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<BufEvent<'buf>, GamlError>,
-    wrapped_constructor: SeqElemConstructor<'_, 'buf, Reader, T>,
+    wrapped_constructor: ElemConstructorCore<'_, 'buf, Reader, T>,
 ) -> Result<(Option<T>, BufEvent<'buf>), GamlError> {
     let next = next_non_ws(next, reader)?;
     match &next.event {
-        Event::Start(e) => {
-            if e.name().as_ref() == tag_name {
+        Event::Start(bytes) => {
+            if bytes.name().as_ref() == tag_name {
                 let (elem, next) = wrapped_constructor(next, reader)?;
                 Ok((Some(elem), next))
             } else {
@@ -477,12 +477,12 @@ fn read_opt_elem_core<'buf, T, Reader>(
     }
 }
 
-fn read_seq<'buf, T, Reader>(
+fn read_sequence_core<'buf, T, Reader>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     reader: &mut Reader,
     next_non_ws: &mut dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<BufEvent<'buf>, GamlError>,
-    wrapped_constructor: SeqElemConstructor<'_, 'buf, Reader, T>,
+    wrapped_constructor: ElemConstructorCore<'_, 'buf, Reader, T>,
 ) -> Result<(Vec<T>, BufEvent<'buf>), GamlError> {
     let mut next = next_non_ws(next, reader)?;
     let mut ret = vec![];

@@ -13,49 +13,49 @@ use crate::{
 use std::{collections::HashMap, error::Error, path::Path, vec};
 
 impl TypeName for Experiment {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "experiment"
     }
 }
 
 impl TypeName for Trace {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "trace"
     }
 }
 
 impl TypeName for Coordinates {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "coordinates"
     }
 }
 
 impl TypeName for Xdata {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "Xdata"
     }
 }
 
 impl TypeName for AltXdata {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "altXdata"
     }
 }
 
 impl TypeName for Ydata {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "Ydata"
     }
 }
 
 impl TypeName for Values {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "values"
     }
 }
 
 impl TypeName for Peaktable {
-    fn display_type_name() -> &'static str {
+    fn display_name() -> &'static str {
         "peaktable"
     }
 }

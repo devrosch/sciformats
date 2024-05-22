@@ -190,10 +190,12 @@ impl Experiment {
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
         let (datetime, next) = read_opt_elem(b"collectdate", next, &mut reader, &Collectdate::new)?;
-        let collectdate = match datetime {
-            None => None,
-            Some(dt) => Some(DateTime::parse_from_rfc3339(&dt.value)?),
-        };
+        let collectdate = datetime
+            .map(|dt| {
+                DateTime::parse_from_rfc3339(&dt.value)
+                    .map_err(|e| GamlError::from_source(e, "Error parsing date/time."))
+            })
+            .transpose()?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         drop(reader);
         let (traces, next) = read_sequence_rc(b"trace", next, Rc::clone(&reader_ref), &Trace::new)?;
@@ -298,7 +300,7 @@ impl Trace {
         let start = read_start(Self::TAG, &reader, &next)?;
         let name = start.get_opt_attr("name");
         let technique =
-            start.parse_req_attr("technique", &Technique::from_str, Trace::display_name())?;
+            start.parse_req_attr("technique", &Technique::from_str, Self::display_name())?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
@@ -615,13 +617,13 @@ impl Values {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let format = start.parse_req_attr("format", &Format::from_str, Values::display_name())?;
+        let format = start.parse_req_attr("format", &Format::from_str, Self::display_name())?;
         let byteorder =
-            start.parse_req_attr("byteorder", &Byteorder::from_str, Values::display_name())?;
+            start.parse_req_attr("byteorder", &Byteorder::from_str, Self::display_name())?;
         let numvalues = start.parse_opt_attr(
             "numvalues",
             &|v: &str| v.parse::<u64>(),
-            Values::display_name(),
+            Self::display_name(),
         )?;
 
         // skip content
@@ -987,10 +989,7 @@ impl Peak {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let number_str = start.get_req_attr("number")?;
-        let number = number_str.parse::<u64>().map_err(|e| {
-            GamlError::from_source(e, format!("Illegal peak number attribute: {}", number_str))
-        })?;
+        let number = start.parse_req_attr("number", &|v| v.parse::<u64>(), Self::display_name())?;
         if number == 0 {
             // only strictly positive peak numbers allowed by schema
             return Err(GamlError::new("Illegal peak number: 0"));

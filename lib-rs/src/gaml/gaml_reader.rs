@@ -60,6 +60,12 @@ impl TypeName for Peaktable {
     }
 }
 
+impl TypeName for Peak {
+    fn display_name() -> &'static str {
+        "peak"
+    }
+}
+
 pub struct GamlReader {
     path: String,
     file: Gaml,

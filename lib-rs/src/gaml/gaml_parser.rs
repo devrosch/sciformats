@@ -499,26 +499,31 @@ impl Coordinates {
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     ) -> Result<(Self, BufEvent<'_>), GamlError> {
-        let mut reader = reader_ref.borrow_mut();
-
         // attributes
-        let start = read_start(Self::TAG, &reader, &next)?;
-        let units = start.parse_req_attr("units", &Units::from_str, Coordinates::display_name())?;
-        let label = start.get_opt_attr("label");
-        let linkid = start.get_opt_attr("linkid");
-        let valueorder = start.parse_opt_attr(
-            "valueorder",
-            &Valueorder::from_str,
-            Coordinates::display_name(),
+        let (
+            DataAttributes {
+                units,
+                label,
+                linkid,
+                valueorder,
+            },
+            next,
+        ) = read_data_attributes(
+            Self::TAG,
+            Self::display_name(),
+            Rc::clone(&reader_ref),
+            next,
         )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, next.buf)?;
-        let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
-        let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        drop(reader);
-        let (values, next) =
-            read_req_elem_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;
+        let (
+            DataElements {
+                links,
+                parameters,
+                values,
+            },
+            next,
+        ) = read_data_elements(Rc::clone(&reader_ref), next)?;
 
         let next = consume_end_rc(Self::TAG, Rc::clone(&reader_ref), next)?;
 
@@ -642,13 +647,13 @@ impl Values {
     pub fn get_data(&self) -> Result<Vec<f64>, GamlError> {
         let mut reader = self.reader_ref.borrow_mut();
 
-        // read value bytes into owned buffer to allow quickxml deserialization; when using reader directly,
-        // quickxml returns an error when it encounters a closing element after the value text
-        // todo: try and make more efficient
         let start = self.value_start_pos;
         let end = self.value_end_pos;
         let input = reader.get_mut();
         input.seek(SeekFrom::Start(start))?;
+        // Read value bytes into owned buffer to allow quickxml deserialization. When using reader directly,
+        // quickxml returns an error when it encounters a closing element after the value text.
+        // Is it possible to make this more efficient and still remove possibly interspresed comments?
         let mut input_buffer = vec![0u8; (end - start) as usize];
         input.read_exact(&mut input_buffer)?;
         let mut reader = Reader::from_reader(Cursor::new(input_buffer));
@@ -743,7 +748,6 @@ pub struct Xdata {
     pub y_data: Vec<Ydata>,
 }
 
-// todo: reduce code duplication w.r.t. coordinates
 impl Xdata {
     const TAG: &'static [u8] = b"Xdata";
 
@@ -751,23 +755,31 @@ impl Xdata {
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     ) -> Result<(Self, BufEvent<'_>), GamlError> {
-        let mut reader = reader_ref.borrow_mut();
-
         // attributes
-        let start = read_start(Self::TAG, &reader, &next)?;
-        let units = start.parse_req_attr("units", &Units::from_str, Xdata::display_name())?;
-        let label = start.get_opt_attr("label");
-        let linkid = start.get_opt_attr("linkid");
-        let valueorder =
-            start.parse_opt_attr("valueorder", &Valueorder::from_str, Xdata::display_name())?;
+        let (
+            DataAttributes {
+                units,
+                label,
+                linkid,
+                valueorder,
+            },
+            next,
+        ) = read_data_attributes(
+            Self::TAG,
+            Self::display_name(),
+            Rc::clone(&reader_ref),
+            next,
+        )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, next.buf)?;
-        let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
-        let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        drop(reader);
-        let (values, next) =
-            read_req_elem_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;
+        let (
+            DataElements {
+                links,
+                parameters,
+                values,
+            },
+            next,
+        ) = read_data_elements(Rc::clone(&reader_ref), next)?;
         let (alt_x_data, next) =
             read_sequence_rc(b"altXdata", next, Rc::clone(&reader_ref), &AltXdata::new)?;
         let (y_data, next) = read_sequence_rc(b"Ydata", next, Rc::clone(&reader_ref), &Ydata::new)?;
@@ -794,7 +806,6 @@ impl Xdata {
     }
 }
 
-// todo: reduce code duplication w.r.t. Xdata
 #[derive(Debug)]
 pub struct AltXdata {
     // Attributes
@@ -808,7 +819,6 @@ pub struct AltXdata {
     pub values: Values,
 }
 
-// todo: reduce code duplication w.r.t. Xdata
 impl AltXdata {
     const TAG: &'static [u8] = b"altXdata";
 
@@ -816,26 +826,31 @@ impl AltXdata {
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     ) -> Result<(Self, BufEvent<'_>), GamlError> {
-        let mut reader = reader_ref.borrow_mut();
-
         // attributes
-        let start = read_start(Self::TAG, &reader, &next)?;
-        let units = start.parse_req_attr("units", &Units::from_str, AltXdata::display_name())?;
-        let label = start.get_opt_attr("label");
-        let linkid = start.get_opt_attr("linkid");
-        let valueorder = start.parse_opt_attr(
-            "valueorder",
-            &Valueorder::from_str,
-            AltXdata::display_name(),
+        let (
+            DataAttributes {
+                units,
+                label,
+                linkid,
+                valueorder,
+            },
+            next,
+        ) = read_data_attributes(
+            Self::TAG,
+            Self::display_name(),
+            Rc::clone(&reader_ref),
+            next,
         )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, next.buf)?;
-        let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
-        let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        drop(reader);
-        let (values, next) =
-            read_req_elem_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;
+        let (
+            DataElements {
+                links,
+                parameters,
+                values,
+            },
+            next,
+        ) = read_data_elements(Rc::clone(&reader_ref), next)?;
 
         let next = consume_end_rc(Self::TAG, Rc::clone(&reader_ref), next)?;
 
@@ -854,7 +869,6 @@ impl AltXdata {
     }
 }
 
-// todo: reduce code duplication w.r.t. Xdata
 #[derive(Debug)]
 pub struct Ydata {
     // Attributes
@@ -866,7 +880,6 @@ pub struct Ydata {
     pub peaktables: Vec<Peaktable>,
 }
 
-// todo: reduce code duplication w.r.t. Xdata
 impl Ydata {
     const TAG: &'static [u8] = b"Ydata";
 
@@ -874,19 +887,23 @@ impl Ydata {
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     ) -> Result<(Self, BufEvent<'_>), GamlError> {
-        let mut reader = reader_ref.borrow_mut();
-
         // attributes
-        let start = read_start(Self::TAG, &reader, &next)?;
-        let units = start.parse_req_attr("units", &Units::from_str, Ydata::display_name())?;
-        let label = start.get_opt_attr("label");
+        let (DataAttributes { units, label, .. }, next) = read_data_attributes(
+            Self::TAG,
+            Self::display_name(),
+            Rc::clone(&reader_ref),
+            next,
+        )?;
 
         // nested elements
-        let next = skip_whitespace(&mut reader, next.buf)?;
-        let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
-        drop(reader);
-        let (values, next) =
-            read_req_elem_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;
+        let (
+            DataElements {
+                links: _,
+                parameters,
+                values,
+            },
+            next,
+        ) = read_data_elements(Rc::clone(&reader_ref), next)?;
         let (peaktables, next) =
             read_sequence_rc(b"peaktable", next, Rc::clone(&reader_ref), &Peaktable::new)?;
 
@@ -1037,7 +1054,6 @@ impl Baseline {
         let (start_y_value, next) = read_req_elem_value_f64(b"startYvalue", next, &mut reader)?;
         let (end_x_value, next) = read_req_elem_value_f64(b"endXvalue", next, &mut reader)?;
         let (end_y_value, next) = read_req_elem_value_f64(b"endYvalue", next, &mut reader)?;
-
         drop(reader);
         let (basecurve, next) =
             read_opt_elem_rc(b"basecurve", next, Rc::clone(&reader_ref), &Basecurve::new)?;
@@ -1113,6 +1129,10 @@ impl Basecurve {
     }
 }
 
+// -------------------------------------------------------------
+// private
+// -------------------------------------------------------------
+
 fn read_base_values<'buf>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
@@ -1129,6 +1149,69 @@ fn read_base_values<'buf>(
     let next = consume_end_rc(tag_name, Rc::clone(&reader_ref), next)?;
 
     Ok((values, next))
+}
+
+#[derive(Debug)]
+struct DataAttributes {
+    pub units: Units,
+    pub label: Option<String>,
+    pub linkid: Option<String>,
+    pub valueorder: Option<Valueorder>,
+}
+
+fn read_data_attributes<'buf>(
+    tag_name: &[u8],
+    display_name: &str,
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+    next: BufEvent<'buf>,
+) -> Result<(DataAttributes, BufEvent<'buf>), GamlError> {
+    let mut reader = reader_ref.borrow_mut();
+    // attributes
+    let start = read_start(tag_name, &reader, &next)?;
+    let units = start.parse_req_attr("units", &Units::from_str, display_name)?;
+    let label = start.get_opt_attr("label");
+    let linkid = start.get_opt_attr("linkid");
+    let valueorder = start.parse_opt_attr("valueorder", &Valueorder::from_str, display_name)?;
+
+    let next = skip_whitespace(&mut reader, next.buf)?;
+
+    Ok((
+        DataAttributes {
+            units,
+            label,
+            linkid,
+            valueorder,
+        },
+        next,
+    ))
+}
+
+#[derive(Debug)]
+struct DataElements {
+    pub links: Vec<Link>,
+    pub parameters: Vec<Parameter>,
+    pub values: Values,
+}
+
+fn read_data_elements(
+    reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
+    next: BufEvent<'_>,
+) -> Result<(DataElements, BufEvent<'_>), GamlError> {
+    let mut reader = reader_ref.borrow_mut();
+
+    let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
+    let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
+    drop(reader);
+    let (values, next) = read_req_elem_rc(b"values", next, Rc::clone(&reader_ref), &Values::new)?;
+
+    Ok((
+        DataElements {
+            links,
+            parameters,
+            values,
+        },
+        next,
+    ))
 }
 
 #[cfg(test)]

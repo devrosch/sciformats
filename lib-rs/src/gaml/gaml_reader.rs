@@ -1,9 +1,8 @@
 use super::{
     gaml_parser::{
-        AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
-        Xdata, Ydata,
+        Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values, Xdata,
     },
-    gaml_utils::{read_elem, TypeName},
+    gaml_utils::read_elem,
     GamlError,
 };
 use crate::{
@@ -11,60 +10,6 @@ use crate::{
     utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path, vec};
-
-impl TypeName for Experiment {
-    fn display_name() -> &'static str {
-        "experiment"
-    }
-}
-
-impl TypeName for Trace {
-    fn display_name() -> &'static str {
-        "trace"
-    }
-}
-
-impl TypeName for Coordinates {
-    fn display_name() -> &'static str {
-        "coordinates"
-    }
-}
-
-impl TypeName for Xdata {
-    fn display_name() -> &'static str {
-        "Xdata"
-    }
-}
-
-impl TypeName for AltXdata {
-    fn display_name() -> &'static str {
-        "altXdata"
-    }
-}
-
-impl TypeName for Ydata {
-    fn display_name() -> &'static str {
-        "Ydata"
-    }
-}
-
-impl TypeName for Values {
-    fn display_name() -> &'static str {
-        "values"
-    }
-}
-
-impl TypeName for Peaktable {
-    fn display_name() -> &'static str {
-        "peaktable"
-    }
-}
-
-impl TypeName for Peak {
-    fn display_name() -> &'static str {
-        "peak"
-    }
-}
 
 pub struct GamlReader {
     path: String,
@@ -77,13 +22,13 @@ impl Reader for GamlReader {
         match &path_indices[..] {
             [] => Ok(self.map_root()?), // "", "/"
             [exp_idx, tail @ ..] => {
-                let experiment = read_elem(&self.file.experiments, *exp_idx)?;
+                let experiment = read_elem(&self.file.experiments, *exp_idx, "experiment")?;
                 if tail.is_empty() {
                     return Ok(self.map_experiment(experiment, *exp_idx)?);
                 }
 
                 let (trace_idx, tail) = tail.split_first().unwrap();
-                let trace = read_elem(&experiment.traces, *trace_idx)?;
+                let trace = read_elem(&experiment.traces, *trace_idx, "trace")?;
                 if tail.is_empty() {
                     return Ok(self.map_trace(trace, *trace_idx)?);
                 }
@@ -91,7 +36,7 @@ impl Reader for GamlReader {
                 let (xy_data_idx, tail) = tail.split_first().unwrap();
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
                     Self::find_xy_indices(trace, *xy_data_idx)?;
-                let x_data = read_elem(&trace.x_data, x_data_idx)?;
+                let x_data = read_elem(&trace.x_data, x_data_idx, "Xdata")?;
                 if tail.is_empty() {
                     let coordinates = trace.coordinates.as_slice();
                     match alt_x_data_idx {
@@ -117,8 +62,8 @@ impl Reader for GamlReader {
                 }
 
                 let (peaktable_idx, tail) = tail.split_first().unwrap();
-                let y_data = read_elem(&x_data.y_data, y_data_idx)?;
-                let peaktable = read_elem(&y_data.peaktables, *peaktable_idx)?;
+                let y_data = read_elem(&x_data.y_data, y_data_idx, "Ydata")?;
+                let peaktable = read_elem(&y_data.peaktables, *peaktable_idx, "peaktable")?;
                 if tail.is_empty() {
                     return Ok(self.map_peaktable(peaktable, *peaktable_idx)?);
                 }
@@ -840,6 +785,7 @@ mod tests {
     use crate::gaml::gaml_parser::Technique;
     use crate::gaml::gaml_parser::Valueorder;
     use crate::gaml::gaml_parser::Values;
+    use crate::gaml::gaml_parser::Ydata;
     use chrono::DateTime;
 
     fn create_values_f32(data: &[f32]) -> Values {

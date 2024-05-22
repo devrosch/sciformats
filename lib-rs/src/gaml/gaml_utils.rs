@@ -17,15 +17,14 @@ impl<'buf> BufEvent<'buf> {
     }
 }
 
-pub(super) trait TypeName {
-    fn display_name() -> &'static str;
-}
-
-pub(super) fn read_elem<T: TypeName>(slice: &[T], index: usize) -> Result<&T, GamlError> {
+pub(super) fn read_elem<'a, T>(
+    slice: &'a [T],
+    index: usize,
+    context: &str,
+) -> Result<&'a T, GamlError> {
     slice.get(index).ok_or(GamlError::new(&format!(
         "Illegal {} index: {}",
-        T::display_name(),
-        index
+        context, index
     )))
 }
 

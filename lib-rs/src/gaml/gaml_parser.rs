@@ -2,7 +2,7 @@ use super::gaml_utils::{
     consume_end, consume_end_rc, next_non_whitespace, read_empty, read_opt_elem, read_opt_elem_rc,
     read_req_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start,
     read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl, BufEvent,
-    TypeName, XmlTagStart,
+    XmlTagStart,
 };
 use super::{GamlError, SeekBufRead};
 use crate::api::Parser;
@@ -299,8 +299,11 @@ impl Trace {
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
         let name = start.get_opt_attr("name");
-        let technique =
-            start.parse_req_attr("technique", &Technique::from_str, Self::display_name())?;
+        let technique = start.parse_req_attr(
+            "technique",
+            &Technique::from_str,
+            str::from_utf8(Self::TAG).unwrap_or_default(),
+        )?;
 
         // nested elements
         let next = skip_whitespace(&mut reader, next.buf)?;
@@ -512,7 +515,7 @@ impl Coordinates {
             next,
         ) = read_data_attributes(
             Self::TAG,
-            Self::display_name(),
+            str::from_utf8(Self::TAG).unwrap_or_default(),
             Rc::clone(&reader_ref),
             next,
         )?;
@@ -617,13 +620,20 @@ impl Values {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let format = start.parse_req_attr("format", &Format::from_str, Self::display_name())?;
-        let byteorder =
-            start.parse_req_attr("byteorder", &Byteorder::from_str, Self::display_name())?;
+        let format = start.parse_req_attr(
+            "format",
+            &Format::from_str,
+            str::from_utf8(Self::TAG).unwrap_or_default(),
+        )?;
+        let byteorder = start.parse_req_attr(
+            "byteorder",
+            &Byteorder::from_str,
+            str::from_utf8(Self::TAG).unwrap_or_default(),
+        )?;
         let numvalues = start.parse_opt_attr(
             "numvalues",
             &|v: &str| v.parse::<u64>(),
-            Self::display_name(),
+            str::from_utf8(Self::TAG).unwrap_or_default(),
         )?;
 
         // skip content
@@ -768,7 +778,7 @@ impl Xdata {
             next,
         ) = read_data_attributes(
             Self::TAG,
-            Self::display_name(),
+            str::from_utf8(Self::TAG).unwrap_or_default(),
             Rc::clone(&reader_ref),
             next,
         )?;
@@ -839,7 +849,7 @@ impl AltXdata {
             next,
         ) = read_data_attributes(
             Self::TAG,
-            Self::display_name(),
+            str::from_utf8(Self::TAG).unwrap_or_default(),
             Rc::clone(&reader_ref),
             next,
         )?;
@@ -892,7 +902,7 @@ impl Ydata {
         // attributes
         let (DataAttributes { units, label, .. }, next) = read_data_attributes(
             Self::TAG,
-            Self::display_name(),
+            str::from_utf8(Self::TAG).unwrap_or_default(),
             Rc::clone(&reader_ref),
             next,
         )?;
@@ -989,7 +999,11 @@ impl Peak {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
-        let number = start.parse_req_attr("number", &|v| v.parse::<u64>(), Self::display_name())?;
+        let number = start.parse_req_attr(
+            "number",
+            &|v| v.parse::<u64>(),
+            str::from_utf8(Self::TAG).unwrap_or_default(),
+        )?;
         if number == 0 {
             // only strictly positive peak numbers allowed by schema
             return Err(GamlError::new("Illegal peak number: 0"));

@@ -2,7 +2,7 @@ use super::{
     gaml_parser::{
         Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values, Xdata,
     },
-    gaml_utils::read_elem,
+    gaml_utils::read_item_at_index,
     GamlError,
 };
 use crate::{
@@ -22,13 +22,14 @@ impl Reader for GamlReader {
         match &path_indices[..] {
             [] => Ok(self.map_root()?), // "", "/"
             [exp_idx, tail @ ..] => {
-                let experiment = read_elem(&self.file.experiments, *exp_idx, "experiment")?;
+                let experiment =
+                    read_item_at_index(&self.file.experiments, *exp_idx, "experiment")?;
                 if tail.is_empty() {
                     return Ok(self.map_experiment(experiment, *exp_idx)?);
                 }
 
                 let (trace_idx, tail) = tail.split_first().unwrap();
-                let trace = read_elem(&experiment.traces, *trace_idx, "trace")?;
+                let trace = read_item_at_index(&experiment.traces, *trace_idx, "trace")?;
                 if tail.is_empty() {
                     return Ok(self.map_trace(trace, *trace_idx)?);
                 }
@@ -36,7 +37,7 @@ impl Reader for GamlReader {
                 let (xy_data_idx, tail) = tail.split_first().unwrap();
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
                     Self::find_xy_indices(trace, *xy_data_idx)?;
-                let x_data = read_elem(&trace.x_data, x_data_idx, "Xdata")?;
+                let x_data = read_item_at_index(&trace.x_data, x_data_idx, "Xdata")?;
                 if tail.is_empty() {
                     let coordinates = trace.coordinates.as_slice();
                     match alt_x_data_idx {
@@ -62,8 +63,9 @@ impl Reader for GamlReader {
                 }
 
                 let (peaktable_idx, tail) = tail.split_first().unwrap();
-                let y_data = read_elem(&x_data.y_data, y_data_idx, "Ydata")?;
-                let peaktable = read_elem(&y_data.peaktables, *peaktable_idx, "peaktable")?;
+                let y_data = read_item_at_index(&x_data.y_data, y_data_idx, "Ydata")?;
+                let peaktable =
+                    read_item_at_index(&y_data.peaktables, *peaktable_idx, "peaktable")?;
                 if tail.is_empty() {
                     return Ok(self.map_peaktable(peaktable, *peaktable_idx)?);
                 }

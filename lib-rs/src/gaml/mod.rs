@@ -1,16 +1,10 @@
-use std::{
-    error::Error,
-    fmt,
-    io::{BufRead, Seek},
-};
+use crate::xml_utils::SfXmlError;
+use std::{error::Error, fmt};
 
 pub mod gaml_parser;
 pub mod gaml_reader;
 pub mod gaml_scanner;
 pub mod gaml_utils;
-
-trait SeekBufRead: Seek + BufRead {}
-impl<T: Seek + BufRead> SeekBufRead for T {}
 
 #[derive(Debug)]
 pub struct GamlError {
@@ -48,12 +42,20 @@ impl fmt::Display for GamlError {
 
 impl From<quick_xml::Error> for GamlError {
     fn from(value: quick_xml::Error) -> Self {
-        Self::from_source(value, "Error parsing GAML.")
+        Self::from_source(value, "XML error parsing GAML.")
     }
 }
 
 impl From<std::io::Error> for GamlError {
     fn from(value: std::io::Error) -> Self {
-        Self::from_source(value, "I/O error when reading GAML.")
+        Self::from_source(value, "I/O error parsing GAML.")
+    }
+}
+
+impl From<SfXmlError> for GamlError {
+    fn from(value: SfXmlError) -> Self {
+        // remove SfXmlError from error nesting
+        let (message, source) = value.into_inner();
+        Self { source, message }
     }
 }

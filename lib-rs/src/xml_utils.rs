@@ -1,20 +1,10 @@
+use crate::common::SeekBufRead;
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,
     Reader,
 };
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    error::Error,
-    fmt,
-    io::{BufRead, Seek},
-    rc::Rc,
-    str, vec,
-};
-
-pub(crate) trait SeekBufRead: Seek + BufRead {}
-impl<T: Seek + BufRead> SeekBufRead for T {}
+use std::{cell::RefCell, collections::HashMap, error::Error, fmt, io::BufRead, rc::Rc, str, vec};
 
 #[derive(Debug)]
 pub struct SfXmlError {

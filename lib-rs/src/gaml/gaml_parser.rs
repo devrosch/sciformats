@@ -1,10 +1,11 @@
 use super::GamlError;
 use crate::api::Parser;
+use crate::common::SeekBufRead;
 use crate::xml_utils::{
     consume_end, consume_end_rc, next_non_whitespace, read_empty, read_opt_elem, read_opt_elem_rc,
     read_req_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start,
     read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl, BufEvent,
-    SeekBufRead, XmlTagStart,
+    XmlTagStart,
 };
 use base64::prelude::*;
 use chrono::{DateTime, FixedOffset};

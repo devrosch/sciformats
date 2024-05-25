@@ -213,10 +213,10 @@ impl GamlReader {
                     &link.linkref,
                 ));
             }
-            let mut coordinate_parameters = map_gaml_parameters(&coordinate.parameters);
-            for param in &mut coordinate_parameters {
-                param.key.insert_str(0, &format!("Coordinate {i} "));
-            }
+            let coordinate_parameters = map_gaml_parameters_with_prefix(
+                &format!("Coordinate {i} "),
+                &coordinate.parameters,
+            );
             parameters.extend(coordinate_parameters);
             parameters.extend(map_values_attributes(
                 &format!("Coordinate {i} values"),
@@ -420,15 +420,9 @@ impl GamlReader {
         for link in &x_data.links {
             parameters.push(Parameter::from_str_str("Xdata link linkref", &link.linkref));
         }
-        let mut x_parameters = map_gaml_parameters(&x_data.parameters);
-        for param in &mut x_parameters {
-            param.key.insert_str(0, "Xdata ");
-        }
+        let x_parameters = map_gaml_parameters_with_prefix("Xdata ", &x_data.parameters);
         parameters.extend(x_parameters);
-        let mut y_parameters = map_gaml_parameters(&y_data.parameters);
-        for param in &mut y_parameters {
-            param.key.insert_str(0, "Ydata ");
-        }
+        let y_parameters = map_gaml_parameters_with_prefix("Ydata ", &y_data.parameters);
         parameters.extend(y_parameters);
         parameters.extend(map_values_attributes("Xdata values", &x_data.values));
         parameters.extend(map_values_attributes("Ydata values", &y_data.values));
@@ -521,15 +515,9 @@ impl GamlReader {
                 &link.linkref,
             ));
         }
-        let mut x_parameters = map_gaml_parameters(&alt_x_data.parameters);
-        for param in &mut x_parameters {
-            param.key.insert_str(0, "AltXdata ");
-        }
+        let x_parameters = map_gaml_parameters_with_prefix("AltXdata ", &alt_x_data.parameters);
         parameters.extend(x_parameters);
-        let mut y_parameters = map_gaml_parameters(&y_data.parameters);
-        for param in &mut y_parameters {
-            param.key.insert_str(0, "Ydata ");
-        }
+        let y_parameters = map_gaml_parameters_with_prefix("Ydata ", &y_data.parameters);
         parameters.extend(y_parameters);
         parameters.extend(map_values_attributes("AltXdata values", &alt_x_data.values));
         parameters.extend(map_values_attributes("Ydata values", &y_data.values));
@@ -574,18 +562,25 @@ impl GamlReader {
         let mut parameters = vec![];
         // peaktable attributes and parameters
         if let Some(name) = &peaktable.name {
-            parameters.push(Parameter::from_str_str("Name", name));
+            parameters.push(Parameter::from_str_str("Peaktable name", name));
         }
-        parameters.extend(map_gaml_parameters(&peaktable.parameters));
+        let peaktable_params = map_gaml_parameters_with_prefix("Peaktable ", &peaktable.parameters);
+        parameters.extend(peaktable_params);
         // peak parameters
         for (i, peak) in peaktable.peaks.iter().enumerate() {
-            let mut peak_params = map_gaml_parameters(&peaktable.parameters);
-            for param in &mut peak_params {
-                param
-                    .key
-                    .insert_str(0, &format!("Peak {}, number {}, ", i, peak.number));
-            }
+            let peak_params = map_gaml_parameters_with_prefix(
+                &format!("Peak {} number {} ", i, peak.number),
+                &peak.parameters,
+            );
             parameters.extend(peak_params);
+            // baseline parameters
+            if let Some(baseline) = &peak.baseline {
+                let baseline_params = map_gaml_parameters_with_prefix(
+                    &format!("Peak {} number {} baseline ", i, peak.number),
+                    &baseline.parameters,
+                );
+                parameters.extend(baseline_params);
+            }
         }
 
         // map peaks as table
@@ -745,6 +740,17 @@ fn map_gaml_parameters(raw_params: &[super::gaml_parser::Parameter]) -> Vec<crat
     }
 
     parameters
+}
+
+fn map_gaml_parameters_with_prefix(
+    prefix: &str,
+    raw_params: &[super::gaml_parser::Parameter],
+) -> Vec<crate::api::Parameter> {
+    let mut params = map_gaml_parameters(raw_params);
+    for param in &mut params {
+        param.key.insert_str(0, prefix);
+    }
+    params
 }
 
 fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parameter> {
@@ -1360,11 +1366,10 @@ mod tests {
 
         assert_eq!(
             &vec![
-                // todo: harmonize naming, capitalization and commas/blanks with other names
-                Parameter::from_str_str("Name", "peaktable name"),
-                Parameter::from_str_str("param 0 name", "param 0 value"),
-                Parameter::from_str_str("Peak 0, number 1, param 0 name", "param 0 value"),
-                Parameter::from_str_str("Peak 1, number 2, param 0 name", "param 0 value"),
+                Parameter::from_str_str("Peaktable name", "peaktable name"),
+                Parameter::from_str_str("Peaktable param 0 name", "param 0 value"),
+                Parameter::from_str_str("Peak 0 number 1 param 0 name", "param 0 value"),
+                Parameter::from_str_str("Peak 1 number 2 param 0 name", "param 0 value"),
             ],
             &peaktable_node.parameters
         );
@@ -1480,7 +1485,13 @@ mod tests {
 
         let peaktable_node = reader.read("/0/0/0/0").unwrap();
         assert_eq!("Peaktable 0", &peaktable_node.name);
-        assert!(&peaktable_node.parameters.is_empty());
+        assert_eq!(
+            &vec![Parameter::from_str_str(
+                "Peak 0 number 1 baseline param 0 name",
+                "param 0 value"
+            ),],
+            &peaktable_node.parameters
+        );
         assert!(&peaktable_node.data.is_empty());
         assert!(&peaktable_node.metadata.is_empty());
         assert_eq!(
@@ -1518,8 +1529,6 @@ mod tests {
         assert_eq!("Basecurve Peak 0, number 1", &basecurve_node.name);
         assert_eq!(
             &vec![
-                // todo: include baseline parameters
-                // Parameter::from_str_str("param 0 name", "param 0 value"),
                 Parameter::from_str_str("BaseXdata values 0 format", "FLOAT64"),
                 Parameter::from_str_str("BaseXdata values 0 byteorder", "INTEL"),
                 Parameter::from_str_u64("BaseXdata values 0 numvalues", 2),

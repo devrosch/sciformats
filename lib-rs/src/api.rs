@@ -2,8 +2,16 @@ use std::{
     collections::HashMap,
     error::Error,
     fmt::Display,
-    io::{Read, Seek},
+    io::{BufRead, Read, Seek},
 };
+
+/// Abstraction for any kind of random access input.
+pub trait SeekRead: Seek + Read {}
+impl<T: Seek + Read> SeekRead for T {}
+
+/// Abstraction for any kind of buffered text input with lines and random access.
+pub(crate) trait SeekBufRead: Seek + BufRead {}
+impl<T: Seek + BufRead> SeekBufRead for T {}
 
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {

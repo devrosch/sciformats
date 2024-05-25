@@ -1,6 +1,5 @@
 use super::GamlError;
-use crate::api::Parser;
-use crate::common::SeekBufRead;
+use crate::api::{Parser, SeekBufRead};
 use crate::xml_utils::{
     consume_end, consume_end_rc, next_non_whitespace, read_empty, read_opt_elem, read_opt_elem_rc,
     read_req_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start,
@@ -666,7 +665,7 @@ impl Values {
         input.seek(SeekFrom::Start(start))?;
         // Read value bytes into owned buffer to allow quickxml deserialization. When using reader directly,
         // quickxml returns an error when it encounters a closing element after the value text.
-        // Is it possible to make this more efficient and still remove possibly interspresed comments?
+        // Is it possible to make this more efficient and still remove possibly interspersed comments?
         let mut input_buffer = vec![0u8; (end - start) as usize];
         input.read_exact(&mut input_buffer)?;
         let mut reader = Reader::from_reader(Cursor::new(input_buffer));

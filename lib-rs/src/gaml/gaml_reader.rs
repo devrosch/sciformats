@@ -2,7 +2,6 @@ use super::{
     gaml_parser::{
         Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values, Xdata,
     },
-    gaml_utils::read_item_at_index,
     GamlError,
 };
 use crate::{
@@ -764,7 +763,7 @@ fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parameter> {
     parameters
 }
 
-pub(super) fn generate_child_node_names<T>(
+fn generate_child_node_names<T>(
     slice: &[T],
     name_generator: &dyn Fn(&T, usize) -> String,
 ) -> Vec<String> {
@@ -773,6 +772,17 @@ pub(super) fn generate_child_node_names<T>(
         .enumerate()
         .map(|(i, item)| name_generator(item, i))
         .collect()
+}
+
+fn read_item_at_index<'a, T>(
+    slice: &'a [T],
+    index: usize,
+    context: &str,
+) -> Result<&'a T, GamlError> {
+    slice.get(index).ok_or(GamlError::new(&format!(
+        "Illegal {} index: {}",
+        context, index
+    )))
 }
 
 #[cfg(test)]

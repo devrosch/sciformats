@@ -1,21 +1,13 @@
 use crate::andi::andi_scanner::AndiScanner;
-use crate::api::{Reader, Scanner};
+use crate::api::{Reader, Scanner, SeekRead};
 use crate::gaml::gaml_scanner::GamlScanner;
 use crate::spc::spc_scanner::SpcScanner;
 use std::fmt;
-use std::io::{BufRead, BufReader, SeekFrom};
+use std::io::{BufReader, SeekFrom};
 use std::{
     error::Error,
     io::{Read, Seek},
 };
-
-/// Abstraction for any kind of random access input.
-pub trait SeekRead: Seek + Read {}
-impl<T: Seek + Read> SeekRead for T {}
-
-/// Abstraction for any kind of buffered text input with lines and random access.
-pub(crate) trait SeekBufRead: Seek + BufRead {}
-impl<T: Seek + BufRead> SeekBufRead for T {}
 
 /// A generic error.
 #[derive(Debug)]
@@ -115,10 +107,6 @@ impl Default for ScannerRepository {
         ScannerRepository::new(vec![])
     }
 }
-
-// -------------------------------------------------
-// Wrappers
-// -------------------------------------------------
 
 /// A buffered implementation of the SeekRead trait.
 ///

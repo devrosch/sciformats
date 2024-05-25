@@ -1,4 +1,4 @@
-use crate::common::SeekBufRead;
+use crate::api::SeekBufRead;
 use quick_xml::{
     events::{BytesStart, Event},
     name::QName,

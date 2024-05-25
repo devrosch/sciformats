@@ -1,8 +1,8 @@
 pub mod andi;
 pub mod spc;
 
-use crate::api::{Node, Reader};
-use crate::common::{BufSeekRead, ScannerRepository, SeekRead};
+use crate::api::{Node, Reader, SeekRead};
+use crate::common::{BufSeekRead, ScannerRepository};
 use js_sys::Uint8Array;
 use std::error::Error;
 use std::io::SeekFrom;

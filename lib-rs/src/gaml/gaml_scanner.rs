@@ -1,7 +1,6 @@
 use super::{gaml_parser::GamlParser, gaml_reader::GamlReader};
 use crate::{
-    api::{Parser, Reader, Scanner},
-    common::SeekRead,
+    api::{Parser, Reader, Scanner, SeekRead},
     utils::is_recognized_extension,
 };
 use std::{

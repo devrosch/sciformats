@@ -4,7 +4,6 @@ use std::{error::Error, fmt};
 pub mod gaml_parser;
 pub mod gaml_reader;
 pub mod gaml_scanner;
-pub mod gaml_utils;
 
 #[derive(Debug)]
 pub struct GamlError {

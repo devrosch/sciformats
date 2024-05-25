@@ -181,7 +181,9 @@ impl GamlReader {
         Ok(names)
     }
 
-    fn map_coordinate_parameters(coordinates: &[Coordinates]) -> Result<Vec<Parameter>, GamlError> {
+    fn map_coordinates_attributes(
+        coordinates: &[Coordinates],
+    ) -> Result<Vec<Parameter>, GamlError> {
         let mut parameters = vec![];
         for (i, coordinate) in coordinates.iter().enumerate() {
             parameters.push(Parameter::from_str_str(
@@ -206,18 +208,45 @@ impl GamlReader {
                     valueorder.to_string(),
                 ));
             }
+        }
 
+        Ok(parameters)
+    }
+
+    fn map_coordinates_linkrefs(coordinates: &[Coordinates]) -> Result<Vec<Parameter>, GamlError> {
+        let mut parameters = vec![];
+        for (i, coordinate) in coordinates.iter().enumerate() {
             for link in &coordinate.links {
                 parameters.push(Parameter::from_str_str(
                     format!("Coordinate {i} link linkref"),
                     &link.linkref,
                 ));
             }
+        }
+
+        Ok(parameters)
+    }
+
+    fn map_coordinates_parameters(
+        coordinates: &[Coordinates],
+    ) -> Result<Vec<Parameter>, GamlError> {
+        let mut parameters = vec![];
+        for (i, coordinate) in coordinates.iter().enumerate() {
             let coordinate_parameters = map_gaml_parameters_with_prefix(
                 &format!("Coordinate {i} "),
                 &coordinate.parameters,
             );
             parameters.extend(coordinate_parameters);
+        }
+
+        Ok(parameters)
+    }
+
+    fn map_coordinates_values_attributes(
+        coordinates: &[Coordinates],
+    ) -> Result<Vec<Parameter>, GamlError> {
+        let mut parameters = vec![];
+        for (i, coordinate) in coordinates.iter().enumerate() {
             parameters.extend(map_values_attributes(
                 &format!("Coordinate {i} values"),
                 &coordinate.values,
@@ -414,18 +443,24 @@ impl GamlReader {
         if let Some(label) = &y_data.label {
             parameters.push(Parameter::from_str_str("Ydata label", label));
         }
-        // coordinates
-        parameters.extend(Self::map_coordinate_parameters(coordinates)?);
+        parameters.extend(Self::map_coordinates_attributes(coordinates)?);
         // elements
         for link in &x_data.links {
             parameters.push(Parameter::from_str_str("Xdata link linkref", &link.linkref));
         }
-        let x_parameters = map_gaml_parameters_with_prefix("Xdata ", &x_data.parameters);
-        parameters.extend(x_parameters);
-        let y_parameters = map_gaml_parameters_with_prefix("Ydata ", &y_data.parameters);
-        parameters.extend(y_parameters);
+        parameters.extend(Self::map_coordinates_linkrefs(coordinates)?);
+        parameters.extend(map_gaml_parameters_with_prefix(
+            "Xdata ",
+            &x_data.parameters,
+        ));
+        parameters.extend(map_gaml_parameters_with_prefix(
+            "Ydata ",
+            &y_data.parameters,
+        ));
+        parameters.extend(Self::map_coordinates_parameters(coordinates)?);
         parameters.extend(map_values_attributes("Xdata values", &x_data.values));
         parameters.extend(map_values_attributes("Ydata values", &y_data.values));
+        parameters.extend(Self::map_coordinates_values_attributes(coordinates)?);
 
         let x_values = x_data.values.get_data()?;
         let y_values = y_data.values.get_data()?;
@@ -506,8 +541,7 @@ impl GamlReader {
         if let Some(label) = &y_data.label {
             parameters.push(Parameter::from_str_str("Ydata label", label));
         }
-        // coordinates
-        parameters.extend(Self::map_coordinate_parameters(coordinates)?);
+        parameters.extend(Self::map_coordinates_attributes(coordinates)?);
         // elements
         for link in &alt_x_data.links {
             parameters.push(Parameter::from_str_str(
@@ -515,12 +549,19 @@ impl GamlReader {
                 &link.linkref,
             ));
         }
-        let x_parameters = map_gaml_parameters_with_prefix("AltXdata ", &alt_x_data.parameters);
-        parameters.extend(x_parameters);
-        let y_parameters = map_gaml_parameters_with_prefix("Ydata ", &y_data.parameters);
-        parameters.extend(y_parameters);
+        parameters.extend(Self::map_coordinates_linkrefs(coordinates)?);
+        parameters.extend(map_gaml_parameters_with_prefix(
+            "AltXdata ",
+            &alt_x_data.parameters,
+        ));
+        parameters.extend(map_gaml_parameters_with_prefix(
+            "Ydata ",
+            &y_data.parameters,
+        ));
+        parameters.extend(Self::map_coordinates_parameters(coordinates)?);
         parameters.extend(map_values_attributes("AltXdata values", &alt_x_data.values));
         parameters.extend(map_values_attributes("Ydata values", &y_data.values));
+        parameters.extend(Self::map_coordinates_values_attributes(coordinates)?);
 
         let x_values = alt_x_data.values.get_data()?;
         let y_values = y_data.values.get_data()?;
@@ -1173,6 +1214,7 @@ mod tests {
         );
         assert_eq!(
             &vec![
+                // attributes
                 Parameter::from_str_str("Xdata units", "NANOMETERS"),
                 Parameter::from_str_str("Xdata label", "xdata label"),
                 Parameter::from_str_str("Xdata linkid", "xdata linkid"),
@@ -1183,19 +1225,20 @@ mod tests {
                 Parameter::from_str_str("Coordinate 0 label", "coordinates label"),
                 Parameter::from_str_str("Coordinate 0 linkid", "coordinates"),
                 Parameter::from_str_str("Coordinate 0 valueorder", "UNSPECIFIED"),
-                // todo: rearrange
-                Parameter::from_str_str("Coordinate 0 param 0 name", "param 0 value"),
-                Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
-                Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
-                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+                // parameters
                 Parameter::from_str_str("Xdata param 0 name", "param 0 value"),
                 Parameter::from_str_str("Ydata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Coordinate 0 param 0 name", "param 0 value"),
+                // values attributes
                 Parameter::from_str_str("Xdata values format", "FLOAT64"),
                 Parameter::from_str_str("Xdata values byteorder", "INTEL"),
                 Parameter::from_str_u64("Xdata values numvalues", 3),
                 Parameter::from_str_str("Ydata values format", "FLOAT64"),
                 Parameter::from_str_str("Ydata values byteorder", "INTEL"),
                 Parameter::from_str_u64("Ydata values numvalues", 3),
+                Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
+                Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
+                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
             ],
             &xydata_node_0.parameters
         );
@@ -1236,19 +1279,18 @@ mod tests {
                 Parameter::from_str_str("Coordinate 0 label", "coordinates label"),
                 Parameter::from_str_str("Coordinate 0 linkid", "coordinates"),
                 Parameter::from_str_str("Coordinate 0 valueorder", "UNSPECIFIED"),
-                // todo: rearrange
-                Parameter::from_str_str("Coordinate 0 param 0 name", "param 0 value"),
-                Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
-                Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
-                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
                 Parameter::from_str_str("AltXdata param 0 name", "param 0 value"),
                 Parameter::from_str_str("Ydata param 0 name", "param 0 value"),
+                Parameter::from_str_str("Coordinate 0 param 0 name", "param 0 value"),
                 Parameter::from_str_str("AltXdata values format", "FLOAT64"),
                 Parameter::from_str_str("AltXdata values byteorder", "INTEL"),
                 Parameter::from_str_u64("AltXdata values numvalues", 3),
                 Parameter::from_str_str("Ydata values format", "FLOAT64"),
                 Parameter::from_str_str("Ydata values byteorder", "INTEL"),
                 Parameter::from_str_u64("Ydata values numvalues", 3),
+                Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
+                Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
+                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
             ],
             &xydata_node_1.parameters
         );

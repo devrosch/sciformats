@@ -1,6 +1,7 @@
 use super::{
     gaml_parser::{
-        Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values, Xdata,
+        AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
+        Xdata, Ydata,
     },
     GamlError,
 };
@@ -9,6 +10,74 @@ use crate::{
     utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path, vec};
+
+macro_rules! generate_map_xy_parameters_fn {
+    ($xy_data_type:ty, $xy_type_name:literal, $fn_name:ident) => {
+        fn $fn_name(
+            x_data: &$xy_data_type,
+            y_data: &Ydata,
+            coordinates: &[Coordinates],
+        ) -> Vec<Parameter> {
+            let mut parameters = vec![];
+            // attributes
+            parameters.push(Parameter::from_str_str(
+                &format!("{} {}", $xy_type_name, "units"),
+                x_data.units.to_string(),
+            ));
+            if let Some(label) = &x_data.label {
+                parameters.push(Parameter::from_str_str(
+                    &format!("{} {}", $xy_type_name, "label"),
+                    label,
+                ));
+            }
+            if let Some(linkid) = &x_data.linkid {
+                parameters.push(Parameter::from_str_str(
+                    &format!("{} {}", $xy_type_name, "linkid"),
+                    linkid,
+                ));
+            }
+            if let Some(valueorder) = &x_data.valueorder {
+                parameters.push(Parameter::from_str_str(
+                    &format!("{} {}", $xy_type_name, "valueorder"),
+                    valueorder.to_string(),
+                ));
+            }
+            parameters.push(Parameter::from_str_str(
+                "Ydata units",
+                y_data.units.to_string(),
+            ));
+            if let Some(label) = &y_data.label {
+                parameters.push(Parameter::from_str_str("Ydata label", label));
+            }
+            parameters.extend(map_coordinates_attributes_to_parameters(coordinates));
+            // elements
+            for link in &x_data.links {
+                parameters.push(Parameter::from_str_str(
+                    &format!("{} {}", $xy_type_name, "linkref"),
+                    &link.linkref,
+                ));
+            }
+            parameters.extend(map_coordinates_linkrefs_to_parameters(coordinates));
+            parameters.extend(map_gaml_parameters_with_prefix(
+                &format!("{} ", $xy_type_name),
+                &x_data.parameters,
+            ));
+            parameters.extend(map_gaml_parameters_with_prefix(
+                "Ydata ",
+                &y_data.parameters,
+            ));
+            parameters.extend(map_coordinates_parameters_to_parameters(coordinates));
+            parameters.extend(map_values_attributes(
+                &format!("{} {}", $xy_type_name, "values"),
+                &x_data.values,
+            ));
+            parameters.extend(map_values_attributes("Ydata values", &y_data.values));
+            parameters.extend(map_coordinates_values_attributes_to_parameters(coordinates));
+
+            parameters
+        }
+    };
+}
 
 pub struct GamlReader {
     path: String,
@@ -19,36 +88,36 @@ impl Reader for GamlReader {
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
         let path_indices = convert_path_to_node_indices(path)?;
         match &path_indices[..] {
-            [] => Ok(self.map_root()?), // "", "/"
+            [] => Ok(Self::map_root(&self.path, &self.file)?), // "", "/"
             [exp_idx, tail @ ..] => {
                 let experiment =
                     read_item_at_index(&self.file.experiments, *exp_idx, "experiment")?;
                 if tail.is_empty() {
-                    return Ok(self.map_experiment(experiment, *exp_idx)?);
+                    return Ok(Self::map_experiment(experiment, *exp_idx)?);
                 }
 
                 let (trace_idx, tail) = tail.split_first().unwrap();
                 let trace = read_item_at_index(&experiment.traces, *trace_idx, "trace")?;
                 if tail.is_empty() {
-                    return Ok(self.map_trace(trace, *trace_idx)?);
+                    return Ok(Self::map_trace(trace, *trace_idx)?);
                 }
 
                 let (xy_data_idx, tail) = tail.split_first().unwrap();
                 let (x_data_idx, alt_x_data_idx, y_data_idx) =
-                    Self::find_xy_indices(trace, *xy_data_idx)?;
+                    find_xy_indices(trace, *xy_data_idx)?;
                 let x_data = read_item_at_index(&trace.x_data, x_data_idx, "Xdata")?;
                 if tail.is_empty() {
                     let coordinates = trace.coordinates.as_slice();
                     match alt_x_data_idx {
                         None => {
-                            return Ok(self.map_xy_data(
+                            return Ok(Self::map_xy_data(
                                 x_data,
                                 (x_data_idx, y_data_idx, *xy_data_idx),
                                 coordinates,
                             )?)
                         }
                         Some(alt_x_idx) => {
-                            return Ok(self.map_alt_xy_data(
+                            return Ok(Self::map_alt_xy_data(
                                 x_data,
                                 (x_data_idx, alt_x_idx, y_data_idx, *xy_data_idx),
                                 coordinates,
@@ -66,14 +135,13 @@ impl Reader for GamlReader {
                 let peaktable =
                     read_item_at_index(&y_data.peaktables, *peaktable_idx, "peaktable")?;
                 if tail.is_empty() {
-                    return Ok(self.map_peaktable(peaktable, *peaktable_idx)?);
+                    return Ok(Self::map_peaktable(peaktable, *peaktable_idx)?);
                 }
 
                 let (basecurve_idx, tail) = tail.split_first().unwrap();
-                let (basecurve, peak, peak_index) =
-                    Self::find_basecurve(peaktable, *basecurve_idx)?;
+                let (basecurve, peak, peak_index) = find_basecurve(peaktable, *basecurve_idx)?;
                 if tail.is_empty() {
-                    return Ok(self.map_basecurve(basecurve, peak_index, peak.number)?);
+                    return Ok(Self::map_basecurve(basecurve, peak_index, peak.number)?);
                 }
 
                 Err(GamlError::new(&format!("Illegal node path: {}", path)).into())
@@ -83,225 +151,6 @@ impl Reader for GamlReader {
 }
 
 impl GamlReader {
-    fn find_xy_indices(
-        trace: &Trace,
-        xy_data_idx: usize,
-    ) -> Result<(usize, Option<usize>, usize), GamlError> {
-        let mut index = 0usize;
-        for (x_index, x_data) in trace.x_data.iter().enumerate() {
-            // first map Xdata - Ydata pairs
-            for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-                if index == xy_data_idx {
-                    return Ok((x_index, None, y_index));
-                }
-                index += 1;
-            }
-            // then map altXdata - Ydata pairs
-            for (alt_x_index, _alt_x_data) in x_data.alt_x_data.iter().enumerate() {
-                for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-                    if index == xy_data_idx {
-                        return Ok((x_index, Some(alt_x_index), y_index));
-                    }
-                    index += 1;
-                }
-            }
-        }
-        Err(GamlError::new(&format!(
-            "Illegal xy data index: {xy_data_idx}"
-        )))
-    }
-
-    fn generate_xy_name(
-        coordinates: &[Coordinates],
-        x_index: usize,
-        alt_x_index: Option<usize>,
-        y_index: usize,
-        overall_index: usize,
-    ) -> Result<String, GamlError> {
-        // Can this repeated reading of values be optimized away? No big perf issue though.
-        let coordinate_values = coordinates
-            .iter()
-            .map(|co| co.values.get_data())
-            .collect::<Result<Vec<_>, GamlError>>()?;
-        let mut coordinate_details = Vec::<String>::new();
-        for (i, coordinate) in coordinates.iter().enumerate() {
-            let values = &coordinate_values[i];
-            let mut text = String::new();
-            if let Some(label) = &coordinate.label {
-                text += &format!("{label}=");
-            }
-            if overall_index < values.len() {
-                text += &values[overall_index].to_string();
-            }
-            text += &format!(" {}", coordinate.units);
-            coordinate_details.push(text);
-        }
-
-        let coordinate_info = if !coordinate_details.is_empty() {
-            format!(" ({})", coordinate_details.join(", "))
-        } else {
-            "".to_owned()
-        };
-        let name = match alt_x_index {
-            None => format!("XYData {}, {}{}", x_index, y_index, coordinate_info),
-            Some(alt_x_index) => format!(
-                "AltXYData {}, {}, {}{}",
-                x_index, alt_x_index, y_index, coordinate_info
-            ),
-        };
-
-        Ok(name)
-    }
-
-    fn generate_xy_names(trace: &Trace) -> Result<Vec<String>, GamlError> {
-        let coordinates = trace.coordinates.as_slice();
-        let mut names = vec![];
-        let mut overall_index = 0;
-        for (x_index, x_data) in trace.x_data.iter().enumerate() {
-            for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-                let name =
-                    Self::generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
-                names.push(name);
-                overall_index += 1;
-            }
-            for (alt_x_index, _alt_x_data) in x_data.alt_x_data.iter().enumerate() {
-                for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-                    let name = Self::generate_xy_name(
-                        coordinates,
-                        x_index,
-                        Some(alt_x_index),
-                        y_index,
-                        overall_index,
-                    )?;
-                    names.push(name);
-                    overall_index += 1;
-                }
-            }
-        }
-        Ok(names)
-    }
-
-    fn map_coordinates_attributes(
-        coordinates: &[Coordinates],
-    ) -> Result<Vec<Parameter>, GamlError> {
-        let mut parameters = vec![];
-        for (i, coordinate) in coordinates.iter().enumerate() {
-            parameters.push(Parameter::from_str_str(
-                format!("Coordinate {i} units"),
-                coordinate.units.to_string(),
-            ));
-            if let Some(label) = &coordinate.label {
-                parameters.push(Parameter::from_str_str(
-                    format!("Coordinate {i} label"),
-                    label,
-                ));
-            }
-            if let Some(linkid) = &coordinate.linkid {
-                parameters.push(Parameter::from_str_str(
-                    format!("Coordinate {i} linkid"),
-                    linkid,
-                ));
-            }
-            if let Some(valueorder) = &coordinate.valueorder {
-                parameters.push(Parameter::from_str_str(
-                    format!("Coordinate {i} valueorder"),
-                    valueorder.to_string(),
-                ));
-            }
-        }
-
-        Ok(parameters)
-    }
-
-    fn map_coordinates_linkrefs(coordinates: &[Coordinates]) -> Result<Vec<Parameter>, GamlError> {
-        let mut parameters = vec![];
-        for (i, coordinate) in coordinates.iter().enumerate() {
-            for link in &coordinate.links {
-                parameters.push(Parameter::from_str_str(
-                    format!("Coordinate {i} link linkref"),
-                    &link.linkref,
-                ));
-            }
-        }
-
-        Ok(parameters)
-    }
-
-    fn map_coordinates_parameters(
-        coordinates: &[Coordinates],
-    ) -> Result<Vec<Parameter>, GamlError> {
-        let mut parameters = vec![];
-        for (i, coordinate) in coordinates.iter().enumerate() {
-            let coordinate_parameters = map_gaml_parameters_with_prefix(
-                &format!("Coordinate {i} "),
-                &coordinate.parameters,
-            );
-            parameters.extend(coordinate_parameters);
-        }
-
-        Ok(parameters)
-    }
-
-    fn map_coordinates_values_attributes(
-        coordinates: &[Coordinates],
-    ) -> Result<Vec<Parameter>, GamlError> {
-        let mut parameters = vec![];
-        for (i, coordinate) in coordinates.iter().enumerate() {
-            parameters.extend(map_values_attributes(
-                &format!("Coordinate {i} values"),
-                &coordinate.values,
-            ));
-        }
-
-        Ok(parameters)
-    }
-
-    fn find_basecurve(
-        peaktable: &Peaktable,
-        basecurve_idx: usize,
-    ) -> Result<(&Basecurve, &Peak, usize), GamlError> {
-        for (i, peak) in peaktable.peaks.iter().enumerate() {
-            if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
-                if i == basecurve_idx {
-                    return Ok((basecurve, peak, i));
-                }
-            }
-        }
-        Err(GamlError::new(&format!(
-            "Illegal basecurve index: {basecurve_idx}"
-        )))?
-    }
-
-    fn generate_xy_plot_hints(
-        x_label: Option<&str>,
-        x_units: &Units,
-        y_label: Option<&str>,
-        y_units: &Units,
-    ) -> Vec<(String, String)> {
-        let mut metadata = Vec::<(String, String)>::new();
-        if let Some(label) = x_label {
-            metadata.push(("x.label".to_owned(), label.to_owned()));
-        };
-        if x_units != &Units::Unknown {
-            metadata.push(("x.unit".to_owned(), x_units.to_string()));
-        }
-        if let Some(label) = y_label {
-            metadata.push(("y.label".to_owned(), label.to_owned()));
-        };
-        if y_units != &Units::Unknown {
-            metadata.push(("y.unit".to_owned(), y_units.to_string()));
-        }
-        if x_units == &Units::Masschargeratio {
-            // possibly use more refined heuristic in the future
-            metadata.push(("plot.style".to_owned(), "sticks".to_owned()));
-        }
-        if x_units == &Units::Wavenumber || x_units == &Units::Ramanshift {
-            metadata.push(("x.reverse".to_owned(), "true".to_owned()));
-        }
-
-        metadata
-    }
-
     pub fn new(path: &str, file: Gaml) -> Self {
         Self {
             path: path.to_owned(),
@@ -309,30 +158,53 @@ impl GamlReader {
         }
     }
 
-    fn map_root(&self) -> Result<Node, GamlError> {
-        let path = Path::new(&self.path);
-        let file_name = path.file_name().map_or("", |f| f.to_str().unwrap_or(""));
+    fn map_root(path: &str, gaml: &Gaml) -> Result<Node, GamlError> {
+        let path = Path::new(path);
+        let name = path
+            .file_name()
+            .map_or("", |f| f.to_str().unwrap_or(""))
+            .to_owned();
+        let parameters = Self::map_root_parameters(gaml);
+        let child_node_names =
+            generate_child_node_names(&gaml.experiments, &Self::generate_experiment_name);
 
+        Ok(Node {
+            name,
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names,
+        })
+    }
+
+    fn map_root_parameters(gaml: &Gaml) -> Vec<Parameter> {
         let mut parameters = vec![];
-        parameters.push(Parameter::from_str_str("Version", &self.file.version));
-        if let Some(name) = &self.file.name {
+        parameters.push(Parameter::from_str_str("Version", &gaml.version));
+        if let Some(name) = &gaml.name {
             let param = Parameter::from_str_str("Name", name);
             parameters.push(param);
         }
-        if let Some(integrity) = &self.file.integrity {
+        if let Some(integrity) = &gaml.integrity {
             let param = Parameter::from_str_str(
                 format!("Integrity (algorithm={})", integrity.algorithm),
                 &integrity.value,
             );
             parameters.push(param);
         }
-        parameters.extend(map_gaml_parameters(&self.file.parameters));
+        parameters.extend(map_gaml_parameters(&gaml.parameters));
 
+        parameters
+    }
+
+    fn map_experiment(experiment: &Experiment, index: usize) -> Result<Node, GamlError> {
+        let name = Self::generate_experiment_name(experiment, index);
+        let parameters = Self::map_experiment_parameters(experiment);
         let child_node_names =
-            generate_child_node_names(&self.file.experiments, &Self::generate_experiment_name);
+            generate_child_node_names(&experiment.traces, &Self::generate_trace_name);
 
         Ok(Node {
-            name: file_name.to_owned(),
+            name,
             parameters,
             data: vec![],
             metadata: vec![],
@@ -348,9 +220,7 @@ impl GamlReader {
         }
     }
 
-    fn map_experiment(&self, experiment: &Experiment, index: usize) -> Result<Node, GamlError> {
-        let name = Self::generate_experiment_name(experiment, index);
-
+    fn map_experiment_parameters(experiment: &Experiment) -> Vec<Parameter> {
         let mut parameters = vec![];
         if let Some(name) = &experiment.name {
             parameters.push(Parameter::from_str_str("Name", name));
@@ -360,8 +230,13 @@ impl GamlReader {
         }
         parameters.extend(map_gaml_parameters(&experiment.parameters));
 
-        let child_node_names =
-            generate_child_node_names(&experiment.traces, &Self::generate_trace_name);
+        parameters
+    }
+
+    fn map_trace(trace: &Trace, index: usize) -> Result<Node, GamlError> {
+        let name = Self::generate_trace_name(trace, index);
+        let parameters = Self::map_trace_parameters(trace);
+        let child_node_names = generate_xy_names(trace)?;
 
         Ok(Node {
             name,
@@ -380,9 +255,7 @@ impl GamlReader {
         }
     }
 
-    fn map_trace(&self, trace: &Trace, index: usize) -> Result<Node, GamlError> {
-        let name = Self::generate_trace_name(trace, index);
-
+    fn map_trace_parameters(trace: &Trace) -> Vec<Parameter> {
         let mut parameters = vec![];
         if let Some(name) = &trace.name {
             parameters.push(Parameter::from_str_str("Name", name));
@@ -393,20 +266,10 @@ impl GamlReader {
         ));
         parameters.extend(map_gaml_parameters(&trace.parameters));
 
-        let child_node_names = Self::generate_xy_names(trace)?;
-
-        Ok(Node {
-            name,
-            parameters,
-            data: vec![],
-            metadata: vec![],
-            table: None,
-            child_node_names,
-        })
+        parameters
     }
 
     fn map_xy_data(
-        &self,
         x_data: &Xdata,
         (x_index, y_index, overall_index): (usize, usize, usize),
         coordinates: &[Coordinates],
@@ -416,51 +279,9 @@ impl GamlReader {
             x_index, y_index
         )))?;
 
-        let name = Self::generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
+        let name = generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
 
-        let mut parameters = vec![];
-        // attributes
-        parameters.push(Parameter::from_str_str(
-            "Xdata units",
-            x_data.units.to_string(),
-        ));
-        if let Some(label) = &x_data.label {
-            parameters.push(Parameter::from_str_str("Xdata label", label));
-        }
-        if let Some(linkid) = &x_data.linkid {
-            parameters.push(Parameter::from_str_str("Xdata linkid", linkid));
-        }
-        if let Some(valueorder) = &x_data.valueorder {
-            parameters.push(Parameter::from_str_str(
-                "Xdata valueorder",
-                valueorder.to_string(),
-            ));
-        }
-        parameters.push(Parameter::from_str_str(
-            "Ydata units",
-            y_data.units.to_string(),
-        ));
-        if let Some(label) = &y_data.label {
-            parameters.push(Parameter::from_str_str("Ydata label", label));
-        }
-        parameters.extend(Self::map_coordinates_attributes(coordinates)?);
-        // elements
-        for link in &x_data.links {
-            parameters.push(Parameter::from_str_str("Xdata link linkref", &link.linkref));
-        }
-        parameters.extend(Self::map_coordinates_linkrefs(coordinates)?);
-        parameters.extend(map_gaml_parameters_with_prefix(
-            "Xdata ",
-            &x_data.parameters,
-        ));
-        parameters.extend(map_gaml_parameters_with_prefix(
-            "Ydata ",
-            &y_data.parameters,
-        ));
-        parameters.extend(Self::map_coordinates_parameters(coordinates)?);
-        parameters.extend(map_values_attributes("Xdata values", &x_data.values));
-        parameters.extend(map_values_attributes("Ydata values", &y_data.values));
-        parameters.extend(Self::map_coordinates_values_attributes(coordinates)?);
+        let parameters = Self::map_xy_data_parameters(x_data, y_data, coordinates);
 
         let x_values = x_data.values.get_data()?;
         let y_values = y_data.values.get_data()?;
@@ -470,7 +291,7 @@ impl GamlReader {
             .map(|(x, y)| PointXy::new(x, y))
             .collect();
 
-        let metadata = Self::generate_xy_plot_hints(
+        let metadata = generate_xy_plot_hints(
             x_data.label.as_deref(),
             &x_data.units,
             y_data.label.as_deref(),
@@ -490,8 +311,9 @@ impl GamlReader {
         })
     }
 
+    generate_map_xy_parameters_fn!(Xdata, "Xdata", map_xy_data_parameters);
+
     fn map_alt_xy_data(
-        &self,
         x_data: &Xdata,
         (x_index, alt_x_index, y_index, overall_index): (usize, usize, usize, usize),
         coordinates: &[Coordinates],
@@ -508,7 +330,7 @@ impl GamlReader {
             x_index, y_index
         )))?;
 
-        let name = Self::generate_xy_name(
+        let name = generate_xy_name(
             coordinates,
             x_index,
             Some(alt_x_index),
@@ -516,52 +338,7 @@ impl GamlReader {
             overall_index,
         )?;
 
-        let mut parameters = vec![];
-        // attributes
-        parameters.push(Parameter::from_str_str(
-            "AltXdata units",
-            alt_x_data.units.to_string(),
-        ));
-        if let Some(label) = &alt_x_data.label {
-            parameters.push(Parameter::from_str_str("AltXdata label", label));
-        }
-        if let Some(linkid) = &alt_x_data.linkid {
-            parameters.push(Parameter::from_str_str("AltXdata linkid", linkid));
-        }
-        if let Some(valueorder) = &alt_x_data.valueorder {
-            parameters.push(Parameter::from_str_str(
-                "AltXdata valueorder",
-                valueorder.to_string(),
-            ));
-        }
-        parameters.push(Parameter::from_str_str(
-            "Ydata units",
-            y_data.units.to_string(),
-        ));
-        if let Some(label) = &y_data.label {
-            parameters.push(Parameter::from_str_str("Ydata label", label));
-        }
-        parameters.extend(Self::map_coordinates_attributes(coordinates)?);
-        // elements
-        for link in &alt_x_data.links {
-            parameters.push(Parameter::from_str_str(
-                "AltXdata link linkref",
-                &link.linkref,
-            ));
-        }
-        parameters.extend(Self::map_coordinates_linkrefs(coordinates)?);
-        parameters.extend(map_gaml_parameters_with_prefix(
-            "AltXdata ",
-            &alt_x_data.parameters,
-        ));
-        parameters.extend(map_gaml_parameters_with_prefix(
-            "Ydata ",
-            &y_data.parameters,
-        ));
-        parameters.extend(Self::map_coordinates_parameters(coordinates)?);
-        parameters.extend(map_values_attributes("AltXdata values", &alt_x_data.values));
-        parameters.extend(map_values_attributes("Ydata values", &y_data.values));
-        parameters.extend(Self::map_coordinates_values_attributes(coordinates)?);
+        let parameters = Self::map_alt_xy_data_parameters(alt_x_data, y_data, coordinates);
 
         let x_values = alt_x_data.values.get_data()?;
         let y_values = y_data.values.get_data()?;
@@ -571,7 +348,7 @@ impl GamlReader {
             .map(|(x, y)| PointXy::new(x, y))
             .collect();
 
-        let metadata = Self::generate_xy_plot_hints(
+        let metadata = generate_xy_plot_hints(
             alt_x_data.label.as_deref(),
             &alt_x_data.units,
             y_data.label.as_deref(),
@@ -590,6 +367,31 @@ impl GamlReader {
         })
     }
 
+    generate_map_xy_parameters_fn!(AltXdata, "AltXdata", map_alt_xy_data_parameters);
+
+    fn map_peaktable(peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
+        let name = Self::generate_peaktable_name(peaktable, index);
+        let parameters = Self::map_peaktable_parameters(peaktable);
+        // map peaks as table
+        let table = Self::map_peaktable_table(peaktable);
+
+        let mut child_node_names = vec![];
+        for (i, peak) in peaktable.peaks.iter().enumerate() {
+            if let Some(_basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
+                child_node_names.push(Self::generate_basecurve_name(i, peak.number));
+            }
+        }
+
+        Ok(Node {
+            name,
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: Some(table),
+            child_node_names,
+        })
+    }
+
     fn generate_peaktable_name(peaktable: &Peaktable, index: usize) -> String {
         match &peaktable.name {
             None => format!("Peaktable {index}"),
@@ -597,9 +399,7 @@ impl GamlReader {
         }
     }
 
-    fn map_peaktable(&self, peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
-        let name = Self::generate_peaktable_name(peaktable, index);
-
+    fn map_peaktable_parameters(peaktable: &Peaktable) -> Vec<Parameter> {
         let mut parameters = vec![];
         // peaktable attributes and parameters
         if let Some(name) = &peaktable.name {
@@ -624,6 +424,10 @@ impl GamlReader {
             }
         }
 
+        parameters
+    }
+
+    fn map_peaktable_table(peaktable: &Peaktable) -> Table {
         // map peaks as table
         let mut table = Table {
             column_names: vec![
@@ -673,29 +477,10 @@ impl GamlReader {
             table.rows.push(row);
         }
 
-        let mut child_node_names = vec![];
-        for (i, peak) in peaktable.peaks.iter().enumerate() {
-            if let Some(_basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
-                child_node_names.push(Self::generate_basecurve_name(i, peak.number));
-            }
-        }
-
-        Ok(Node {
-            name,
-            parameters,
-            data: vec![],
-            metadata: vec![],
-            table: Some(table),
-            child_node_names,
-        })
-    }
-
-    fn generate_basecurve_name(peak_index: usize, peak_number: u64) -> String {
-        format!("Basecurve Peak {}, number {}", peak_index, peak_number)
+        table
     }
 
     fn map_basecurve(
-        &self,
         basecurve: &Basecurve,
         peak_index: usize,
         peak_number: u64,
@@ -750,6 +535,206 @@ impl GamlReader {
             child_node_names: vec![],
         })
     }
+
+    fn generate_basecurve_name(peak_index: usize, peak_number: u64) -> String {
+        format!("Basecurve Peak {}, number {}", peak_index, peak_number)
+    }
+}
+
+fn find_basecurve(
+    peaktable: &Peaktable,
+    basecurve_idx: usize,
+) -> Result<(&Basecurve, &Peak, usize), GamlError> {
+    for (i, peak) in peaktable.peaks.iter().enumerate() {
+        if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
+            if i == basecurve_idx {
+                return Ok((basecurve, peak, i));
+            }
+        }
+    }
+    Err(GamlError::new(&format!(
+        "Illegal basecurve index: {basecurve_idx}"
+    )))?
+}
+
+fn find_xy_indices(
+    trace: &Trace,
+    xy_data_idx: usize,
+) -> Result<(usize, Option<usize>, usize), GamlError> {
+    let mut index = 0usize;
+    for (x_index, x_data) in trace.x_data.iter().enumerate() {
+        // first map Xdata - Ydata pairs
+        for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
+            if index == xy_data_idx {
+                return Ok((x_index, None, y_index));
+            }
+            index += 1;
+        }
+        // then map altXdata - Ydata pairs
+        for (alt_x_index, _alt_x_data) in x_data.alt_x_data.iter().enumerate() {
+            for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
+                if index == xy_data_idx {
+                    return Ok((x_index, Some(alt_x_index), y_index));
+                }
+                index += 1;
+            }
+        }
+    }
+    Err(GamlError::new(&format!(
+        "Illegal xy data index: {xy_data_idx}"
+    )))
+}
+
+fn generate_xy_name(
+    coordinates: &[Coordinates],
+    x_index: usize,
+    alt_x_index: Option<usize>,
+    y_index: usize,
+    overall_index: usize,
+) -> Result<String, GamlError> {
+    // Can this repeated reading of values be optimized away? No big perf issue though.
+    let coordinate_values = coordinates
+        .iter()
+        .map(|co| co.values.get_data())
+        .collect::<Result<Vec<_>, GamlError>>()?;
+    let mut coordinate_details = Vec::<String>::new();
+    for (i, coordinate) in coordinates.iter().enumerate() {
+        let values = &coordinate_values[i];
+        let mut text = String::new();
+        if let Some(label) = &coordinate.label {
+            text += &format!("{label}=");
+        }
+        if overall_index < values.len() {
+            text += &values[overall_index].to_string();
+        }
+        text += &format!(" {}", coordinate.units);
+        coordinate_details.push(text);
+    }
+
+    let coordinate_info = if !coordinate_details.is_empty() {
+        format!(" ({})", coordinate_details.join(", "))
+    } else {
+        "".to_owned()
+    };
+    let name = match alt_x_index {
+        None => format!("XYData {}, {}{}", x_index, y_index, coordinate_info),
+        Some(alt_x_index) => format!(
+            "AltXYData {}, {}, {}{}",
+            x_index, alt_x_index, y_index, coordinate_info
+        ),
+    };
+
+    Ok(name)
+}
+
+fn generate_xy_names(trace: &Trace) -> Result<Vec<String>, GamlError> {
+    let coordinates = trace.coordinates.as_slice();
+    let mut names = vec![];
+    let mut overall_index = 0;
+    for (x_index, x_data) in trace.x_data.iter().enumerate() {
+        for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
+            let name = generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
+            names.push(name);
+            overall_index += 1;
+        }
+        for (alt_x_index, _alt_x_data) in x_data.alt_x_data.iter().enumerate() {
+            for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
+                let name = generate_xy_name(
+                    coordinates,
+                    x_index,
+                    Some(alt_x_index),
+                    y_index,
+                    overall_index,
+                )?;
+                names.push(name);
+                overall_index += 1;
+            }
+        }
+    }
+    Ok(names)
+}
+
+fn map_coordinates_attributes_to_parameters(coordinates: &[Coordinates]) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for (i, coordinate) in coordinates.iter().enumerate() {
+        parameters.push(Parameter::from_str_str(
+            format!("Coordinate {i} units"),
+            coordinate.units.to_string(),
+        ));
+        if let Some(label) = &coordinate.label {
+            parameters.push(Parameter::from_str_str(
+                format!("Coordinate {i} label"),
+                label,
+            ));
+        }
+        if let Some(linkid) = &coordinate.linkid {
+            parameters.push(Parameter::from_str_str(
+                format!("Coordinate {i} linkid"),
+                linkid,
+            ));
+        }
+        if let Some(valueorder) = &coordinate.valueorder {
+            parameters.push(Parameter::from_str_str(
+                format!("Coordinate {i} valueorder"),
+                valueorder.to_string(),
+            ));
+        }
+    }
+
+    parameters
+}
+
+fn map_coordinates_linkrefs_to_parameters(coordinates: &[Coordinates]) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for (i, coordinate) in coordinates.iter().enumerate() {
+        for link in &coordinate.links {
+            parameters.push(Parameter::from_str_str(
+                format!("Coordinate {i} link linkref"),
+                &link.linkref,
+            ));
+        }
+    }
+
+    parameters
+}
+
+fn map_coordinates_parameters_to_parameters(coordinates: &[Coordinates]) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for (i, coordinate) in coordinates.iter().enumerate() {
+        let coordinate_parameters =
+            map_gaml_parameters_with_prefix(&format!("Coordinate {i} "), &coordinate.parameters);
+        parameters.extend(coordinate_parameters);
+    }
+
+    parameters
+}
+
+fn map_coordinates_values_attributes_to_parameters(coordinates: &[Coordinates]) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for (i, coordinate) in coordinates.iter().enumerate() {
+        parameters.extend(map_values_attributes(
+            &format!("Coordinate {i} values"),
+            &coordinate.values,
+        ));
+    }
+
+    parameters
+}
+
+fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    // Values attributes
+    let format = Parameter::from_str_str(format!("{prefix} format"), values.format.to_string());
+    parameters.push(format);
+    let byteorder =
+        Parameter::from_str_str(format!("{prefix} byteorder"), values.byteorder.to_string());
+    parameters.push(byteorder);
+    if let Some(numvalues) = values.numvalues {
+        let numvalues = Parameter::from_str_u64(format!("{prefix} numvalues"), numvalues);
+        parameters.push(numvalues);
+    }
+
+    parameters
 }
 
 fn map_gaml_parameters(raw_params: &[super::gaml_parser::Parameter]) -> Vec<crate::api::Parameter> {
@@ -794,22 +779,6 @@ fn map_gaml_parameters_with_prefix(
     params
 }
 
-fn map_values_attributes(prefix: &str, values: &Values) -> Vec<Parameter> {
-    let mut parameters = vec![];
-    // Values attributes
-    let format = Parameter::from_str_str(format!("{prefix} format"), values.format.to_string());
-    parameters.push(format);
-    let byteorder =
-        Parameter::from_str_str(format!("{prefix} byteorder"), values.byteorder.to_string());
-    parameters.push(byteorder);
-    if let Some(numvalues) = values.numvalues {
-        let numvalues = Parameter::from_str_u64(format!("{prefix} numvalues"), numvalues);
-        parameters.push(numvalues);
-    }
-
-    parameters
-}
-
 fn generate_child_node_names<T>(
     slice: &[T],
     name_generator: &dyn Fn(&T, usize) -> String,
@@ -830,6 +799,36 @@ fn read_item_at_index<'a, T>(
         "Illegal {} index: {}",
         context, index
     )))
+}
+
+fn generate_xy_plot_hints(
+    x_label: Option<&str>,
+    x_units: &Units,
+    y_label: Option<&str>,
+    y_units: &Units,
+) -> Vec<(String, String)> {
+    let mut metadata = Vec::<(String, String)>::new();
+    if let Some(label) = x_label {
+        metadata.push(("x.label".to_owned(), label.to_owned()));
+    };
+    if x_units != &Units::Unknown {
+        metadata.push(("x.unit".to_owned(), x_units.to_string()));
+    }
+    if let Some(label) = y_label {
+        metadata.push(("y.label".to_owned(), label.to_owned()));
+    };
+    if y_units != &Units::Unknown {
+        metadata.push(("y.unit".to_owned(), y_units.to_string()));
+    }
+    if x_units == &Units::Masschargeratio {
+        // possibly use more refined heuristic in the future
+        metadata.push(("plot.style".to_owned(), "sticks".to_owned()));
+    }
+    if x_units == &Units::Wavenumber || x_units == &Units::Ramanshift {
+        metadata.push(("x.reverse".to_owned(), "true".to_owned()));
+    }
+
+    metadata
 }
 
 #[cfg(test)]

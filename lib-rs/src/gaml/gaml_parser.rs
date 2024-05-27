@@ -30,7 +30,7 @@ impl<T: Seek + Read + 'static> Parser<T> for GamlParser {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Gaml {
     // Attributes
     pub version: String,
@@ -84,7 +84,7 @@ impl Gaml {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Integrity {
     // Attributes
     pub algorithm: String,
@@ -113,7 +113,7 @@ impl Integrity {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Parameter {
     // Attributes
     pub group: Option<String>,
@@ -164,7 +164,7 @@ impl Parameter {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Experiment {
     // Attributes
     pub name: Option<String>,
@@ -214,7 +214,7 @@ impl Experiment {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Collectdate {
     pub value: String,
 }
@@ -276,7 +276,7 @@ pub enum Technique {
     Xray,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Trace {
     // Attributes
     pub name: Option<String>,
@@ -484,7 +484,7 @@ pub enum Valueorder {
     Unspecified,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Coordinates {
     // Attributes
     pub units: Units,
@@ -547,7 +547,7 @@ impl Coordinates {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Link {
     // Attributes
     pub linkref: String,
@@ -606,6 +606,18 @@ impl std::fmt::Debug for Values {
             .field("value_end_pos", &self.value_end_pos)
             // skip reader_ref as quickxml::Reader does not implement Debug
             .finish()
+    }
+}
+
+impl PartialEq for Values {
+    fn eq(&self, other: &Self) -> bool {
+        self.format == other.format
+            && self.byteorder == other.byteorder
+            && self.numvalues == other.numvalues
+            && self.value_start_pos == other.value_start_pos
+            && self.value_end_pos == other.value_end_pos
+            && ((self.get_data().is_err() && other.get_data().is_err())
+                || self.get_data().unwrap() == other.get_data().unwrap())
     }
 }
 
@@ -745,7 +757,7 @@ impl Values {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Xdata {
     // Attributes
     pub units: Units,
@@ -818,7 +830,7 @@ impl Xdata {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct AltXdata {
     // Attributes
     pub units: Units,
@@ -881,7 +893,7 @@ impl AltXdata {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ydata {
     // Attributes
     pub units: Units,
@@ -934,7 +946,7 @@ impl Ydata {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Peaktable {
     // Attributes
     pub name: Option<String>,
@@ -975,7 +987,7 @@ impl Peaktable {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Peak {
     // Attributes
     pub number: u64,
@@ -1037,7 +1049,7 @@ impl Peak {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Baseline {
     // Elements
     pub parameters: Vec<Parameter>,
@@ -1087,7 +1099,7 @@ impl Baseline {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Basecurve {
     // Elements
     pub base_x_data: Vec<Values>,

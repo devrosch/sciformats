@@ -56,6 +56,9 @@ impl Gaml {
 
         // attributes
         let start = read_start(Self::TAG, &reader, &next)?;
+        // In GAML 1.10 version was turned into an enum. However, it was not updated for 1.20 even though 1.20 is used in multiple examples.
+        // Versions 1.10 and 1.20 allow more flexibility. There should be no harm in also allowing this flexibility also in previous versions.
+        // todo: Turn into enum with 1.00, 1.10, 1.20. No version specific changes in behavior required.
         let version = start.get_req_attr("version")?;
         let name = start.get_opt_attr("name");
 
@@ -64,6 +67,7 @@ impl Gaml {
         let (integrity, next) = read_opt_elem(b"integrity", next, &mut reader, &Integrity::new)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         drop(reader);
+        // In GAML 1.00 experiments had to contain at least one item but here zero items are allowed for all versions.
         let (experiments, next) = read_sequence_rc(
             b"experiment",
             next,
@@ -136,6 +140,7 @@ impl Parameter {
         let group = start.get_opt_attr("group");
         let name = start.get_req_attr("name")?;
         let label = start.get_opt_attr("label");
+        // Introduced in GAML version 1.20. Accept it for all versions here.
         let alias = start.get_opt_attr("alias");
 
         // value
@@ -198,6 +203,7 @@ impl Experiment {
             .transpose()?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         drop(reader);
+        // In GAML 1.00 traces had to contain at least one item but here zero items are allowed for all versions.
         let (traces, next) = read_sequence_rc(b"trace", next, Rc::clone(&reader_ref), &Trace::new)?;
 
         let next = consume_end_rc(Self::TAG, Rc::clone(&reader_ref), next)?;
@@ -458,6 +464,7 @@ pub enum Units {
     Watts,
     #[strum(serialize = "WAVENUMBER")]
     Wavenumber,
+    // The values below were introduced in GAML 1.10. Here these are allowed for all versions.
     #[strum(serialize = "YEARS")]
     Years,
     #[strum(serialize = "INCHES")]
@@ -972,6 +979,7 @@ impl Peaktable {
         let next = skip_whitespace(&mut reader, next.buf)?;
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         drop(reader);
+        // In GAML 1.00 peaks had to contain at least one item but here zero items are allowed for all versions.
         let (peaks, next) = read_sequence_rc(b"peak", next, Rc::clone(&reader_ref), &Peak::new)?;
 
         let next = consume_end_rc(Self::TAG, Rc::clone(&reader_ref), next)?;

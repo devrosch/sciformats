@@ -6,6 +6,7 @@ A library for reading the Generalized Analytical Markup Language (GAML) file for
 
 * GAML version 1.20 is not added as allowed version in the 1.20 schema. As it is clearly implied this library accepts it as a value.
 * Additional flexibility has been introduced with GAML versions 1.10 and 1.20. This library accepts the relaxations/extensions for all versions.
+* The integrity value is read but not checked.
 
 ## References
 
@@ -18,4 +19,4 @@ XML Schemas:
 * [gaml100.xsd](https://www.gaml.org/Documentation/gaml100.xsd)
 
 Data:
-* [gaml.org - examples](https://www.gaml.org/examples.htm)
+* [gaml.org/examples](https://www.gaml.org/examples.htm)

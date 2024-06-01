@@ -84,8 +84,8 @@ fn parse_experiments_succeeds(reader: &GamlReader) {
     assert_eq!(Vec::<PointXy>::new(), experiment0.data);
     assert_eq!(Vec::<(String, String)>::new(), experiment0.metadata);
     assert_eq!(None, experiment0.table);
-    // todo:
-    // assert_eq!(0, experiment0.child_node_names.len());
+    assert_eq!(1, experiment0.child_node_names.len());
+    parse_trace00_succeeds(reader);
 
     let experiment1 = reader.read("/1").unwrap();
     assert_eq!("Experiment 1, Experiment 1 name", experiment1.name);
@@ -114,6 +114,73 @@ fn parse_experiments_succeeds(reader: &GamlReader) {
     assert_eq!(Vec::<PointXy>::new(), experiment1.data);
     assert_eq!(Vec::<(String, String)>::new(), experiment1.metadata);
     assert_eq!(None, experiment1.table);
-    // todo:
-    // assert_eq!(0, experiment1.child_node_names.len());
+    assert_eq!(2, experiment1.child_node_names.len());
+    parse_trace10_succeeds(reader);
+    parse_trace11_succeeds(reader);
+}
+
+fn parse_trace00_succeeds(reader: &GamlReader) {
+    let trace = reader.read("/0/0").unwrap();
+    assert_eq!("Trace 0, Trace 0/0 name", trace.name);
+    let parameters = &trace.parameters;
+    assert_eq!(3, parameters.len());
+    assert_eq!(
+        Parameter::from_str_str("Name", "Trace 0/0 name"),
+        parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Technique", "UNKNOWN"),
+        parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Trace 0/0 parameter name 0 (group=Trace 0/0 parameter group 0, label=Trace 0/0 parameter label 0, alias=Trace 0/0 parameter alias 0)", "Trace 0/0 parameter value 0"),
+        parameters[2]
+    );
+    assert_eq!(Vec::<PointXy>::new(), trace.data);
+    assert_eq!(Vec::<(String, String)>::new(), trace.metadata);
+    assert_eq!(None, trace.table);
+}
+
+fn parse_trace10_succeeds(reader: &GamlReader) {
+    let trace = reader.read("/1/0").unwrap();
+    assert_eq!("Trace 0, Trace 1/0 name", trace.name);
+    let parameters = &trace.parameters;
+    assert_eq!(3, parameters.len());
+    assert_eq!(
+        Parameter::from_str_str("Name", "Trace 1/0 name"),
+        parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Technique", "UNKNOWN"),
+        parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Trace 1/0 parameter name 0 (group=Trace 1/0 parameter group 0, label=Trace 1/0 parameter label 0, alias=Trace 1/0 parameter alias 0)", "Trace 1/0 parameter value 0"),
+        parameters[2]
+    );
+    assert_eq!(Vec::<PointXy>::new(), trace.data);
+    assert_eq!(Vec::<(String, String)>::new(), trace.metadata);
+    assert_eq!(None, trace.table);
+}
+
+fn parse_trace11_succeeds(reader: &GamlReader) {
+    let trace = reader.read("/1/1").unwrap();
+    assert_eq!("Trace 1, Trace 1/1 name", trace.name);
+    let parameters = &trace.parameters;
+    assert_eq!(3, parameters.len());
+    assert_eq!(
+        Parameter::from_str_str("Name", "Trace 1/1 name"),
+        parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Technique", "UNKNOWN"),
+        parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Trace 1/1 parameter name 0 (group=Trace 1/1 parameter group 0, label=Trace 1/1 parameter label 0, alias=Trace 1/1 parameter alias 0)", "Trace 1/1 parameter value 0"),
+        parameters[2]
+    );
+    assert_eq!(Vec::<PointXy>::new(), trace.data);
+    assert_eq!(Vec::<(String, String)>::new(), trace.metadata);
+    assert_eq!(None, trace.table);
 }

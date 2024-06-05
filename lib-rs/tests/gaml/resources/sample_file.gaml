@@ -15,12 +15,34 @@
         <coordinates label="Coordinates 0/0/0 label" units="MICRONS" linkid="coordinates000-linkid" valueorder="UNSPECIFIED">
             <link linkref="coordinates000-linkref"/>
             <parameter name="Coordinates 0/0/0 parameter name 0" label="Coordinates 0/0/0 parameter label 0" group="Coordinates 0/0/0 parameter group 0" alias="Coordinates 0/0/0 parameter alias 0">Coordinates 0/0/0 parameter value 0</parameter>
+            <values byteorder="INTEL" format="FLOAT32" numvalues="1">
+                AACAPw==
+            </values>
+        </coordinates>
+        <Xdata label="Xdata 0/0/0 label" units="MICRONS" linkid="xdata000-linkid" valueorder="UNSPECIFIED">
+            <link linkref="xdata000-linkref"/>
+            <parameter name="Xdata 0/0/0 parameter name 0" label="Xdata 0/0/0 parameter label 0" group="Xdata 0/0/0 parameter group 0" alias="Xdata 0/0/0 parameter alias 0">Xdata 0/0/0 parameter value 0</parameter>
             <values byteorder="INTEL" format="FLOAT32" numvalues="2">
                 AACAPw
                 AAAEA=
             </values>
-        </coordinates>
-        <!-- todo: Xdata -->
+            <altXdata label="altXdata 0/0/0/0 label" units="MICRONS" linkid="altxdata0000-linkid" valueorder="UNSPECIFIED">
+                <link linkref="altxdata0000-linkref"/>
+                <parameter name="altXdata 0/0/0/0 parameter name 0" label="altXdata 0/0/0/0 parameter label 0" group="altXdata 0/0/0/0 parameter group 0" alias="altXdata 0/0/0/0 parameter alias 0">altXdata 0/0/0/0 parameter value 0</parameter>
+                <values byteorder="INTEL" format="FLOAT32" numvalues="2">
+                    AACAPw
+                    AAAEA=
+                </values>
+            </altXdata>
+            <Ydata label="Ydata 0/0/0/0 label" units="MICRONS">
+                <parameter name="Ydata 0/0/0/0 parameter name 0" label="Ydata 0/0/0/0 parameter label 0" group="Ydata 0/0/0/0 parameter group 0" alias="Ydata 0/0/0/0 parameter alias 0">Ydata 0/0/0/0 parameter value 0</parameter>
+                <values byteorder="INTEL" format="FLOAT32" numvalues="2">
+                    AACAPw
+                    AAAEA=
+                </values>
+            </Ydata>
+            <!-- todo: peaktable -->
+        </Xdata>
     </trace>
   </experiment>
   <experiment name="Experiment 1 name">
@@ -28,7 +50,6 @@
     <parameter name="Experiment 1 parameter name 0" label="Experiment 1 parameter label 0" group="Experiment 1 parameter group 0" alias="Experiment 1 parameter alias 0">Experiment 1 parameter value 0</parameter>
     <parameter name="Experiment 1 parameter name 1" label="Experiment 1 parameter label 1" group="Experiment 1 parameter group 1" alias="Experiment 1 parameter alias 1">Experiment 1 parameter value 1</parameter>
     <parameter name="Experiment 1 parameter name 2" label="Experiment 1 parameter label 2" group="Experiment 1 parameter group 1" alias="Experiment 1 parameter alias 2">Experiment 1 parameter value 2</parameter>
-    <!-- todo: traces -->
     <trace name="Trace 1/0 name" technique="UNKNOWN">
         <parameter name="Trace 1/0 parameter name 0" label="Trace 1/0 parameter label 0" group="Trace 1/0 parameter group 0" alias="Trace 1/0 parameter alias 0">Trace 1/0 parameter value 0</parameter>
         <coordinates label="Coordinates 1/0/0 label" units="MICRONS" linkid="coordinates100-linkid" valueorder="UNSPECIFIED">

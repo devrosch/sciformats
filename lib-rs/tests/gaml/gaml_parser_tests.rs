@@ -6,7 +6,7 @@ use sf_rs::{
     api::Parser,
     gaml::gaml_parser::{
         Byteorder, Experiment, Format, GamlParser, Integrity, Link, Parameter, Technique, Trace,
-        Units, Valueorder,
+        Units, Valueorder, Xdata,
     },
 };
 use wasm_bindgen_test::wasm_bindgen_test;
@@ -195,8 +195,11 @@ fn parse_trace00_succeeds(trace: &Trace) {
     let coordinates0_values = &coordinates0.values;
     assert_eq!(Byteorder::Intel, coordinates0_values.byteorder);
     assert_eq!(Format::Float32, coordinates0_values.format);
-    assert_eq!(Some(2), coordinates0_values.numvalues);
-    assert_eq!(vec![1.0, 2.0], coordinates0_values.get_data().unwrap());
+    assert_eq!(Some(1), coordinates0_values.numvalues);
+    assert_eq!(vec![1.0], coordinates0_values.get_data().unwrap());
+
+    assert_eq!(1, trace.x_data.len());
+    parse_xdata000_succeeds(&trace.x_data[0]);
 }
 
 fn parse_trace10_succeeds(trace: &Trace) {
@@ -301,4 +304,83 @@ fn parse_trace11_succeeds(trace: &Trace) {
     assert_eq!(Format::Float32, coordinates0_values.format);
     assert_eq!(Some(2), coordinates0_values.numvalues);
     assert_eq!(vec![1.0, 2.0], coordinates0_values.get_data().unwrap());
+}
+
+fn parse_xdata000_succeeds(x_data: &Xdata) {
+    assert_eq!(Units::Microns, x_data.units);
+    assert_eq!(Some("Xdata 0/0/0 label".to_owned()), x_data.label);
+    assert_eq!(Some("xdata000-linkid".to_owned()), x_data.linkid);
+    assert_eq!(Some(Valueorder::Unspecified), x_data.valueorder);
+    assert_eq!(
+        Link {
+            linkref: "xdata000-linkref".to_owned()
+        },
+        x_data.links[0]
+    );
+    assert_eq!(1, x_data.parameters.len());
+    assert_eq!(
+        Parameter {
+            group: Some("Xdata 0/0/0 parameter group 0".to_owned()),
+            name: "Xdata 0/0/0 parameter name 0".to_owned(),
+            label: Some("Xdata 0/0/0 parameter label 0".to_owned()),
+            alias: Some("Xdata 0/0/0 parameter alias 0".to_owned()),
+            value: Some("Xdata 0/0/0 parameter value 0".to_owned()),
+        },
+        x_data.parameters[0]
+    );
+    let x_data_values = &x_data.values;
+    assert_eq!(Byteorder::Intel, x_data_values.byteorder);
+    assert_eq!(Format::Float32, x_data_values.format);
+    assert_eq!(Some(2), x_data_values.numvalues);
+    assert_eq!(vec![1.0, 2.0], x_data_values.get_data().unwrap());
+
+    assert_eq!(1, x_data.alt_x_data.len());
+    let alt_x_data = &x_data.alt_x_data[0];
+    assert_eq!(Units::Microns, alt_x_data.units);
+    assert_eq!(Some("altXdata 0/0/0/0 label".to_owned()), alt_x_data.label);
+    assert_eq!(Some("altxdata0000-linkid".to_owned()), alt_x_data.linkid);
+    assert_eq!(Some(Valueorder::Unspecified), alt_x_data.valueorder);
+    assert_eq!(
+        Link {
+            linkref: "altxdata0000-linkref".to_owned()
+        },
+        alt_x_data.links[0]
+    );
+    assert_eq!(1, alt_x_data.parameters.len());
+    assert_eq!(
+        Parameter {
+            group: Some("altXdata 0/0/0/0 parameter group 0".to_owned()),
+            name: "altXdata 0/0/0/0 parameter name 0".to_owned(),
+            label: Some("altXdata 0/0/0/0 parameter label 0".to_owned()),
+            alias: Some("altXdata 0/0/0/0 parameter alias 0".to_owned()),
+            value: Some("altXdata 0/0/0/0 parameter value 0".to_owned()),
+        },
+        alt_x_data.parameters[0]
+    );
+    let alt_x_data_values = &alt_x_data.values;
+    assert_eq!(Byteorder::Intel, alt_x_data_values.byteorder);
+    assert_eq!(Format::Float32, alt_x_data_values.format);
+    assert_eq!(Some(2), alt_x_data_values.numvalues);
+    assert_eq!(vec![1.0, 2.0], alt_x_data_values.get_data().unwrap());
+
+    assert_eq!(1, x_data.y_data.len());
+    let y_data = &x_data.y_data[0];
+    assert_eq!(Units::Microns, y_data.units);
+    assert_eq!(Some("Ydata 0/0/0/0 label".to_owned()), y_data.label);
+    assert_eq!(1, y_data.parameters.len());
+    assert_eq!(
+        Parameter {
+            group: Some("Ydata 0/0/0/0 parameter group 0".to_owned()),
+            name: "Ydata 0/0/0/0 parameter name 0".to_owned(),
+            label: Some("Ydata 0/0/0/0 parameter label 0".to_owned()),
+            alias: Some("Ydata 0/0/0/0 parameter alias 0".to_owned()),
+            value: Some("Ydata 0/0/0/0 parameter value 0".to_owned()),
+        },
+        y_data.parameters[0]
+    );
+    let y_data_values = &y_data.values;
+    assert_eq!(Byteorder::Intel, y_data_values.byteorder);
+    assert_eq!(Format::Float32, y_data_values.format);
+    assert_eq!(Some(2), y_data_values.numvalues);
+    assert_eq!(vec![1.0, 2.0], y_data_values.get_data().unwrap());
 }

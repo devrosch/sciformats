@@ -112,14 +112,14 @@ impl Reader for GamlReader {
                         None => {
                             return Ok(Self::map_xy_data(
                                 x_data,
-                                (x_data_idx, y_data_idx, *xy_data_idx),
+                                (x_data_idx, y_data_idx),
                                 coordinates,
                             )?)
                         }
                         Some(alt_x_idx) => {
                             return Ok(Self::map_alt_xy_data(
                                 x_data,
-                                (x_data_idx, alt_x_idx, y_data_idx, *xy_data_idx),
+                                (x_data_idx, alt_x_idx, y_data_idx),
                                 coordinates,
                             )?)
                         }
@@ -271,7 +271,7 @@ impl GamlReader {
 
     fn map_xy_data(
         x_data: &Xdata,
-        (x_index, y_index, overall_index): (usize, usize, usize),
+        (x_index, y_index): (usize, usize),
         coordinates: &[Coordinates],
     ) -> Result<Node, GamlError> {
         let y_data = x_data.y_data.get(y_index).ok_or(GamlError::new(&format!(
@@ -279,7 +279,7 @@ impl GamlReader {
             x_index, y_index
         )))?;
 
-        let name = generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
+        let name = generate_xy_name(coordinates, x_index, None, y_index)?;
 
         let parameters = Self::map_xy_data_parameters(x_data, y_data, coordinates);
 
@@ -315,7 +315,7 @@ impl GamlReader {
 
     fn map_alt_xy_data(
         x_data: &Xdata,
-        (x_index, alt_x_index, y_index, overall_index): (usize, usize, usize, usize),
+        (x_index, alt_x_index, y_index): (usize, usize, usize),
         coordinates: &[Coordinates],
     ) -> Result<Node, GamlError> {
         let alt_x_data = x_data
@@ -330,13 +330,7 @@ impl GamlReader {
             x_index, y_index
         )))?;
 
-        let name = generate_xy_name(
-            coordinates,
-            x_index,
-            Some(alt_x_index),
-            y_index,
-            overall_index,
-        )?;
+        let name = generate_xy_name(coordinates, x_index, Some(alt_x_index), y_index)?;
 
         let parameters = Self::map_alt_xy_data_parameters(alt_x_data, y_data, coordinates);
 
@@ -590,7 +584,6 @@ fn generate_xy_name(
     x_index: usize,
     alt_x_index: Option<usize>,
     y_index: usize,
-    overall_index: usize,
 ) -> Result<String, GamlError> {
     // Can this repeated reading of values be optimized away? No big perf issue though.
     let coordinate_values = coordinates
@@ -604,8 +597,8 @@ fn generate_xy_name(
         if let Some(label) = &coordinate.label {
             text += &format!("{label}=");
         }
-        if overall_index < values.len() {
-            text += &values[overall_index].to_string();
+        if x_index < values.len() {
+            text += &values[x_index].to_string();
         }
         text += &format!(" {}", coordinate.units);
         coordinate_details.push(text);
@@ -630,24 +623,15 @@ fn generate_xy_name(
 fn generate_xy_names(trace: &Trace) -> Result<Vec<String>, GamlError> {
     let coordinates = trace.coordinates.as_slice();
     let mut names = vec![];
-    let mut overall_index = 0;
     for (x_index, x_data) in trace.x_data.iter().enumerate() {
         for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-            let name = generate_xy_name(coordinates, x_index, None, y_index, overall_index)?;
+            let name = generate_xy_name(coordinates, x_index, None, y_index)?;
             names.push(name);
-            overall_index += 1;
         }
         for (alt_x_index, _alt_x_data) in x_data.alt_x_data.iter().enumerate() {
             for (y_index, _y_data) in x_data.y_data.iter().enumerate() {
-                let name = generate_xy_name(
-                    coordinates,
-                    x_index,
-                    Some(alt_x_index),
-                    y_index,
-                    overall_index,
-                )?;
+                let name = generate_xy_name(coordinates, x_index, Some(alt_x_index), y_index)?;
                 names.push(name);
-                overall_index += 1;
             }
         }
     }
@@ -1153,7 +1137,7 @@ mod tests {
                             alias: None,
                             value: Some("param 0 value".into()),
                         }],
-                        values: create_values_f64(&[100.0, 200.0]),
+                        values: create_values_f64(&[100.0]),
                     }],
                     x_data: vec![Xdata {
                         units: Units::Nanometers,
@@ -1237,7 +1221,7 @@ mod tests {
                 Parameter::from_str_u64("Ydata values numvalues", 3),
                 Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
                 Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
-                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+                Parameter::from_str_u64("Coordinate 0 values numvalues", 1),
             ],
             &xydata_node_0.parameters
         );
@@ -1263,7 +1247,7 @@ mod tests {
 
         let xydata_node_1 = reader.read("/0/0/1").unwrap();
         assert_eq!(
-            "AltXYData 0, 0, 0 (coordinates label=200 SECONDS)",
+            "AltXYData 0, 0, 0 (coordinates label=100 SECONDS)",
             &xydata_node_1.name
         );
         assert_eq!(
@@ -1289,7 +1273,7 @@ mod tests {
                 Parameter::from_str_u64("Ydata values numvalues", 3),
                 Parameter::from_str_str("Coordinate 0 values format", "FLOAT64"),
                 Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
-                Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+                Parameter::from_str_u64("Coordinate 0 values numvalues", 1),
             ],
             &xydata_node_1.parameters
         );

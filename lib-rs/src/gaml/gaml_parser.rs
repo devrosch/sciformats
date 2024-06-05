@@ -1271,9 +1271,9 @@ mod tests {
                                     <coordinates label=\"Coordinate label\" units=\"MICRONS\" linkid=\"coordinates-linkid\" valueorder=\"UNSPECIFIED\">
                                         <link linkref=\"co-linkref\"/>
                                         <parameter name=\"co-parameter0\" label=\"Coordinates parameter label 0\">Coordinates parameter value 0</parameter>
-                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
+                                        <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"1\">
                                             <!-- A values comment -->
-                                            AACAPw\nAAAEA=
+                                            AACAPw==
                                         </values>
                                     </coordinates>
                                     <Xdata label=\"Xdata label\" units=\"MICRONS\" linkid=\"xdata-linkid\" valueorder=\"UNSPECIFIED\">
@@ -1291,7 +1291,7 @@ mod tests {
                                                 <!-- A values comment -->
                                             </values>
                                         </altXdata>
-                                        <Ydata label=\"Ydata label\" units=\"MICRONS\" linkid=\"altxdata-linkid\" valueorder=\"UNSPECIFIED\">
+                                        <Ydata label=\"Ydata label\" units=\"MICRONS\">
                                             <parameter name=\"ydata-parameter0\" label=\"Ydata parameter label 0\">Ydata parameter value 0</parameter>
                                             <values byteorder=\"INTEL\" format=\"FLOAT32\" numvalues=\"2\">
                                                 <!-- A values comment -->
@@ -1427,13 +1427,12 @@ mod tests {
         let co_values = &coordinates[0].values;
         assert_eq!(Format::Float32, co_values.format);
         assert_eq!(Byteorder::Intel, co_values.byteorder);
-        assert_eq!(Some(2), co_values.numvalues);
+        assert_eq!(Some(1), co_values.numvalues);
         // value is lazily read
         // converted data
         let decoded_values = co_values.get_data().unwrap();
-        assert_eq!(2, decoded_values.len());
+        assert_eq!(1, decoded_values.len());
         assert_eq!(1.0f32 as f64, decoded_values[0]);
-        assert_eq!(2.0f32 as f64, decoded_values[1]);
 
         let x_data = &trace.x_data;
         assert_eq!(1, x_data.len());

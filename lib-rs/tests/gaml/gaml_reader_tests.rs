@@ -172,6 +172,8 @@ fn parse_trace10_succeeds(reader: &GamlReader) {
     assert_eq!(Vec::<PointXy>::new(), trace.data);
     assert_eq!(Vec::<(String, String)>::new(), trace.metadata);
     assert_eq!(None, trace.table);
+    parse_xydata100_succeeds(reader);
+    parse_xydata101_succeeds(reader);
 }
 
 fn parse_trace11_succeeds(reader: &GamlReader) {
@@ -194,6 +196,7 @@ fn parse_trace11_succeeds(reader: &GamlReader) {
     assert_eq!(Vec::<PointXy>::new(), trace.data);
     assert_eq!(Vec::<(String, String)>::new(), trace.metadata);
     assert_eq!(None, trace.table);
+    // todo: parse_xydata110_succeeds(reader);
 }
 
 fn parse_xydata000_succeeds(reader: &GamlReader) {
@@ -412,6 +415,224 @@ fn parse_xydata001_succeeds(reader: &GamlReader) {
             ("x.unit".to_owned(), "MICRONS".to_owned()),
             ("y.label".to_owned(), "Ydata 0/0/0/0 label".to_owned()),
             ("y.unit".to_owned(), "MICRONS".to_owned())
+        ],
+        xy_data.metadata
+    );
+    assert_eq!(None, xy_data.table);
+}
+
+fn parse_xydata100_succeeds(reader: &GamlReader) {
+    let xy_data = reader.read("/1/0/0").unwrap();
+    assert_eq!(
+        "XYData 0, 0 (Coordinates 1/0/0 label=1 MICRONS)",
+        xy_data.name
+    );
+    let parameters = &xy_data.parameters;
+    assert_eq!(21, parameters.len());
+    assert_eq!(
+        Parameter::from_str_str("Xdata units", "MASSCHARGERATIO"),
+        parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata label", "Xdata 1/0/0 label"),
+        parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata linkid", "xdata100-linkid"),
+        parameters[2]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata valueorder", "UNSPECIFIED"),
+        parameters[3]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata units", "MILLIVOLTS"),
+        parameters[4]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata label", "Ydata 1/0/0/0 label"),
+        parameters[5]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 units", "MICRONS"),
+        parameters[6]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 label", "Coordinates 1/0/0 label"),
+        parameters[7]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 linkid", "coordinates100-linkid"),
+        parameters[8]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 valueorder", "UNSPECIFIED"),
+        parameters[9]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata linkref", "xdata100-linkref"),
+        parameters[10]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 link linkref", "coordinates100-linkref"),
+        parameters[11]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata values format", "FLOAT32"),
+        parameters[12]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata values byteorder", "INTEL"),
+        parameters[13]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("Xdata values numvalues", 2),
+        parameters[14]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata values format", "FLOAT32"),
+        parameters[15]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata values byteorder", "INTEL"),
+        parameters[16]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("Ydata values numvalues", 2),
+        parameters[17]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 values format", "FLOAT32"),
+        parameters[18]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
+        parameters[19]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+        parameters[20]
+    );
+    assert_eq!(
+        vec![PointXy::new(1.0, 1.0,), PointXy::new(2.0, 2.0,)],
+        xy_data.data
+    );
+    assert_eq!(
+        vec![
+            ("x.label".to_owned(), "Xdata 1/0/0 label".to_owned()),
+            ("x.unit".to_owned(), "MASSCHARGERATIO".to_owned()),
+            ("y.label".to_owned(), "Ydata 1/0/0/0 label".to_owned()),
+            ("y.unit".to_owned(), "MILLIVOLTS".to_owned()),
+            ("plot.style".to_owned(), "sticks".to_owned()),
+        ],
+        xy_data.metadata
+    );
+    assert_eq!(None, xy_data.table);
+}
+
+fn parse_xydata101_succeeds(reader: &GamlReader) {
+    let xy_data = reader.read("/1/0/1").unwrap();
+    assert_eq!(
+        "XYData 0, 1 (Coordinates 1/0/0 label=1 MICRONS)",
+        xy_data.name
+    );
+    let parameters = &xy_data.parameters;
+    assert_eq!(21, parameters.len());
+    assert_eq!(
+        Parameter::from_str_str("Xdata units", "MASSCHARGERATIO"),
+        parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata label", "Xdata 1/0/0 label"),
+        parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata linkid", "xdata100-linkid"),
+        parameters[2]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata valueorder", "UNSPECIFIED"),
+        parameters[3]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata units", "MILLIVOLTS"),
+        parameters[4]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata label", "Ydata 1/0/0/1 label"),
+        parameters[5]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 units", "MICRONS"),
+        parameters[6]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 label", "Coordinates 1/0/0 label"),
+        parameters[7]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 linkid", "coordinates100-linkid"),
+        parameters[8]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 valueorder", "UNSPECIFIED"),
+        parameters[9]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata linkref", "xdata100-linkref"),
+        parameters[10]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 link linkref", "coordinates100-linkref"),
+        parameters[11]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata values format", "FLOAT32"),
+        parameters[12]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Xdata values byteorder", "INTEL"),
+        parameters[13]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("Xdata values numvalues", 2),
+        parameters[14]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata values format", "FLOAT32"),
+        parameters[15]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Ydata values byteorder", "INTEL"),
+        parameters[16]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("Ydata values numvalues", 2),
+        parameters[17]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 values format", "FLOAT32"),
+        parameters[18]
+    );
+    assert_eq!(
+        Parameter::from_str_str("Coordinate 0 values byteorder", "INTEL"),
+        parameters[19]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("Coordinate 0 values numvalues", 2),
+        parameters[20]
+    );
+    assert_eq!(
+        vec![PointXy::new(1.0, 1.0,), PointXy::new(2.0, 2.0,)],
+        xy_data.data
+    );
+    assert_eq!(
+        vec![
+            ("x.label".to_owned(), "Xdata 1/0/0 label".to_owned()),
+            ("x.unit".to_owned(), "MASSCHARGERATIO".to_owned()),
+            ("y.label".to_owned(), "Ydata 1/0/0/1 label".to_owned()),
+            ("y.unit".to_owned(), "MILLIVOLTS".to_owned()),
+            ("plot.style".to_owned(), "sticks".to_owned()),
         ],
         xy_data.metadata
     );

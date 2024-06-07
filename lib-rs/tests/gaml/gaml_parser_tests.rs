@@ -242,6 +242,7 @@ fn parse_trace10_succeeds(trace: &Trace) {
     assert_eq!(Format::Float32, coordinates0_values.format);
     assert_eq!(Some(2), coordinates0_values.numvalues);
     assert_eq!(vec![1.0, 2.0], coordinates0_values.get_data().unwrap());
+    assert_eq!(1, trace.x_data.len());
     parse_xdata100_succeeds(&trace.x_data[0]);
 }
 
@@ -259,43 +260,8 @@ fn parse_trace11_succeeds(trace: &Trace) {
         },
         trace.parameters[0]
     );
-    assert_eq!(1, trace.coordinates.len());
-
-    let coordinates0 = &trace.coordinates[0];
-    assert_eq!(
-        Some("Coordinates 1/1/0 label".to_owned()),
-        coordinates0.label
-    );
-    assert_eq!(
-        Some("coordinates110-linkid".to_owned()),
-        coordinates0.linkid
-    );
-    assert_eq!(Units::Microns, coordinates0.units);
-    assert_eq!(Some(Valueorder::Unspecified), coordinates0.valueorder);
-    assert_eq!(1, coordinates0.links.len());
-    assert_eq!(
-        Link {
-            linkref: "coordinates110-linkref".to_owned()
-        },
-        coordinates0.links[0]
-    );
-    assert_eq!(1, coordinates0.parameters.len());
-    assert_eq!(
-        Parameter {
-            group: Some("Coordinates 1/1/0 parameter group 0".to_owned()),
-            name: "Coordinates 1/1/0 parameter name 0".to_owned(),
-            label: Some("Coordinates 1/1/0 parameter label 0".to_owned()),
-            alias: Some("Coordinates 1/1/0 parameter alias 0".to_owned()),
-            value: Some("Coordinates 1/1/0 parameter value 0".to_owned()),
-        },
-        coordinates0.parameters[0]
-    );
-    let coordinates0_values = &coordinates0.values;
-    assert_eq!(Byteorder::Intel, coordinates0_values.byteorder);
-    assert_eq!(Format::Float32, coordinates0_values.format);
-    assert_eq!(Some(2), coordinates0_values.numvalues);
-    assert_eq!(vec![1.0, 2.0], coordinates0_values.get_data().unwrap());
-    // todo: parse_xdata110_succeeds(&trace.x_data[0]);
+    assert_eq!(1, trace.x_data.len());
+    parse_xdata110_succeeds(&trace.x_data[0]);
 }
 
 fn parse_xdata000_succeeds(x_data: &Xdata) {
@@ -416,4 +382,29 @@ fn parse_xdata100_succeeds(x_data: &Xdata) {
     assert_eq!(Format::Float32, y_data1_values.format);
     assert_eq!(Some(2), y_data1_values.numvalues);
     assert_eq!(vec![1.0, 2.0], y_data1_values.get_data().unwrap());
+}
+
+fn parse_xdata110_succeeds(x_data: &Xdata) {
+    assert_eq!(Units::Masschargeratio, x_data.units);
+    assert_eq!(Some("Xdata 1/1/0 label".to_owned()), x_data.label);
+    assert_eq!(Some("xdata110-linkid".to_owned()), x_data.linkid);
+    assert_eq!(Some(Valueorder::Unspecified), x_data.valueorder);
+    assert!(x_data.parameters.is_empty());
+    let x_data_values = &x_data.values;
+    assert_eq!(Byteorder::Intel, x_data_values.byteorder);
+    assert_eq!(Format::Float32, x_data_values.format);
+    assert_eq!(Some(2), x_data_values.numvalues);
+    assert_eq!(vec![1.0, 2.0], x_data_values.get_data().unwrap());
+    assert!(x_data.alt_x_data.is_empty());
+
+    assert_eq!(1, x_data.y_data.len());
+    let y_data0 = &x_data.y_data[0];
+    assert_eq!(Units::Millivolts, y_data0.units);
+    assert_eq!(Some("Ydata 1/1/0/0 label".to_owned()), y_data0.label);
+    assert!(y_data0.parameters.is_empty());
+    let y_data0_values = &y_data0.values;
+    assert_eq!(Byteorder::Intel, y_data0_values.byteorder);
+    assert_eq!(Format::Float32, y_data0_values.format);
+    assert_eq!(Some(2), y_data0_values.numvalues);
+    assert_eq!(vec![1.0, 2.0], y_data0_values.get_data().unwrap());
 }

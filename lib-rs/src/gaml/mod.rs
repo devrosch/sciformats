@@ -39,12 +39,6 @@ impl fmt::Display for GamlError {
     }
 }
 
-impl From<quick_xml::Error> for GamlError {
-    fn from(value: quick_xml::Error) -> Self {
-        Self::from_source(value, "XML error parsing GAML.")
-    }
-}
-
 impl From<std::io::Error> for GamlError {
     fn from(value: std::io::Error) -> Self {
         Self::from_source(value, "I/O error parsing GAML.")

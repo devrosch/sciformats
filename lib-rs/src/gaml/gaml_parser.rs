@@ -1,10 +1,10 @@
 use super::GamlError;
 use crate::api::{Parser, SeekBufRead};
 use crate::xml_utils::{
-    consume_end, consume_end_rc, next_non_whitespace, read_empty, read_opt_elem, read_opt_elem_rc,
-    read_req_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc, read_start,
-    read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl, BufEvent,
-    XmlTagStart,
+    consume_end, consume_end_rc, next_non_whitespace, read_empty, read_next_event, read_opt_elem,
+    read_opt_elem_rc, read_req_elem_rc, read_req_elem_value_f64, read_sequence, read_sequence_rc,
+    read_start, read_start_or_empty, read_value, read_value_pos, skip_whitespace, skip_xml_decl,
+    BufEvent, XmlTagStart,
 };
 use base64::prelude::*;
 use chrono::{DateTime, FixedOffset};
@@ -159,8 +159,8 @@ impl Parameter {
         // value
         let (value, next) = match start {
             XmlTagStart::Empty(_) => {
-                let next_raw = reader.read_event_into(next.buf)?.into_owned();
-                (None, BufEvent::new(next_raw, next.buf))
+                let next = read_next_event(reader, next.buf)?;
+                (None, next)
             }
             XmlTagStart::Start(_) => {
                 let (value, next) = read_value(reader, next.buf)?;
@@ -584,9 +584,8 @@ impl Link {
         let start = read_empty(Self::TAG, reader, &next)?;
         let linkref = start.get_req_attr("linkref")?;
 
-        let next_raw = reader.read_event_into(next.buf)?.into_owned();
-
-        Ok((Self { linkref }, BufEvent::new(next_raw, next.buf)))
+        let next = read_next_event(reader, next.buf)?;
+        Ok((Self { linkref }, next))
     }
 }
 
@@ -1264,7 +1263,7 @@ fn read_data_elements(
 mod tests {
     use super::*;
     use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-    use std::io::Cursor;
+    use std::{error::Error, io::Cursor};
 
     #[test]
     fn parses_utf8_gaml_xml_1_0() {
@@ -1616,7 +1615,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unsupported_gaml_versions() {
+    fn fails_to_parse_unsupported_gaml_versions() {
         let xml_gaml_1_11 = b"<GAML version=\"1.11\"></GAML>";
         let xml_gaml_1_30 = b"<GAML version=\"1.30\"></GAML>";
         let xml_gaml_abc = b"<GAML version=\"abc\"></GAML>";
@@ -1678,6 +1677,13 @@ mod tests {
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
         assert!(gaml_err.message.contains("Unexpected tag"));
+        assert!(gaml_err.message.contains("NOGAML"));
+        let error_str = gaml_err.to_string();
+        assert!(error_str.contains("Unexpected tag"));
+        assert!(error_str.contains("NOGAML"));
+        let error_debug = format!("{gaml_err:?}");
+        assert!(error_debug.contains("GamlError"));
+        assert!(error_debug.contains("NOGAML"));
     }
 
     #[test]
@@ -1707,6 +1713,8 @@ mod tests {
         assert!(gaml_err.message.contains("ILLEGAL_TECHNIQUE"));
         assert!(gaml_err.message.contains("technique"));
         assert!(gaml_err.message.contains("trace"));
+        let source_err = gaml_err.source();
+        assert!(source_err.is_some());
     }
 
     #[test]

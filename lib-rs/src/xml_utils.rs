@@ -203,6 +203,14 @@ pub(super) fn read_empty<'buf, R>(
     }
 }
 
+pub(super) fn read_next_event<'buf, R: BufRead>(
+    reader: &mut Reader<R>,
+    buf: &'buf mut Vec<u8>,
+) -> Result<BufEvent<'buf>, SfXmlError> {
+    let raw_next = reader.read_event_into(buf)?;
+    Ok(BufEvent::new(raw_next.into_owned(), buf))
+}
+
 pub(super) fn skip_whitespace<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,

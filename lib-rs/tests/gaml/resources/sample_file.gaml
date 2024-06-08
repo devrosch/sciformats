@@ -40,8 +40,43 @@
                     AACAPw
                     AAAEA=
                 </values>
+                <peaktable name="Peaktable 0/0/0/0/0 name">
+                    <parameter name="Peaktable 0/0/0/0/0 parameter name 0" label="Peaktable 0/0/0/0/0 parameter label 0" group="Peaktable 0/0/0/0/0 parameter group 0" alias="Peaktable 0/0/0/0/0 parameter alias 0">Peaktable 0/0/0/0/0 parameter value 0</parameter>
+                    <peak number="1" group="Peak 0/0/0/0/0/0 group" name="Peak 0/0/0/0/0/0 name">
+                        <parameter name="Peak 0/0/0/0/0/0 parameter name 0" label="Peak 0/0/0/0/0/0 parameter label 0" group="Peak 0/0/0/0/0/0 parameter group 0" alias="Peak 0/0/0/0/0/0 parameter alias 0">Peak 0/0/0/0/0/0 parameter value 0</parameter>
+                        <peakXvalue>0.1</peakXvalue>
+                        <peakYvalue>100.0</peakYvalue>
+                        <baseline>
+                            <startXvalue>1.1</startXvalue>
+                            <startYvalue>11.1</startYvalue>
+                            <endXvalue>2.2</endXvalue>
+                            <endYvalue>22.2</endYvalue>
+                            <basecurve>
+                                <baseXdata>
+                                    <values byteorder="INTEL" format="FLOAT32" numvalues="2">
+                                        AACAPw
+                                        AAAEA=
+                                    </values>
+                                    <values byteorder="INTEL" format="FLOAT32" numvalues="2">
+                                        AACAPw
+                                        AAAEA=
+                                    </values>
+                                </baseXdata>
+                                <baseYdata>
+                                    <values byteorder="INTEL" format="FLOAT32" numvalues="2">
+                                        AACAPw
+                                        AAAEA=
+                                    </values>
+                                    <values byteorder="INTEL" format="FLOAT32" numvalues="2">
+                                        AACAPw
+                                        AAAEA=
+                                    </values>
+                                </baseYdata>
+                            </basecurve>
+                        </baseline>
+                    </peak>
+                </peaktable>
             </Ydata>
-            <!-- todo: peaktable -->
         </Xdata>
     </trace>
   </experiment>

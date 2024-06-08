@@ -1,8 +1,9 @@
 use super::{open_file, GAML_SAMPLE_FILE};
 use sf_rs::{
-    api::{Parameter, Parser, PointXy, Reader},
+    api::{Column, Parameter, Parser, PointXy, Reader, Table, Value},
     gaml::{gaml_parser::GamlParser, gaml_reader::GamlReader},
 };
+use std::collections::HashMap;
 use wasm_bindgen_test::wasm_bindgen_test;
 
 #[wasm_bindgen_test]
@@ -319,6 +320,9 @@ fn parse_xydata000_succeeds(reader: &GamlReader) {
         xy_data.metadata
     );
     assert_eq!(None, xy_data.table);
+
+    assert_eq!(1, xy_data.child_node_names.len());
+    parse_peaktables0000_succeeds(reader);
 }
 
 fn parse_xydata001_succeeds(reader: &GamlReader) {
@@ -430,6 +434,7 @@ fn parse_xydata001_succeeds(reader: &GamlReader) {
         xy_data.metadata
     );
     assert_eq!(None, xy_data.table);
+    assert!(xy_data.child_node_names.is_empty());
 }
 
 fn parse_xydata100_succeeds(reader: &GamlReader) {
@@ -539,6 +544,7 @@ fn parse_xydata100_succeeds(reader: &GamlReader) {
         xy_data.metadata
     );
     assert_eq!(None, xy_data.table);
+    assert!(xy_data.child_node_names.is_empty());
 }
 
 fn parse_xydata101_succeeds(reader: &GamlReader) {
@@ -648,6 +654,7 @@ fn parse_xydata101_succeeds(reader: &GamlReader) {
         xy_data.metadata
     );
     assert_eq!(None, xy_data.table);
+    assert!(xy_data.child_node_names.is_empty());
 }
 
 fn parse_xydata110_succeeds(reader: &GamlReader) {
@@ -718,4 +725,108 @@ fn parse_xydata110_succeeds(reader: &GamlReader) {
         xy_data.metadata
     );
     assert_eq!(None, xy_data.table);
+    assert!(xy_data.child_node_names.is_empty());
+}
+
+fn parse_peaktables0000_succeeds(reader: &GamlReader) {
+    let peaktable = reader.read("/0/0/0/0").unwrap();
+    assert_eq!("Peaktable 0, Peaktable 0/0/0/0/0 name", peaktable.name);
+    let parameters = &peaktable.parameters;
+    assert_eq!(3, parameters.len());
+    assert_eq!(
+        Parameter::from_str_str("Peaktable name", "Peaktable 0/0/0/0/0 name"),
+        parameters[0]
+    );
+    assert_eq!(Parameter::from_str_str("Peaktable Peaktable 0/0/0/0/0 parameter name 0 (group=Peaktable 0/0/0/0/0 parameter group 0, label=Peaktable 0/0/0/0/0 parameter label 0, alias=Peaktable 0/0/0/0/0 parameter alias 0)", "Peaktable 0/0/0/0/0 parameter value 0"), parameters[1]);
+    assert_eq!(Parameter::from_str_str("Peak 0 number 1 Peak 0/0/0/0/0/0 parameter name 0 (group=Peak 0/0/0/0/0/0 parameter group 0, label=Peak 0/0/0/0/0/0 parameter label 0, alias=Peak 0/0/0/0/0/0 parameter alias 0)", "Peak 0/0/0/0/0/0 parameter value 0"), parameters[2]);
+    assert!(peaktable.metadata.is_empty());
+    assert_eq!(
+        Some(Table {
+            column_names: vec![
+                Column::new("number", "Number"),
+                Column::new("group", "Group"),
+                Column::new("name", "Name"),
+                Column::new("peak_x_value", "peakXvalue"),
+                Column::new("peak_y_value", "peakYvalue"),
+                Column::new("baseline_start_x_value", "Baseline Start X Value"),
+                Column::new("baseline_start_y_value", "Baseline Start Y Value"),
+                Column::new("baseline_end_x_value", "Baseline End X Value"),
+                Column::new("baseline_end_y_value", "Baseline End Y Value"),
+            ],
+            rows: vec![HashMap::from([
+                ("number".to_owned(), Value::U64(1)),
+                (
+                    "group".to_owned(),
+                    Value::String("Peak 0/0/0/0/0/0 group".to_owned())
+                ),
+                (
+                    "name".to_owned(),
+                    Value::String("Peak 0/0/0/0/0/0 name".to_owned())
+                ),
+                ("peak_x_value".to_owned(), Value::F64(0.1)),
+                ("peak_y_value".to_owned(), Value::F64(100.0)),
+                ("baseline_start_x_value".to_owned(), Value::F64(1.1)),
+                ("baseline_start_y_value".to_owned(), Value::F64(11.1)),
+                ("baseline_end_x_value".to_owned(), Value::F64(2.2)),
+                ("baseline_end_y_value".to_owned(), Value::F64(22.2)),
+            ])]
+        }),
+        peaktable.table
+    );
+    assert_eq!(1, peaktable.child_node_names.len());
+    assert_eq!("Basecurve Peak 0, number 1", peaktable.child_node_names[0]);
+
+    let basecurve0 = reader.read("/0/0/0/0/0").unwrap();
+    assert_eq!("Basecurve Peak 0, number 1", basecurve0.name);
+    assert_eq!(12, basecurve0.parameters.len());
+    let basecurve0_parameters = &basecurve0.parameters;
+    assert_eq!(
+        Parameter::from_str_str("BaseXdata values 0 format", "FLOAT32"),
+        basecurve0_parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseXdata values 0 byteorder", "INTEL"),
+        basecurve0_parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("BaseXdata values 0 numvalues", 2),
+        basecurve0_parameters[2]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseXdata values 1 format", "FLOAT32"),
+        basecurve0_parameters[3]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseXdata values 1 byteorder", "INTEL"),
+        basecurve0_parameters[4]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("BaseXdata values 1 numvalues", 2),
+        basecurve0_parameters[5]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseYdata values 0 format", "FLOAT32"),
+        basecurve0_parameters[6]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseYdata values 0 byteorder", "INTEL"),
+        basecurve0_parameters[7]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("BaseYdata values 0 numvalues", 2),
+        basecurve0_parameters[8]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseYdata values 1 format", "FLOAT32"),
+        basecurve0_parameters[9]
+    );
+    assert_eq!(
+        Parameter::from_str_str("BaseYdata values 1 byteorder", "INTEL"),
+        basecurve0_parameters[10]
+    );
+    assert_eq!(
+        Parameter::from_str_u64("BaseYdata values 1 numvalues", 2),
+        basecurve0_parameters[11]
+    );
+    assert!(basecurve0.child_node_names.is_empty());
 }

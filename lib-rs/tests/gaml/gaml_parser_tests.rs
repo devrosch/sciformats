@@ -5,8 +5,8 @@ use chrono::{DateTime, FixedOffset};
 use sf_rs::{
     api::Parser,
     gaml::gaml_parser::{
-        Byteorder, Experiment, Format, GamlParser, Integrity, Link, Parameter, Technique, Trace,
-        Units, Valueorder, Xdata,
+        Byteorder, Experiment, Format, GamlParser, Integrity, Link, Parameter, Peaktable,
+        Technique, Trace, Units, Valueorder, Xdata,
     },
 };
 use wasm_bindgen_test::wasm_bindgen_test;
@@ -322,10 +322,10 @@ fn parse_xdata000_succeeds(x_data: &Xdata) {
     assert_eq!(vec![1.0, 2.0], alt_x_data_values.get_data().unwrap());
 
     assert_eq!(1, x_data.y_data.len());
-    let y_data = &x_data.y_data[0];
-    assert_eq!(Units::Microns, y_data.units);
-    assert_eq!(Some("Ydata 0/0/0/0 label".to_owned()), y_data.label);
-    assert_eq!(1, y_data.parameters.len());
+    let y_data0 = &x_data.y_data[0];
+    assert_eq!(Units::Microns, y_data0.units);
+    assert_eq!(Some("Ydata 0/0/0/0 label".to_owned()), y_data0.label);
+    assert_eq!(1, y_data0.parameters.len());
     assert_eq!(
         Parameter {
             group: Some("Ydata 0/0/0/0 parameter group 0".to_owned()),
@@ -334,13 +334,16 @@ fn parse_xdata000_succeeds(x_data: &Xdata) {
             alias: Some("Ydata 0/0/0/0 parameter alias 0".to_owned()),
             value: Some("Ydata 0/0/0/0 parameter value 0".to_owned()),
         },
-        y_data.parameters[0]
+        y_data0.parameters[0]
     );
-    let y_data_values = &y_data.values;
-    assert_eq!(Byteorder::Intel, y_data_values.byteorder);
-    assert_eq!(Format::Float32, y_data_values.format);
-    assert_eq!(Some(2), y_data_values.numvalues);
-    assert_eq!(vec![1.0, 2.0], y_data_values.get_data().unwrap());
+    let y_data0_values = &y_data0.values;
+    assert_eq!(Byteorder::Intel, y_data0_values.byteorder);
+    assert_eq!(Format::Float32, y_data0_values.format);
+    assert_eq!(Some(2), y_data0_values.numvalues);
+    assert_eq!(vec![1.0, 2.0], y_data0_values.get_data().unwrap());
+
+    assert_eq!(1, y_data0.peaktables.len());
+    parse_peaktables0000_succeeds(&y_data0.peaktables[0]);
 }
 
 fn parse_xdata100_succeeds(x_data: &Xdata) {
@@ -372,6 +375,7 @@ fn parse_xdata100_succeeds(x_data: &Xdata) {
     assert_eq!(Format::Float32, y_data0_values.format);
     assert_eq!(Some(2), y_data0_values.numvalues);
     assert_eq!(vec![1.0, 2.0], y_data0_values.get_data().unwrap());
+    assert!(y_data0.peaktables.is_empty());
 
     let y_data1 = &x_data.y_data[1];
     assert_eq!(Units::Millivolts, y_data1.units);
@@ -382,6 +386,7 @@ fn parse_xdata100_succeeds(x_data: &Xdata) {
     assert_eq!(Format::Float32, y_data1_values.format);
     assert_eq!(Some(2), y_data1_values.numvalues);
     assert_eq!(vec![1.0, 2.0], y_data1_values.get_data().unwrap());
+    assert!(y_data1.peaktables.is_empty());
 }
 
 fn parse_xdata110_succeeds(x_data: &Xdata) {
@@ -407,4 +412,63 @@ fn parse_xdata110_succeeds(x_data: &Xdata) {
     assert_eq!(Format::Float32, y_data0_values.format);
     assert_eq!(Some(2), y_data0_values.numvalues);
     assert_eq!(vec![1.0, 2.0], y_data0_values.get_data().unwrap());
+    assert!(y_data0.peaktables.is_empty());
+}
+
+fn parse_peaktables0000_succeeds(peaktable: &Peaktable) {
+    assert_eq!(Some("Peaktable 0/0/0/0/0 name".to_owned()), peaktable.name);
+    assert_eq!(1, peaktable.parameters.len());
+    assert_eq!(
+        Parameter {
+            group: Some("Peaktable 0/0/0/0/0 parameter group 0".to_owned()),
+            name: "Peaktable 0/0/0/0/0 parameter name 0".to_owned(),
+            label: Some("Peaktable 0/0/0/0/0 parameter label 0".to_owned()),
+            alias: Some("Peaktable 0/0/0/0/0 parameter alias 0".to_owned()),
+            value: Some("Peaktable 0/0/0/0/0 parameter value 0".to_owned()),
+        },
+        peaktable.parameters[0]
+    );
+
+    assert_eq!(1, peaktable.peaks.len());
+    let peak0 = &peaktable.peaks[0];
+    assert_eq!(1, peak0.number);
+    assert_eq!(Some("Peak 0/0/0/0/0/0 group".to_owned()), peak0.group);
+    assert_eq!(Some("Peak 0/0/0/0/0/0 name".to_owned()), peak0.name);
+    assert_eq!(1, peak0.parameters.len());
+    assert_eq!(
+        Parameter {
+            group: Some("Peak 0/0/0/0/0/0 parameter group 0".to_owned()),
+            name: "Peak 0/0/0/0/0/0 parameter name 0".to_owned(),
+            label: Some("Peak 0/0/0/0/0/0 parameter label 0".to_owned()),
+            alias: Some("Peak 0/0/0/0/0/0 parameter alias 0".to_owned()),
+            value: Some("Peak 0/0/0/0/0/0 parameter value 0".to_owned()),
+        },
+        peak0.parameters[0]
+    );
+    assert_eq!(0.1, peak0.peak_x_value);
+    assert_eq!(100.0, peak0.peak_y_value);
+
+    let baseline0 = peak0.baseline.as_ref().unwrap();
+    assert!(baseline0.parameters.is_empty());
+    assert_eq!(1.1, baseline0.start_x_value);
+    assert_eq!(11.1, baseline0.start_y_value);
+    assert_eq!(2.2, baseline0.end_x_value);
+    assert_eq!(22.2, baseline0.end_y_value);
+    let basecurve = baseline0.basecurve.as_ref().unwrap();
+    assert_eq!(2, basecurve.base_x_data.len());
+    assert_eq!(Byteorder::Intel, basecurve.base_x_data[0].byteorder);
+    assert_eq!(Format::Float32, basecurve.base_x_data[0].format);
+    assert_eq!(Some(2), basecurve.base_x_data[0].numvalues);
+    assert_eq!(Byteorder::Intel, basecurve.base_x_data[1].byteorder);
+    assert_eq!(Format::Float32, basecurve.base_x_data[1].format);
+    assert_eq!(Some(2), basecurve.base_x_data[1].numvalues);
+    assert_eq!(vec![1.0, 2.0, 1.0, 2.0], basecurve.get_x_data().unwrap());
+    assert_eq!(2, basecurve.base_y_data.len());
+    assert_eq!(Byteorder::Intel, basecurve.base_y_data[0].byteorder);
+    assert_eq!(Format::Float32, basecurve.base_y_data[0].format);
+    assert_eq!(Some(2), basecurve.base_y_data[0].numvalues);
+    assert_eq!(Byteorder::Intel, basecurve.base_y_data[1].byteorder);
+    assert_eq!(Format::Float32, basecurve.base_y_data[1].format);
+    assert_eq!(Some(2), basecurve.base_y_data[1].numvalues);
+    assert_eq!(vec![1.0, 2.0, 1.0, 2.0], basecurve.get_y_data().unwrap());
 }

@@ -174,12 +174,18 @@ fn parse_trace00_succeeds(trace: &Trace) {
     );
     assert_eq!(Units::Microns, coordinates0.units);
     assert_eq!(Some(Valueorder::Unspecified), coordinates0.valueorder);
-    assert_eq!(1, coordinates0.links.len());
+    assert_eq!(2, coordinates0.links.len());
     assert_eq!(
         Link {
-            linkref: "coordinates000-linkref".to_owned()
+            linkref: "xdata000-linkid".to_owned()
         },
         coordinates0.links[0]
+    );
+    assert_eq!(
+        Link {
+            linkref: "altxdata0000-linkid".to_owned()
+        },
+        coordinates0.links[1]
     );
     assert_eq!(1, coordinates0.parameters.len());
     assert_eq!(
@@ -232,7 +238,7 @@ fn parse_trace10_succeeds(trace: &Trace) {
     assert_eq!(1, coordinates0.links.len());
     assert_eq!(
         Link {
-            linkref: "coordinates100-linkref".to_owned()
+            linkref: "xdata100-linkid".to_owned()
         },
         coordinates0.links[0]
     );
@@ -240,8 +246,8 @@ fn parse_trace10_succeeds(trace: &Trace) {
     let coordinates0_values = &coordinates0.values;
     assert_eq!(Byteorder::Intel, coordinates0_values.byteorder);
     assert_eq!(Format::Float32, coordinates0_values.format);
-    assert_eq!(Some(2), coordinates0_values.numvalues);
-    assert_eq!(vec![1.0, 2.0], coordinates0_values.get_data().unwrap());
+    assert_eq!(Some(1), coordinates0_values.numvalues);
+    assert_eq!(vec![1.0], coordinates0_values.get_data().unwrap());
     assert_eq!(1, trace.x_data.len());
     parse_xdata100_succeeds(&trace.x_data[0]);
 }
@@ -265,13 +271,13 @@ fn parse_trace11_succeeds(trace: &Trace) {
 }
 
 fn parse_xdata000_succeeds(x_data: &Xdata) {
-    assert_eq!(Units::Microns, x_data.units);
+    assert_eq!(Units::Minutes, x_data.units);
     assert_eq!(Some("Xdata 0/0/0 label".to_owned()), x_data.label);
     assert_eq!(Some("xdata000-linkid".to_owned()), x_data.linkid);
     assert_eq!(Some(Valueorder::Unspecified), x_data.valueorder);
     assert_eq!(
         Link {
-            linkref: "xdata000-linkref".to_owned()
+            linkref: "coordinates000-linkid".to_owned()
         },
         x_data.links[0]
     );
@@ -294,13 +300,13 @@ fn parse_xdata000_succeeds(x_data: &Xdata) {
 
     assert_eq!(1, x_data.alt_x_data.len());
     let alt_x_data = &x_data.alt_x_data[0];
-    assert_eq!(Units::Microns, alt_x_data.units);
+    assert_eq!(Units::Centimeters, alt_x_data.units);
     assert_eq!(Some("altXdata 0/0/0/0 label".to_owned()), alt_x_data.label);
     assert_eq!(Some("altxdata0000-linkid".to_owned()), alt_x_data.linkid);
     assert_eq!(Some(Valueorder::Unspecified), alt_x_data.valueorder);
     assert_eq!(
         Link {
-            linkref: "altxdata0000-linkref".to_owned()
+            linkref: "coordinates000-linkid".to_owned()
         },
         alt_x_data.links[0]
     );
@@ -353,7 +359,7 @@ fn parse_xdata100_succeeds(x_data: &Xdata) {
     assert_eq!(Some(Valueorder::Unspecified), x_data.valueorder);
     assert_eq!(
         Link {
-            linkref: "xdata100-linkref".to_owned()
+            linkref: "coordinates100-linkid".to_owned()
         },
         x_data.links[0]
     );

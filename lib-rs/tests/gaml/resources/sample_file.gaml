@@ -13,21 +13,22 @@
     <trace name="Trace 0/0 name" technique="UNKNOWN">
         <parameter name="Trace 0/0 parameter name 0" label="Trace 0/0 parameter label 0" group="Trace 0/0 parameter group 0" alias="Trace 0/0 parameter alias 0">Trace 0/0 parameter value 0</parameter>
         <coordinates label="Coordinates 0/0/0 label" units="MICRONS" linkid="coordinates000-linkid" valueorder="UNSPECIFIED">
-            <link linkref="coordinates000-linkref"/>
+            <link linkref="xdata000-linkid"/>
+            <link linkref="altxdata0000-linkid"/>
             <parameter name="Coordinates 0/0/0 parameter name 0" label="Coordinates 0/0/0 parameter label 0" group="Coordinates 0/0/0 parameter group 0" alias="Coordinates 0/0/0 parameter alias 0">Coordinates 0/0/0 parameter value 0</parameter>
             <values byteorder="INTEL" format="FLOAT32" numvalues="1">
                 AACAPw==
             </values>
         </coordinates>
-        <Xdata label="Xdata 0/0/0 label" units="MICRONS" linkid="xdata000-linkid" valueorder="UNSPECIFIED">
-            <link linkref="xdata000-linkref"/>
+        <Xdata label="Xdata 0/0/0 label" units="MINUTES" linkid="xdata000-linkid" valueorder="UNSPECIFIED">
+            <link linkref="coordinates000-linkid"/>
             <parameter name="Xdata 0/0/0 parameter name 0" label="Xdata 0/0/0 parameter label 0" group="Xdata 0/0/0 parameter group 0" alias="Xdata 0/0/0 parameter alias 0">Xdata 0/0/0 parameter value 0</parameter>
             <values byteorder="INTEL" format="FLOAT32" numvalues="2">
                 AACAPw
                 AAAEA=
             </values>
-            <altXdata label="altXdata 0/0/0/0 label" units="MICRONS" linkid="altxdata0000-linkid" valueorder="UNSPECIFIED">
-                <link linkref="altxdata0000-linkref"/>
+            <altXdata label="altXdata 0/0/0/0 label" units="CENTIMETERS" linkid="altxdata0000-linkid" valueorder="UNSPECIFIED">
+                <link linkref="coordinates000-linkid"/>
                 <parameter name="altXdata 0/0/0/0 parameter name 0" label="altXdata 0/0/0/0 parameter label 0" group="altXdata 0/0/0/0 parameter group 0" alias="altXdata 0/0/0/0 parameter alias 0">altXdata 0/0/0/0 parameter value 0</parameter>
                 <values byteorder="INTEL" format="FLOAT32" numvalues="2">
                     AACAPw
@@ -88,14 +89,13 @@
     <trace name="Trace 1/0 name" technique="UNKNOWN">
         <parameter name="Trace 1/0 parameter name 0" label="Trace 1/0 parameter label 0" group="Trace 1/0 parameter group 0" alias="Trace 1/0 parameter alias 0">Trace 1/0 parameter value 0</parameter>
         <coordinates label="Coordinates 1/0/0 label" units="MICRONS" linkid="coordinates100-linkid" valueorder="UNSPECIFIED">
-            <link linkref="coordinates100-linkref"/>
-            <values byteorder="INTEL" format="FLOAT32" numvalues="2">
-                AACAPw
-                AAAEA=
+            <link linkref="xdata100-linkid"/>
+            <values byteorder="INTEL" format="FLOAT32" numvalues="1">
+                AACAPw==
             </values>
         </coordinates>
         <Xdata label="Xdata 1/0/0 label" units="MASSCHARGERATIO" linkid="xdata100-linkid" valueorder="UNSPECIFIED">
-            <link linkref="xdata100-linkref"/>
+            <link linkref="coordinates100-linkid"/>
             <values byteorder="INTEL" format="FLOAT32" numvalues="2">
                 AACAPw
                 AAAEA=

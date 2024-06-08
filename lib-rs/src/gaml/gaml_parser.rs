@@ -33,7 +33,7 @@ impl<T: Seek + Read + 'static> Parser<T> for GamlParser {
 #[derive(Debug, PartialEq)]
 pub struct Gaml {
     // Attributes
-    pub version: String,
+    pub version: Version,
     pub name: Option<String>,
     // Elements
     pub integrity: Option<Integrity>,
@@ -58,8 +58,11 @@ impl Gaml {
         let start = read_start(Self::TAG, &reader, &next)?;
         // In GAML 1.10 version was turned into an enum. However, it was not updated for 1.20 even though 1.20 is used in multiple examples.
         // Versions 1.10 and 1.20 allow more flexibility. There should be no harm in also allowing this flexibility also in previous versions.
-        // todo: Turn into enum with 1.00, 1.10, 1.20. No version specific changes in behavior required.
-        let version = start.get_req_attr("version")?;
+        let version = start.parse_req_attr(
+            "version",
+            &Version::from_str,
+            str::from_utf8(Self::TAG).unwrap_or_default(),
+        )?;
         let name = start.get_opt_attr("name");
 
         // nested elements
@@ -86,6 +89,16 @@ impl Gaml {
             experiments,
         })
     }
+}
+
+#[derive(EnumString, PartialEq, Debug, Display)]
+pub enum Version {
+    #[strum(serialize = "1.00")]
+    Version1_00,
+    #[strum(serialize = "1.10")]
+    Version1_10,
+    #[strum(serialize = "1.20")]
+    Version1_20,
 }
 
 #[derive(Debug, PartialEq)]
@@ -1337,7 +1350,7 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
-        assert_eq!("1.20", gaml.version);
+        assert_eq!(Version::Version1_20, gaml.version);
         assert_eq!(Some("Gaml test file".into()), gaml.name);
         let integrity = &gaml.integrity.unwrap();
         assert_eq!("SHA1", integrity.algorithm);
@@ -1584,6 +1597,44 @@ mod tests {
     }
 
     #[test]
+    fn parses_supported_gaml_versions() {
+        let xml_gaml_1_00 = b"<GAML version=\"1.00\"></GAML>";
+        let xml_gaml_1_10 = b"<GAML version=\"1.10\"></GAML>";
+        let xml_gaml_1_20 = b"<GAML version=\"1.20\"></GAML>";
+
+        let cursor = Cursor::new(xml_gaml_1_00);
+        let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
+        assert_eq!(Version::Version1_00, gaml.version);
+
+        let cursor = Cursor::new(xml_gaml_1_10);
+        let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
+        assert_eq!(Version::Version1_10, gaml.version);
+
+        let cursor = Cursor::new(xml_gaml_1_20);
+        let gaml = GamlParser::parse("test.gaml", cursor).unwrap();
+        assert_eq!(Version::Version1_20, gaml.version);
+    }
+
+    #[test]
+    fn rejects_unsupported_gaml_versions() {
+        let xml_gaml_1_11 = b"<GAML version=\"1.11\"></GAML>";
+        let xml_gaml_1_30 = b"<GAML version=\"1.30\"></GAML>";
+        let xml_gaml_abc = b"<GAML version=\"abc\"></GAML>";
+
+        let cursor = Cursor::new(xml_gaml_1_11);
+        let gaml = GamlParser::parse("test.gaml", cursor);
+        assert!(gaml.is_err());
+
+        let cursor = Cursor::new(xml_gaml_1_30);
+        let gaml = GamlParser::parse("test.gaml", cursor);
+        assert!(gaml.is_err());
+
+        let cursor = Cursor::new(xml_gaml_abc);
+        let gaml = GamlParser::parse("test.gaml", cursor);
+        assert!(gaml.is_err());
+    }
+
+    #[test]
     fn parses_iso_8859_1_gaml_xml_1_0() {
         // GAML name="Gaml umlaut ÄÖÜäöü test file"
         let xml = b"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n
@@ -1592,7 +1643,7 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
-        assert_eq!("1.20", gaml.version);
+        assert_eq!(Version::Version1_20, gaml.version);
         assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
     }
 
@@ -1605,7 +1656,7 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
-        assert_eq!("1.20", gaml.version);
+        assert_eq!(Version::Version1_20, gaml.version);
         assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
     }
 
@@ -1615,7 +1666,7 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml = GamlParser::parse("iso_8859_1.gaml", cursor).unwrap();
-        assert_eq!("1.20", gaml.version);
+        assert_eq!(Version::Version1_20, gaml.version);
         assert_eq!(Some("Gaml umlaut ÄÖÜäöü test file".into()), gaml.name);
     }
 

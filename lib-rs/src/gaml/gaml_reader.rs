@@ -180,7 +180,7 @@ impl GamlReader {
 
     fn map_root_parameters(gaml: &Gaml) -> Vec<Parameter> {
         let mut parameters = vec![];
-        parameters.push(Parameter::from_str_str("Version", &gaml.version));
+        parameters.push(Parameter::from_str_str("Version", gaml.version.to_string()));
         if let Some(name) = &gaml.name {
             let param = Parameter::from_str_str("Name", name);
             parameters.push(param);
@@ -818,16 +818,10 @@ fn generate_xy_plot_hints(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gaml::gaml_parser::AltXdata;
-    use crate::gaml::gaml_parser::Baseline;
-    use crate::gaml::gaml_parser::Byteorder;
-    use crate::gaml::gaml_parser::Format;
-    use crate::gaml::gaml_parser::Integrity;
-    use crate::gaml::gaml_parser::Parameter as RawParameter;
-    use crate::gaml::gaml_parser::Technique;
-    use crate::gaml::gaml_parser::Valueorder;
-    use crate::gaml::gaml_parser::Values;
-    use crate::gaml::gaml_parser::Ydata;
+    use crate::gaml::gaml_parser::{
+        AltXdata, Baseline, Byteorder, Format, Integrity, Parameter as RawParameter, Technique,
+        Valueorder, Values, Version, Ydata,
+    };
     use chrono::DateTime;
 
     fn create_values_f32(data: &[f32]) -> Values {
@@ -844,7 +838,7 @@ mod tests {
     fn maps_gaml_root() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: Some("GAML name".into()),
             integrity: Some(Integrity {
                 algorithm: "SHA1".into(),
@@ -890,7 +884,7 @@ mod tests {
     fn maps_gaml_root_minimal() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],
@@ -916,7 +910,7 @@ mod tests {
     fn maps_gaml_experiment() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],
@@ -964,7 +958,7 @@ mod tests {
     fn maps_gaml_trace() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],
@@ -1016,7 +1010,7 @@ mod tests {
     fn maps_gaml_xydata() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],
@@ -1112,7 +1106,7 @@ mod tests {
     fn maps_gaml_xydata_with_coordinates_and_altxdata() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],
@@ -1302,7 +1296,7 @@ mod tests {
     fn maps_gaml_peaktable() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],
@@ -1439,7 +1433,7 @@ mod tests {
     fn maps_gaml_baseline_and_basecurve() {
         let path = "gaml_file.gaml";
         let gaml = Gaml {
-            version: "1.20".into(),
+            version: Version::Version1_20,
             name: None,
             integrity: None,
             parameters: vec![],

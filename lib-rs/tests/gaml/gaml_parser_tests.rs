@@ -6,7 +6,7 @@ use sf_rs::{
     api::Parser,
     gaml::gaml_parser::{
         Byteorder, Experiment, Format, GamlParser, Integrity, Link, Parameter, Peaktable,
-        Technique, Trace, Units, Valueorder, Xdata,
+        Technique, Trace, Units, Valueorder, Version, Xdata,
     },
 };
 use wasm_bindgen_test::wasm_bindgen_test;
@@ -17,7 +17,7 @@ fn gaml_parse_valid_succeeds() {
     let (path, file) = open_file(GAML_SAMPLE_FILE);
     let gaml = GamlParser::parse(&path, file).unwrap();
 
-    assert_eq!("1.20", gaml.version);
+    assert_eq!(Version::Version1_20, gaml.version);
     assert_eq!(Some("Gaml Test File".to_owned()), gaml.name);
     assert_eq!(
         Some(Integrity {

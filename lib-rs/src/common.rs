@@ -1,5 +1,6 @@
 use crate::andi::andi_scanner::AndiScanner;
-use crate::api::{Reader, Scanner};
+use crate::api::{Reader, Scanner, SeekRead};
+use crate::gaml::gaml_scanner::GamlScanner;
 use crate::spc::spc_scanner::SpcScanner;
 use std::fmt;
 use std::io::{BufReader, SeekFrom};
@@ -8,16 +9,13 @@ use std::{
     io::{Read, Seek},
 };
 
-pub trait SeekRead: Seek + Read {}
-impl<T: Seek + Read> SeekRead for T {}
-
+/// A generic error.
 #[derive(Debug)]
 pub struct SfError {
     message: String,
     source: Option<Box<dyn Error>>,
 }
 
-/// A generic error.
 impl SfError {
     pub fn new(msg: &str) -> Self {
         Self {
@@ -46,32 +44,42 @@ impl fmt::Display for SfError {
     }
 }
 
+/// A repository for scanners.
 pub struct ScannerRepository {
     scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>>,
 }
 
 impl ScannerRepository {
+    /// Create a repository containing the passed scanners.
     pub fn new(scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>>) -> ScannerRepository {
         ScannerRepository { scanners }
     }
 
+    /// Create a repository containing all available scanners.
     pub fn init_all() -> ScannerRepository {
         let andi_scanner: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiScanner::new());
         let spc_scanner = Box::new(SpcScanner::new());
-        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> = vec![andi_scanner, spc_scanner];
+        let gaml_scanner = Box::new(GamlScanner::new());
+        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> =
+            vec![andi_scanner, spc_scanner, gaml_scanner];
         ScannerRepository { scanners }
     }
 
+    /// Add a scanner to the repository.
     pub fn push(&mut self, scanner: Box<dyn Scanner<Box<dyn SeekRead>>>) {
         self.scanners.push(scanner)
     }
 
+    /// Checks whether a data set is recognized by any contained scanner. Shallow check.
     pub fn is_recognized(&self, path: &str, input: &mut Box<dyn SeekRead>) -> bool {
         self.scanners
             .iter()
             .any(|scanner| scanner.is_recognized(path, input))
     }
 
+    /// Provides a reader for a recognized data set.
+    ///
+    /// If multiple scanners recognize a data set, any of them may be returned.
     pub fn get_reader(
         &self,
         path: &str,
@@ -100,10 +108,9 @@ impl Default for ScannerRepository {
     }
 }
 
-// -------------------------------------------------
-// Wrappers
-// -------------------------------------------------
-
+/// A buffered implementation of the SeekRead trait.
+///
+/// Unlike the std BufReader, this implementation tries to avoid clearing the buffer on seek.
 pub struct BufSeekRead<T: Seek + Read> {
     input: BufReader<T>,
     pos: u64,

@@ -2,8 +2,16 @@ use std::{
     collections::HashMap,
     error::Error,
     fmt::Display,
-    io::{Read, Seek},
+    io::{BufRead, Read, Seek},
 };
+
+/// Abstraction for any kind of random access input.
+pub trait SeekRead: Seek + Read {}
+impl<T: Seek + Read> SeekRead for T {}
+
+/// Abstraction for any kind of buffered text input with lines and random access.
+pub(crate) trait SeekBufRead: Seek + BufRead {}
+impl<T: Seek + BufRead> SeekBufRead for T {}
 
 /// Parses a (readonly) data set.
 pub trait Parser<T: Read + Seek> {
@@ -15,7 +23,7 @@ pub trait Parser<T: Read + Seek> {
 
 /// Scans a data set and provides a reader for recognized formats.
 pub trait Scanner<T: Read + Seek> {
-    /// Returns whether a data set is recognized. Shallow check.
+    /// Checks whether a data set is recognized. Shallow check.
     ///
     /// # Arguments
     ///
@@ -30,7 +38,7 @@ pub trait Scanner<T: Read + Seek> {
     /// The cursor in `input` is not guaranteed to be reset upon return.
     fn is_recognized(&self, path: &str, input: &mut T) -> bool;
 
-    /// Returns a reader for a recognized data set.
+    /// Provides a reader for a recognized data set.
     ///
     /// # Arguments
     ///
@@ -48,7 +56,7 @@ pub trait Scanner<T: Read + Seek> {
 
 /// Provides a harmonized view for reading a scientifc data set.
 pub trait Reader {
-    /// Returns a Node read from the data set.
+    /// Reads a Node from the data set.
     ///
     /// # Arguments
     ///

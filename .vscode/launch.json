@@ -5,6 +5,35 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Cargo test (unit tests)",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--manifest-path=${workspaceFolder}/lib-rs/Cargo.toml"
+        ]
+      },
+      "args": []
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Cargo test (integration tests)",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--manifest-path=${workspaceFolder}/lib-rs/Cargo.toml",
+          "--test",
+          "integration_tests",
+        ]
+      },
+      "args": []
+    },
+    {
       "name": "(gdb) Launch jdx_test",
       "type": "cppdbg",
       "request": "launch",

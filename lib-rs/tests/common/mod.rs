@@ -1,7 +1,10 @@
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 use super::open_files;
-use sf_rs::common::{BufSeekRead, ScannerRepository, SeekRead};
+use sf_rs::{
+    api::SeekRead,
+    common::{BufSeekRead, ScannerRepository},
+};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 open_files!(

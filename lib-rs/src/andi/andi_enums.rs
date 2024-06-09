@@ -1,6 +1,5 @@
-use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
-
 use super::AndiError;
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 
 #[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsExperimentType {

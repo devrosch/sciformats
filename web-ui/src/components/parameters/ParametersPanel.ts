@@ -6,6 +6,9 @@ import Channel from 'model/Channel';
 import Message from 'model/Message';
 import './ParametersPanel.css';
 
+// The number of parameters to append to the DOM before yielding.
+const parametersBatchSize = 100;
+
 const html = `
   <h1>Heading 1</h1>
   <div>
@@ -30,7 +33,7 @@ export default class ParametersPanel extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data : { key: string, value: string }[] = [];
+  #data: { key: string, value: string }[] = [];
 
   constructor() {
     super();
@@ -59,15 +62,38 @@ export default class ParametersPanel extends HTMLElement {
     const heading = this.querySelector('h1');
     heading!.textContent = this._title === null ? '' : this._title;
 
-    const ul = this.querySelector('ul');
-    for (const param of this.data) {
+    const ulOld = this.querySelector('ul')!;
+    const ulNew = document.createElement('ul');
+    const div = ulOld!.parentElement;
+    div!.replaceChild(ulNew, ulOld);
+    // don't await the async function as it would block the main thread
+    ParametersPanel.renderAsync(ulNew!, this.data);
+    console.log('ParametersPanel render() completed');
+  }
+
+  static async renderAsync(ul: HTMLUListElement, parameters: { key: string, value: string }[]) {
+    let index = 0;
+    for (const param of parameters) {
+      if (ul.parentElement === null || !ul.isConnected) {
+        // the ul is no longer attached to the DOM
+        console.log('Stopping async population of ParametersPanel as ul is detached');
+        break;
+      }
+      if (index % parametersBatchSize === 0) {
+        // let other events get processed after every n parameters first
+        // this allows for a responsive UI in case of many parameters
+        /* eslint-disable-next-line no-await-in-loop */
+        await new Promise((resolve) => { setTimeout(resolve, 0); });
+      }
       const li = document.createElement('li');
       const parameterEl = document.createElement('sf-parameter');
       parameterEl.setAttribute('key', param.key);
       parameterEl.setAttribute('value', param.value);
       li.append(parameterEl);
-      ul!.appendChild(li);
+      ul.appendChild(li);
+      index += 1;
     }
+    console.log('ParametersPanel renderAsync() completed');
   }
 
   handleParametersChanged(message: Message) {

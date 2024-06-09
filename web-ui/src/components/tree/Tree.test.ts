@@ -50,7 +50,7 @@ const prepareFileOpenMessage = (fileNames: string[]) => {
   return message;
 };
 
-const waitForChildrenCount = async (el: HTMLElement, childrenCount: Number) => {
+const waitForChildrenCount = async (el: HTMLElement, childrenCount: number) => {
   // wait for DOM change
   while (el.children.length !== childrenCount) {
     /* eslint-disable-next-line no-await-in-loop */
@@ -103,7 +103,7 @@ const prepareActualKeyDownEvent = (key: string) => {
   return event;
 };
 
-const prepareStubKeyDownEvent = (key: String, target: Element) => {
+const prepareStubKeyDownEvent = (key: string, target: Element) => {
   const event = {
     key,
     target,

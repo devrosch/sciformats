@@ -12,6 +12,14 @@ const parameters = [
   { key: 'testKey2', value: 'testValue2' },
 ];
 
+const waitForChildrenCount = async (el: HTMLElement, childrenCount: number) => {
+  // wait for DOM change
+  while (el.children.length !== childrenCount) {
+    /* eslint-disable-next-line no-await-in-loop */
+    await new Promise((resolve) => { setTimeout(resolve, 1); });
+  }
+};
+
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';
@@ -27,6 +35,8 @@ test('sf-parameters-panel renders', async () => {
 
   const panel = document.body.querySelector(element) as ParametersPanel;
   panel.data = parameters;
+  const ul = panel.querySelector('ul');
+  await waitForChildrenCount(ul!, 2);
   expect(document.body.innerHTML).toContain(parameters[0].key);
   expect(document.body.innerHTML).toContain(parameters[0].value);
   expect(document.body.innerHTML).toContain(parameters[1].key);
@@ -53,14 +63,16 @@ test('sf-parameters-panel reacts to sf-tree-node-(de)selected events', async () 
     data: null,
     parameters,
   });
-
+  let ul = panel.querySelector('ul');
+  await waitForChildrenCount(ul!, 2);
   expect(document.body.innerHTML).toContain(parameters[0].key);
   expect(document.body.innerHTML).toContain(parameters[0].value);
   expect(document.body.innerHTML).toContain(parameters[1].key);
   expect(document.body.innerHTML).toContain(parameters[1].value);
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
-
+  ul = panel.querySelector('ul');
+  await waitForChildrenCount(ul!, 0);
   expect(document.body.innerHTML).not.toContain(parameters[0].key);
   expect(document.body.innerHTML).not.toContain(parameters[0].value);
   expect(document.body.innerHTML).not.toContain(parameters[1].key);

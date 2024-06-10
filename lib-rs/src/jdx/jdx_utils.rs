@@ -2,6 +2,8 @@ use regex::bytes::Regex;
 
 pub fn is_ldr_start(line: &[u8]) -> bool {
     // todo: init only once
+    // this could be achieved by using https://crates.io/crates/lazy_static
+    // as suggested in https://docs.rs/regex/1.10.5/regex/
     let regex = Regex::new("^\\s*##.*=.*").unwrap();
     regex.is_match(line)
 }
@@ -18,7 +20,7 @@ mod tests {
 
     #[test]
     fn recognizes_ldr_start_with_leading_ws() {
-        let s = b"\t\n\x0b\x0d\r##TITLE= abc";
+        let s = b"\t\n\x0b\x0d\r ##TITLE= abc";
         assert!(is_ldr_start(s));
     }
 

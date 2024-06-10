@@ -7,6 +7,8 @@ A library for reading scientific data formats.
 This is a library implemented in [Rust](https://www.rust-lang.org/) for reading multiple scientific data formats. Currently, the following formats are supported:
 * AnDI/AIA for Chromatographic Data ([ASTM E1947-98(2022)](https://www.astm.org/e1947-98r22.html), [ASTM E1948-98(2022)](https://www.astm.org/e1948-98r22.html))
 * AnDI/AIA for Mass Spectrometric Data ([ASTM E2077-00(2016)](https://www.astm.org/e2077-00r16.html), [ASTM E2078-00(2016)](https://www.astm.org/e2078-00r16.html))
+* Galactic Industries / Thermo Fisher Scientific SPC ([SPC](https://en.wikipedia.org/wiki/SPC_file_format))
+* Generalized Analytical Markup Language ([GAML](https://www.gaml.org/))
 
 ## Prerequisites
 

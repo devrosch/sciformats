@@ -16,6 +16,7 @@ binrw = "0.13"
 chrono = "0.4"
 quick-xml = { version = "0.31.0", features = ['encoding'] }
 base64 = "0.22.0"
+regex = "1.10.5"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

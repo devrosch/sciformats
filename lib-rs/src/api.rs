@@ -10,7 +10,7 @@ pub trait SeekRead: Seek + Read {}
 impl<T: Seek + Read> SeekRead for T {}
 
 /// Abstraction for any kind of buffered text input with lines and random access.
-pub(crate) trait SeekBufRead: Seek + BufRead {}
+pub trait SeekBufRead: Seek + BufRead {}
 impl<T: Seek + BufRead> SeekBufRead for T {}
 
 /// Parses a (readonly) data set.

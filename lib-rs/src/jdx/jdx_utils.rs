@@ -13,6 +13,7 @@ pub fn is_ldr_start(line: &[u8]) -> bool {
     regex.is_match(line)
 }
 
+// todo: is this even required or can it be integrated into parse_ldr_start()?
 pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
     // todo: init only once
     let regex = Regex::new(LDR_START_REGEX).unwrap();
@@ -20,7 +21,7 @@ pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
     let caps = regex.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
         return Err(JdxError::new(&format!(
-            "Malformed LDR start does not match pattern \"{}\": {}",
+            "Malformed LDR start. Line does not match pattern \"{}\": {}",
             LDR_START_REGEX,
             // todo: use better name
             from_iso_8859_1_cstr(line)
@@ -87,6 +88,40 @@ pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
 //     output.extend(&line[index..]);
 //     Ok(output)
 // }
+
+pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
+    // todo: init only once
+    let regex = Regex::new(LDR_START_REGEX).unwrap();
+
+    let caps = regex.captures(line);
+    if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
+        return Err(JdxError::new(&format!(
+            "Malformed LDR start. Line does not match pattern \"{}\": {}",
+            LDR_START_REGEX,
+            // todo: use better name
+            from_iso_8859_1_cstr(line)
+        )));
+    }
+
+    let raw_label = &caps.as_ref().unwrap()[1];
+    let raw_value = &caps.as_ref().unwrap()[2];
+
+    let mut label = String::with_capacity(raw_label.len());
+    // normalize label
+    for c in raw_label {
+        // ignore separators
+        if c != &b' ' && c != &b'-' && c != &b'/' && c != &b'_' {
+            label.push(c.to_ascii_uppercase() as char);
+        }
+    }
+    let value = match raw_value {
+        // strip one leading " " if present
+        s if s.starts_with(b" ") => from_iso_8859_1_cstr(&s[1..]),
+        s => from_iso_8859_1_cstr(s),
+    };
+
+    Ok((label, value))
+}
 
 #[cfg(test)]
 mod tests {
@@ -180,5 +215,48 @@ mod tests {
     fn normalize_ldr_start_rejects_missing_equals() {
         let s = b"##LABEL abc";
         assert!(normalize_ldr_start(s).is_err());
+    }
+
+    #[test]
+    fn parse_ldr_start_tokenizes_regular_ldr_start() {
+        let s = b"##LABEL=abc";
+        assert_eq!(
+            ("LABEL".to_owned(), "abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_tokenizes_ldr_start_with_missing_value() {
+        let s = b"##LABEL=";
+        assert_eq!(
+            ("LABEL".to_owned(), "".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_removes_first_leading_space_in_value() {
+        let s = b"##LABEL=  abc";
+        assert_eq!(
+            ("LABEL".to_owned(), " abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_normalizes_label() {
+        // label: abcdeäöüÄÖÜ in ISO-8859-1 encoding
+        let s = b"\t\n\x0B\x0C\r ##abcde\xE4\xF6\xFC\xC4\xD6\xDC= abc";
+        assert_eq!(
+            ("ABCDEäöüÄÖÜ".to_owned(), "abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_rejects_malformed_ldr_start() {
+        let s = b"##LABEL";
+        assert!(parse_ldr_start(s).is_err());
     }
 }

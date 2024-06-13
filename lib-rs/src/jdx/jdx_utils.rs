@@ -1,28 +1,26 @@
 use super::JdxError;
 use crate::utils::from_iso_8859_1_cstr;
+use lazy_static::lazy_static;
 use regex::bytes::Regex;
 
 // (?-u) disable unicode mode, see: https://docs.rs/regex/latest/regex/#unicode
-const LDR_START_REGEX: &str = "(?-u)^\\s*##(.*)=(.*)";
+const LDR_START_REGEX_PATTERN: &str = "(?-u)^\\s*##(.*)=(.*)";
 
-pub fn is_ldr_start(line: &[u8]) -> bool {
-    // todo: init only once
-    // this could be achieved by using https://crates.io/crates/lazy_static
-    // as suggested in https://docs.rs/regex/1.10.5/regex/
-    let regex = Regex::new(LDR_START_REGEX).unwrap();
-    regex.is_match(line)
+lazy_static! {
+    static ref LDR_START_REGEX: Regex = Regex::new(LDR_START_REGEX_PATTERN).unwrap();
 }
 
-// todo: is this even required or can it be integrated into parse_ldr_start()?
-pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
-    // todo: init only once
-    let regex = Regex::new(LDR_START_REGEX).unwrap();
+pub fn is_ldr_start(line: &[u8]) -> bool {
+    LDR_START_REGEX.is_match(line)
+}
 
-    let caps = regex.captures(line);
+// todo: Is this fn even required? Not use by parse_ldr_start()?
+pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
+    let caps = LDR_START_REGEX.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
         return Err(JdxError::new(&format!(
             "Malformed LDR start. Line does not match pattern \"{}\": {}",
-            LDR_START_REGEX,
+            LDR_START_REGEX_PATTERN,
             // todo: use better name
             from_iso_8859_1_cstr(line)
         )));
@@ -90,14 +88,11 @@ pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
 // }
 
 pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
-    // todo: init only once
-    let regex = Regex::new(LDR_START_REGEX).unwrap();
-
-    let caps = regex.captures(line);
+    let caps = LDR_START_REGEX.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
         return Err(JdxError::new(&format!(
             "Malformed LDR start. Line does not match pattern \"{}\": {}",
-            LDR_START_REGEX,
+            LDR_START_REGEX_PATTERN,
             // todo: use better name
             from_iso_8859_1_cstr(line)
         )));

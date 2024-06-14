@@ -1,7 +1,6 @@
 use std::{
-    cmp,
     error::Error,
-    io::{BufReader, Read, Seek, SeekFrom},
+    io::{BufReader, Read, Seek},
 };
 
 use crate::{
@@ -9,34 +8,24 @@ use crate::{
     utils::is_recognized_extension,
 };
 
-use super::{jdx_parser::JdxParser, jdx_reader::JdxReader};
+use super::{
+    jdx_parser::JdxParser,
+    jdx_reader::JdxReader,
+    jdx_utils::{is_ldr_start, parse_ldr_start},
+};
 
 #[derive(Default)]
 pub struct JdxScanner {}
 
 impl JdxScanner {
     const ACCEPTED_EXTENSIONS: [&'static str; 3] = ["jdx", "dx", "jcm"];
-    const MAGIC_BYTES: &'static [u8; 5] = b"TITLE";
+    const JDX_START_LABEL: &'static str = "TITLE";
     const NUM_START_BYTES: u64 = 128;
 }
 
 impl JdxScanner {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    // todo: duplicate code in GamlScanner
-    fn read_start<T: Seek + Read + 'static>(
-        &self,
-        input: &mut T,
-    ) -> Result<Vec<u8>, Box<dyn Error>> {
-        let len = input.seek(SeekFrom::End(0))?;
-        input.seek(SeekFrom::Start(0))?;
-        let len = cmp::min(len, Self::NUM_START_BYTES);
-        let mut buf = vec![0; len as usize];
-        input.read_exact(&mut buf)?;
-
-        Ok(buf)
     }
 }
 
@@ -47,15 +36,17 @@ impl<T: Seek + Read + 'static> Scanner<T> for JdxScanner {
         }
 
         // recognized extension => check start of content
-        // todo: duplicate code in GamlScanner
-        // todo: actually parse LDR
-        match self.read_start(input) {
+        let mut buf = Vec::<u8>::with_capacity(Self::NUM_START_BYTES as usize);
+        let mut chunk = input.take(Self::NUM_START_BYTES);
+        match chunk.read_to_end(&mut buf) {
             Err(_) => false,
-            Ok(bytes) => {
-                let pos = bytes
-                    .windows(Self::MAGIC_BYTES.len())
-                    .position(|window| window == Self::MAGIC_BYTES);
-                pos.is_some()
+            Ok(_) => {
+                if is_ldr_start(&buf) {
+                    if let Ok((label, _)) = parse_ldr_start(&buf) {
+                        return label == Self::JDX_START_LABEL;
+                    }
+                }
+                false
             }
         }
     }
@@ -66,5 +57,46 @@ impl<T: Seek + Read + 'static> Scanner<T> for JdxScanner {
         let jdx_file = JdxParser::parse(path, buf_input)?;
         let reader = JdxReader::new(path, jdx_file);
         Ok(Box::new(reader))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn scanner_recognizes_valid_jdx() {
+        let s = b"##TITLE= Data XYDATA (PAC) Block
+            ##JCAMP-DX= 4.24
+            ##DATA TYPE= INFRARED SPECTRUM
+            ##XUNITS= 1/CM
+            ##YUNITS= ABSORBANCE
+            ##XFACTOR= 1.0
+            ##YFACTOR= 1.0
+            ##FIRSTX= 450
+            ##LASTX= 451
+            ##NPOINTS= 2
+            ##FIRSTY= 10
+            ##XYDATA= (X++(Y..Y))
+            +450+10
+            +451+11
+            ##END=";
+        let mut cursor = Cursor::new(s);
+
+        let scanner = JdxScanner::new();
+        assert!(scanner.is_recognized("name.jdx", &mut cursor));
+    }
+
+    #[test]
+    fn scanner_rejects_invalid_jdx() {
+        let s = b"##NOTITLE= Data XYDATA (PAC) Block
+            ##JCAMP-DX= 4.24
+            ##END=";
+        let mut cursor = Cursor::new(s);
+
+        let scanner = JdxScanner::new();
+        assert!(!scanner.is_recognized("name.jdx", &mut cursor));
     }
 }

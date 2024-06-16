@@ -1,7 +1,35 @@
+use std::io::BufRead;
+
 use super::JdxError;
 use crate::utils::from_iso_8859_1_cstr;
 use lazy_static::lazy_static;
 use regex::bytes::Regex;
+
+pub trait BinBufRead: BufRead {
+    /// Read all bytes until a newline (the `0xA` byte) is reached, and append
+    /// them to the provided `String` buffer.
+    ///
+    /// This function has the same semantics as `read_until` but will remove
+    /// the trailing LF or CRLF. The returned number of bytes read includes
+    /// the trailing end of line markers.
+    fn read_line_bytes(&mut self, buf: &mut Vec<u8>) -> Result<usize, std::io::Error>;
+}
+
+impl<T: BufRead> BinBufRead for T {
+    /// like read_line() but for bytes
+    fn read_line_bytes(&mut self, buf: &mut Vec<u8>) -> Result<usize, std::io::Error> {
+        let bytes_read = self.read_until(b'\n', buf)?;
+        if bytes_read > 0 && buf.last().unwrap() == &b'\n' {
+            // remove trailing LF
+            buf.pop();
+            if bytes_read > 1 && buf.last().unwrap() == &b'\r' {
+                // remove trailing CR (if CRLF)
+                buf.pop();
+            }
+        }
+        Ok(bytes_read)
+    }
+}
 
 // (?-u) disable unicode mode, see: https://docs.rs/regex/latest/regex/#unicode
 const LDR_START_REGEX_PATTERN: &str = "(?-u)^\\s*##(.*)=(.*)";
@@ -87,6 +115,18 @@ pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
 //     Ok(output)
 // }
 
+fn normalize_label(raw_label: &[u8]) -> String {
+    let mut label = String::with_capacity(raw_label.len());
+    // normalize label
+    for c in raw_label {
+        // ignore separators
+        if c != &b' ' && c != &b'-' && c != &b'/' && c != &b'_' {
+            label.push(c.to_ascii_uppercase() as char);
+        }
+    }
+    label
+}
+
 pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
     let caps = LDR_START_REGEX.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
@@ -101,14 +141,7 @@ pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
     let raw_label = &caps.as_ref().unwrap()[1];
     let raw_value = &caps.as_ref().unwrap()[2];
 
-    let mut label = String::with_capacity(raw_label.len());
-    // normalize label
-    for c in raw_label {
-        // ignore separators
-        if c != &b' ' && c != &b'-' && c != &b'/' && c != &b'_' {
-            label.push(c.to_ascii_uppercase() as char);
-        }
-    }
+    let label = normalize_label(raw_label);
     let value = match raw_value {
         // strip one leading " " if present
         s if s.starts_with(b" ") => from_iso_8859_1_cstr(&s[1..]),
@@ -120,7 +153,49 @@ pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
     use super::*;
+
+    #[test]
+    fn read_line_bytes_recognizes_lf() {
+        let mut buf_read = Cursor::new(b"##LABEL0= abc\n##LABEL1= xyz");
+        let mut buf = vec![];
+
+        let bytes_read = buf_read.read_line_bytes(&mut buf).unwrap();
+        assert_eq!(14, bytes_read);
+        assert_eq!(b"##LABEL0= abc".as_ref(), buf);
+    }
+
+    #[test]
+    fn read_line_bytes_recognizes_crlf() {
+        let mut buf_read = Cursor::new(b"##LABEL0= abc\r\n##LABEL1= xyz");
+        let mut buf = vec![];
+
+        let bytes_read = buf_read.read_line_bytes(&mut buf).unwrap();
+        assert_eq!(15, bytes_read);
+        assert_eq!(b"##LABEL0= abc".as_ref(), buf);
+    }
+
+    #[test]
+    fn read_line_bytes_recognizes_eof() {
+        let mut buf_read = Cursor::new(b"##LABEL0= abc");
+        let mut buf = vec![];
+
+        let bytes_read = buf_read.read_line_bytes(&mut buf).unwrap();
+        assert_eq!(13, bytes_read);
+        assert_eq!(b"##LABEL0= abc".as_ref(), buf);
+    }
+
+    #[test]
+    fn read_line_bytes_ignores_lone_cr() {
+        let mut buf_read = Cursor::new(b"##LABEL0= abc\r##LABEL1= xyz");
+        let mut buf = vec![];
+
+        let bytes_read = buf_read.read_line_bytes(&mut buf).unwrap();
+        assert_eq!(27, bytes_read);
+        assert_eq!(b"##LABEL0= abc\r##LABEL1= xyz".as_ref(), buf);
+    }
 
     #[test]
     fn is_ldr_start_recognizes_regular_ldr_start() {

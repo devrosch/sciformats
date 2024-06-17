@@ -151,6 +151,34 @@ pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
     Ok((label, value))
 }
 
+pub fn strip_line_comment(
+    line: &str,
+    trim_content: bool,
+    trim_comment: bool,
+) -> (&str, Option<&str>) {
+    const COMMENT_REGEX_PATTERN: &str = "^(.*)\\$\\$(.*)$";
+    lazy_static! {
+        static ref COMMENT_REGEX: regex::Regex = regex::Regex::new(COMMENT_REGEX_PATTERN).unwrap();
+    }
+    let caps = COMMENT_REGEX.captures(line);
+
+    if let Some((_, [mut content, mut comment])) = caps.map(|c| c.extract()) {
+        if trim_content {
+            content = content.trim();
+        }
+        if trim_comment {
+            comment = comment.trim();
+        }
+        (content, Some(comment))
+    } else {
+        if trim_content {
+            (line.trim(), None)
+        } else {
+            (line, None)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;
@@ -328,5 +356,59 @@ mod tests {
     fn parse_ldr_start_rejects_malformed_ldr_start() {
         let s = b"##LABEL";
         assert!(parse_ldr_start(s).is_err());
+    }
+
+    #[test]
+    fn strip_line_comment_strips_line_comment() {
+        let s = "line start $$ comment";
+        assert_eq!(
+            ("line start ", Some(" comment")),
+            strip_line_comment(s, false, false)
+        );
+    }
+
+    #[test]
+    fn strip_line_comment_indicates_missing_comment_with_none() {
+        let s = "line content";
+        assert_eq!(("line content", None), strip_line_comment(s, false, false));
+    }
+
+    #[test]
+    fn strip_line_comment_has_empty_content_for_whole_line_comment() {
+        let s = "$$line comment";
+        assert_eq!(
+            ("", Some("line comment")),
+            strip_line_comment(s, false, false)
+        );
+    }
+
+    #[test]
+    fn strip_line_comment_indicates_empty_comment_with_empty_string() {
+        let s = "line content$$";
+        assert_eq!(
+            ("line content", Some("")),
+            strip_line_comment(s, false, false)
+        );
+    }
+
+    #[test]
+    fn strip_line_comment_trims_content_and_comment_if_indicated() {
+        let s = " content $$ comment ";
+        assert_eq!(
+            (" content ", Some(" comment ")),
+            strip_line_comment(s, false, false)
+        );
+        assert_eq!(
+            (" content ", Some("comment")),
+            strip_line_comment(s, false, true)
+        );
+        assert_eq!(
+            ("content", Some(" comment ")),
+            strip_line_comment(s, true, false)
+        );
+        assert_eq!(
+            ("content", Some("comment")),
+            strip_line_comment(s, true, true)
+        );
     }
 }

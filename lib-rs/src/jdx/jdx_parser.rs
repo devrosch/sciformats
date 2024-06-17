@@ -16,10 +16,55 @@ impl<T: SeekBufRead + 'static> Parser<T> for JdxParser {
 pub struct JdxBlock<T: SeekBufRead> {
     // todo: remove once T is actually used
     phantom: PhantomData<T>,
+
+    /// The labeled data records (LDRs) of the Block.
+    /// 
+    /// This does not include the following LDRs:
+    /// - comments ("##=")
+    /// - data (XYDATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS, RADATA,
+    ///   NTUPLES)
+    /// These are available as dedicated peroperties.
+    ///
+    /// The key is the normalized label without "##" and "=" and the value is
+    /// the content (without initial blank character if any).E.g. the LDR
+    /// "##TITLE= abc" has label "TITLE" and content "abc" and the LDR
+    /// "##DATA_POINTS=   5" has label "DATAPOINTS" and content "  5".
+   ldrs: Vec<StringLdr>,
+    // std::vector<std::string> m_ldrComments;
+    // std::vector<Block> m_blocks;
+    // std::optional<XyData> m_xyData;
+    // std::optional<RaData> m_raData;
+    // std::optional<XyPoints> m_xyPoints;
+    // std::optional<PeakTable> m_peakTable;
+    // std::optional<PeakAssignments> m_peakAssignments;
+    // std::optional<NTuples> m_nTuples;
+    // std::optional<AuditTrail> m_auditTrail;
+    // std::vector<BrukerSpecificParameters> m_brukerSpecificParameters;
+    // std::vector<BrukerRelaxSection> m_brukerRelaxSections;
 }
 
 impl<T: SeekBufRead> JdxBlock<T> {
+    const block_start_label: &'static str = "TITLE";
+
     pub fn new(name: &str, mut reader: T) -> Result<Self, JdxError> {
         todo!()
+    }
+}
+
+pub struct StringLdr {
+    /// The label of the LDR, e.g., "TITLE" for "##TITLE= abc".
+    pub label: String,
+    /// The value (without initial blank character if any) of the LDR, e.g.,
+    /// "abc" for "##TITLE= abc".
+    pub value: String,
+}
+
+impl StringLdr {
+    pub fn is_user_defined(&self) -> bool {
+        self.label.chars().nth(0) == Some('$')
+    }
+
+    pub fn is_technique_specific(&self) -> bool {
+        self.label.chars().nth(0) == Some('.')
     }
 }

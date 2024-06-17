@@ -7,12 +7,21 @@ use regex::bytes::Regex;
 
 pub trait BinBufRead: BufRead {
     /// Read all bytes until a newline (the `0xA` byte) is reached, and append
-    /// them to the provided `String` buffer.
+    /// them to the provided `Vec` buffer.
     ///
     /// This function has the same semantics as `read_until` but will remove
     /// the trailing LF or CRLF. The returned number of bytes read includes
     /// the trailing end of line markers.
     fn read_line_bytes(&mut self, buf: &mut Vec<u8>) -> Result<usize, std::io::Error>;
+
+    /// Read all bytes until a newline (the `0xA` byte) is reached. Replace
+    /// the content of the provided `Vec` buffer with the content read.
+    ///
+    /// Returns an ISO 8859-1 string corresponding to the content.
+    ///
+    /// Trailing LF or CRLF will be removed from the `Vec` buffer and returned
+    /// string.
+    fn read_line_iso_8859_1(&mut self, buf: &mut Vec<u8>) -> Result<String, std::io::Error>;
 }
 
 impl<T: BufRead> BinBufRead for T {
@@ -28,6 +37,12 @@ impl<T: BufRead> BinBufRead for T {
             }
         }
         Ok(bytes_read)
+    }
+
+    fn read_line_iso_8859_1(&mut self, buf: &mut Vec<u8>) -> Result<String, std::io::Error> {
+        buf.clear();
+        self.read_line_bytes(buf)?;
+        Ok(from_iso_8859_1_cstr(&buf))
     }
 }
 
@@ -190,6 +205,20 @@ mod tests {
         let bytes_read = buf_read.read_line_bytes(&mut buf).unwrap();
         assert_eq!(27, bytes_read);
         assert_eq!(b"##LABEL0= abc\r##LABEL1= xyz".as_ref(), buf);
+    }
+
+    #[test]
+    fn read_line_iso_8859_1_interprets_input_as_iso_8859_1_chars() {
+        // string: abcäöüÄÖÜ in ISO-8859-1 / Windows-1252 encoding
+        let mut buf_read = Cursor::new(b"abc\xE4\xF6\xFC\xC4\xD6\xDC\n");
+        let mut buf = vec![];
+
+        let string = buf_read.read_line_iso_8859_1(&mut buf).unwrap();
+        assert_eq!(
+            [b'a', b'b', b'c', b'\xE4', b'\xF6', b'\xFC', b'\xC4', b'\xD6', b'\xDC'].as_ref(),
+            buf
+        );
+        assert_eq!("abcäöüÄÖÜ".as_ref(), string);
     }
 
     #[test]

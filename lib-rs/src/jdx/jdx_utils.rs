@@ -70,51 +70,6 @@ pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
     Ok(output)
 }
 
-// todo: check performance of implementations
-// pub fn normalize_ldr_start2(line: &[u8]) -> Result<Vec<u8>, JdxError> {
-//     let mut output = Vec::<u8>::with_capacity(line.len());
-//     let mut index = 0;
-//     // skip leading white spaces
-//     for c in line {
-//         // 0B is not considered whitespace by is_ascii_whitespace()
-//         if !c.is_ascii_whitespace() && c != &0x0Bu8 {
-//             break;
-//         }
-//         index += 1;
-//     }
-//     // check and skip "##" marking start of LDR
-//     for _ in 0..2 {
-//         if index >= line.len() || line[index] != b'#' {
-//             return Err(JdxError::new(&format!(
-//                 "Malformed LDR start, missing double hashes: {}",
-//                 // todo: use better name
-//                 from_iso_8859_1_cstr(line)
-//             )));
-//         }
-//         index += 1;
-//     }
-//     output.extend(b"##");
-//     // normalize label
-//     while index < line.len() && line[index] != b'=' {
-//         let c = line[index];
-//         // ignore separators
-//         if c != b' ' && c != b'-' && c != b'/' && c != b'_' {
-//             output.push(c.to_ascii_uppercase());
-//         }
-//         index += 1;
-//     }
-//     // add remaining string content
-//     if index >= line.len() || line[index] != b'=' {
-//         return Err(JdxError::new(&format!(
-//             "Malformed LDR start, missing equals: {}",
-//             // todo: use better name
-//             from_iso_8859_1_cstr(line)
-//         )));
-//     }
-//     output.extend(&line[index..]);
-//     Ok(output)
-// }
-
 fn normalize_label(raw_label: &[u8]) -> String {
     let mut label = String::with_capacity(raw_label.len());
     // normalize label
@@ -177,6 +132,18 @@ pub fn strip_line_comment(
             (line, None)
         }
     }
+}
+
+pub fn is_pure_comment(line: &str) -> bool {
+    strip_line_comment(line, true, false).0.is_empty()
+}
+
+pub fn is_bruker_specific_section_start(line: &str) -> bool {
+    line.starts_with("$$ Bruker specific parameters")
+}
+
+pub fn is_bruker_specific_section_end(line: &str) -> bool {
+    line.starts_with("$$ End of Bruker specific parameters")
 }
 
 #[cfg(test)]
@@ -410,5 +377,31 @@ mod tests {
             ("content", Some("comment")),
             strip_line_comment(s, true, true)
         );
+    }
+
+    #[test]
+    fn is_pure_comment_accepts_whole_line_comment_and_rejects_others() {
+        let pure_comment = "$$comment";
+        let pure_comment_with_leading_spaces = "  $$comment";
+        let non_pure_comment = "abc $$comment";
+
+        assert!(is_pure_comment(pure_comment));
+        assert!(is_pure_comment(pure_comment_with_leading_spaces));
+        assert!(!is_pure_comment(non_pure_comment));
+    }
+
+    #[test]
+    fn is_bruker_specific_section_recognizes_bruker_comments() {
+        let bruker_section_start = "$$ Bruker specific parameters";
+        let bruker_section_start_f1 = "$$ Bruker specific parameters for F1";
+        let bruker_section_end = "$$ End of Bruker specific parameters";
+        let bruker_dashes = "$$ ---------------------------------";
+        let regular_ldr = "##ORIGIN= Test";
+
+        assert!(is_bruker_specific_section_start(bruker_section_start));
+        assert!(is_bruker_specific_section_start(bruker_section_start_f1));
+        assert!(!is_bruker_specific_section_start(bruker_section_end));
+        assert!(!is_bruker_specific_section_start(bruker_dashes));
+        assert!(!is_bruker_specific_section_start(regular_ldr));
     }
 }

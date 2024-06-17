@@ -44,7 +44,7 @@ pub struct JdxBlock<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> JdxBlock<T> {
-    const block_start_label: &'static str = "TITLE";
+    const BLOCK_START_LABEL: &'static str = "TITLE";
 
     pub fn new(name: &str, mut reader: T) -> Result<Self, JdxError> {
         todo!()

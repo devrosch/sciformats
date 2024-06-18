@@ -1,3 +1,4 @@
+use super::jdx_utils::{parse_ldr_start, BinBufRead};
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
 use std::marker::PhantomData;
@@ -18,7 +19,7 @@ pub struct JdxBlock<T: SeekBufRead> {
     phantom: PhantomData<T>,
 
     /// The labeled data records (LDRs) of the Block.
-    /// 
+    ///
     /// This does not include the following LDRs:
     /// - comments ("##=")
     /// - data (XYDATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS, RADATA,
@@ -29,7 +30,7 @@ pub struct JdxBlock<T: SeekBufRead> {
     /// the content (without initial blank character if any).E.g. the LDR
     /// "##TITLE= abc" has label "TITLE" and content "abc" and the LDR
     /// "##DATA_POINTS=   5" has label "DATAPOINTS" and content "  5".
-   ldrs: Vec<StringLdr>,
+    ldrs: Vec<StringLdr>,
     // std::vector<std::string> m_ldrComments;
     // std::vector<Block> m_blocks;
     // std::optional<XyData> m_xyData;
@@ -46,8 +47,14 @@ pub struct JdxBlock<T: SeekBufRead> {
 impl<T: SeekBufRead> JdxBlock<T> {
     const BLOCK_START_LABEL: &'static str = "TITLE";
 
-    pub fn new(name: &str, mut reader: T) -> Result<Self, JdxError> {
+    pub fn new(_name: &str, mut reader: T) -> Result<Self, JdxError> {
+        let mut buf = Vec::<u8>::with_capacity(1024);
+        let line = reader.read_line_iso_8859_1(&mut buf)?;
         todo!()
+    }
+
+    fn parse_first_line(line: &str) {
+        let start = parse_ldr_start(line);
     }
 }
 

@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     api::{Parser, Reader, Scanner, SeekBufRead},
-    utils::is_recognized_extension,
+    utils::{from_iso_8859_1_cstr, is_recognized_extension},
 };
 
 use super::{
@@ -41,8 +41,9 @@ impl<T: Seek + Read + 'static> Scanner<T> for JdxScanner {
         match chunk.read_to_end(&mut buf) {
             Err(_) => false,
             Ok(_) => {
-                if is_ldr_start(&buf) {
-                    if let Ok((label, _)) = parse_ldr_start(&buf) {
+                let s = from_iso_8859_1_cstr(&buf);
+                if is_ldr_start(&s) {
+                    if let Ok((label, _)) = parse_ldr_start(&s) {
                         return label == Self::JDX_START_LABEL;
                     }
                 }

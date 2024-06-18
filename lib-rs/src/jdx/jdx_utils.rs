@@ -1,9 +1,8 @@
-use std::io::BufRead;
-
 use super::JdxError;
 use crate::utils::from_iso_8859_1_cstr;
 use lazy_static::lazy_static;
-use regex::bytes::Regex;
+use regex::Regex;
+use std::io::BufRead;
 
 pub trait BinBufRead: BufRead {
     /// Read all bytes until a newline (the `0xA` byte) is reached, and append
@@ -46,65 +45,60 @@ impl<T: BufRead> BinBufRead for T {
     }
 }
 
-// (?-u) disable unicode mode, see: https://docs.rs/regex/latest/regex/#unicode
-const LDR_START_REGEX_PATTERN: &str = "(?-u)^\\s*##(.*)=(.*)";
+const LDR_START_REGEX_PATTERN: &str = "^\\s*##(.*)=(.*)";
 
 lazy_static! {
     static ref LDR_START_REGEX: Regex = Regex::new(LDR_START_REGEX_PATTERN).unwrap();
 }
 
-pub fn is_ldr_start(line: &[u8]) -> bool {
+pub fn is_ldr_start(line: &str) -> bool {
     LDR_START_REGEX.is_match(line)
 }
 
 // todo: Is this fn even required? Not use by parse_ldr_start()?
-pub fn normalize_ldr_start(line: &[u8]) -> Result<Vec<u8>, JdxError> {
+pub fn normalize_ldr_start(line: &str) -> Result<String, JdxError> {
     let caps = LDR_START_REGEX.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
         return Err(JdxError::new(&format!(
             "Malformed LDR start. Line does not match pattern \"{}\": {}",
-            LDR_START_REGEX_PATTERN,
-            // todo: use better name
-            from_iso_8859_1_cstr(line)
+            LDR_START_REGEX_PATTERN, line
         )));
     }
 
     let label = &caps.as_ref().unwrap()[1];
     let value = &caps.as_ref().unwrap()[2];
 
-    let mut normalized_label = Vec::<u8>::with_capacity(label.len());
+    let mut normalized_label = String::with_capacity(label.len());
     // normalize label
-    for c in label {
+    for c in label.chars() {
         // ignore separators
-        if c != &b' ' && c != &b'-' && c != &b'/' && c != &b'_' {
+        if c != ' ' && c != '-' && c != '/' && c != '_' {
             normalized_label.push(c.to_ascii_uppercase());
         }
     }
 
-    let output = [b"##".as_slice(), &normalized_label, b"=", value].concat();
+    let output = ["##", &normalized_label, "=", value].concat();
     Ok(output)
 }
 
-fn normalize_label(raw_label: &[u8]) -> String {
+fn normalize_label(raw_label: &str) -> String {
     let mut label = String::with_capacity(raw_label.len());
     // normalize label
-    for c in raw_label {
+    for c in raw_label.chars() {
         // ignore separators
-        if c != &b' ' && c != &b'-' && c != &b'/' && c != &b'_' {
+        if c != ' ' && c != '-' && c != '/' && c != '_' {
             label.push(c.to_ascii_uppercase() as char);
         }
     }
     label
 }
 
-pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
+pub fn parse_ldr_start(line: &str) -> Result<(String, String), JdxError> {
     let caps = LDR_START_REGEX.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
         return Err(JdxError::new(&format!(
             "Malformed LDR start. Line does not match pattern \"{}\": {}",
-            LDR_START_REGEX_PATTERN,
-            // todo: use better name
-            from_iso_8859_1_cstr(line)
+            LDR_START_REGEX_PATTERN, line
         )));
     }
 
@@ -114,11 +108,11 @@ pub fn parse_ldr_start(line: &[u8]) -> Result<(String, String), JdxError> {
     let label = normalize_label(raw_label);
     let value = match raw_value {
         // strip one leading " " if present
-        s if s.starts_with(b" ") => from_iso_8859_1_cstr(&s[1..]),
-        s => from_iso_8859_1_cstr(s),
+        s if s.starts_with(" ") => &s[1..],
+        s => s,
     };
 
-    Ok((label, value))
+    Ok((label, value.to_owned()))
 }
 
 pub fn strip_line_comment(
@@ -214,38 +208,34 @@ mod tests {
         let mut buf = vec![];
 
         let string = buf_read.read_line_iso_8859_1(&mut buf).unwrap();
-        assert_eq!(
-            [b'a', b'b', b'c', b'\xE4', b'\xF6', b'\xFC', b'\xC4', b'\xD6', b'\xDC'].as_ref(),
-            buf
-        );
+        assert_eq!(b"abc\xE4\xF6\xFC\xC4\xD6\xDC".as_ref(), buf);
         assert_eq!("abcäöüÄÖÜ".as_ref(), string);
     }
 
     #[test]
     fn is_ldr_start_recognizes_regular_ldr_start() {
-        let s = b"##TITLE= abc";
+        let s = "##TITLE= abc";
         assert!(is_ldr_start(s));
     }
 
     #[test]
     fn is_ldr_start_recognizes_ldr_start_with_non_ascii_chars() {
-        // label: abcdeäöüÄÖÜ in ISO-8859-1 / Windows-1252 encoding
-        let s = b"##TITLE\xE4\xF6\xFC\xC4\xD6\xDC= abc";
+        let s = "##TITLEabcdeäöüÄÖÜ= abc";
         assert!(is_ldr_start(s));
     }
 
     #[test]
     fn is_ldr_start_recognizes_ldr_start_with_leading_ws() {
-        let s = b"\t\n\x0B\x0C\r ##TITLE= abc";
+        let s = "\t\n\x0B\x0C\r ##TITLE= abc";
         assert!(is_ldr_start(s));
     }
 
     #[test]
     fn is_ldr_start_recognizes_ldr_start_with_trailing_line_break() {
-        let slf = b"##TITLE= abc\n";
-        let scr = b"##TITLE= abc\r";
-        let scrlf = b"##TITLE= abc\r\n";
-        let scrlfu = "##TITLE= abc\r\n\u{2028}\u{2029}".as_bytes();
+        let slf = "##TITLE= abc\n";
+        let scr = "##TITLE= abc\r";
+        let scrlf = "##TITLE= abc\r\n";
+        let scrlfu = "##TITLE= abc\r\n\u{2028}\u{2029}";
 
         assert!(is_ldr_start(slf));
         assert!(is_ldr_start(scr));
@@ -255,65 +245,61 @@ mod tests {
 
     #[test]
     fn is_ldr_start_rejects_ldr_preceeded_by_non_ws() {
-        let s = b"xyz ##TITLE= abc";
+        let s = "xyz ##TITLE= abc";
         assert!(!is_ldr_start(s));
     }
 
     #[test]
     fn is_ldr_start_recognizes_ldr_start_with_special_chars() {
-        let s = b"##.N_A/M2E$= abc";
+        let s = "##.N_A/M2E$= abc";
         assert!(is_ldr_start(s));
     }
 
     #[test]
     fn is_ldr_start_rejects_ldr_non_start() {
-        let s = b"#NAME= ##NOT_LDR=abc";
+        let s = "#NAME= ##NOT_LDR=abc";
         assert!(!is_ldr_start(s));
     }
 
     #[test]
     fn normalize_ldr_start_removes_separators_from_label() {
-        let s = b"##A B-C/D_E= abc";
-        assert_eq!(b"##ABCDE= abc", normalize_ldr_start(s).unwrap().as_slice());
+        let s = "##A B-C/D_E= abc";
+        assert_eq!("##ABCDE= abc", normalize_ldr_start(s).unwrap());
     }
 
     #[test]
     fn normalize_ldr_start_leaves_normalized_label_intact() {
-        let s = b"##ABCDE= abc";
-        assert_eq!(b"##ABCDE= abc", normalize_ldr_start(s).unwrap().as_slice());
+        let s = "##ABCDE= abc";
+        assert_eq!("##ABCDE= abc", normalize_ldr_start(s).unwrap());
     }
 
     #[test]
     fn normalize_ldr_start_removes_leading_ws() {
-        let s = b"\t\n\x0B\x0C\r ##ABCDE= abc";
-        assert_eq!(b"##ABCDE= abc", normalize_ldr_start(s).unwrap().as_slice());
+        let s = "\t\n\x0B\x0C\r ##ABCDE= abc";
+        assert_eq!("##ABCDE= abc", normalize_ldr_start(s).unwrap());
     }
 
     #[test]
     fn normalize_ldr_start_turns_ascii_chars_to_upper_case() {
-        // label: abcdeäöüÄÖÜ in ISO-8859-1 / Windows-1252 encoding
-        let s = b"##abcde\xE4\xF6\xFC\xC4\xD6\xDC= abc";
-        assert_eq!(
-            b"##ABCDE\xE4\xF6\xFC\xC4\xD6\xDC= abc",
-            normalize_ldr_start(s).unwrap().as_slice()
-        );
+        let s = "##abcdeäöüÄÖÜ= abc";
+        assert_eq!("##ABCDEäöüÄÖÜ= abc", normalize_ldr_start(s).unwrap());
     }
 
     #[test]
     fn normalize_ldr_start_rejects_missing_double_hashes() {
-        let s = b"#LABEL= abc";
+        let s = "#LABEL= abc";
         assert!(normalize_ldr_start(s).is_err());
     }
 
     #[test]
     fn normalize_ldr_start_rejects_missing_equals() {
-        let s = b"##LABEL abc";
+        let s = "##LABEL abc";
         assert!(normalize_ldr_start(s).is_err());
     }
 
     #[test]
     fn parse_ldr_start_tokenizes_regular_ldr_start() {
-        let s = b"##LABEL=abc";
+        let s = "##LABEL=abc";
         assert_eq!(
             ("LABEL".to_owned(), "abc".to_owned()),
             parse_ldr_start(s).unwrap()
@@ -322,7 +308,7 @@ mod tests {
 
     #[test]
     fn parse_ldr_start_tokenizes_ldr_start_with_missing_value() {
-        let s = b"##LABEL=";
+        let s = "##LABEL=";
         assert_eq!(
             ("LABEL".to_owned(), "".to_owned()),
             parse_ldr_start(s).unwrap()
@@ -331,7 +317,7 @@ mod tests {
 
     #[test]
     fn parse_ldr_start_removes_first_leading_space_in_value() {
-        let s = b"##LABEL=  abc";
+        let s = "##LABEL=  abc";
         assert_eq!(
             ("LABEL".to_owned(), " abc".to_owned()),
             parse_ldr_start(s).unwrap()
@@ -340,8 +326,7 @@ mod tests {
 
     #[test]
     fn parse_ldr_start_normalizes_label() {
-        // label: abcdeäöüÄÖÜ in ISO-8859-1 encoding
-        let s = b"\t\n\x0B\x0C\r ##abcde\xE4\xF6\xFC\xC4\xD6\xDC= abc";
+        let s = "\t\n\x0B\x0C\r ##abcdeäöüÄÖÜ= abc";
         assert_eq!(
             ("ABCDEäöüÄÖÜ".to_owned(), "abc".to_owned()),
             parse_ldr_start(s).unwrap()
@@ -350,7 +335,7 @@ mod tests {
 
     #[test]
     fn parse_ldr_start_rejects_malformed_ldr_start() {
-        let s = b"##LABEL";
+        let s = "##LABEL";
         assert!(parse_ldr_start(s).is_err());
     }
 

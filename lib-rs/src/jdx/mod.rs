@@ -38,3 +38,9 @@ impl fmt::Display for JdxError {
         write!(f, "{}", self.message)
     }
 }
+
+impl From<std::io::Error> for JdxError {
+    fn from(value: std::io::Error) -> Self {
+        Self::from_source(value, "I/O error parsing JCAMP-DX.")
+    }
+}

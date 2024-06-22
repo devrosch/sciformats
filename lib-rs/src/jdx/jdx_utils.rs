@@ -1,5 +1,5 @@
-use super::JdxError;
-use crate::utils::from_iso_8859_1_cstr;
+use super::{jdx_parser::StringLdr, JdxError};
+use crate::{api::SeekBufRead, utils::from_iso_8859_1_cstr};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::io::BufRead;
@@ -20,7 +20,8 @@ pub trait BinBufRead: BufRead {
     ///
     /// Trailing LF or CRLF will be removed from the `Vec` buffer and returned
     /// string.
-    fn read_line_iso_8859_1(&mut self, buf: &mut Vec<u8>) -> Result<String, std::io::Error>;
+    fn read_line_iso_8859_1(&mut self, buf: &mut Vec<u8>)
+        -> Result<Option<String>, std::io::Error>;
 }
 
 impl<T: BufRead> BinBufRead for T {
@@ -38,10 +39,16 @@ impl<T: BufRead> BinBufRead for T {
         Ok(bytes_read)
     }
 
-    fn read_line_iso_8859_1(&mut self, buf: &mut Vec<u8>) -> Result<String, std::io::Error> {
+    fn read_line_iso_8859_1(
+        &mut self,
+        buf: &mut Vec<u8>,
+    ) -> Result<Option<String>, std::io::Error> {
         buf.clear();
-        self.read_line_bytes(buf)?;
-        Ok(from_iso_8859_1_cstr(&buf))
+        let num_bytes_read = self.read_line_bytes(buf)?;
+        match num_bytes_read {
+            0 => Ok(None),
+            _ => Ok(Some(from_iso_8859_1_cstr(buf))),
+        }
     }
 }
 
@@ -87,7 +94,7 @@ fn normalize_label(raw_label: &str) -> String {
     for c in raw_label.chars() {
         // ignore separators
         if c != ' ' && c != '-' && c != '/' && c != '_' {
-            label.push(c.to_ascii_uppercase() as char);
+            label.push(c.to_ascii_uppercase());
         }
     }
     label
@@ -108,7 +115,7 @@ pub fn parse_ldr_start(line: &str) -> Result<(String, String), JdxError> {
     let label = normalize_label(raw_label);
     let value = match raw_value {
         // strip one leading " " if present
-        s if s.starts_with(" ") => &s[1..],
+        s if s.starts_with(' ') => &s[1..],
         s => s,
     };
 
@@ -134,17 +141,39 @@ pub fn strip_line_comment(
             comment = comment.trim();
         }
         (content, Some(comment))
+    } else if trim_content {
+        (line.trim(), None)
     } else {
-        if trim_content {
-            (line.trim(), None)
-        } else {
-            (line, None)
-        }
+        (line, None)
     }
 }
 
 pub fn is_pure_comment(line: &str) -> bool {
     strip_line_comment(line, true, false).0.is_empty()
+}
+
+pub fn skip_pure_comments<T: SeekBufRead>(
+    mut next_line: Option<String>,
+    must_precede_ldr: bool,
+    mut reader: T,
+    buf: &mut Vec<u8>,
+) -> Result<Option<String>, JdxError> {
+    while let Some(ref line) = next_line {
+        if is_pure_comment(line) {
+            next_line = reader.read_line_iso_8859_1(buf)?;
+            continue;
+        }
+        if must_precede_ldr && !is_ldr_start(line) {
+            // pure $$ comment lines must be followed by LDR start
+            // if not this special case, give up
+            return Err(JdxError::new(&format!(
+                "Unexpected content found instead of pure comment ($$): {}",
+                line
+            )));
+        }
+    }
+
+    Ok(next_line)
 }
 
 pub fn is_bruker_specific_section_start(line: &str) -> bool {
@@ -153,6 +182,40 @@ pub fn is_bruker_specific_section_start(line: &str) -> bool {
 
 pub fn is_bruker_specific_section_end(line: &str) -> bool {
     line.starts_with("$$ End of Bruker specific parameters")
+}
+
+pub fn parse_string_value<T: SeekBufRead>(
+    value: &str,
+    reader: &mut T,
+    buf: &mut Vec<u8>,
+) -> Result<(String, Option<String>), JdxError> {
+    let mut output = value.trim().to_owned();
+    while let Some(line) = reader.read_line_iso_8859_1(buf)? {
+        if is_ldr_start(&line) {
+            return Ok((output, Some(line)));
+        }
+        let (content, comment) = strip_line_comment(&line, false, false);
+        if !content.is_empty() && output.ends_with('=') {
+            // account for terminal "=" as non line breaking marker
+            output.pop();
+            output.push_str(content);
+        } else if content.is_empty()
+            && comment.is_some()
+            && (is_bruker_specific_section_start(&line) || is_bruker_specific_section_end(&line))
+        {
+            // Bruker quirk: specific comments indicate the end of the previous LDR
+            return Ok((output, Some(line)));
+        } else {
+            output.push('\n');
+            output.push_str(&line);
+        }
+    }
+    Ok((output, None))
+}
+
+pub fn find_ldr<'ldrs>(raw_label: &str, ldrs: &'ldrs [StringLdr]) -> Option<&'ldrs StringLdr> {
+    let label = normalize_label(raw_label);
+    ldrs.iter().find(|&ldr| label == ldr.label)
 }
 
 #[cfg(test)]
@@ -209,7 +272,7 @@ mod tests {
 
         let string = buf_read.read_line_iso_8859_1(&mut buf).unwrap();
         assert_eq!(b"abc\xE4\xF6\xFC\xC4\xD6\xDC".as_ref(), buf);
-        assert_eq!("abcäöüÄÖÜ".as_ref(), string);
+        assert_eq!(Some("abcäöüÄÖÜ".to_owned()), string);
     }
 
     #[test]

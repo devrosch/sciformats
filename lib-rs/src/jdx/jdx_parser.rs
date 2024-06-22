@@ -1,6 +1,9 @@
-use super::jdx_utils::{parse_ldr_start, BinBufRead};
+use super::jdx_utils::{is_pure_comment, parse_ldr_start, BinBufRead};
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
+use crate::jdx::jdx_utils::{
+    find_ldr, is_bruker_specific_section_start, parse_string_value, skip_pure_comments,
+};
 use std::marker::PhantomData;
 
 pub struct JdxParser {}
@@ -50,11 +53,99 @@ impl<T: SeekBufRead> JdxBlock<T> {
     pub fn new(_name: &str, mut reader: T) -> Result<Self, JdxError> {
         let mut buf = Vec::<u8>::with_capacity(1024);
         let line = reader.read_line_iso_8859_1(&mut buf)?;
-        todo!()
+        let title = Self::parse_first_line(line.as_deref())?;
+        let (block, _next_line) = Self::parse_input(&title, reader, &mut buf)?;
+        Ok(block)
     }
 
-    fn parse_first_line(line: &str) {
-        let start = parse_ldr_start(line);
+    fn parse_first_line(line_opt: Option<&str>) -> Result<String, JdxError> {
+        if line_opt.is_none() {
+            return Err(JdxError::new("Malformed Block start. First line is empty."));
+        }
+        let line = line_opt.unwrap();
+        let (label, value) = parse_ldr_start(line)?;
+        if Self::BLOCK_START_LABEL != label {
+            Err(JdxError::new(&format!("Malformed Block start: {line}")))
+        } else {
+            Ok(value)
+        }
+    }
+
+    fn parse_input(
+        title: &str,
+        mut reader: T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        let mut ldrs = Vec::<StringLdr>::new();
+
+        let (title, mut next_line) = parse_string_value(title, &mut reader, buf)?;
+        ldrs.push(StringLdr {
+            label: Self::BLOCK_START_LABEL.into(),
+            value: title.clone(),
+        });
+
+        while let Some(ref line) = next_line {
+            if is_pure_comment(line) {
+                if is_bruker_specific_section_start(line) {
+                    todo!();
+                }
+                next_line = skip_pure_comments(next_line, true, &mut reader, buf)?;
+                continue;
+            }
+
+            let (label, mut value) = parse_ldr_start(line)?;
+            match label.as_str() {
+                "END" => break,
+                Self::BLOCK_START_LABEL => todo!(),
+                "XYDATA" => todo!(),
+                "RADATA" => todo!(),
+                "XYPOINTS" => todo!(),
+                "PEAKTABLE" => todo!(),
+                "PEAKASSIGNMENTS" => todo!(),
+                "NTUPLES" => todo!(),
+                "AUDITTRAIL" => todo!(),
+                "$RELAX" => todo!(),
+                _ => {
+                    // LDR is a regular LDR
+                    (value, next_line) = parse_string_value(&value, &mut reader, buf)?;
+
+                    let existing_ldr = find_ldr(&label, &ldrs);
+                    if let Some(ldr) = existing_ldr {
+                        // reference implementation seems to overwrite LDR with
+                        // duplicate, but spec (JCAMP-DX IR 3.2) says
+                        // a duplicate LDR is illegal in a block
+                        // => accept if content is identical
+                        if ldr.value != value {
+                            return Err(JdxError::new(&format!(
+                                "Multiple non-identical values found for \"{}\" in block: {}",
+                                label, title
+                            )));
+                        }
+                    }
+
+                    ldrs.push(StringLdr { label, value });
+                }
+            }
+        }
+
+        if let Some(line) = next_line {
+            let (label, _value) = parse_ldr_start(&line)?;
+            if "END" != &label {
+                return Err(JdxError::new(&format!(
+                    "No END LDR encountered for block: {}",
+                    title
+                )));
+            }
+            next_line = reader.read_line_iso_8859_1(buf)?;
+        }
+
+        Ok((
+            JdxBlock {
+                phantom: PhantomData,
+                ldrs,
+            },
+            next_line,
+        ))
     }
 }
 

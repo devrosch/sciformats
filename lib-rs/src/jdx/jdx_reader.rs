@@ -14,10 +14,10 @@ impl Reader for JdxReader {
 }
 
 impl JdxReader {
-  pub fn new(path: &str, file: JdxBlock<Box<dyn SeekBufRead>>) -> Self {
-      Self {
-          path: path.to_owned(),
-          file,
-      }
-  }
+    pub fn new(path: &str, file: JdxBlock<Box<dyn SeekBufRead>>) -> Self {
+        Self {
+            path: path.to_owned(),
+            file,
+        }
+    }
 }

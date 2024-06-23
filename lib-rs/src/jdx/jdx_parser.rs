@@ -37,10 +37,10 @@ pub struct JdxBlock<T: SeekBufRead> {
     /// "##DATA_POINTS=   5" has label "DATAPOINTS" and content "  5".
     pub ldrs: Vec<StringLdr>,
 
-    // The labeled data records (LDRs) of the Block that are comments (i.e.
-    // "##= <comment>"). The value holds the comment contents. The content of
-    // a comment is the text following the "=" without initial blank character
-    // if any. E.g. the comment "##= abc" has content "abc".
+    /// The labeled data records (LDRs) of the Block that are comments (i.e.
+    /// "##= <comment>"). The value holds the comment contents. The content of
+    /// a comment is the text following the "=" without initial blank character
+    /// if any. E.g. the comment "##= abc" has content "abc".
     pub ldr_comments: Vec<String>,
     // std::vector<Block> m_blocks;
     // std::optional<XyData> m_xyData;

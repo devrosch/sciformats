@@ -29,12 +29,19 @@ pub struct JdxBlock<T: SeekBufRead> {
     ///   NTUPLES)
     /// These are available as dedicated peroperties.
     ///
+    /// Also does not include "##END=" LDR.
+    ///
     /// The key is the normalized label without "##" and "=" and the value is
     /// the content (without initial blank character if any).E.g. the LDR
     /// "##TITLE= abc" has label "TITLE" and content "abc" and the LDR
     /// "##DATA_POINTS=   5" has label "DATAPOINTS" and content "  5".
     pub ldrs: Vec<StringLdr>,
-    // std::vector<std::string> m_ldrComments;
+
+    // The labeled data records (LDRs) of the Block that are comments (i.e.
+    // "##= <comment>"). The value holds the comment contents. The content of
+    // a comment is the text following the "=" without initial blank character
+    // if any. E.g. the comment "##= abc" has content "abc".
+    pub ldr_comments: Vec<String>,
     // std::vector<Block> m_blocks;
     // std::optional<XyData> m_xyData;
     // std::optional<RaData> m_raData;
@@ -49,6 +56,7 @@ pub struct JdxBlock<T: SeekBufRead> {
 
 impl<T: SeekBufRead> JdxBlock<T> {
     const BLOCK_START_LABEL: &'static str = "TITLE";
+    const BLOCK_END_LABEL: &'static str = "END";
 
     pub fn new(_name: &str, mut reader: T) -> Result<Self, JdxError> {
         let mut buf = Vec::<u8>::with_capacity(1024);
@@ -81,6 +89,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         buf: &mut Vec<u8>,
     ) -> Result<(Self, Option<String>), JdxError> {
         let mut ldrs = Vec::<StringLdr>::new();
+        let mut ldr_comments = Vec::<String>::new();
 
         let (title, mut next_line) = parse_string_value(title, &mut reader, buf)?;
         ldrs.push(StringLdr {
@@ -99,7 +108,12 @@ impl<T: SeekBufRead> JdxBlock<T> {
 
             let (label, mut value) = parse_ldr_start(line)?;
             match label.as_str() {
-                "END" => break,
+                "" => {
+                    // LDR start is an LDR comment "##="
+                    (value, next_line) = parse_string_value(&value, &mut reader, buf)?;
+                    ldr_comments.push(value);
+                }
+                Self::BLOCK_END_LABEL => break,
                 Self::BLOCK_START_LABEL => todo!(),
                 "XYDATA" => todo!(),
                 "RADATA" => todo!(),
@@ -144,6 +158,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
             JdxBlock {
                 phantom: PhantomData,
                 ldrs,
+                ldr_comments,
             },
             next_line,
         ))
@@ -239,5 +254,20 @@ mod tests {
             Some(&StringLdr::new("JCAMPDX", "4.24")),
             block.get_ldr(" J_/CAMP DX-")
         );
+    }
+
+    #[test]
+    fn block_get_ldr_parses_ldr_comments() {
+        let input = b"##TITLE= Test\r\n\
+                           ##= a comment\r\n\
+                           ##=another comment\r\n\
+                           ##END=\r\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(2, block.ldr_comments.len());
+        assert_eq!("a comment", block.ldr_comments[0]);
+        assert_eq!("another comment", block.ldr_comments[1]);
     }
 }

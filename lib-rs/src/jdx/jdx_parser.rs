@@ -58,6 +58,10 @@ impl<T: SeekBufRead> JdxBlock<T> {
         Ok(block)
     }
 
+    pub fn get_ldr(&self, label: &str) -> Option<&StringLdr> {
+        find_ldr(label, &self.ldrs)
+    }
+
     fn parse_first_line(line_opt: Option<&str>) -> Result<String, JdxError> {
         if line_opt.is_none() {
             return Err(JdxError::new("Malformed Block start. First line is empty."));
@@ -123,7 +127,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                         }
                     }
 
-                    ldrs.push(StringLdr { label, value });
+                    ldrs.push(StringLdr::new(label, value));
                 }
             }
         }
@@ -207,6 +211,33 @@ mod tests {
         assert_eq!(
             StringLdr::new("SPECTROMETERDATASYSTEM", "Something\n$$ random comment #2"),
             block.ldrs[5]
+        );
+    }
+
+    #[test]
+    fn block_get_ldr_finds_ldrs_for_non_normalized_search_strings() {
+        let input = b"##TITLE= Test\r\n\
+                           ##JCAMP-DX= 4.24\r\n\
+                           ##END=\r\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(2, block.ldrs.len());
+        assert_eq!(StringLdr::new("TITLE", "Test"), block.ldrs[0]);
+        assert_eq!(StringLdr::new("JCAMPDX", "4.24"), block.ldrs[1]);
+
+        assert_eq!(
+            Some(&StringLdr::new("JCAMPDX", "4.24")),
+            block.get_ldr("JCAMPDX")
+        );
+        assert_eq!(
+            Some(&StringLdr::new("JCAMPDX", "4.24")),
+            block.get_ldr("JCAMP-DX")
+        );
+        assert_eq!(
+            Some(&StringLdr::new("JCAMPDX", "4.24")),
+            block.get_ldr(" J_/CAMP DX-")
         );
     }
 }

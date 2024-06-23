@@ -52,40 +52,13 @@ impl<T: BufRead> BinBufRead for T {
     }
 }
 
-const LDR_START_REGEX_PATTERN: &str = "^\\s*##(.*)=(.*)";
-
+const LDR_START_REGEX_PATTERN: &str = "^\\s*##(.*?)=(.*)";
 lazy_static! {
     static ref LDR_START_REGEX: Regex = Regex::new(LDR_START_REGEX_PATTERN).unwrap();
 }
 
 pub fn is_ldr_start(line: &str) -> bool {
     LDR_START_REGEX.is_match(line)
-}
-
-// todo: Is this fn even required? Not use by parse_ldr_start()?
-pub fn normalize_ldr_start(line: &str) -> Result<String, JdxError> {
-    let caps = LDR_START_REGEX.captures(line);
-    if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
-        return Err(JdxError::new(&format!(
-            "Malformed LDR start. Line does not match pattern \"{}\": {}",
-            LDR_START_REGEX_PATTERN, line
-        )));
-    }
-
-    let label = &caps.as_ref().unwrap()[1];
-    let value = &caps.as_ref().unwrap()[2];
-
-    let mut normalized_label = String::with_capacity(label.len());
-    // normalize label
-    for c in label.chars() {
-        // ignore separators
-        if c != ' ' && c != '-' && c != '/' && c != '_' {
-            normalized_label.push(c.to_ascii_uppercase());
-        }
-    }
-
-    let output = ["##", &normalized_label, "=", value].concat();
-    Ok(output)
 }
 
 fn normalize_label(raw_label: &str) -> String {
@@ -127,7 +100,7 @@ pub fn strip_line_comment(
     trim_content: bool,
     trim_comment: bool,
 ) -> (&str, Option<&str>) {
-    const COMMENT_REGEX_PATTERN: &str = "^(.*)\\$\\$(.*)$";
+    const COMMENT_REGEX_PATTERN: &str = "^(.*?)\\$\\$(.*)$";
     lazy_static! {
         static ref COMMENT_REGEX: regex::Regex = regex::Regex::new(COMMENT_REGEX_PATTERN).unwrap();
     }
@@ -198,7 +171,7 @@ pub fn parse_string_value<T: SeekBufRead>(
         if !content.is_empty() && output.ends_with('=') {
             // account for terminal "=" as non line breaking marker
             output.pop();
-            output.push_str(content);
+            output.push_str(&line);
         } else if content.is_empty()
             && comment.is_some()
             && (is_bruker_specific_section_start(&line) || is_bruker_specific_section_end(&line))
@@ -325,42 +298,6 @@ mod tests {
     }
 
     #[test]
-    fn normalize_ldr_start_removes_separators_from_label() {
-        let s = "##A B-C/D_E= abc";
-        assert_eq!("##ABCDE= abc", normalize_ldr_start(s).unwrap());
-    }
-
-    #[test]
-    fn normalize_ldr_start_leaves_normalized_label_intact() {
-        let s = "##ABCDE= abc";
-        assert_eq!("##ABCDE= abc", normalize_ldr_start(s).unwrap());
-    }
-
-    #[test]
-    fn normalize_ldr_start_removes_leading_ws() {
-        let s = "\t\n\x0B\x0C\r ##ABCDE= abc";
-        assert_eq!("##ABCDE= abc", normalize_ldr_start(s).unwrap());
-    }
-
-    #[test]
-    fn normalize_ldr_start_turns_ascii_chars_to_upper_case() {
-        let s = "##abcdeäöüÄÖÜ= abc";
-        assert_eq!("##ABCDEäöüÄÖÜ= abc", normalize_ldr_start(s).unwrap());
-    }
-
-    #[test]
-    fn normalize_ldr_start_rejects_missing_double_hashes() {
-        let s = "#LABEL= abc";
-        assert!(normalize_ldr_start(s).is_err());
-    }
-
-    #[test]
-    fn normalize_ldr_start_rejects_missing_equals() {
-        let s = "##LABEL abc";
-        assert!(normalize_ldr_start(s).is_err());
-    }
-
-    #[test]
     fn parse_ldr_start_tokenizes_regular_ldr_start() {
         let s = "##LABEL=abc";
         assert_eq!(
@@ -397,9 +334,66 @@ mod tests {
     }
 
     #[test]
+    fn parse_ldr_start_removes_separators_from_label() {
+        let s = "##A B-C/D_E= abc";
+        assert_eq!(
+            ("ABCDE".to_owned(), "abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_leaves_normalized_label_intact() {
+        let s = "##ABCDE= abc";
+        assert_eq!(
+            ("ABCDE".to_owned(), "abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_removes_leading_ws() {
+        let s = "\t\n\x0B\x0C\r ##ABCDE= abc";
+        assert_eq!(
+            ("ABCDE".to_owned(), "abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
+    fn parse_ldr_start_turns_ascii_chars_to_upper_case() {
+        let s = "##abcdeäöüÄÖÜ= abc";
+        assert_eq!(
+            ("ABCDEäöüÄÖÜ".to_owned(), "abc".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
+    }
+
+    #[test]
     fn parse_ldr_start_rejects_malformed_ldr_start() {
         let s = "##LABEL";
         assert!(parse_ldr_start(s).is_err());
+    }
+
+    #[test]
+    fn parse_ldr_start_rejects_missing_double_hashes() {
+        let s = "#LABEL= abc";
+        assert!(parse_ldr_start(s).is_err());
+    }
+
+    #[test]
+    fn parse_ldr_start_rejects_missing_equals() {
+        let s = "##LABEL abc";
+        assert!(parse_ldr_start(s).is_err());
+    }
+
+    #[test]
+    fn parse_ldr_start_correctly_handles_multiple_equals() {
+        let s = "##LABEL= abc=";
+        assert_eq!(
+            ("LABEL".to_owned(), "abc=".to_owned()),
+            parse_ldr_start(s).unwrap()
+        );
     }
 
     #[test]

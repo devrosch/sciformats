@@ -33,7 +33,7 @@ pub struct JdxBlock<T: SeekBufRead> {
     /// the content (without initial blank character if any).E.g. the LDR
     /// "##TITLE= abc" has label "TITLE" and content "abc" and the LDR
     /// "##DATA_POINTS=   5" has label "DATAPOINTS" and content "  5".
-    ldrs: Vec<StringLdr>,
+    pub ldrs: Vec<StringLdr>,
     // std::vector<std::string> m_ldrComments;
     // std::vector<Block> m_blocks;
     // std::optional<XyData> m_xyData;
@@ -128,16 +128,13 @@ impl<T: SeekBufRead> JdxBlock<T> {
             }
         }
 
-        if let Some(line) = next_line {
-            let (label, _value) = parse_ldr_start(&line)?;
-            if "END" != &label {
-                return Err(JdxError::new(&format!(
-                    "No END LDR encountered for block: {}",
-                    title
-                )));
-            }
-            next_line = reader.read_line_iso_8859_1(buf)?;
+        if next_line.is_none() || "END" != parse_ldr_start(&next_line.unwrap())?.0 {
+            return Err(JdxError::new(&format!(
+                "No END LDR encountered for block: {}",
+                title
+            )));
         }
+        next_line = reader.read_line_iso_8859_1(buf)?;
 
         Ok((
             JdxBlock {
@@ -149,6 +146,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct StringLdr {
     /// The label of the LDR, e.g., "TITLE" for "##TITLE= abc".
     pub label: String,
@@ -158,11 +156,57 @@ pub struct StringLdr {
 }
 
 impl StringLdr {
+    pub fn new(label: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            label: label.into(),
+            value: value.into(),
+        }
+    }
+
     pub fn is_user_defined(&self) -> bool {
         self.label.chars().nth(0) == Some('$')
     }
 
     pub fn is_technique_specific(&self) -> bool {
         self.label.chars().nth(0) == Some('.')
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn block_parses_all_string_ldrs() {
+        let input = b"##TITLE= Test\r\n\
+                           ##JCAMP-DX= 4.24 $$ or later\r\n\
+                           ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                           $$ random comment #1\r\n\
+                           ##ORIGIN=devrosch\r\n\
+                           ##OWNER= PUBLIC DOMAIN\n\
+                           ##SPECTROMETER/DATA SYSTEM= Some=\r\n\
+                           thing\r\n\
+                           $$ random comment #2\r\n\
+                           ##END=\
+                           $$ random comment #3\r\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(6, block.ldrs.len());
+        assert_eq!(StringLdr::new("TITLE", "Test"), block.ldrs[0]);
+        assert_eq!(StringLdr::new("JCAMPDX", "4.24 $$ or later"), block.ldrs[1]);
+        assert_eq!(
+            StringLdr::new("DATATYPE", "INFRARED SPECTRUM\n$$ random comment #1"),
+            block.ldrs[2]
+        );
+        assert_eq!(StringLdr::new("ORIGIN", "devrosch"), block.ldrs[3]);
+        assert_eq!(StringLdr::new("OWNER", "PUBLIC DOMAIN"), block.ldrs[4]);
+        assert_eq!(
+            StringLdr::new("SPECTROMETERDATASYSTEM", "Something\n$$ random comment #2"),
+            block.ldrs[5]
+        );
     }
 }

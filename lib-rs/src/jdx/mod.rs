@@ -1,5 +1,6 @@
 use std::{error::Error, fmt};
 
+mod jdx_data_parser;
 pub mod jdx_parser;
 pub mod jdx_reader;
 pub mod jdx_scanner;

@@ -22,8 +22,49 @@ enum TokenType {
 pub struct DataParser {}
 
 impl DataParser {
-    pub fn read_xppyy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<(f64, f64)>, JdxError> {
-        todo!()
+    /// read (X++(Y..Y)) data
+    pub fn read_xppyy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<f64>, JdxError> {
+        // todo: possible performance tweak: pass NPOINTS as parameter and initialize Vec::<f64>::with_capacity()
+        let mut y_values = Vec::<f64>::new();
+        let mut y_value_check = Option::<f64>::None;
+        let mut pos = reader.stream_position()?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if is_ldr_start(&line) {
+                // next LDR encountered => all data read => move back to start of next LDR
+                reader.seek(std::io::SeekFrom::Start(pos))?;
+                break;
+            }
+
+            // save position to move back if next line read is LDR start
+            pos = reader.stream_position()?;
+            // pre-process line
+            let data = strip_line_comment(&line, true, false).0;
+            // read Y values from line
+            let (line_y_values, is_dif_encoded) = Self::read_xppyy_line(data, y_value_check)?;
+            if !line_y_values.is_empty() && y_value_check.is_some() {
+                // y value is duplicated in new line, trust new value
+                y_values.pop();
+            }
+            // append line values to y_values
+            y_values.extend(&line_y_values);
+
+            // if last and second to last values are defined, use last as y check
+            if !is_dif_encoded
+                || line_y_values.is_empty()
+                || (line_y_values.len() == 1 && line_y_values.last().unwrap().is_nan())
+                || (line_y_values.len() >= 2
+                    && (line_y_values.last().unwrap().is_nan()
+                        && line_y_values[line_y_values.len() - 2].is_nan()))
+            {
+                y_value_check = None;
+            } else {
+                y_value_check = line_y_values.last().copied();
+            }
+        }
+
+        Ok(y_values)
     }
 
     /// read (XY..XY) data
@@ -41,13 +82,12 @@ impl DataParser {
                 break;
             }
 
-            // save position to move back if next readLine() encounters LDR start
+            // save position to move back if next line read is LDR start
             pos = reader.stream_position()?;
             // pre-process line
             let data = strip_line_comment(&line, true, false).0;
             // read xy values from line
             let line_values = Self::read_values(data, false)?.0;
-            // turn line values into pairs and append line values to xyValues
             if line_values.len() % 2 != 0 {
                 return Err(JdxError::new(&format!(
                     "Uneven number of values for xy data encountered in line {}. No y value for x value: {}",
@@ -55,6 +95,7 @@ impl DataParser {
                 )));
             }
 
+            // turn line values into pairs and append line values to xyValues
             for (x, y) in line_values
                 .iter()
                 .step_by(2)
@@ -195,7 +236,7 @@ impl DataParser {
         if let Some(pos) = start_delimiter_pos_opt {
             line = line.split_at(pos).1;
         }
-        if line.len() == 0 {
+        if line.is_empty() {
             // no token
             return Ok((None, line));
         }
@@ -237,9 +278,9 @@ impl DataParser {
             // replace SQZ/DIF/DUP char (first char) with (signed) value
             let value = first_digit.unwrap();
             let replacement = if value >= 0 {
-                ((b'0' + value) as char).to_string()
+                ((b'0' as i8 + value) as u8 as char).to_string()
             } else {
-                ['-', (b'0' - value) as char].iter().collect()
+                ['-', (b'0' as i8 - value) as u8 as char].iter().collect()
             };
             token.replace_range(..1, &replacement);
         }
@@ -253,7 +294,7 @@ impl DataParser {
             Some(c) => c.to_owned() as char,
         };
 
-        if (Self::is_ascii_digit(c as char) || c == '.')
+        if (Self::is_ascii_digit(c) || c == '.')
             && (index == 0
                 // todo: correct?
                 || Self::is_token_delimiter(encoded_values.as_bytes()[index - 1] as char))
@@ -298,10 +339,10 @@ impl DataParser {
         if is_asdf {
             // compressed values can easily end in a line on, e.g., "E567", so
             // require delimiter
-            return delimiter.len() > 0;
+            return !delimiter.is_empty();
         }
         // for AFFN
-        (delimiter.len() == 0 && tail.len() == 0) || delimiter.len() > 1
+        (delimiter.is_empty() && tail.is_empty()) || delimiter.len() > 1
     }
 
     fn is_ascii_digit(c: char) -> bool {
@@ -324,44 +365,44 @@ impl DataParser {
         (c >= '@' && c <= 'Z') || (c >= 'a' && c <= 's') || c == '%'
     }
 
-    fn get_ascii_digit_value(c: char) -> Option<u8> {
+    fn get_ascii_digit_value(c: char) -> Option<i8> {
         if Self::is_ascii_digit(c) {
-            return Some(c as u8 - '0' as u8);
+            return Some(c as i8 - '0' as i8);
         }
         None
     }
 
-    fn get_sqz_digit_value(c: char) -> Option<u8> {
+    fn get_sqz_digit_value(c: char) -> Option<i8> {
         // positive SQZ digits @ABCDEFGHI
         if c >= '@' && c <= 'I' {
-            return Some(c as u8 - '@' as u8);
+            return Some(c as i8 - '@' as i8);
         }
         // negative SQZ digits abcdefghi
         if c >= 'a' && c <= 'i' {
-            return Some('`' as u8 - c as u8);
+            return Some('`' as i8 - c as i8);
         }
         None
     }
 
-    fn get_dif_digit_value(c: char) -> Option<u8> {
+    fn get_dif_digit_value(c: char) -> Option<i8> {
         // positive DIF digits %JKLMNOPQR
         if c == '%' {
             return Some(0);
         }
         if c >= 'J' && c <= 'R' {
-            return Some(c as u8 - 'I' as u8);
+            return Some(c as i8 - 'I' as i8);
         }
         // negative DIF digits jklmnopqr
         if c >= 'j' && c <= 'r' {
-            return Some('i' as u8 - c as u8);
+            return Some('i' as i8 - c as i8);
         }
         None
     }
 
-    fn get_dup_digit_value(c: char) -> Option<u8> {
+    fn get_dup_digit_value(c: char) -> Option<i8> {
         // DUP digits STUVWXYZs
         if c >= 'S' && c <= 'Z' {
-            return Some(c as u8 - 'R' as u8);
+            return Some(c as i8 - 'R' as i8);
         }
         if c == 's' {
             return Some(9);

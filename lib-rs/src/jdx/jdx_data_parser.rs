@@ -1,5 +1,8 @@
-use super::JdxError;
-use crate::api::{PointXy, SeekBufRead};
+use super::{jdx_utils::BinBufRead, JdxError};
+use crate::{
+    api::SeekBufRead,
+    jdx::jdx_utils::{is_ldr_start, strip_line_comment},
+};
 use lazy_static::lazy_static;
 
 const EXPONENT_REGEX_PATTERN: &str = "^[eE][+-]{0,1}\\d{1,3}([;,\\s]{0,1})(.*)";
@@ -19,12 +22,171 @@ enum TokenType {
 pub struct DataParser {}
 
 impl DataParser {
-    pub fn read_xpp_yy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<PointXy>, JdxError> {
+    pub fn read_xppyy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<(f64, f64)>, JdxError> {
         todo!()
     }
 
+    /// read (XY..XY) data
+    pub fn read_xyxy_data<T: SeekBufRead + BinBufRead>(
+        reader: &mut T,
+    ) -> Result<Vec<(f64, f64)>, JdxError> {
+        let mut xy_values = Vec::<(f64, f64)>::new();
+        let mut pos = reader.stream_position()?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if is_ldr_start(&line) {
+                // next LDR encountered => all data read => move back to start of next LDR
+                reader.seek(std::io::SeekFrom::Start(pos))?;
+                break;
+            }
+
+            // save position to move back if next readLine() encounters LDR start
+            pos = reader.stream_position()?;
+            // pre-process line
+            let data = strip_line_comment(&line, true, false).0;
+            // read xy values from line
+            let line_values = Self::read_values(data, false)?.0;
+            // turn line values into pairs and append line values to xyValues
+            if line_values.len() % 2 != 0 {
+                return Err(JdxError::new(&format!(
+                    "Uneven number of values for xy data encountered in line {}. No y value for x value: {}",
+                    &line, line_values.last().unwrap()
+                )));
+            }
+
+            for (x, y) in line_values
+                .iter()
+                .step_by(2)
+                .zip(line_values.iter().skip(1).step_by(2))
+            {
+                if x.is_nan() {
+                    return Err(JdxError::new(&format!(
+                        "NaN value encountered as x value in line: {}",
+                        &line
+                    )));
+                }
+                xy_values.push((*x, *y))
+            }
+        }
+
+        Ok(xy_values)
+    }
+
+    fn read_xppyy_line(
+        line: &str,
+        y_value_check: Option<f64>,
+    ) -> Result<(Vec<f64>, bool), JdxError> {
+        let (mut values, dif_encoded) = Self::read_values(line, true)?;
+        if !values.is_empty() {
+            // remove initial x value (not required for (X++(Y..Y)) encoded data)
+            values.remove(0);
+            // skip X value check
+        }
+        if let (Some(check), Some(first)) = (y_value_check, values.first()) {
+            // first y value is a duplicate, check if roughly the same
+            if (first - check).abs() >= 1.0 {
+                return Err(JdxError::new(&format!(
+                    "Y value check failed in line: {}",
+                    line
+                )));
+            }
+        }
+
+        Ok((values, dif_encoded))
+    }
+
     fn read_values(mut line: &str, is_asdf: bool) -> Result<(Vec<f64>, bool), JdxError> {
-        todo!()
+        let mut y_values = Vec::<f64>::new();
+        let mut dif_encoded = false;
+        // state
+        // for DIF/DUP previousTokenValue not same as last yValues value
+        let mut previous_token_value = Option::<f64>::None;
+        let mut previous_token_type = TokenType::Affn;
+
+        while let (Some(token), tail) = Self::next_token(line, is_asdf)? {
+            let mut token = token.to_owned();
+            // todo: change fn signature to accept &str and return tuple
+            let token_type = Self::to_affn(&mut token);
+            // it's not quite clear if DUP of DIF should also count as DIF encoded
+            // Bruker seems to think so => apply same logic here
+            dif_encoded =
+                token_type == TokenType::Dif || (dif_encoded && token_type == TokenType::Dup);
+
+            // check for logical errors
+            if (token_type == TokenType::Dif || token_type == TokenType::Dup)
+                && previous_token_value.is_none()
+            {
+                let token_name = if token_type == TokenType::Dif {
+                    "DIF"
+                } else {
+                    "DUP"
+                };
+                return Err(JdxError::new(&format!(
+                    "{} token without preceding token encountered in sequence: {}",
+                    token_name, line
+                )));
+            }
+            if token_type == TokenType::Dup
+                && previous_token_value.is_some()
+                && previous_token_type == TokenType::Dup
+            {
+                return Err(JdxError::new(&format!(
+                    "DUP token with preceding DUP token encountered in sequence: {}",
+                    line
+                )));
+            }
+
+            // process token
+            if token_type == TokenType::Missing {
+                // ?
+                y_values.push(f64::NAN);
+                previous_token_value = Some(f64::NAN);
+            } else if token_type == TokenType::Dup {
+                let num_repeats = token.parse::<u64>().map_err(|e| {
+                    JdxError::new(&format!(
+                        "Illegal DUP token encountered in sequence \"{}\": {}",
+                        line, token
+                    ))
+                })?;
+                // todo: "-1" correct?
+                for _ in 0..(num_repeats - 1) {
+                    if previous_token_type == TokenType::Dif {
+                        // todo: empty y_value or none previous_value caught earlier in loop; necessary there?
+                        let last_value = y_values.last().unwrap();
+                        let next_value = last_value + previous_token_value.unwrap();
+                        y_values.push(next_value);
+                    } else {
+                        y_values.push(*y_values.last().unwrap());
+                    }
+                }
+            } else {
+                let value = token.parse::<f64>().map_err(|e| {
+                    JdxError::new(&format!(
+                        "Illegal token encountered in sequence \"{}\": {}",
+                        line, token
+                    ))
+                })?;
+                if token_type == TokenType::Dif {
+                    if previous_token_type == TokenType::Missing {
+                        return Err(JdxError::new(&format!(
+                            "DIF token with preceding ? token encountered in sequence: \"{}\": {}",
+                            line, token
+                        )));
+                    }
+                    let last_value = y_values.last().unwrap();
+                    let next_value = last_value + value;
+                    y_values.push(next_value);
+                } else {
+                    y_values.push(value);
+                }
+                previous_token_value = Some(value);
+            }
+            previous_token_type = token_type;
+            line = tail;
+        }
+
+        Ok((y_values, dif_encoded))
     }
 
     fn next_token(mut line: &str, is_asdf: bool) -> Result<(Option<&str>, &str), JdxError> {

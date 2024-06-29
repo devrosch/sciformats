@@ -68,9 +68,7 @@ impl DataParser {
     }
 
     /// read (XY..XY) data
-    pub fn read_xyxy_data<T: SeekBufRead + BinBufRead>(
-        reader: &mut T,
-    ) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn read_xyxy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<(f64, f64)>, JdxError> {
         let mut xy_values = Vec::<(f64, f64)>::new();
         let mut pos = reader.stream_position()?;
         let mut buf = Vec::<u8>::with_capacity(128);
@@ -232,15 +230,17 @@ impl DataParser {
 
     fn next_token(mut line: &str, is_asdf: bool) -> Result<(Option<&str>, &str), JdxError> {
         // skip delimiters
-        let start_delimiter_pos_opt = line.find(Self::is_token_delimiter);
-        if let Some(pos) = start_delimiter_pos_opt {
-            line = line.split_at(pos).1;
+        for (idx, c) in line.char_indices() {
+            if !Self::is_token_delimiter(c) {
+                line = line.split_at(idx).1;
+                break;
+            }
         }
         if line.is_empty() {
             // no token
             return Ok((None, line));
         }
-        if !Self::is_token_start(line, 0, is_asdf) {
+        if !Self::is_token_start(line, None, is_asdf) {
             return Err(JdxError::new(&format!(
                 "Illegal sequence encountered while parsing data: {}",
                 line
@@ -249,9 +249,12 @@ impl DataParser {
 
         // find end of token
         let mut end_idx = 1;
-        for (idx, c) in line[1..].char_indices() {
-            if !Self::is_token_delimiter(c) && !Self::is_token_start(line, idx, is_asdf) {
+        let mut iter = line.chars();
+        let mut prev_char = Some(iter.next().unwrap());
+        for c in iter {
+            if !Self::is_token_delimiter(c) && !Self::is_token_start(line, prev_char, is_asdf) {
                 end_idx += 1;
+                prev_char = Some(c);
             } else {
                 break;
             }
@@ -288,32 +291,31 @@ impl DataParser {
     }
 
     // todo: refactor as to not require .as_bytes() and char lookup
-    fn is_token_start(encoded_values: &str, index: usize, is_asdf: bool) -> bool {
-        let c = match encoded_values.as_bytes().get(index) {
+    fn is_token_start(encoded_values: &str, prev_char: Option<char>, is_asdf: bool) -> bool {
+        let c = match encoded_values.chars().next() {
             None => return false,
-            Some(c) => c.to_owned() as char,
+            Some(c) => c,
         };
 
         if (Self::is_ascii_digit(c) || c == '.')
-            && (index == 0
-                // todo: correct?
-                || Self::is_token_delimiter(encoded_values.as_bytes()[index - 1] as char))
+            && (prev_char.is_none() || Self::is_token_delimiter(prev_char.unwrap()))
         {
             return true;
         }
         if c == 'E' || c == 'e' {
             // could be either an exponent or SQZ digit (E==+5, e==-5)
             // apply heuristic to provide answer
-            // todo: correct? dangerous?
-            return !Self::is_exponent_start(&encoded_values[index..], is_asdf);
+            return !Self::is_exponent_start(&encoded_values, is_asdf);
         }
         if c == '+' || c == '-' {
             // could be either a sign of an exponent or AFFN/PAC start digit
             // apply heuristic to provide answer
-            if index == 0 {
+            if prev_char.is_none() || (prev_char != Some('E') && prev_char != Some('e')) {
                 return true;
             }
-            return !Self::is_exponent_start(&encoded_values[index - 1..], is_asdf);
+            // todo: efficient?
+            let prepended_encoded_value = format!("{}{}", prev_char.unwrap(), &encoded_values);
+            return !Self::is_exponent_start(&prepended_encoded_value, is_asdf);
         }
         if Self::is_sqz_dif_dup_digit(c) {
             return true;
@@ -408,5 +410,23 @@ impl DataParser {
             return Some(9);
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // use std::io::Cursor;
+
+    use super::*;
+
+    #[test]
+    fn parses_affn_data_line() {
+        let input = "1.23 4.5E23 4.5e2 7.89E-14 600 1E2";
+        // let mut reader = Cursor::new(input);
+
+        let (actual, dif_encoded) = DataParser::read_values(input, false).unwrap();
+
+        assert_eq!(vec![1.23, 4.5E23, 4.5E2, 7.89E-14, 600.0, 1E2], actual);
+        assert!(!dif_encoded);
     }
 }

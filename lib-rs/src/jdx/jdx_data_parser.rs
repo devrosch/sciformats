@@ -200,7 +200,7 @@ impl DataParser {
                     }
                 }
             } else {
-                let value = token.parse::<f64>().map_err(|e| {
+                let value = token.parse::<f64>().map_err(|_e| {
                     JdxError::new(&format!(
                         "Illegal token encountered in sequence \"{}\": {}",
                         line, token
@@ -291,7 +291,6 @@ impl DataParser {
         token_type
     }
 
-    // todo: refactor as to not require .as_bytes() and char lookup
     fn is_token_start(encoded_values: &str, prev_char: Option<char>, is_asdf: bool) -> bool {
         let c = match encoded_values.chars().next() {
             None => return false,
@@ -416,9 +415,8 @@ impl DataParser {
 
 #[cfg(test)]
 mod tests {
-    // use std::io::Cursor;
-
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     fn parses_affn_data_line() {
@@ -490,5 +488,115 @@ mod tests {
             actual
         );
         assert!(dif_encoded);
+    }
+
+    #[test]
+    fn parsing_fails_if_sequence_starts_with_dif_token() {
+        let input = "jjj";
+
+        let actual = DataParser::read_values(input, true);
+        assert!(DataParser::read_values(input, true).is_err());
+        assert!(actual
+            .unwrap_err()
+            .to_string()
+            .contains("DIF token without preceding token"));
+    }
+
+    #[test]
+    fn parses_difdup_data_line() {
+        let input = "1JT%jX";
+
+        let (actual, dif_encoded) = DataParser::read_values(input, true).unwrap();
+
+        assert_eq!(
+            vec![1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
+            actual
+        );
+        // last ordinate is in DUP format, but previous value is DIF hence count as
+        // DIF (as Bruker does)
+        assert!(dif_encoded);
+    }
+
+    #[test]
+    fn parsing_fails_if_sequence_contains_consecutive_dup_tokens() {
+        let input = "1VZ";
+
+        let actual = DataParser::read_values(input, true);
+        assert!(DataParser::read_values(input, true).is_err());
+        assert!(actual
+            .unwrap_err()
+            .to_string()
+            .contains("DUP token with preceding DUP token"));
+    }
+
+    #[test]
+    fn parsing_fails_for_illegal_token_start_character() {
+        // "u" is an illegal character
+        let input = "123 u45";
+
+        let actual = DataParser::read_values(input, true);
+        assert!(DataParser::read_values(input, true).is_err());
+        assert!(actual.unwrap_err().to_string().contains("Illegal sequence"));
+    }
+
+    #[test]
+    fn parses_mixed_pac_affn_stream() {
+        let input = b"599.860 0 0 0 0 2 4 4 4 7 5 4 4 5 5 7 10 11 11 6 5 7 6 9 9 7\r\n\
+            648.081 10 10 9 10 11 12 15 16 16 14 17 38 38 35 38 42 47 54\r\n\
+            682.799  59  66  75  78  88  96 104 110 121 128\r\n\
+            ##END=";
+        let mut reader = Cursor::new(input);
+
+        let actual = DataParser::read_xppyy_data(&mut reader).unwrap();
+        let last_line = reader.read_line_iso_8859_1(&mut vec![]);
+
+        assert_eq!(
+            vec![
+                0.0, 0.0, 0.0, 0.0, 2.0, 4.0, 4.0, 4.0, 7.0, 5.0, 4.0, 4.0, 5.0, 5.0, 7.0, 10.0,
+                11.0, 11.0, 6.0, 5.0, 7.0, 6.0, 9.0, 9.0, 7.0, 10.0, 10.0, 9.0, 10.0, 11.0, 12.0,
+                15.0, 16.0, 16.0, 14.0, 17.0, 38.0, 38.0, 35.0, 38.0, 42.0, 47.0, 54.0, 59.0, 66.0,
+                75.0, 78.0, 88.0, 96.0, 104.0, 110.0, 121.0, 128.0
+            ],
+            actual
+        );
+        assert_eq!("##END=", last_line.unwrap().unwrap());
+    }
+
+    #[test]
+    fn parsing_detects_failing_y_check() {
+        let input = b"599.000+1jj\r\n\
+                                600.000+4jj\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let actual = DataParser::read_xppyy_data(&mut reader);
+
+        assert!(actual.is_err());
+        assert!(actual
+            .unwrap_err()
+            .to_string()
+            .contains("Y value check failed"));
+    }
+
+    #[test]
+    fn parses_difdup_stream() {
+        let input = b"599.860@VKT%TLkj%J%KLJ%njKjL%kL%jJULJ%kLK1%lLMNPNPRLJ0QTOJ1P\r\n\
+                                700.158A28\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let actual = DataParser::read_xppyy_data(&mut reader).unwrap();
+        let last_line = reader.read_line_iso_8859_1(&mut vec![]);
+
+        assert_eq!(
+            vec![
+                0.0, 0.0, 0.0, 0.0, 2.0, 4.0, 4.0, 4.0, 7.0, 5.0, 4.0, 4.0, 5.0, 5.0, 7.0, 10.0,
+                11.0, 11.0, 6.0, 5.0, 7.0, 6.0, 9.0, 9.0, 7.0, 10.0, 10.0, 9.0, 10.0, 11.0, 12.0,
+                15.0, 16.0, 16.0, 14.0, 17.0, 38.0, 38.0, 35.0, 38.0, 42.0, 47.0, 54.0, 59.0, 66.0,
+                75.0, 78.0, 88.0, 96.0, 104.0, 110.0, 121.0, 128.0
+            ],
+            actual
+        );
+        assert_eq!("##END=", last_line.unwrap().unwrap());
     }
 }

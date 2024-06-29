@@ -249,10 +249,11 @@ impl DataParser {
 
         // find end of token
         let mut end_idx = 1;
-        let mut iter = line.chars();
-        let mut prev_char = Some(iter.next().unwrap());
-        for c in iter {
-            if !Self::is_token_delimiter(c) && !Self::is_token_start(line, prev_char, is_asdf) {
+        let mut iter = line.char_indices();
+        let mut prev_char = Some(iter.next().unwrap().1);
+        for (i, c) in iter {
+            if !Self::is_token_delimiter(c) && !Self::is_token_start(&line[i..], prev_char, is_asdf)
+            {
                 end_idx += 1;
                 prev_char = Some(c);
             } else {
@@ -344,7 +345,7 @@ impl DataParser {
             return !delimiter.is_empty();
         }
         // for AFFN
-        (delimiter.is_empty() && tail.is_empty()) || delimiter.len() > 1
+        !delimiter.is_empty() || (delimiter.is_empty() && tail.is_empty())
     }
 
     fn is_ascii_digit(c: char) -> bool {
@@ -422,11 +423,20 @@ mod tests {
     #[test]
     fn parses_affn_data_line() {
         let input = "1.23 4.5E23 4.5e2 7.89E-14 600 1E2";
-        // let mut reader = Cursor::new(input);
 
         let (actual, dif_encoded) = DataParser::read_values(input, false).unwrap();
 
         assert_eq!(vec![1.23, 4.5E23, 4.5E2, 7.89E-14, 600.0, 1E2], actual);
+        assert!(!dif_encoded);
+    }
+
+    #[test]
+    fn parses_ambiguous_affn_sqz_data_line() {
+        let input = "1E2 B23C34D45E56";
+
+        let (actual, dif_encoded) = DataParser::read_values(input, true).unwrap();
+
+        assert_eq!(vec![100.0, 223.0, 334.0, 445.0, 556.0], actual);
         assert!(!dif_encoded);
     }
 }

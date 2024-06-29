@@ -439,4 +439,56 @@ mod tests {
         assert_eq!(vec![100.0, 223.0, 334.0, 445.0, 556.0], actual);
         assert!(!dif_encoded);
     }
+
+    #[test]
+    fn parses_fix_i3_ascii_data_line() {
+        let input = "1  2  3  3  2  1  0 -1 -2 -3";
+
+        let (actual, dif_encoded) = DataParser::read_values(input, false).unwrap();
+
+        assert_eq!(
+            vec![1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
+            actual
+        );
+        assert!(!dif_encoded);
+    }
+
+    #[test]
+    fn parses_pac_data_line() {
+        let input = "1+2+3+3+2+1+0-1-2-3";
+
+        let (actual, dif_encoded) = DataParser::read_values(input, true).unwrap();
+
+        assert_eq!(
+            vec![1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
+            actual
+        );
+        assert!(!dif_encoded);
+    }
+
+    #[test]
+    fn parses_sqz_data_line() {
+        let input = "1BCCBA@abc";
+
+        let (actual, dif_encoded) = DataParser::read_values(input, true).unwrap();
+
+        assert_eq!(
+            vec![1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
+            actual
+        );
+        assert!(!dif_encoded);
+    }
+
+    #[test]
+    fn parses_dif_data_line() {
+        let input = "1JJ%jjjjjj";
+
+        let (actual, dif_encoded) = DataParser::read_values(input, true).unwrap();
+
+        assert_eq!(
+            vec![1.0, 2.0, 3.0, 3.0, 2.0, 1.0, 0.0, -1.0, -2.0, -3.0],
+            actual
+        );
+        assert!(dif_encoded);
+    }
 }

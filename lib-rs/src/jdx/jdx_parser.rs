@@ -217,7 +217,7 @@ pub struct XyData<T: SeekBufRead> {
 
     label: String,
     variable_list: String,
-    xy_parameters: XyParameters,
+    parameters: XyParameters,
 }
 
 impl<T: SeekBufRead> XyData<T> {
@@ -257,7 +257,7 @@ impl<T: SeekBufRead> XyData<T> {
                 address,
                 label: label.to_owned(),
                 variable_list: variable_list.to_owned(),
-                xy_parameters: parameters,
+                parameters,
             },
             next_line,
         ))
@@ -448,8 +448,36 @@ impl<T: SeekBufRead> XyData<T> {
         Ok(xy_data)
     }
 
-    pub fn get_data(&self) {
-        todo!()
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        if !Self::XYDATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for XYDATA: {}",
+                &self.variable_list,
+            )));
+        }
+        let data = if self.variable_list == Self::QUIRK_OO_VARIABLE_LIST {
+            // Ocean Optics quirk
+            Self::parse_xyxy_data(
+                &self.label,
+                self.parameters.x_factor,
+                self.parameters.y_factor,
+                Some(self.parameters.n_points),
+                self.address,
+                &mut *self.reader_ref.borrow_mut(),
+            )?
+        } else {
+            Self::parse_xppyy_data(
+                &self.label,
+                self.parameters.first_x,
+                self.parameters.last_x,
+                self.parameters.y_factor,
+                self.parameters.n_points,
+                self.address,
+                &mut *self.reader_ref.borrow_mut(),
+            )?
+        };
+
+        Ok(data)
     }
 }
 
@@ -599,9 +627,10 @@ mod tests {
         // does NOT contain "##END=" even though technically an LDR
         // does NOT contain "##XYDATA=" as it's available through specialized member
         assert_eq!(14, block.ldrs.len());
-        // todo:
-        let xy_data = &block.xy_data;
-        assert!(xy_data.is_some());
-        // assert_eq!([(450.0, 10.0), (451.0, 11.0)], xydata);
+        let xy_data = &block.xy_data.unwrap();
+        assert_eq!(
+            vec![(450.0, 10.0), (451.0, 11.0)],
+            xy_data.get_data().unwrap()
+        );
     }
 }

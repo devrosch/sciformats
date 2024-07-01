@@ -182,7 +182,7 @@ impl DataParser {
                 y_values.push(f64::NAN);
                 previous_token_value = Some(f64::NAN);
             } else if token_type == TokenType::Dup {
-                let num_repeats = token.parse::<u64>().map_err(|e| {
+                let num_repeats = token.parse::<u64>().map_err(|_e| {
                     JdxError::new(&format!(
                         "Illegal DUP token encountered in sequence \"{}\": {}",
                         line, token
@@ -305,7 +305,7 @@ impl DataParser {
         if c == 'E' || c == 'e' {
             // could be either an exponent or SQZ digit (E==+5, e==-5)
             // apply heuristic to provide answer
-            return !Self::is_exponent_start(&encoded_values, is_asdf);
+            return !Self::is_exponent_start(encoded_values, is_asdf);
         }
         if c == '+' || c == '-' {
             // could be either a sign of an exponent or AFFN/PAC start digit
@@ -348,39 +348,39 @@ impl DataParser {
     }
 
     fn is_ascii_digit(c: char) -> bool {
-        c >= '0' && c <= '9'
+        // c >= '0' && c <= '9'
+        c.is_ascii_digit()
     }
 
     fn is_sqz_digit(c: char) -> bool {
-        (c >= '@' && c <= 'I') || (c >= 'a' && c <= 'i')
+        // (c >= '@' && c <= 'I') || (c >= 'a' && c <= 'i')
+        ('@'..='I').contains(&c) || ('a'..='i').contains(&c)
     }
 
     fn is_dif_digit(c: char) -> bool {
-        (c >= 'J' && c <= 'R') || (c >= 'j' && c <= 'r') || c == '%'
+        // (c >= 'J' && c <= 'R') || (c >= 'j' && c <= 'r') || c == '%'
+        ('J'..='R').contains(&c) || ('j'..='r').contains(&c) || c == '%'
     }
 
     fn is_dup_digit(c: char) -> bool {
-        (c >= 'S' && c <= 'Z') || c == 's'
+        // (c >= 'S' && c <= 'Z') || c == 's'
+        ('S'..='Z').contains(&c) || c == 's'
     }
 
     fn is_sqz_dif_dup_digit(c: char) -> bool {
-        (c >= '@' && c <= 'Z') || (c >= 'a' && c <= 's') || c == '%'
-    }
-
-    fn get_ascii_digit_value(c: char) -> Option<i8> {
-        if Self::is_ascii_digit(c) {
-            return Some(c as i8 - '0' as i8);
-        }
-        None
+        // (c >= '@' && c <= 'Z') || (c >= 'a' && c <= 's') || c == '%'
+        ('@'..='Z').contains(&c) || ('a'..='s').contains(&c) || c == '%'
     }
 
     fn get_sqz_digit_value(c: char) -> Option<i8> {
         // positive SQZ digits @ABCDEFGHI
-        if c >= '@' && c <= 'I' {
+        if ('@'..='I').contains(&c) {
+            // c >= '@' && c <= 'I'
             return Some(c as i8 - '@' as i8);
         }
         // negative SQZ digits abcdefghi
-        if c >= 'a' && c <= 'i' {
+        if ('a'..='i').contains(&c) {
+            // c >= 'a' && c <= 'i'
             return Some('`' as i8 - c as i8);
         }
         None
@@ -391,11 +391,13 @@ impl DataParser {
         if c == '%' {
             return Some(0);
         }
-        if c >= 'J' && c <= 'R' {
+        if ('J'..='R').contains(&c) {
+            // c >= 'J' && c <= 'R'
             return Some(c as i8 - 'I' as i8);
         }
         // negative DIF digits jklmnopqr
-        if c >= 'j' && c <= 'r' {
+        if ('j'..='r').contains(&c) {
+            // c >= 'j' && c <= 'r'
             return Some('i' as i8 - c as i8);
         }
         None
@@ -403,7 +405,8 @@ impl DataParser {
 
     fn get_dup_digit_value(c: char) -> Option<i8> {
         // DUP digits STUVWXYZs
-        if c >= 'S' && c <= 'Z' {
+        if ('S'..='Z').contains(&c) {
+            // c >= 'S' && c <= 'Z'
             return Some(c as i8 - 'R' as i8);
         }
         if c == 's' {

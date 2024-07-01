@@ -357,6 +357,9 @@ impl<T: SeekBufRead> XyData<T> {
     fn parse_parameter<P: FromStr>(key: &str, ldrs: &[StringLdr]) -> Result<Option<P>, JdxError> {
         if let Some(ldr) = find_ldr(key, ldrs) {
             let value = strip_line_comment(&ldr.value, true, false).0;
+            if value.is_empty() {
+                return Ok(None);
+            }
             let parsed_value = value.parse::<P>().map_err(|_e| {
                 JdxError::new(&format!("Illegal value for \"{}\": {}", key, ldr.value))
             })?;
@@ -703,6 +706,222 @@ mod tests {
         assert_eq!(1.0, params.x_factor);
         assert_eq!(1.0, params.y_factor);
         assert_eq!(3, params.n_points);
+        assert!(params.max_x.is_none());
+        assert!(params.min_x.is_none());
+        assert!(params.max_y.is_none());
+        assert!(params.min_y.is_none());
+        assert!(params.delta_x.is_none());
+        assert!(params.resolution.is_none());
+    }
+
+    #[test]
+    fn xydata_parses_affn_xppyy_data_with_all_optional_parameters() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "452.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "3"),
+            StringLdr::new("MAXX", "452.0"),
+            StringLdr::new("MINX", "450.0"),
+            StringLdr::new("MAXY", "12.0"),
+            StringLdr::new("MINY", "10.0"),
+            StringLdr::new("DELTAX", "1.0"),
+            StringLdr::new("RESOLUTION", "2.0"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 451.0, 11.0\r\n\
+                                 452.0, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYDATA", &xy_data.label);
+        assert_eq!("(X++(Y..Y))", &xy_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(3, xy_vec.len());
+        assert_eq!(vec![(450.0, 10.0), (451.0, 11.0), (452.0, 12.0)], xy_vec);
+
+        let params = &xy_data.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(450.0, params.first_x);
+        assert_eq!(452.0, params.last_x);
+        assert_eq!(1.0, params.x_factor);
+        assert_eq!(1.0, params.y_factor);
+        assert_eq!(3, params.n_points);
+        assert_eq!(Some(452.0), params.max_x);
+        assert_eq!(Some(450.0), params.min_x);
+        assert_eq!(Some(12.0), params.max_y);
+        assert_eq!(Some(10.0), params.min_y);
+        assert_eq!(Some(1.0), params.delta_x);
+        assert_eq!(Some(2.0), params.resolution);
+    }
+
+    #[test]
+    fn xydata_parses_accepts_blank_values_for_optional_parameters() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "452.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "3"),
+            StringLdr::new("MAXX", ""),
+            StringLdr::new("MINX", ""),
+            StringLdr::new("MAXY", ""),
+            StringLdr::new("MINY", ""),
+            StringLdr::new("DELTAX", ""),
+            StringLdr::new("RESOLUTION", ""),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 451.0, 11.0\r\n\
+                                 452.0, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYDATA", &xy_data.label);
+        assert_eq!("(X++(Y..Y))", &xy_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(3, xy_vec.len());
+        assert_eq!(vec![(450.0, 10.0), (451.0, 11.0), (452.0, 12.0)], xy_vec);
+
+        let params = &xy_data.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(450.0, params.first_x);
+        assert_eq!(452.0, params.last_x);
+        assert_eq!(1.0, params.x_factor);
+        assert_eq!(1.0, params.y_factor);
+        assert_eq!(3, params.n_points);
+        assert!(params.max_x.is_none());
+        assert!(params.min_x.is_none());
+        assert!(params.max_y.is_none());
+        assert!(params.min_y.is_none());
+        assert!(params.delta_x.is_none());
+        assert!(params.resolution.is_none());
+    }
+
+    #[test]
+    fn xydata_parses_single_data_point_record() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "450.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "1"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYDATA", &xy_data.label);
+        assert_eq!("(X++(Y..Y))", &xy_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(1, xy_vec.len());
+        assert_eq!(vec![(450.0, 10.0)], xy_vec);
+    }
+
+    #[test]
+    fn xydata_parses_xpprr_data() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "450.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "5.0"),
+            StringLdr::new("NPOINTS", "1"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(R..R))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYDATA", &xy_data.label);
+        assert_eq!("(X++(R..R))", &xy_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(1, xy_vec.len());
+        assert_eq!(vec![(450.0, 50.0)], xy_vec);
+
+        let params = &xy_data.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(450.0, params.first_x);
+        assert_eq!(450.0, params.last_x);
+        assert_eq!(1.0, params.x_factor);
+        assert_eq!(5.0, params.y_factor);
+        assert_eq!(1, params.n_points);
+        assert!(params.max_x.is_none());
+        assert!(params.min_x.is_none());
+        assert!(params.max_y.is_none());
+        assert!(params.min_y.is_none());
+        assert!(params.delta_x.is_none());
+        assert!(params.resolution.is_none());
+    }
+
+    #[test]
+    fn xydata_parses_xppii_data() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "450.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "5.0"),
+            StringLdr::new("NPOINTS", "1"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(I..I))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYDATA", &xy_data.label);
+        assert_eq!("(X++(I..I))", &xy_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(1, xy_vec.len());
+        assert_eq!(vec![(450.0, 50.0)], xy_vec);
+
+        let params = &xy_data.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(450.0, params.first_x);
+        assert_eq!(450.0, params.last_x);
+        assert_eq!(1.0, params.x_factor);
+        assert_eq!(5.0, params.y_factor);
+        assert_eq!(1, params.n_points);
         assert!(params.max_x.is_none());
         assert!(params.min_x.is_none());
         assert!(params.max_y.is_none());

@@ -22,6 +22,7 @@ impl<T: SeekBufRead + 'static> Parser<T> for JdxParser {
     }
 }
 
+#[derive(Debug)]
 pub struct JdxBlock<T: SeekBufRead> {
     /// The labeled data records (LDRs) of the Block.
     ///
@@ -632,5 +633,81 @@ mod tests {
             vec![(450.0, 10.0), (451.0, 11.0)],
             xy_data.get_data().unwrap()
         );
+    }
+
+    #[test]
+    fn block_fails_parsing_duplicate_xydata() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                $$ random comment #1\r\n\
+                                ##ORIGIN= devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##SPECTROMETER/DATA SYSTEM= Some=\r\n\
+                                thing\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 451\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYDATA= (X++(Y..Y))\r\n\
+                                450.0, 10.0\r\n\
+                                451.0, 11.0\r\n\
+                                ##XYDATA= (X++(Y..Y))\r\n\
+                                450.0, 10.0\r\n\
+                                451.0, 11.0\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+        assert!(error.to_string().contains("Multiple \"XYDATA\" LDRs"));
+    }
+
+    #[test]
+    fn xydata_parses_affn_xppyy_data_with_required_parameters_only() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "452.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "3"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 451.0, 11.0\r\n\
+                                 452.0, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYDATA", &xy_data.label);
+        assert_eq!("(X++(Y..Y))", &xy_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(3, xy_vec.len());
+        assert_eq!(vec![(450.0, 10.0), (451.0, 11.0), (452.0, 12.0)], xy_vec);
+
+        let params = &xy_data.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(450.0, params.first_x);
+        assert_eq!(452.0, params.last_x);
+        assert_eq!(1.0, params.x_factor);
+        assert_eq!(1.0, params.y_factor);
+        assert_eq!(3, params.n_points);
+        assert!(params.max_x.is_none());
+        assert!(params.min_x.is_none());
+        assert!(params.max_y.is_none());
+        assert!(params.min_y.is_none());
+        assert!(params.delta_x.is_none());
+        assert!(params.resolution.is_none());
     }
 }

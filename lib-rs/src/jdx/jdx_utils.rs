@@ -149,6 +149,22 @@ pub fn skip_pure_comments<T: SeekBufRead>(
     Ok(next_line)
 }
 
+pub fn skip_to_next_ldr<T: SeekBufRead>(
+    mut next_line: Option<String>,
+    force_skip_first_line: bool,
+    reader: &mut T,
+    buf: &mut Vec<u8>,
+) -> Result<Option<String>, JdxError> {
+    if force_skip_first_line {
+        next_line = reader.read_line_iso_8859_1(buf)?;
+    }
+    while next_line.is_some() && !is_ldr_start(next_line.as_ref().unwrap()) {
+        next_line = reader.read_line_iso_8859_1(buf)?;
+    }
+
+    Ok(next_line)
+}
+
 pub fn is_bruker_specific_section_start(line: &str) -> bool {
     line.starts_with("$$ Bruker specific parameters")
 }

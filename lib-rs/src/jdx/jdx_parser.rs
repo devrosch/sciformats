@@ -46,6 +46,7 @@ pub struct JdxBlock<T: SeekBufRead> {
     /// if any. E.g. the comment "##= abc" has content "abc".
     pub ldr_comments: Vec<String>,
     // std::vector<Block> m_blocks;
+    /// The XYDATA record if available.
     pub xy_data: Option<XyData<T>>,
     // std::optional<RaData> m_raData;
     // std::optional<XyPoints> m_xyPoints;
@@ -452,6 +453,9 @@ impl<T: SeekBufRead> XyData<T> {
         Ok(xy_data)
     }
 
+    /// Provides the parsed xy data.
+    ///
+    /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
         if !Self::XYDATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(

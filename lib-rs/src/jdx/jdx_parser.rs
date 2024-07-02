@@ -929,4 +929,182 @@ mod tests {
         assert!(params.delta_x.is_none());
         assert!(params.resolution.is_none());
     }
+
+    #[test]
+    fn xydata_detects_mismatching_npoints() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "452.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "1"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 451.0, 11.0\r\n\
+                                 452.0, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, _next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        let error = xy_data.get_data().unwrap_err();
+        assert!(error.to_string().contains("Mismatch") && error.to_string().contains("NPOINTS"));
+    }
+
+    #[test]
+    fn xydata_detects_illegal_variable_list() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "450.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "1"),
+        ];
+        let label = "XYDATA";
+        let variables = "(R++(A..A))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let error = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap_err();
+        assert!(error.to_string().contains("Illegal variable list"));
+    }
+
+    #[test]
+    fn xydata_detects_illegal_stream_position() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "450.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "1"),
+        ];
+        let label = "NPOINTS";
+        let variables = "1";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##XYDATA= (X++(Y..Y))\r\n\
+                                 450.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let error = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap_err();
+        assert!(error.to_string().contains("Illegal label"));
+    }
+
+    #[test]
+    fn xydata_omits_y_value_check_if_last_digit_in_previous_line_is_not_dif_encoded() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "1.0"),
+            StringLdr::new("LASTX", "8.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "8"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        // y values: 10 11 12 13  20 21 22 23
+        let input = b"1 A0JJA3\r\n\
+                                 5 B0JJB3\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, _next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(
+            vec![
+                (1.0, 10.0),
+                (2.0, 11.0),
+                (3.0, 12.0),
+                (4.0, 13.0),
+                (5.0, 20.0),
+                (6.0, 21.0),
+                (7.0, 22.0),
+                (8.0, 23.0)
+            ],
+            xy_vec
+        );
+    }
+
+    #[test]
+    fn xydata_parses_zero_data_point_record() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "450.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "0"),
+        ];
+        let label = "XYDATA";
+        let variables = "(X++(Y..Y))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, _next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        let xy_vec = xy_data.get_data().unwrap();
+        assert!(xy_vec.is_empty());
+    }
+
+    #[test]
+    fn xydata_accepts_xyxy_variable_list_quirk() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "900.0"),
+            StringLdr::new("LASTX", "922.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YFACTOR", "10.0"),
+            StringLdr::new("NPOINTS", "4"),
+        ];
+        let label = "XYDATA";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; 451.0, 11.0\r\n\
+                                 460.0, 20.0; 461.0, 21.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_data, _next) = XyData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("(XY..XY)", &xy_data.variable_list);
+
+        let xy_vec = xy_data.get_data().unwrap();
+        assert_eq!(
+            vec![
+                (900.0, 100.0),
+                (902.0, 110.0),
+                (920.0, 200.0),
+                (922.0, 210.0),
+            ],
+            xy_vec
+        );
+
+        let params = &xy_data.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(900.0, params.first_x);
+        assert_eq!(922.0, params.last_x);
+        assert_eq!(2.0, params.x_factor);
+        assert_eq!(10.0, params.y_factor);
+        assert_eq!(4, params.n_points);
+        assert!(params.max_x.is_none());
+        assert!(params.min_x.is_none());
+        assert!(params.max_y.is_none());
+        assert!(params.min_y.is_none());
+        assert!(params.delta_x.is_none());
+        assert!(params.resolution.is_none());
+    }
 }

@@ -1,5 +1,7 @@
-use super::jdx_data_parser::DataParser;
-use super::jdx_utils::{is_pure_comment, parse_ldr_start, strip_line_comment, BinBufRead};
+use super::jdx_utils::{
+    is_pure_comment, parse_ldr_start, parse_parameter, parse_xppyy_data, parse_xyxy_data,
+    validate_xydata_input, BinBufRead,
+};
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
 use crate::jdx::jdx_utils::{
@@ -7,9 +9,7 @@ use crate::jdx::jdx_utils::{
     skip_to_next_ldr,
 };
 use std::cell::RefCell;
-use std::io::SeekFrom;
 use std::rc::Rc;
-use std::str::FromStr;
 
 pub struct JdxParser {}
 
@@ -212,6 +212,7 @@ impl StringLdr {
     }
 }
 
+/// A JCAMP-DX XYDATA record.
 #[derive(Debug, PartialEq)]
 pub struct XyData<T: SeekBufRead> {
     reader_ref: Rc<RefCell<T>>,
@@ -241,7 +242,7 @@ impl<T: SeekBufRead> XyData<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(XyData<T>, Option<String>), JdxError> {
-        Self::validate_input(
+        validate_xydata_input(
             label,
             variable_list,
             Self::XYDATA_START_LABEL,
@@ -265,48 +266,27 @@ impl<T: SeekBufRead> XyData<T> {
         ))
     }
 
-    fn validate_input(
-        label: &str,
-        variable_list: &str,
-        expected_label: &str,
-        expected_variable_lists: &[&str],
-    ) -> Result<(), JdxError> {
-        if label != expected_label {
-            return Err(JdxError::new(&format!(
-                "Illegal label at \"{}\" start encountered: {}",
-                expected_label, label
-            )));
-        }
-        if !expected_variable_lists.contains(&variable_list) {
-            return Err(JdxError::new(&format!(
-                "Illegal variable list for \"{}\" encountered: {}",
-                label, variable_list
-            )));
-        }
-        Ok(())
-    }
-
     fn parse_parameters(ldrs: &[StringLdr]) -> Result<XyParameters, JdxError> {
         // required
         // string
-        let x_units = find_ldr("XUNITS", ldrs).map(|ldr| &ldr.value);
-        let y_units = find_ldr("YUNITS", ldrs).map(|ldr| &ldr.value);
+        let x_units = parse_parameter::<String>("XUNITS", ldrs)?;
+        let y_units = parse_parameter::<String>("YUNITS", ldrs)?;
         // double
-        let first_x = Self::parse_parameter::<f64>("FIRSTX", ldrs)?;
-        let last_x = Self::parse_parameter::<f64>("LASTX", ldrs)?;
-        let x_factor = Self::parse_parameter::<f64>("XFACTOR", ldrs)?;
-        let y_factor = Self::parse_parameter::<f64>("YFACTOR", ldrs)?;
+        let first_x = parse_parameter::<f64>("FIRSTX", ldrs)?;
+        let last_x = parse_parameter::<f64>("LASTX", ldrs)?;
+        let x_factor = parse_parameter::<f64>("XFACTOR", ldrs)?;
+        let y_factor = parse_parameter::<f64>("YFACTOR", ldrs)?;
         // u64
-        let n_points = Self::parse_parameter::<u64>("NPOINTS", ldrs)?;
+        let n_points = parse_parameter::<u64>("NPOINTS", ldrs)?;
         // optional
         // double
-        let first_y = Self::parse_parameter::<f64>("FIRSTY", ldrs)?;
-        let max_x = Self::parse_parameter::<f64>("MAXX", ldrs)?;
-        let min_x = Self::parse_parameter::<f64>("MINX", ldrs)?;
-        let max_y = Self::parse_parameter::<f64>("MAXY", ldrs)?;
-        let min_y = Self::parse_parameter::<f64>("MINY", ldrs)?;
-        let resolution = Self::parse_parameter::<f64>("RESOLUTION", ldrs)?;
-        let delta_x = Self::parse_parameter::<f64>("DELTAX", ldrs)?;
+        let first_y = parse_parameter::<f64>("FIRSTY", ldrs)?;
+        let max_x = parse_parameter::<f64>("MAXX", ldrs)?;
+        let min_x = parse_parameter::<f64>("MINX", ldrs)?;
+        let max_y = parse_parameter::<f64>("MAXY", ldrs)?;
+        let min_y = parse_parameter::<f64>("MINY", ldrs)?;
+        let resolution = parse_parameter::<f64>("RESOLUTION", ldrs)?;
+        let delta_x = parse_parameter::<f64>("DELTAX", ldrs)?;
 
         let mut missing = vec![];
         if x_units.is_none() {
@@ -355,104 +335,6 @@ impl<T: SeekBufRead> XyData<T> {
         })
     }
 
-    fn parse_parameter<P: FromStr>(key: &str, ldrs: &[StringLdr]) -> Result<Option<P>, JdxError> {
-        if let Some(ldr) = find_ldr(key, ldrs) {
-            let value = strip_line_comment(&ldr.value, true, false).0;
-            if value.is_empty() {
-                return Ok(None);
-            }
-            let parsed_value = value.parse::<P>().map_err(|_e| {
-                JdxError::new(&format!("Illegal value for \"{}\": {}", key, ldr.value))
-            })?;
-            return Ok(Some(parsed_value));
-        }
-        Ok(None)
-    }
-
-    fn parse_xppyy_data(
-        label: &str,
-        first_x: f64,
-        last_x: f64,
-        y_factor: f64,
-        n_points: u64,
-        data_address: u64,
-        reader: &mut T,
-    ) -> Result<Vec<(f64, f64)>, JdxError> {
-        // read raw data from stream
-        // remember stream position
-        let pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(data_address))?;
-        let y_data = DataParser::read_xppyy_data(reader)?;
-        // reset stream position
-        reader.seek(SeekFrom::Start(pos))?;
-        if y_data.len() as u64 != n_points {
-            return Err(JdxError::new(&format!(
-                "Mismatch between NPOINTS and actual number of points \
-                in \"{}\". NPOINTS: {}, actual: {}",
-                label,
-                n_points,
-                y_data.len()
-            )));
-        }
-
-        // prepare processing
-        let mut xy_data = Vec::<(f64, f64)>::with_capacity(y_data.len());
-        // cover special cases nPoints == 0 and nPoints == 1
-        if n_points == 0 {
-            return Ok(xy_data);
-        }
-        let (nominator, denominator) = if n_points == 1 {
-            (first_x, 1f64)
-        } else {
-            (last_x - first_x, (n_points - 1) as f64)
-        };
-
-        // generate and return xy data
-        for (i, y_raw) in y_data.iter().enumerate() {
-            let x = first_x + nominator / denominator * i as f64;
-            let y = y_factor * y_raw;
-            xy_data.push((x, y));
-        }
-
-        Ok(xy_data)
-    }
-
-    fn parse_xyxy_data(
-        label: &str,
-        x_factor: f64,
-        y_factor: f64,
-        n_points: Option<u64>,
-        data_address: u64,
-        reader: &mut T,
-    ) -> Result<Vec<(f64, f64)>, JdxError> {
-        // read raw data from stream
-        // remember stream position
-        let pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(data_address))?;
-        let mut xy_data = DataParser::read_xyxy_data(reader)?;
-        // reset stream position
-        reader.seek(SeekFrom::Start(pos))?;
-        if let Some(np) = n_points {
-            if xy_data.len() as u64 != np {
-                return Err(JdxError::new(&format!(
-                    "Mismatch between NPOINTS and actual number of points \
-                    in \"{}\". NPOINTS: {}, actual: {}",
-                    label,
-                    np,
-                    xy_data.len()
-                )));
-            }
-        }
-
-        // generate and return xy data
-        for (x, y) in xy_data.iter_mut() {
-            *x *= x_factor;
-            *y *= y_factor;
-        }
-
-        Ok(xy_data)
-    }
-
     /// Provides the parsed xy data.
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
@@ -465,7 +347,7 @@ impl<T: SeekBufRead> XyData<T> {
         }
         let data = if self.variable_list == Self::QUIRK_OO_VARIABLE_LIST {
             // Ocean Optics quirk
-            Self::parse_xyxy_data(
+            parse_xyxy_data(
                 &self.label,
                 self.parameters.x_factor,
                 self.parameters.y_factor,
@@ -474,7 +356,7 @@ impl<T: SeekBufRead> XyData<T> {
                 &mut *self.reader_ref.borrow_mut(),
             )?
         } else {
-            Self::parse_xppyy_data(
+            parse_xppyy_data(
                 &self.label,
                 self.parameters.first_x,
                 self.parameters.last_x,
@@ -500,11 +382,9 @@ pub struct XyParameters {
     ///
     /// Not required for parsing but for displaying.
     y_units: String,
-    /// The factor by which to multiply raw x values to arrive at the
-    /// actual value.
+    /// The factor by which to multiply raw x values to arrive at the actual value.
     x_factor: f64,
-    /// The factor by which to multiply raw y values to arrive at the
-    /// actual value.
+    /// The factor by which to multiply raw y values to arrive at the actual value.
     y_factor: f64,
     /// The number of xy pairs in this record.
     n_points: u64,
@@ -514,14 +394,200 @@ pub struct XyParameters {
     last_x: f64,
     /// The first actual Y value (after scaling).
     first_y: Option<f64>,
+    /// Maximum X.
     max_x: Option<f64>,
+    /// Minimum X.
     min_x: Option<f64>,
+    /// Maximum Y.
     max_y: Option<f64>,
+    /// Minimum Y.
     min_y: Option<f64>,
     /// The resolution of the data.
     resolution: Option<f64>,
     /// The x distance between adjacent data points (if constant).
     delta_x: Option<f64>,
+}
+
+/// A JCAMP-DX RADATA record.
+#[derive(Debug, PartialEq)]
+pub struct RaData<T: SeekBufRead> {
+    reader_ref: Rc<RefCell<T>>,
+    address: u64,
+
+    label: String,
+    variable_list: String,
+    parameters: RaParameters,
+}
+
+impl<T: SeekBufRead> RaData<T> {
+    const RADATA_START_LABEL: &'static str = "RADATA";
+    const RADATA_VARIABLE_LISTS: [&'static str; 1] = ["(R++(A..A))"];
+
+    fn new(
+        label: &str,
+        variable_list: &str,
+        ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(RaData<T>, Option<String>), JdxError> {
+        validate_xydata_input(
+            label,
+            variable_list,
+            Self::RADATA_START_LABEL,
+            &Self::RADATA_VARIABLE_LISTS,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
+        let address = reader.stream_position()?;
+        let parameters = Self::parse_parameters(ldrs)?;
+        let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
+        drop(reader);
+
+        Ok((
+            RaData {
+                reader_ref,
+                address,
+                label: label.to_owned(),
+                variable_list: variable_list.to_owned(),
+                parameters,
+            },
+            next_line,
+        ))
+    }
+
+    fn parse_parameters(ldrs: &[StringLdr]) -> Result<RaParameters, JdxError> {
+        // required
+        // string
+        let r_units = parse_parameter::<String>("RUNITS", ldrs)?;
+        let a_units = parse_parameter::<String>("AUNITS", ldrs)?;
+        // double
+        let first_r = parse_parameter::<f64>("FIRSTR", ldrs)?;
+        let last_r = parse_parameter::<f64>("LASTR", ldrs)?;
+        let r_factor = parse_parameter::<f64>("RFACTOR", ldrs)?;
+        let a_factor = parse_parameter::<f64>("AFACTOR", ldrs)?;
+        // u64
+        let n_points = parse_parameter::<u64>("NPOINTS", ldrs)?;
+        // optional
+        // double
+        let first_a = parse_parameter::<f64>("FIRSTA", ldrs)?;
+        // required, according to standard
+        let max_a = parse_parameter::<f64>("MAXA", ldrs)?;
+        // required, according to standard
+        let min_a = parse_parameter::<f64>("MINA", ldrs)?;
+        let resolution = parse_parameter::<f64>("RESOLUTION", ldrs)?;
+        let delta_r = parse_parameter::<f64>("DELTAR", ldrs)?;
+        let zdp = parse_parameter::<f64>("ZDP", ldrs)?;
+        // string
+        let alias = parse_parameter::<String>("ALIAS", ldrs)?;
+
+        let mut missing = vec![];
+        if r_units.is_none() {
+            missing.push("RUNITS");
+        }
+        if a_units.is_none() {
+            missing.push("AUNITS");
+        }
+        if first_r.is_none() {
+            missing.push("FIRSTR");
+        }
+        if last_r.is_none() {
+            missing.push("LASTR");
+        }
+        if r_factor.is_none() {
+            missing.push("RFACTOR");
+        }
+        if a_factor.is_none() {
+            missing.push("AFACTOR");
+        }
+        if n_points.is_none() {
+            missing.push("NPOINTS");
+        }
+        if !missing.is_empty() {
+            return Err(JdxError::new(&format!(
+                "Required LDR(s) missing for RADATA: {}",
+                missing.join(", ")
+            )));
+        }
+
+        Ok(RaParameters {
+            r_units: r_units.unwrap().to_owned(),
+            a_units: a_units.unwrap().to_owned(),
+            first_r: first_r.unwrap(),
+            last_r: last_r.unwrap(),
+            max_a,
+            min_a,
+            r_factor: r_factor.unwrap(),
+            a_factor: a_factor.unwrap(),
+            n_points: n_points.unwrap(),
+            first_a,
+            resolution,
+            delta_r,
+            zdp,
+            alias,
+        })
+    }
+
+    /// Provides the parsed xy data.
+    ///
+    /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        if !Self::RADATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for RADATA: {}",
+                &self.variable_list,
+            )));
+        }
+        let data = parse_xppyy_data(
+            &self.label,
+            self.parameters.first_r,
+            self.parameters.last_r,
+            self.parameters.a_factor,
+            self.parameters.n_points,
+            self.address,
+            &mut *self.reader_ref.borrow_mut(),
+        )?;
+
+        Ok(data)
+    }
+}
+
+/// JCAMP-DX spectral parameters describing an RADATA record.
+#[derive(Debug, PartialEq)]
+pub struct RaParameters {
+    /// Abscissa units.
+    ///
+    /// Not required for parsing but for displaying.
+    r_units: String,
+    /// Ordinate units.
+    ///
+    /// Not required for parsing but for displaying.
+    a_units: String,
+    /// The factor by which to multiply raw R values to arrive at the actual value.
+    r_factor: f64,
+    /// The factor by which to multiply raw A values to arrive at the actual value.
+    a_factor: f64,
+    /// The number of ra pairs in this record.
+    n_points: u64,
+    /// The first R value.
+    first_r: f64,
+    /// The last R value.
+    last_r: f64,
+    /// The first actual A value (after scaling).
+    first_a: Option<f64>,
+    // no MAXR, MINR according to standard
+    /// Maximum A. Required, according to standard.
+    max_a: Option<f64>,
+    /// Minimum A. Required, according to standard.
+    min_a: Option<f64>,
+    /// The resolution of the data.
+    resolution: Option<f64>,
+    /// The R distance between adjacent data points (if constant).
+    delta_r: Option<f64>,
+    /// The number of data points before zero path difference.
+    zdp: Option<f64>,
+    /// Alias. Standard says type is AFFN, but gives "1/1" and "1/2" as examples.
+    alias: Option<String>,
+    // In addition, XUNITS, YUNITS, FIRSTX, LASTX, DELTAX are given in examples
+    // in the standard with not quite clear meaning.
 }
 
 #[cfg(test)]
@@ -1110,5 +1176,181 @@ mod tests {
         assert!(params.min_y.is_none());
         assert!(params.delta_x.is_none());
         assert!(params.resolution.is_none());
+    }
+
+    #[test]
+    fn radata_parses_affn_ra_data_with_required_parameters_only() {
+        let ldrs = &[
+            StringLdr::new("RUNITS", "MICROMETERS"),
+            StringLdr::new("AUNITS", "ARBITRARY UNITS"),
+            StringLdr::new("FIRSTR", "0"),
+            StringLdr::new("LASTR", "2"),
+            StringLdr::new("RFACTOR", "1.0"),
+            StringLdr::new("AFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "3"),
+        ];
+        let label = "RADATA";
+        let variables = "(R++(A..A))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 2, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (ra_data, next) = RaData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("RADATA", &ra_data.label);
+        assert_eq!("(R++(A..A))", &ra_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let ra_vec = ra_data.get_data().unwrap();
+        assert_eq!(3, ra_vec.len());
+        assert_eq!(vec![(0.0, 10.0), (1.0, 11.0), (2.0, 12.0)], ra_vec);
+
+        let params = &ra_data.parameters;
+        assert_eq!("MICROMETERS", &params.r_units);
+        assert_eq!("ARBITRARY UNITS", &params.a_units);
+        assert_eq!(0.0, params.first_r);
+        assert_eq!(2.0, params.last_r);
+        assert_eq!(1.0, params.r_factor);
+        assert_eq!(1.0, params.a_factor);
+        assert_eq!(3, params.n_points);
+        assert!(params.first_a.is_none());
+        assert!(params.max_a.is_none());
+        assert!(params.min_a.is_none());
+        assert!(params.resolution.is_none());
+        assert!(params.delta_r.is_none());
+        assert!(params.zdp.is_none());
+        assert!(params.alias.is_none());
+    }
+
+    #[test]
+    fn radata_parses_affn_ra_data_with_all_parameters() {
+        let ldrs = &[
+            StringLdr::new("RUNITS", "MICROMETERS"),
+            StringLdr::new("AUNITS", "ARBITRARY UNITS"),
+            StringLdr::new("FIRSTR", "0"),
+            StringLdr::new("LASTR", "2"),
+            StringLdr::new("RFACTOR", "1.0"),
+            StringLdr::new("AFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "3"),
+            StringLdr::new("FIRSTA", "10.0"),
+            StringLdr::new("MAXA", "12.0"),
+            StringLdr::new("MINA", "10.0"),
+            StringLdr::new("RESOLUTION", "2.0"),
+            StringLdr::new("DELTAR", "1.0"),
+            StringLdr::new("ZDP", "1"),
+            StringLdr::new("ALIAS", "1/2"),
+        ];
+        let label = "RADATA";
+        let variables = "(R++(A..A))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 2, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (ra_data, next) = RaData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("RADATA", &ra_data.label);
+        assert_eq!("(R++(A..A))", &ra_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let ra_vec = ra_data.get_data().unwrap();
+        assert_eq!(3, ra_vec.len());
+        assert_eq!(vec![(0.0, 10.0), (1.0, 11.0), (2.0, 12.0)], ra_vec);
+
+        let params = &ra_data.parameters;
+        assert_eq!("MICROMETERS", &params.r_units);
+        assert_eq!("ARBITRARY UNITS", &params.a_units);
+        assert_eq!(0.0, params.first_r);
+        assert_eq!(2.0, params.last_r);
+        assert_eq!(1.0, params.r_factor);
+        assert_eq!(1.0, params.a_factor);
+        assert_eq!(3, params.n_points);
+        assert_eq!(Some(10.0), params.first_a);
+        assert_eq!(Some(12.0), params.max_a);
+        assert_eq!(Some(10.0), params.min_a);
+        assert_eq!(Some(2.0), params.resolution);
+        assert_eq!(Some(1.0), params.delta_r);
+        assert_eq!(Some(1.0), params.zdp);
+        assert_eq!(Some("1/2".to_owned()), params.alias);
+    }
+
+    #[test]
+    fn radata_accepts_blank_values_for_optional_ra_parameters() {
+        let ldrs = &[
+            StringLdr::new("RUNITS", "MICROMETERS"),
+            StringLdr::new("AUNITS", "ARBITRARY UNITS"),
+            StringLdr::new("FIRSTR", "0"),
+            StringLdr::new("LASTR", "2"),
+            StringLdr::new("RFACTOR", "1.0"),
+            StringLdr::new("AFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "3"),
+            StringLdr::new("FIRSTA", ""),
+            StringLdr::new("MAXA", ""),
+            StringLdr::new("MINA", ""),
+            StringLdr::new("RESOLUTION", ""),
+            StringLdr::new("DELTAR", ""),
+            StringLdr::new("ZDP", ""),
+            StringLdr::new("ALIAS", ""),
+        ];
+        let label = "RADATA";
+        let variables = "(R++(A..A))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 2, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (ra_data, next) = RaData::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("RADATA", &ra_data.label);
+        assert_eq!("(R++(A..A))", &ra_data.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let ra_vec = ra_data.get_data().unwrap();
+        assert_eq!(3, ra_vec.len());
+        assert_eq!(vec![(0.0, 10.0), (1.0, 11.0), (2.0, 12.0)], ra_vec);
+
+        let params = &ra_data.parameters;
+        assert_eq!("MICROMETERS", &params.r_units);
+        assert_eq!("ARBITRARY UNITS", &params.a_units);
+        assert_eq!(0.0, params.first_r);
+        assert_eq!(2.0, params.last_r);
+        assert_eq!(1.0, params.r_factor);
+        assert_eq!(1.0, params.a_factor);
+        assert_eq!(3, params.n_points);
+        assert!(params.first_a.is_none());
+        assert!(params.max_a.is_none());
+        assert!(params.min_a.is_none());
+        assert!(params.resolution.is_none());
+        assert!(params.delta_r.is_none());
+        assert!(params.zdp.is_none());
+        assert!(params.alias.is_none());
+    }
+
+    #[test]
+    fn radata_detects_mismatching_variable_list() {
+        let ldrs = &[
+            StringLdr::new("RUNITS", "MICROMETERS"),
+            StringLdr::new("AUNITS", "ARBITRARY UNITS"),
+            StringLdr::new("FIRSTR", "0"),
+            StringLdr::new("LASTR", "2"),
+            StringLdr::new("RFACTOR", "1.0"),
+            StringLdr::new("AFACTOR", "1.0"),
+            // NPOINTS missing
+        ];
+        let label = "RADATA";
+        let variables = "(R++(A..A))";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 2, 12.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let error = RaData::new(label, variables, ldrs, next_line, reader_ref).unwrap_err();
+        assert!(error.to_string().contains("missing") && error.to_string().contains("NPOINTS"));
     }
 }

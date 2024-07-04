@@ -48,7 +48,8 @@ pub struct JdxBlock<T: SeekBufRead> {
     // std::vector<Block> m_blocks;
     /// The XYDATA record if available.
     pub xy_data: Option<XyData<T>>,
-    // std::optional<RaData> m_raData;
+    /// The RADATA record if available.
+    pub ra_data: Option<RaData<T>>,
     // std::optional<XyPoints> m_xyPoints;
     // std::optional<PeakTable> m_peakTable;
     // std::optional<PeakAssignments> m_peakAssignments;
@@ -98,6 +99,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut ldrs = Vec::<StringLdr>::new();
         let mut ldr_comments = Vec::<String>::new();
         let mut xy_data = Option::<XyData<T>>::None;
+        let mut ra_data = Option::<RaData<T>>::None;
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -137,7 +139,21 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     xy_data = Some(data);
                     next_line = next;
                 }
-                "RADATA" => todo!(),
+                "RADATA" => {
+                    // todo: refactor to reduce code duplication
+                    if ra_data.is_some() {
+                        return Err(JdxError::new(&format!(
+                            "Multiple \"{}\" LDRs found in block: {}",
+                            label, title
+                        )));
+                    }
+                    drop(reader);
+                    let (data, next) =
+                        RaData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
+                    reader = reader_ref.borrow_mut();
+                    ra_data = Some(data);
+                    next_line = next;
+                }
                 "XYPOINTS" => todo!(),
                 "PEAKTABLE" => todo!(),
                 "PEAKASSIGNMENTS" => todo!(),
@@ -180,6 +196,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 ldrs,
                 ldr_comments,
                 xy_data,
+                ra_data,
             },
             next_line,
         ))
@@ -737,6 +754,69 @@ mod tests {
 
         let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
         assert!(error.to_string().contains("Multiple \"XYDATA\" LDRs"));
+    }
+
+    #[test]
+    fn block_parses_radata() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED INTERFEROGRAM\r\n\
+                                ##ORIGIN= devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##RUNITS= MICROMETERS\r\n\
+                                ##AUNITS= ARBITRARY UNITS\r\n\
+                                ##RFACTOR= 1.0\r\n\
+                                ##AFACTOR= 1.0\r\n\
+                                ##FIRSTR= 0\r\n\
+                                ##LASTR= 1\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTA= 10\r\n\
+                                ##RADATA= (R++(A..A))\r\n\
+                                0, 10.0\r\n\
+                                1, 11.0\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        // does NOT contain "##END=" even though technically an LDR
+        // does NOT contain "##XYDATA=" as it's available through specialized member
+        assert_eq!(13, block.ldrs.len());
+        assert_eq!(
+            Some(&StringLdr::new("TITLE", "Test")),
+            block.get_ldr("TITLE")
+        );
+
+        let ra_data = &block.ra_data.unwrap();
+        assert_eq!(vec![(0.0, 10.0), (1.0, 11.0)], ra_data.get_data().unwrap());
+    }
+
+    #[test]
+    fn block_fails_parsing_duplicate_radata() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED INTERFEROGRAM\r\n\
+                                ##ORIGIN= devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##RUNITS= MICROMETERS\r\n\
+                                ##AUNITS= ARBITRARY UNITS\r\n\
+                                ##RFACTOR= 1.0\r\n\
+                                ##AFACTOR= 1.0\r\n\
+                                ##FIRSTR= 0\r\n\
+                                ##LASTR= 1\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTA= 10\r\n\
+                                ##RADATA= (R++(A..A))\r\n\
+                                0, 10.0\r\n\
+                                1, 11.0\r\n\
+                                ##RADATA= (R++(A..A))\r\n\
+                                0, 10.0\r\n\
+                                1, 11.0\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+        assert!(error.to_string().contains("Multiple \"RADATA\" LDRs"));
     }
 
     #[test]

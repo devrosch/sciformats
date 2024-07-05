@@ -241,7 +241,7 @@ pub struct XyData<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> XyData<T> {
-    const XYDATA_START_LABEL: &'static str = "XYDATA";
+    const XYDATA_LABEL: &'static str = "XYDATA";
     // quirk variable list found in some sample data
     // that violates the spec but is unambiguous and thus accepted
     const QUIRK_OO_VARIABLE_LIST: &'static str = "(XY..XY)";
@@ -262,12 +262,12 @@ impl<T: SeekBufRead> XyData<T> {
         validate_xydata_input(
             label,
             variable_list,
-            Self::XYDATA_START_LABEL,
+            Self::XYDATA_LABEL,
             &Self::XYDATA_VARIABLE_LISTS,
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
-        let parameters = Self::parse_parameters(ldrs)?;
+        let parameters = parse_xydata_parameters(ldrs)?;
         let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
         drop(reader);
 
@@ -281,75 +281,6 @@ impl<T: SeekBufRead> XyData<T> {
             },
             next_line,
         ))
-    }
-
-    fn parse_parameters(ldrs: &[StringLdr]) -> Result<XyParameters, JdxError> {
-        // required
-        // string
-        let x_units = parse_parameter::<String>("XUNITS", ldrs)?;
-        let y_units = parse_parameter::<String>("YUNITS", ldrs)?;
-        // double
-        let first_x = parse_parameter::<f64>("FIRSTX", ldrs)?;
-        let last_x = parse_parameter::<f64>("LASTX", ldrs)?;
-        let x_factor = parse_parameter::<f64>("XFACTOR", ldrs)?;
-        let y_factor = parse_parameter::<f64>("YFACTOR", ldrs)?;
-        // u64
-        let n_points = parse_parameter::<u64>("NPOINTS", ldrs)?;
-        // optional
-        // double
-        let first_y = parse_parameter::<f64>("FIRSTY", ldrs)?;
-        let max_x = parse_parameter::<f64>("MAXX", ldrs)?;
-        let min_x = parse_parameter::<f64>("MINX", ldrs)?;
-        let max_y = parse_parameter::<f64>("MAXY", ldrs)?;
-        let min_y = parse_parameter::<f64>("MINY", ldrs)?;
-        let resolution = parse_parameter::<f64>("RESOLUTION", ldrs)?;
-        let delta_x = parse_parameter::<f64>("DELTAX", ldrs)?;
-
-        let mut missing = vec![];
-        if x_units.is_none() {
-            missing.push("XUNITS");
-        }
-        if y_units.is_none() {
-            missing.push("YUNITS");
-        }
-        if first_x.is_none() {
-            missing.push("FIRSTX");
-        }
-        if last_x.is_none() {
-            missing.push("LASTX");
-        }
-        if x_factor.is_none() {
-            missing.push("XFACTOR");
-        }
-        if y_factor.is_none() {
-            missing.push("YFACTOR");
-        }
-        if n_points.is_none() {
-            missing.push("NPOINTS");
-        }
-        if !missing.is_empty() {
-            return Err(JdxError::new(&format!(
-                "Required LDR(s) missing for XYDATA: {}",
-                missing.join(", ")
-            )));
-        }
-
-        Ok(XyParameters {
-            x_units: x_units.unwrap().to_owned(),
-            y_units: y_units.unwrap().to_owned(),
-            x_factor: x_factor.unwrap(),
-            y_factor: y_factor.unwrap(),
-            n_points: n_points.unwrap(),
-            first_x: first_x.unwrap(),
-            last_x: last_x.unwrap(),
-            first_y,
-            max_x,
-            min_x,
-            max_y,
-            min_y,
-            resolution,
-            delta_x,
-        })
     }
 
     /// Provides the parsed xy data.
@@ -386,6 +317,76 @@ impl<T: SeekBufRead> XyData<T> {
 
         Ok(data)
     }
+}
+
+fn parse_xydata_parameters(ldrs: &[StringLdr]) -> Result<XyParameters, JdxError> {
+    // required
+    // string
+    let x_units = parse_parameter::<String>("XUNITS", ldrs)?;
+    let y_units = parse_parameter::<String>("YUNITS", ldrs)?;
+    // double
+    let first_x = parse_parameter::<f64>("FIRSTX", ldrs)?;
+    let last_x = parse_parameter::<f64>("LASTX", ldrs)?;
+    let x_factor = parse_parameter::<f64>("XFACTOR", ldrs)?;
+    let y_factor = parse_parameter::<f64>("YFACTOR", ldrs)?;
+    // u64
+    let n_points = parse_parameter::<u64>("NPOINTS", ldrs)?;
+    // optional
+    // double
+    let first_y = parse_parameter::<f64>("FIRSTY", ldrs)?;
+    let max_x = parse_parameter::<f64>("MAXX", ldrs)?;
+    let min_x = parse_parameter::<f64>("MINX", ldrs)?;
+    let max_y = parse_parameter::<f64>("MAXY", ldrs)?;
+    let min_y = parse_parameter::<f64>("MINY", ldrs)?;
+    let resolution = parse_parameter::<f64>("RESOLUTION", ldrs)?;
+    let delta_x = parse_parameter::<f64>("DELTAX", ldrs)?;
+
+    let mut missing = vec![];
+    if x_units.is_none() {
+        missing.push("XUNITS");
+    }
+    if y_units.is_none() {
+        missing.push("YUNITS");
+    }
+    if first_x.is_none() {
+        missing.push("FIRSTX");
+    }
+    if last_x.is_none() {
+        missing.push("LASTX");
+    }
+    if x_factor.is_none() {
+        missing.push("XFACTOR");
+    }
+    if y_factor.is_none() {
+        missing.push("YFACTOR");
+    }
+    if n_points.is_none() {
+        missing.push("NPOINTS");
+    }
+    if !missing.is_empty() {
+        return Err(JdxError::new(&format!(
+            // todo: also for XYPOINTS?
+            "Required LDR(s) missing for XYDATA: {}",
+            missing.join(", ")
+        )));
+    }
+
+    Ok(XyParameters {
+        x_units: x_units.unwrap(),
+        y_units: y_units.unwrap(),
+        x_factor: x_factor.unwrap(),
+        y_factor: y_factor.unwrap(),
+        n_points: n_points.unwrap(),
+        first_x: first_x.unwrap(),
+        last_x: last_x.unwrap(),
+        first_y,
+        max_x,
+        min_x,
+        max_y,
+        min_y,
+        resolution,
+        delta_x,
+    })
 }
 
 /// JCAMP-DX spectral parameters describing an XYDATA record.
@@ -437,7 +438,7 @@ pub struct RaData<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> RaData<T> {
-    const RADATA_START_LABEL: &'static str = "RADATA";
+    const RADATA_LABEL: &'static str = "RADATA";
     const RADATA_VARIABLE_LISTS: [&'static str; 1] = ["(R++(A..A))"];
 
     fn new(
@@ -450,7 +451,7 @@ impl<T: SeekBufRead> RaData<T> {
         validate_xydata_input(
             label,
             variable_list,
-            Self::RADATA_START_LABEL,
+            Self::RADATA_LABEL,
             &Self::RADATA_VARIABLE_LISTS,
         )?;
         let mut reader = reader_ref.borrow_mut();
@@ -526,16 +527,16 @@ impl<T: SeekBufRead> RaData<T> {
         }
 
         Ok(RaParameters {
-            r_units: r_units.unwrap().to_owned(),
-            a_units: a_units.unwrap().to_owned(),
+            r_units: r_units.unwrap(),
+            a_units: a_units.unwrap(),
             first_r: first_r.unwrap(),
             last_r: last_r.unwrap(),
-            max_a,
-            min_a,
             r_factor: r_factor.unwrap(),
             a_factor: a_factor.unwrap(),
             n_points: n_points.unwrap(),
             first_a,
+            max_a,
+            min_a,
             resolution,
             delta_r,
             zdp,
@@ -607,9 +608,80 @@ pub struct RaParameters {
     // in the standard with not quite clear meaning.
 }
 
+/// A JCAMP-DX XYPOINTS record.
+#[derive(Debug, PartialEq)]
+pub struct XyPoints<T: SeekBufRead> {
+    reader_ref: Rc<RefCell<T>>,
+    address: u64,
+
+    label: String,
+    variable_list: String,
+    // todo: really all XYDATA parameters required?
+    parameters: XyParameters,
+}
+
+impl<T: SeekBufRead> XyPoints<T> {
+    const XYPOINTS_LABEL: &'static str = "XYPOINTS";
+    const XYPOINTS_VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XR..XR)", "(XI..XI)"];
+
+    fn new(
+        label: &str,
+        variable_list: &str,
+        ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(XyPoints<T>, Option<String>), JdxError> {
+        validate_xydata_input(
+            label,
+            variable_list,
+            Self::XYPOINTS_LABEL,
+            &Self::XYPOINTS_VARIABLE_LISTS,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
+        let address = reader.stream_position()?;
+        // todo: really all XYDATA parameters required?
+        let parameters = parse_xydata_parameters(ldrs)?;
+        let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
+        drop(reader);
+
+        Ok((
+            XyPoints {
+                reader_ref,
+                address,
+                label: label.to_owned(),
+                variable_list: variable_list.to_owned(),
+                parameters,
+            },
+            next_line,
+        ))
+    }
+
+    /// Provides the parsed xy data.
+    ///
+    /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        if !Self::XYPOINTS_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for XYPOINTS: {}",
+                &self.variable_list,
+            )));
+        }
+        let data = parse_xyxy_data(
+            &self.label,
+            self.parameters.x_factor,
+            self.parameters.y_factor,
+            Some(self.parameters.n_points),
+            self.address,
+            &mut *self.reader_ref.borrow_mut(),
+        )?;
+
+        Ok(data)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use std::{f64::NAN, io::Cursor};
 
     use super::*;
 
@@ -1432,5 +1504,189 @@ mod tests {
 
         let error = RaData::new(label, variables, ldrs, next_line, reader_ref).unwrap_err();
         assert!(error.to_string().contains("missing") && error.to_string().contains("NPOINTS"));
+    }
+
+    #[test]
+    fn xypoints_parses_unevenly_spaced_xyxy_data() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "900.0"),
+            StringLdr::new("LASTX", "922.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YFACTOR", "10.0"),
+            StringLdr::new("NPOINTS", "4"),
+        ];
+        let label = "XYPOINTS";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; 451.0, 11.0\r\n\
+                                 460.0, ?; 461.0, 21.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_points, next) =
+            XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYPOINTS", &xy_points.label);
+        assert_eq!("(XY..XY)", &xy_points.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_points.get_data().unwrap();
+        assert_eq!(4, xy_vec.len());
+        assert_eq!((900.0, 100.0), xy_vec[0]);
+        assert_eq!((902.0, 110.0), xy_vec[1]);
+        assert_eq!(920.0, xy_vec[2].0);
+        assert!(xy_vec[2].1.is_nan());
+        assert_eq!((922.0, 210.0), xy_vec[3]);
+
+        let params = &xy_points.parameters;
+        assert_eq!("1/CM", &params.x_units);
+        assert_eq!("ABSORBANCE", &params.y_units);
+        assert_eq!(900.0, params.first_x);
+        assert_eq!(922.0, params.last_x);
+        assert_eq!(2.0, params.x_factor);
+        assert_eq!(10.0, params.y_factor);
+        assert_eq!(4, params.n_points);
+        assert!(params.max_x.is_none());
+        assert!(params.min_x.is_none());
+        assert!(params.max_y.is_none());
+        assert!(params.min_y.is_none());
+        assert!(params.delta_x.is_none());
+        assert!(params.resolution.is_none());
+    }
+
+    #[test]
+    fn xypoints_parses_xrxr_data() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "900.0"),
+            StringLdr::new("LASTX", "922.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YFACTOR", "10.0"),
+            StringLdr::new("NPOINTS", "2"),
+        ];
+        let label = "XYPOINTS";
+        let variables = "(XR..XR)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; 451.0, 11.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_points, next) =
+            XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYPOINTS", &xy_points.label);
+        assert_eq!("(XR..XR)", &xy_points.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_points.get_data().unwrap();
+        assert_eq!(2, xy_vec.len());
+        assert_eq!((900.0, 100.0), xy_vec[0]);
+        assert_eq!((902.0, 110.0), xy_vec[1]);
+    }
+
+    #[test]
+    fn xypoints_parses_xixi_data() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "900.0"),
+            StringLdr::new("LASTX", "922.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YFACTOR", "10.0"),
+            StringLdr::new("NPOINTS", "2"),
+        ];
+        let label = "XYPOINTS";
+        let variables = "(XI..XI)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; 451.0, 11.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_points, next) =
+            XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        assert_eq!("XYPOINTS", &xy_points.label);
+        assert_eq!("(XI..XI)", &xy_points.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        let xy_vec = xy_points.get_data().unwrap();
+        assert_eq!(2, xy_vec.len());
+        assert_eq!((900.0, 100.0), xy_vec[0]);
+        assert_eq!((902.0, 110.0), xy_vec[1]);
+    }
+
+    #[test]
+    fn xypoints_fails_parsing_question_mark_as_x_value() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "450.0"),
+            StringLdr::new("LASTX", "461.0"),
+            StringLdr::new("XFACTOR", "1.0"),
+            StringLdr::new("YFACTOR", "1.0"),
+            StringLdr::new("NPOINTS", "4"),
+        ];
+        let label = "XYPOINTS";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; ?, 11.0\r\n\
+                                 460.0, 20.0; 461.0, 21.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_points, _next) =
+            XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        let error = xy_points.get_data().unwrap_err();
+        assert!(error.to_string().contains("NaN") && error.to_string().contains("x value"));
+    }
+
+    #[test]
+    fn xypoints_fails_parsing_npoints_mismatch() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "900.0"),
+            StringLdr::new("LASTX", "922.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YFACTOR", "10.0"),
+            StringLdr::new("NPOINTS", "3"),
+        ];
+        let label = "XYPOINTS";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; 451.0, 11.0\r\n\
+                                 460.0, 20.0; 461.0, 21.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_points, _next) =
+            XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        let error = xy_points.get_data().unwrap_err();
+        assert!(error.to_string().contains("NPOINTS") && error.to_string().contains("Mismatch"));
+    }
+
+    #[test]
+    fn xypoints_fails_parsing_incomplete_xy_pair() {
+        let ldrs = &[
+            StringLdr::new("XUNITS", "1/CM"),
+            StringLdr::new("YUNITS", "ABSORBANCE"),
+            StringLdr::new("FIRSTX", "900.0"),
+            StringLdr::new("LASTX", "922.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YFACTOR", "10.0"),
+            StringLdr::new("NPOINTS", "4"),
+        ];
+        let label = "XYPOINTS";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0; 451.0, 11.0\r\n\
+                                 460.0, 20.0; 461.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (xy_points, _next) =
+            XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
+        let error = xy_points.get_data().unwrap_err();
+        assert!(error.to_string().contains("Uneven"));
     }
 }

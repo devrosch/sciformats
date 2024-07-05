@@ -50,7 +50,8 @@ pub struct JdxBlock<T: SeekBufRead> {
     pub xy_data: Option<XyData<T>>,
     /// The RADATA record if available.
     pub ra_data: Option<RaData<T>>,
-    // std::optional<XyPoints> m_xyPoints;
+    /// The XYPOINTS record if available.
+    pub xy_points: Option<XyPoints<T>>,
     // std::optional<PeakTable> m_peakTable;
     // std::optional<PeakAssignments> m_peakAssignments;
     // std::optional<NTuples> m_nTuples;
@@ -100,6 +101,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut ldr_comments = Vec::<String>::new();
         let mut xy_data = Option::<XyData<T>>::None;
         let mut ra_data = Option::<RaData<T>>::None;
+        let mut xy_points = Option::<XyPoints<T>>::None;
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -154,7 +156,21 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     ra_data = Some(data);
                     next_line = next;
                 }
-                "XYPOINTS" => todo!(),
+                "XYPOINTS" => {
+                    // todo: refactor to reduce code duplication
+                    if xy_points.is_some() {
+                        return Err(JdxError::new(&format!(
+                            "Multiple \"{}\" LDRs found in block: {}",
+                            label, title
+                        )));
+                    }
+                    drop(reader);
+                    let (data, next) =
+                        XyPoints::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
+                    reader = reader_ref.borrow_mut();
+                    xy_points = Some(data);
+                    next_line = next;
+                }
                 "PEAKTABLE" => todo!(),
                 "PEAKASSIGNMENTS" => todo!(),
                 "NTUPLES" => todo!(),
@@ -197,6 +213,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 ldr_comments,
                 xy_data,
                 ra_data,
+                xy_points,
             },
             next_line,
         ))
@@ -681,9 +698,8 @@ impl<T: SeekBufRead> XyPoints<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::{f64::NAN, io::Cursor};
-
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     fn block_parses_all_string_ldrs() {
@@ -889,6 +905,57 @@ mod tests {
 
         let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
         assert!(error.to_string().contains("Multiple \"RADATA\" LDRs"));
+    }
+
+    #[test]
+    fn block_parses_xypoints() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 461\r\n\
+                                ##NPOINTS= 4\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYPOINTS= (XY..XY)\r\n\
+                                450.0, 10.0; 451.0, 11.0\r\n\
+                                460.0, ?; 461.0, 21.0\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert!(block.xy_points.is_some());
+        let xy_points = &block.xy_points.unwrap();
+        assert_eq!(4, xy_points.get_data().unwrap().len());
+    }
+
+    #[test]
+    fn block_fails_parsing_duplicate_xypoints() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 461\r\n\
+                                ##NPOINTS= 4\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYPOINTS= (XY..XY)\r\n\
+                                450.0, 10.0; 451.0, 11.0\r\n\
+                                460.0, ?; 461.0, 21.0\r\n\
+                                ##XYPOINTS= (XY..XY)\r\n\
+                                450.0, 10.0; 451.0, 11.0\r\n\
+                                460.0, ?; 461.0, 21.0\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+        assert!(error.to_string().contains("Multiple \"XYPOINTS\" LDRs"));
     }
 
     #[test]

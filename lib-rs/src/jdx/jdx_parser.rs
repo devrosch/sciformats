@@ -1,7 +1,7 @@
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
-    is_pure_comment, parse_ldr_start, parse_parameter, parse_xppyy_data, parse_xyxy_data,
-    validate_input, BinBufRead,
+    is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, parse_xppyy_data,
+    parse_xyxy_data, strip_line_comment, validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
@@ -763,7 +763,7 @@ impl<T: SeekBufRead> PeakTable<T> {
         let mut pos = reader.stream_position()?;
         let mut buf = Vec::<u8>::with_capacity(128);
         while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
-            if is_pure_comment(&line) {
+            if !is_pure_comment(&line) {
                 break;
             }
             pos = reader.stream_position()?;
@@ -782,6 +782,36 @@ impl<T: SeekBufRead> PeakTable<T> {
         reader.seek(SeekFrom::Start(initial_pos))?;
 
         Ok(peaks)
+    }
+
+    pub fn get_kernel(&self) -> Result<Option<String>, JdxError> {
+        // remember stream position
+        let reader = &mut *self.reader_ref.borrow_mut();
+        let initial_pos = reader.stream_position()?;
+        reader.seek(SeekFrom::Start(self.address))?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+
+        // read possible initial comment lines
+        let mut kernel_lines = Vec::<String>::new();
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if is_ldr_start(&line) {
+                break;
+            }
+            if let (_content, Some(comment)) = strip_line_comment(&line, false, true) {
+                kernel_lines.push(comment.to_owned());
+            } else {
+                break;
+            }
+        }
+
+        // reset stream position
+        reader.seek(SeekFrom::Start(initial_pos))?;
+
+        if kernel_lines.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(kernel_lines.join("\n")))
+        }
     }
 }
 
@@ -1882,7 +1912,16 @@ mod tests {
         assert_eq!(variables, table.variable_list);
         assert_eq!(Some("##END=".to_owned()), next);
 
-        // todo: check kernel 7 width function
+        let kernel = table.get_kernel().unwrap();
+        assert!(kernel.is_some());
+        assert_eq!(
+            Some(
+                "peak width kernel line 1\n\
+                 peak width kernel line 2"
+                    .to_owned()
+            ),
+            kernel
+        );
 
         let peaks = table.get_data().unwrap();
         assert_eq!(
@@ -1926,5 +1965,212 @@ mod tests {
             ],
             peaks
         )
+    }
+
+    #[test]
+    fn peak_table_parses_xywxyw_peaks() {
+        let label = "PEAKTABLE";
+        let variables = "(XYW..XYW)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0, 1.0\r\n\
+                                460.0,\t11.0,\t2.0\r\n\
+                                470.0, 12.0, 3.0 480.0, 13.0, 4.0\r\n\
+                                490.0, 14.0, 5.0; 500.0, 15.0, 6.0\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+
+        assert_eq!(label, table.label);
+        assert_eq!(variables, table.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        assert!(table.get_kernel().unwrap().is_none());
+
+        let peaks = table.get_data().unwrap();
+        assert_eq!(
+            vec![
+                Peak {
+                    x: 450.0,
+                    y: 10.0,
+                    m: None,
+                    w: Some(1.0)
+                },
+                Peak {
+                    x: 460.0,
+                    y: 11.0,
+                    m: None,
+                    w: Some(2.0)
+                },
+                Peak {
+                    x: 470.0,
+                    y: 12.0,
+                    m: None,
+                    w: Some(3.0)
+                },
+                Peak {
+                    x: 480.0,
+                    y: 13.0,
+                    m: None,
+                    w: Some(4.0)
+                },
+                Peak {
+                    x: 490.0,
+                    y: 14.0,
+                    m: None,
+                    w: Some(5.0)
+                },
+                Peak {
+                    x: 500.0,
+                    y: 15.0,
+                    m: None,
+                    w: Some(6.0)
+                }
+            ],
+            peaks
+        )
+    }
+
+    #[test]
+    fn peak_table_parses_xymxym_peaks() {
+        let label = "PEAKTABLE";
+        let variables = "(XYM..XYM)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0, T\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+
+        assert_eq!(label, table.label);
+        assert_eq!(variables, table.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        assert!(table.get_kernel().unwrap().is_none());
+
+        let peaks = table.get_data().unwrap();
+        assert_eq!(
+            vec![Peak {
+                x: 450.0,
+                y: 10.0,
+                m: Some("T".to_owned()),
+                w: None
+            },],
+            peaks
+        )
+    }
+
+    #[test]
+    fn peak_table_fails_parsing_xyxy_peaks_with_excess_column() {
+        let label = "PEAKTABLE";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0, 1.0\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+        let error = table.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_table_fails_parsing_xywxyw_peaks_with_excess_column() {
+        let label = "PEAKTABLE";
+        let variables = "(XYW..XYW)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0, 1.0, -1.0\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+        let error = table.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_table_fails_parsing_xyxy_peaks_with_incomplete_pair() {
+        let label = "PEAKTABLE";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 460.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+        let error = table.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_table_parsing_reports_blanks_as_nan() {
+        let label = "PEAKTABLE";
+        let variables = "(XYW..XYW)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0,, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let data = table.get_data().unwrap();
+        assert_eq!(1, data.len());
+        assert_eq!(450.0, data[0].x);
+        assert!(data[0].y.is_nan());
+        assert_eq!(None, data[0].m);
+        assert_eq!(Some(10.0), data[0].w);
+    }
+
+    #[test]
+    fn peak_table_fails_parsing_for_illegal_variable_list() {
+        let label = "PEAKTABLE";
+        let variables = "(XYWABC..XYWABC)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 3.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let error = PeakTable::new(label, &variables, next_line, reader_ref).unwrap_err();
+        assert!(
+            error.to_string().contains("Illegal") && error.to_string().contains("variable list")
+        );
+    }
+
+    #[test]
+    fn peak_table_fails_parsing_xywxyw_peaks_with_incomplete_tuple() {
+        let label = "PEAKTABLE";
+        let variables = "(XYW..XYW)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"450.0, 10.0\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+        let error = table.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_table_parses_peak_width_function_and_zero_peaks() {
+        let label = "PEAKTABLE";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"$$ peak width kernel line 1\r\n\
+                                 $$ peak width kernel line 2\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let kernel = table.get_kernel().unwrap();
+        assert_eq!(
+            Some(
+                "peak width kernel line 1\n\
+                 peak width kernel line 2"
+                    .to_owned()
+            ),
+            kernel
+        );
     }
 }

@@ -3,6 +3,7 @@ use super::{jdx_parser::Peak, JdxError};
 use crate::api::SeekBufRead;
 use lazy_static::lazy_static;
 use std::collections::VecDeque;
+use std::f64::NAN;
 
 const TUPLE_SEPARATOR_REGEX_PATTERN: &str = r"((?<tuple>.*?[^,\s])(\s*(?:\s|;)\s*))?(?<tail>.*)";
 lazy_static! {
@@ -152,21 +153,27 @@ impl<'r, T: SeekBufRead> PeakTableParser<'r, T> {
                 tuple
             ))
         })?;
-        let y = y_opt.unwrap().as_str().parse::<f64>().map_err(|_e| {
-            JdxError::new(&format!(
-                "Illegal y value encountered while parsing PEAK TABLE token: {}",
-                tuple
-            ))
-        })?;
+        let y = match y_opt.unwrap().as_str() {
+            s if s.trim().is_empty() => NAN,
+            s => s.parse::<f64>().map_err(|_e| {
+                JdxError::new(&format!(
+                    "Illegal y value encountered while parsing PEAK TABLE token: {}",
+                    tuple
+                ))
+            })?,
+        };
         let (w, m) = match self.variable_list {
             s if s == Self::PEAK_TABLE_VARIABLE_LISTS[0] => (None, None),
             s if s == Self::PEAK_TABLE_VARIABLE_LISTS[1] => {
-                let w = wm_opt.unwrap().as_str().parse::<f64>().map_err(|_e| {
-                    JdxError::new(&format!(
-                        "Illegal w value encountered while parsing PEAK TABLE token: {}",
-                        tuple
-                    ))
-                })?;
+                let w = match wm_opt.unwrap().as_str() {
+                    wm if wm.trim().is_empty() => NAN,
+                    wm => wm.parse::<f64>().map_err(|_e| {
+                        JdxError::new(&format!(
+                            "Illegal w value encountered while parsing PEAK TABLE token: {}",
+                            tuple
+                        ))
+                    })?,
+                };
                 (Some(w), None)
             }
             s if s == Self::PEAK_TABLE_VARIABLE_LISTS[2] => {

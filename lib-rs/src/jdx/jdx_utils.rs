@@ -224,7 +224,7 @@ pub fn parse_parameter<P: FromStr>(key: &str, ldrs: &[StringLdr]) -> Result<Opti
     Ok(None)
 }
 
-pub fn validate_xydata_input(
+pub fn validate_input(
     label: &str,
     variable_list: &str,
     expected_label: &str,

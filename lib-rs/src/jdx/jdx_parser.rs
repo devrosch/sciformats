@@ -1,6 +1,7 @@
+use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
     is_pure_comment, parse_ldr_start, parse_parameter, parse_xppyy_data, parse_xyxy_data,
-    validate_xydata_input, BinBufRead,
+    validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
@@ -9,6 +10,7 @@ use crate::jdx::jdx_utils::{
     skip_to_next_ldr,
 };
 use std::cell::RefCell;
+use std::io::SeekFrom;
 use std::rc::Rc;
 
 pub struct JdxParser {}
@@ -276,7 +278,7 @@ impl<T: SeekBufRead> XyData<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(XyData<T>, Option<String>), JdxError> {
-        validate_xydata_input(
+        validate_input(
             label,
             variable_list,
             Self::XYDATA_LABEL,
@@ -304,6 +306,8 @@ impl<T: SeekBufRead> XyData<T> {
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        // todo: move check to constructor
+        // todo: Required? Should have been caught in new().
         if !Self::XYDATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for XYDATA: {}",
@@ -465,7 +469,7 @@ impl<T: SeekBufRead> RaData<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(RaData<T>, Option<String>), JdxError> {
-        validate_xydata_input(
+        validate_input(
             label,
             variable_list,
             Self::RADATA_LABEL,
@@ -565,6 +569,7 @@ impl<T: SeekBufRead> RaData<T> {
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        // todo: Required? Should have been caught in new().
         if !Self::RADATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for RADATA: {}",
@@ -648,7 +653,7 @@ impl<T: SeekBufRead> XyPoints<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(XyPoints<T>, Option<String>), JdxError> {
-        validate_xydata_input(
+        validate_input(
             label,
             variable_list,
             Self::XYPOINTS_LABEL,
@@ -677,6 +682,7 @@ impl<T: SeekBufRead> XyPoints<T> {
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        // todo: move check to constructor
         if !Self::XYPOINTS_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for XYPOINTS: {}",
@@ -694,6 +700,105 @@ impl<T: SeekBufRead> XyPoints<T> {
 
         Ok(data)
     }
+}
+
+/// A JCAMP-DX DATA TABLE record.
+#[derive(Debug, PartialEq)]
+pub struct PeakTable<T: SeekBufRead> {
+    reader_ref: Rc<RefCell<T>>,
+    address: u64,
+
+    label: String,
+    variable_list: String,
+}
+
+impl<T: SeekBufRead> PeakTable<T> {
+    const PEAK_TABLE_LABEL: &'static str = "PEAKTABLE";
+    const PEAK_TABLE_VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XYW..XYW)", "(XYM..XYM)"];
+
+    fn new(
+        label: &str,
+        variable_list: &str,
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(PeakTable<T>, Option<String>), JdxError> {
+        validate_input(
+            label,
+            variable_list,
+            Self::PEAK_TABLE_LABEL,
+            &Self::PEAK_TABLE_VARIABLE_LISTS,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
+        let address = reader.stream_position()?;
+        let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
+        drop(reader);
+
+        Ok((
+            PeakTable {
+                reader_ref,
+                address,
+                label: label.to_owned(),
+                variable_list: variable_list.to_owned(),
+            },
+            next_line,
+        ))
+    }
+
+    /// Provides the parsed peak data.
+    pub fn get_data(&self) -> Result<Vec<Peak>, JdxError> {
+        // todo: Required? Should have been caught in new().
+        if !Self::PEAK_TABLE_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for PEAK TABLE: {}",
+                &self.variable_list,
+            )));
+        }
+
+        // remember stream position
+        let reader = &mut *self.reader_ref.borrow_mut();
+        let initial_pos = reader.stream_position()?;
+        reader.seek(SeekFrom::Start(self.address))?;
+
+        // skip possible initial comment lines
+        let mut pos = reader.stream_position()?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if is_pure_comment(&line) {
+                break;
+            }
+            pos = reader.stream_position()?;
+        }
+        // move stream to start of first non pure comment line
+        reader.seek(SeekFrom::Start(pos))?;
+
+        // parse peaks
+        let mut parser = PeakTableParser::new(&self.variable_list, reader)?;
+        let mut peaks = Vec::<Peak>::new();
+        while let Some(peak) = parser.next()? {
+            peaks.push(peak);
+        }
+
+        // reset stream position
+        reader.seek(SeekFrom::Start(initial_pos))?;
+
+        Ok(peaks)
+    }
+}
+
+/// A JCAMP-DX peak, i.e. one item in a PEAK TABLE.
+#[derive(Debug, PartialEq)]
+pub struct Peak {
+    /// Peak position.
+    pub x: f64,
+    /// Intensity.
+    pub y: f64,
+    /// Multiplicity.
+    ///
+    /// S, D, Т, Q for singlets, douЬlets, triplets, or quadruplets,
+    /// М for multiple, and U for unassigned. Used only for NMR.
+    pub m: Option<String>,
+    /// Width.
+    pub w: Option<f64>,
 }
 
 #[cfg(test)]
@@ -1755,5 +1860,71 @@ mod tests {
             XyPoints::new(label, variables, ldrs, next_line, reader_ref).unwrap();
         let error = xy_points.get_data().unwrap_err();
         assert!(error.to_string().contains("Uneven"));
+    }
+
+    #[test]
+    fn peak_table_parses_xyxy_peaks() {
+        let label = "PEAKTABLE";
+        let variables = "(XY..XY)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"$$ peak width kernel line 1\r\n\
+                                $$ peak width kernel line 2\r\n\
+                                450.0,  10.0\r\n\
+                                460.0, 11.0 $$ test comment\r\n\
+                                \x20470.0, 12.0E2 480.0, 13.0\r\n\
+                                490.0, 14.0;  500.0, 15.0\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (table, next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
+
+        assert_eq!(label, table.label);
+        assert_eq!(variables, table.variable_list);
+        assert_eq!(Some("##END=".to_owned()), next);
+
+        // todo: check kernel 7 width function
+
+        let peaks = table.get_data().unwrap();
+        assert_eq!(
+            vec![
+                Peak {
+                    x: 450.0,
+                    y: 10.0,
+                    m: None,
+                    w: None
+                },
+                Peak {
+                    x: 460.0,
+                    y: 11.0,
+                    m: None,
+                    w: None
+                },
+                Peak {
+                    x: 470.0,
+                    y: 1200.0,
+                    m: None,
+                    w: None
+                },
+                Peak {
+                    x: 480.0,
+                    y: 13.0,
+                    m: None,
+                    w: None
+                },
+                Peak {
+                    x: 490.0,
+                    y: 14.0,
+                    m: None,
+                    w: None
+                },
+                Peak {
+                    x: 500.0,
+                    y: 15.0,
+                    m: None,
+                    w: None
+                }
+            ],
+            peaks
+        )
     }
 }

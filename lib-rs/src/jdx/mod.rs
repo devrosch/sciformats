@@ -2,6 +2,7 @@ use std::{error::Error, fmt};
 
 mod jdx_data_parser;
 pub mod jdx_parser;
+mod jdx_peak_table_parser;
 pub mod jdx_reader;
 pub mod jdx_scanner;
 mod jdx_utils;

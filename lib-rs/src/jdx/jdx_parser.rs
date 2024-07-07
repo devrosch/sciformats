@@ -50,11 +50,15 @@ pub struct JdxBlock<T: SeekBufRead> {
     // std::vector<Block> m_blocks;
     /// The XYDATA record if available.
     pub xy_data: Option<XyData<T>>,
+
     /// The RADATA record if available.
     pub ra_data: Option<RaData<T>>,
+
     /// The XYPOINTS record if available.
     pub xy_points: Option<XyPoints<T>>,
-    // std::optional<PeakTable> m_peakTable;
+
+    /// The PEAK TABLE record if available.
+    pub peak_table: Option<PeakTable<T>>,
     // std::optional<PeakAssignments> m_peakAssignments;
     // std::optional<NTuples> m_nTuples;
     // std::optional<AuditTrail> m_auditTrail;
@@ -104,6 +108,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut xy_data = Option::<XyData<T>>::None;
         let mut ra_data = Option::<RaData<T>>::None;
         let mut xy_points = Option::<XyPoints<T>>::None;
+        let mut peak_table = Option::<PeakTable<T>>::None;
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -173,7 +178,21 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     xy_points = Some(data);
                     next_line = next;
                 }
-                "PEAKTABLE" => todo!(),
+                "PEAKTABLE" => {
+                    // todo: refactor to reduce code duplication
+                    if peak_table.is_some() {
+                        return Err(JdxError::new(&format!(
+                            "Multiple \"{}\" LDRs found in block: {}",
+                            label, title
+                        )));
+                    }
+                    drop(reader);
+                    let (data, next) =
+                        PeakTable::new(&label, &value, next_line, Rc::clone(&reader_ref))?;
+                    reader = reader_ref.borrow_mut();
+                    peak_table = Some(data);
+                    next_line = next;
+                }
                 "PEAKASSIGNMENTS" => todo!(),
                 "NTUPLES" => todo!(),
                 "AUDITTRAIL" => todo!(),
@@ -216,6 +235,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 xy_data,
                 ra_data,
                 xy_points,
+                peak_table,
             },
             next_line,
         ))
@@ -1091,6 +1111,39 @@ mod tests {
 
         let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
         assert!(error.to_string().contains("Multiple \"XYPOINTS\" LDRs"));
+    }
+
+    #[test]
+    fn block_parses_peak_table() {
+        let input = b"##TITLE= Test\r\n\
+                                 ##JCAMP-DX= 4.24\r\n\
+                                 ##PEAK TABLE= (XY..XY)\r\n\
+                                 0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert!(block.peak_table.is_some());
+        let table = &block.peak_table.unwrap();
+        assert_eq!(2, table.get_data().unwrap().len());
+    }
+
+    #[test]
+    fn block_fails_parsing_duplicate_peak_tables() {
+        let input = b"##TITLE= Test\r\n\
+                                 ##JCAMP-DX= 4.24\r\n\
+                                 ##PEAK TABLE= (XY..XY)\r\n\
+                                 0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 ##PEAK TABLE= (XY..XY)\r\n\
+                                 0, 10.0\r\n\
+                                 1, 11.0\r\n\
+                                 ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+        assert!(error.to_string().contains("Multiple \"PEAKTABLE\" LDRs"));
     }
 
     #[test]

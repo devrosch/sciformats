@@ -1,7 +1,8 @@
+use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
-    is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, parse_xppyy_data,
-    parse_xyxy_data, strip_line_comment, validate_input, BinBufRead,
+    is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, strip_line_comment,
+    validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};

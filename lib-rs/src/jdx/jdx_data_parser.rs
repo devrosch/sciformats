@@ -1,3 +1,5 @@
+use std::io::SeekFrom;
+
 use super::{jdx_utils::BinBufRead, JdxError};
 use crate::{
     api::SeekBufRead,
@@ -17,6 +19,90 @@ enum TokenType {
     Dif,
     Dup,
     Missing,
+}
+
+pub fn parse_xppyy_data<T: SeekBufRead>(
+    label: &str,
+    first_x: f64,
+    last_x: f64,
+    y_factor: f64,
+    n_points: u64,
+    data_address: u64,
+    reader: &mut T,
+) -> Result<Vec<(f64, f64)>, JdxError> {
+    // read raw data from stream
+    // remember stream position
+    let pos = reader.stream_position()?;
+    reader.seek(SeekFrom::Start(data_address))?;
+    let y_data = DataParser::read_xppyy_data(reader)?;
+    // reset stream position
+    reader.seek(SeekFrom::Start(pos))?;
+    if y_data.len() as u64 != n_points {
+        return Err(JdxError::new(&format!(
+            "Mismatch between NPOINTS and actual number of points \
+            in \"{}\". NPOINTS: {}, actual: {}",
+            label,
+            n_points,
+            y_data.len()
+        )));
+    }
+
+    // prepare processing
+    let mut xy_data = Vec::<(f64, f64)>::with_capacity(y_data.len());
+    // cover special cases nPoints == 0 and nPoints == 1
+    if n_points == 0 {
+        return Ok(xy_data);
+    }
+    let (nominator, denominator) = if n_points == 1 {
+        (first_x, 1f64)
+    } else {
+        (last_x - first_x, (n_points - 1) as f64)
+    };
+
+    // generate and return xy data
+    for (i, y_raw) in y_data.iter().enumerate() {
+        let x = first_x + nominator / denominator * i as f64;
+        let y = y_factor * y_raw;
+        xy_data.push((x, y));
+    }
+
+    Ok(xy_data)
+}
+
+pub fn parse_xyxy_data<T: SeekBufRead>(
+    label: &str,
+    x_factor: f64,
+    y_factor: f64,
+    n_points: Option<u64>,
+    data_address: u64,
+    reader: &mut T,
+) -> Result<Vec<(f64, f64)>, JdxError> {
+    // read raw data from stream
+    // remember stream position
+    let pos = reader.stream_position()?;
+    reader.seek(SeekFrom::Start(data_address))?;
+    let mut xy_data = DataParser::read_xyxy_data(reader)?;
+    // reset stream position
+    reader.seek(SeekFrom::Start(pos))?;
+    if let Some(np) = n_points {
+        if xy_data.len() as u64 != np {
+            return Err(JdxError::new(&format!(
+                "Mismatch between NPOINTS and actual number of points \
+                in \"{}\". NPOINTS: {}, actual: {}",
+                label,
+                np,
+                xy_data.len()
+            )));
+        }
+    }
+
+    // generate and return xy data
+    for (x, y) in xy_data.iter_mut() {
+        *x *= x_factor;
+        *y *= y_factor;
+    }
+
+    Ok(xy_data)
 }
 
 pub struct DataParser {}
@@ -297,7 +383,7 @@ impl DataParser {
             Some(c) => c,
         };
 
-        if (Self::is_ascii_digit(c) || c == '.')
+        if (c.is_ascii_digit() || c == '.')
             && (prev_char.is_none() || Self::is_token_delimiter(prev_char.unwrap()))
         {
             return true;
@@ -345,11 +431,6 @@ impl DataParser {
         }
         // for AFFN
         !delimiter.is_empty() || (delimiter.is_empty() && tail.is_empty())
-    }
-
-    fn is_ascii_digit(c: char) -> bool {
-        // c >= '0' && c <= '9'
-        c.is_ascii_digit()
     }
 
     fn is_sqz_digit(c: char) -> bool {

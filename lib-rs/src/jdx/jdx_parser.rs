@@ -101,12 +101,12 @@ impl<T: SeekBufRead> JdxBlock<T> {
 
     fn parse_first_line(line_opt: Option<&str>) -> Result<String, JdxError> {
         if line_opt.is_none() {
-            return Err(JdxError::new("Malformed Block start. First line is empty."));
+            return Err(JdxError::new("Malformed block start. First line is empty."));
         }
         let line = line_opt.unwrap();
         let (label, value) = parse_ldr_start(line)?;
         if Self::BLOCK_START_LABEL != label {
-            Err(JdxError::new(&format!("Malformed Block start: {line}")))
+            Err(JdxError::new(&format!("Malformed block start: {line}")))
         } else {
             Ok(value)
         }
@@ -1105,6 +1105,81 @@ mod tests {
     }
 
     #[test]
+    fn block_parsing_reports_block_comments_separately() {
+        let input = b"##TITLE= Test Block\r\n\
+                                ##= comment 1\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##= comment 2 line 1\r\n\
+                                comment 2 line 2\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(2, block.ldrs.len());
+        let ldr_comments = &block.ldr_comments;
+        assert_eq!(2, ldr_comments.len());
+        assert_eq!(
+            &vec![
+                "comment 1".to_owned(),
+                "comment 2 line 1\ncomment 2 line 2".to_owned()
+            ],
+            ldr_comments
+        );
+    }
+
+    #[test]
+    fn block_parsing_fails_for_illegal_block_start() {
+        let input = b"##ILLEGAL_BLOCK_START= Test Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Malformed block start"));
+    }
+
+    #[test]
+    fn block_parsing_fails_for_missing_end_ldr() {
+        let input = b"##TITLE= Test Block\r\n\
+                                ##JCAMP-DX= 5.00\r\n";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("END"));
+    }
+
+    #[test]
+    fn block_parsing_fails_for_duplicate_generic_ldrs_with_different_content() {
+        let input = b"##TITLE= Test Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##JCAMP-DX= 5.00\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Multiple non-identical"));
+    }
+
+    #[test]
+    fn block_parsing_succeeds_for_duplicate_generic_ldrs_with_same_content() {
+        let input = b"##TITLE= Test Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert_eq!(
+            Some(&StringLdr::new("JCAMPDX", "4.24")),
+            block.get_ldr("JCAMP-DX")
+        );
+    }
+
+    #[test]
     fn block_parses_xydata() {
         let input = b"##TITLE= Test\r\n\
                                 ##JCAMP-DX= 4.24\r\n\
@@ -1171,6 +1246,31 @@ mod tests {
 
         let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
         assert!(error.to_string().contains("Multiple \"XYDATA\" LDRs"));
+    }
+
+    #[test]
+    fn block_fails_parsing_xydata_with_missing_required_ldrs() {
+        // "##FIRSTX= 450\r\n" // required for XYDATA
+        // "##NPOINTS= 2\r\n" // required for XYDATA
+        let input = b"##TITLE= Test\r\n\
+                                  ##JCAMP-DX= 4.24\r\n\
+                                  ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                  ##ORIGIN= devrosch\r\n\
+                                  ##OWNER= PUBLIC DOMAIN\r\n\
+                                  ##XUNITS= 1/CM\r\n\
+                                  ##YUNITS= ABSORBANCE\r\n\
+                                  ##XFACTOR= 1.0\r\n\
+                                  ##YFACTOR= 1.0\r\n\
+                                  ##LASTX= 451\r\n\
+                                  ##FIRSTY= 10\r\n\
+                                  ##XYDATA= (X++(Y..Y))\r\n\
+                                  450.0, 10.0\r\n\
+                                  451.0, 11.0\r\n\
+                                  ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+        assert!(error.to_string().contains("NPOINTS") && error.to_string().contains("FIRSTX"));
     }
 
     #[test]
@@ -1412,6 +1512,56 @@ mod tests {
         assert!(block.peak_assignments.is_none());
         assert_eq!(2, block.blocks.len())
     }
+
+    #[test]
+    fn block_parses_nested_blocks() {
+        let input = b"##TITLE= Test Link Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= LINK\r\n\
+                                ##BLOCKS= 1\r\n\
+                                ##TITLE= Test Nested Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                ##ORIGIN= devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 451\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYPOINTS= (XY..XY)\r\n\
+                                450.0, 10.0\r\n\
+                                451.0, 11.0\r\n\
+                                ##END=\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(4, block.ldrs.len());
+        assert_eq!(
+            Some(&StringLdr::new("TITLE", "Test Link Block")),
+            block.get_ldr("TITLE")
+        );
+        assert_eq!(
+            Some(&StringLdr::new("DATATYPE", "LINK")),
+            block.get_ldr("DATATYPE")
+        );
+
+        assert_eq!(1, block.blocks.len());
+        let inner_block = &block.blocks[0];
+        assert_eq!(
+            Some(&StringLdr::new("TITLE", "Test Nested Block")),
+            inner_block.get_ldr("TITLE")
+        );
+    }
+
+    // todo: remaining block tests:
+    // - parses block with NTUPLES
+    // - parses block with AUDIT TRAIL
 
     #[test]
     fn xydata_parses_affn_xppyy_data_with_required_parameters_only() {

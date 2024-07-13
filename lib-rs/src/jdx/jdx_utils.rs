@@ -144,6 +144,7 @@ pub fn skip_pure_comments<T: SeekBufRead>(
                 line
             )));
         }
+        break;
     }
 
     Ok(next_line)

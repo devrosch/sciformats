@@ -49,7 +49,10 @@ pub struct JdxBlock<T: SeekBufRead> {
     /// a comment is the text following the "=" without initial blank character
     /// if any. E.g. the comment "##= abc" has content "abc".
     pub ldr_comments: Vec<String>,
-    // std::vector<Block> m_blocks;
+
+    /// BLOCKs that are nested in this (LINK) block.
+    pub blocks: Vec<JdxBlock<T>>,
+
     /// The XYDATA record if available.
     pub xy_data: Option<XyData<T>>,
 
@@ -78,8 +81,18 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut buf = Vec::<u8>::with_capacity(1024);
         let line = reader.read_line_iso_8859_1(&mut buf)?;
         let title = Self::parse_first_line(line.as_deref())?;
-        let (block, _next_line) = Self::parse_input(&title, reader, &mut buf)?;
+        let reader_ref = Rc::new(RefCell::new(reader));
+        let (block, _next_line) = Self::parse_input(&title, reader_ref, &mut buf)?;
         Ok(block)
+    }
+
+    pub fn new_nested(
+        title: &str,
+        reader_ref: Rc<RefCell<T>>,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        let (block, next_line) = Self::parse_input(title, reader_ref, buf)?;
+        Ok((block, next_line))
     }
 
     pub fn get_ldr(&self, label: &str) -> Option<&StringLdr> {
@@ -101,14 +114,14 @@ impl<T: SeekBufRead> JdxBlock<T> {
 
     fn parse_input(
         title: &str,
-        reader: T,
+        reader_ref: Rc<RefCell<T>>,
         buf: &mut Vec<u8>,
     ) -> Result<(Self, Option<String>), JdxError> {
-        let reader_ref = Rc::new(RefCell::new(reader));
         let mut reader = reader_ref.borrow_mut();
 
         let mut ldrs = Vec::<StringLdr>::new();
         let mut ldr_comments = Vec::<String>::new();
+        let mut blocks = Vec::<JdxBlock<T>>::new();
         let mut xy_data = Option::<XyData<T>>::None;
         let mut ra_data = Option::<RaData<T>>::None;
         let mut xy_points = Option::<XyPoints<T>>::None;
@@ -138,7 +151,13 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     ldr_comments.push(value);
                 }
                 Self::BLOCK_END_LABEL => break,
-                Self::BLOCK_START_LABEL => todo!(),
+                Self::BLOCK_START_LABEL => {
+                    drop(reader);
+                    let (block, next) = JdxBlock::new_nested(&value, Rc::clone(&reader_ref), buf)?;
+                    reader = reader_ref.borrow_mut();
+                    blocks.push(block);
+                    next_line = next;
+                }
                 "XYDATA" => {
                     if xy_data.is_some() {
                         return Err(JdxError::new(&format!(
@@ -251,6 +270,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
             JdxBlock {
                 ldrs,
                 ldr_comments,
+                blocks,
                 xy_data,
                 ra_data,
                 xy_points,
@@ -1336,6 +1356,61 @@ mod tests {
         assert!(error
             .to_string()
             .contains("Multiple \"PEAKASSIGNMENTS\" LDRs"));
+    }
+
+    #[test]
+    fn block_parses_link_block() {
+        let input = b"##TITLE= Root LINK BLOCK\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= LINK\r\n\
+                                ##BLOCKS= 3\r\n\
+                                ##TITLE= Data XYDATA (PAC) Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 451\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYDATA= (X++(Y..Y))\r\n\
+                                +450+10\r\n\
+                                +451+11\r\n\
+                                ##END=\r\n\
+                                ##TITLE= Data RADATA (PAC) Block\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED INTERFEROGRAM\r\n\
+                                ##RUNITS= MICROMETERS\r\n\
+                                ##AUNITS= ARBITRARY UNITS\r\n\
+                                ##FIRSTR= 0\r\n\
+                                ##LASTR= 2\r\n\
+                                ##RFACTOR= 1.0\r\n\
+                                ##AFACTOR= 1.0\r\n\
+                                ##NPOINTS= 3\r\n\
+                                ##RADATA= (R++(A..A))\r\n\
+                                +0+10\r\n\
+                                +1+11\r\n\
+                                +2+12\r\n\
+                                ##END=\r\n\
+                                $$ potentially problematic comment\r\n\
+                                ##END=\r\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(4, block.ldrs.len());
+        assert_eq!(
+            Some(&StringLdr::new("TITLE", "Root LINK BLOCK")),
+            block.get_ldr("TITLE")
+        );
+        assert!(block.xy_data.is_none());
+        assert!(block.ra_data.is_none());
+        assert!(block.xy_points.is_none());
+        assert!(block.peak_table.is_none());
+        assert!(block.peak_assignments.is_none());
+        assert_eq!(2, block.blocks.len())
     }
 
     #[test]

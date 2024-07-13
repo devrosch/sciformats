@@ -1,4 +1,5 @@
 use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
+use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
     is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, strip_line_comment,
@@ -765,6 +766,36 @@ impl<T: SeekBufRead> PeakTable<T> {
         ))
     }
 
+    pub fn get_width_function(&self) -> Result<Option<String>, JdxError> {
+        // remember stream position
+        let reader = &mut *self.reader_ref.borrow_mut();
+        let initial_pos = reader.stream_position()?;
+        reader.seek(SeekFrom::Start(self.address))?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+
+        // read possible initial comment lines
+        let mut kernel_lines = Vec::<String>::new();
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if is_ldr_start(&line) {
+                break;
+            }
+            if let (_content, Some(comment)) = strip_line_comment(&line, false, true) {
+                kernel_lines.push(comment.to_owned());
+            } else {
+                break;
+            }
+        }
+
+        // reset stream position
+        reader.seek(SeekFrom::Start(initial_pos))?;
+
+        if kernel_lines.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(kernel_lines.join("\n")))
+        }
+    }
+
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<Peak>, JdxError> {
         // todo: Required? Should have been caught in new().
@@ -804,8 +835,69 @@ impl<T: SeekBufRead> PeakTable<T> {
 
         Ok(peaks)
     }
+}
 
-    pub fn get_kernel(&self) -> Result<Option<String>, JdxError> {
+/// A JCAMP-DX peak, i.e., one item in a PEAK TABLE.
+#[derive(Debug, PartialEq)]
+pub struct Peak {
+    /// Peak position.
+    pub x: f64,
+    /// Intensity.
+    pub y: f64,
+    /// Multiplicity.
+    ///
+    /// S, D, Т, Q for singlets, douЬlets, triplets, or quadruplets,
+    /// М for multiple, and U for unassigned. Used only for NMR.
+    pub m: Option<String>,
+    /// Width.
+    pub w: Option<f64>,
+}
+
+/// A JCAMP-DX PEAK ASSIGNMENTS record.
+#[derive(Debug, PartialEq)]
+pub struct PeakAssignments<T: SeekBufRead> {
+    reader_ref: Rc<RefCell<T>>,
+    address: u64,
+
+    label: String,
+    variable_list: String,
+}
+
+// todo: reduce code duplication
+impl<T: SeekBufRead> PeakAssignments<T> {
+    const PEAK_ASSIGNMENTS_LABEL: &'static str = "PEAKASSIGNMENTS";
+    const PEAK_ASSIGNMENTS_VARIABLE_LISTS: [&'static str; 4] =
+        ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];
+
+    fn new(
+        label: &str,
+        variable_list: &str,
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(PeakAssignments<T>, Option<String>), JdxError> {
+        validate_input(
+            label,
+            variable_list,
+            Self::PEAK_ASSIGNMENTS_LABEL,
+            &Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS,
+        )?;
+        let mut reader = reader_ref.borrow_mut();
+        let address = reader.stream_position()?;
+        let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
+        drop(reader);
+
+        Ok((
+            PeakAssignments {
+                reader_ref,
+                address,
+                label: label.to_owned(),
+                variable_list: variable_list.to_owned(),
+            },
+            next_line,
+        ))
+    }
+
+    pub fn get_width_function(&self) -> Result<Option<String>, JdxError> {
         // remember stream position
         let reader = &mut *self.reader_ref.borrow_mut();
         let initial_pos = reader.stream_position()?;
@@ -834,15 +926,56 @@ impl<T: SeekBufRead> PeakTable<T> {
             Ok(Some(kernel_lines.join("\n")))
         }
     }
+
+    /// Provides the parsed peak data.
+    pub fn get_data(&self) -> Result<Vec<PeakAssignment>, JdxError> {
+        // todo: Required? Should have been caught in new().
+        if !Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for PEAK ASSIGNMENTS: {}",
+                &self.variable_list,
+            )));
+        }
+
+        // remember stream position
+        let reader = &mut *self.reader_ref.borrow_mut();
+        let initial_pos = reader.stream_position()?;
+        reader.seek(SeekFrom::Start(self.address))?;
+
+        // skip possible initial comment lines
+        let mut pos = reader.stream_position()?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if !is_pure_comment(&line) {
+                break;
+            }
+            pos = reader.stream_position()?;
+        }
+        // move stream to start of first non pure comment line
+        reader.seek(SeekFrom::Start(pos))?;
+
+        // parse peaks
+        let mut parser = PeakAssignmentsParser::new(&self.variable_list, reader)?;
+        let mut peaks = Vec::<PeakAssignment>::new();
+        while let Some(peak) = parser.next()? {
+            peaks.push(peak);
+        }
+
+        // reset stream position
+        reader.seek(SeekFrom::Start(initial_pos))?;
+
+        Ok(peaks)
+    }
 }
 
-/// A JCAMP-DX peak, i.e. one item in a PEAK TABLE.
+/// A JCAMP-DX peak assignment, i.e., one item in PEAK ASSIGNMENTS.
 #[derive(Debug, PartialEq)]
-pub struct Peak {
+pub struct PeakAssignment {
     /// Peak position.
     pub x: f64,
+    // standard is ambiguous whether this is optional
     /// Intensity.
-    pub y: f64,
+    pub y: Option<f64>,
     /// Multiplicity.
     ///
     /// S, D, Т, Q for singlets, douЬlets, triplets, or quadruplets,
@@ -850,6 +983,8 @@ pub struct Peak {
     pub m: Option<String>,
     /// Width.
     pub w: Option<f64>,
+    /// The peak assignment string.
+    pub a: String,
 }
 
 #[cfg(test)]
@@ -1966,15 +2101,15 @@ mod tests {
         assert_eq!(variables, table.variable_list);
         assert_eq!(Some("##END=".to_owned()), next);
 
-        let kernel = table.get_kernel().unwrap();
-        assert!(kernel.is_some());
+        let width_function = table.get_width_function().unwrap();
+        assert!(width_function.is_some());
         assert_eq!(
             Some(
                 "peak width kernel line 1\n\
                  peak width kernel line 2"
                     .to_owned()
             ),
-            kernel
+            width_function
         );
 
         let peaks = table.get_data().unwrap();
@@ -2039,7 +2174,7 @@ mod tests {
         assert_eq!(variables, table.variable_list);
         assert_eq!(Some("##END=".to_owned()), next);
 
-        assert!(table.get_kernel().unwrap().is_none());
+        assert!(table.get_width_function().unwrap().is_none());
 
         let peaks = table.get_data().unwrap();
         assert_eq!(
@@ -2100,7 +2235,7 @@ mod tests {
         assert_eq!(variables, table.variable_list);
         assert_eq!(Some("##END=".to_owned()), next);
 
-        assert!(table.get_kernel().unwrap().is_none());
+        assert!(table.get_width_function().unwrap().is_none());
 
         let peaks = table.get_data().unwrap();
         assert_eq!(
@@ -2217,14 +2352,467 @@ mod tests {
 
         let (table, _next) = PeakTable::new(label, &variables, next_line, reader_ref).unwrap();
 
-        let kernel = table.get_kernel().unwrap();
+        let width_function = table.get_width_function().unwrap();
         assert_eq!(
             Some(
                 "peak width kernel line 1\n\
                  peak width kernel line 2"
                     .to_owned()
             ),
-            kernel
+            width_function
         );
+    }
+
+    #[test]
+    fn peak_assignments_parses_xya() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"$$ peak width function\r\n\
+                                (1.0, 10.0, <peak assignment 1>)\r\n\
+                                ( 2.0,20.0,<peak assignment 2> )\r\n\
+                                (3.0, <peak assignment 3>)\r\n\
+                                (4.0, , <peak assignment 4>)\r\n\
+                                (5.0,\r\n\
+                                50.0\r\n\
+                                , <peak\r\n\
+                                assignment 5>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(Some("peak width function".to_owned()), width_function);
+
+        let data = assignments.get_data().unwrap();
+        assert_eq!(5, data.len());
+        assert_eq!(
+            PeakAssignment {
+                x: 1.0,
+                y: Some(10.0),
+                m: None,
+                w: None,
+                a: "peak assignment 1".to_owned(),
+            },
+            data[0]
+        );
+        assert_eq!(
+            PeakAssignment {
+                x: 2.0,
+                y: Some(20.0),
+                m: None,
+                w: None,
+                a: "peak assignment 2".to_owned(),
+            },
+            data[1]
+        );
+        assert_eq!(
+            PeakAssignment {
+                x: 3.0,
+                y: None,
+                m: None,
+                w: None,
+                a: "peak assignment 3".to_owned(),
+            },
+            data[2]
+        );
+        let assignment3 = &data[3];
+        assert_eq!(4.0, assignment3.x);
+        assert!(assignment3.y.unwrap().is_nan());
+        assert_eq!(None, assignment3.m);
+        assert_eq!(None, assignment3.w);
+        assert_eq!("peak assignment 4".to_owned(), assignment3.a);
+        assert_eq!(
+            PeakAssignment {
+                x: 5.0,
+                y: Some(50.0),
+                m: None,
+                w: None,
+                a: "peak assignment 5".to_owned(),
+            },
+            data[4]
+        );
+    }
+
+    #[test]
+    fn peak_assignments_parses_xywa() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"$$ peak width function\r\n\
+                                (1.0, 10.0, 100.0, <peak assignment 1>)\r\n\
+                                ( 2.0,20.0,200.0,<peak assignment 2> )\r\n\
+                                (3.0, <peak assignment 3>)\r\n\
+                                (4.0, ,, <peak assignment 4>)\r\n\
+                                (5.0,\r\n\
+                                ,\r\n\
+                                500.0,\r\n\
+                                <peak\r\n\
+                                assignment 5>)\r\n\
+                                (6.0, 60.0, , <peak assignment 6>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(Some("peak width function".to_owned()), width_function);
+
+        let data = assignments.get_data().unwrap();
+        assert_eq!(6, data.len());
+        assert_eq!(
+            PeakAssignment {
+                x: 1.0,
+                y: Some(10.0),
+                m: None,
+                w: Some(100.0),
+                a: "peak assignment 1".to_owned(),
+            },
+            data[0]
+        );
+        assert_eq!(
+            PeakAssignment {
+                x: 2.0,
+                y: Some(20.0),
+                m: None,
+                w: Some(200.0),
+                a: "peak assignment 2".to_owned(),
+            },
+            data[1]
+        );
+        assert_eq!(
+            PeakAssignment {
+                x: 3.0,
+                y: None,
+                m: None,
+                w: None,
+                a: "peak assignment 3".to_owned(),
+            },
+            data[2]
+        );
+        let assignment3 = &data[3];
+        assert_eq!(4.0, assignment3.x);
+        assert!(assignment3.y.unwrap().is_nan());
+        assert_eq!(None, assignment3.m);
+        assert!(assignment3.w.unwrap().is_nan());
+        assert_eq!("peak assignment 4".to_owned(), assignment3.a);
+        let assignment4 = &data[4];
+        assert_eq!(5.0, assignment4.x);
+        assert!(assignment4.y.unwrap().is_nan());
+        assert_eq!(None, assignment4.m);
+        assert_eq!(Some(500.0), assignment4.w);
+        assert_eq!("peak assignment 5".to_owned(), assignment4.a);
+        let assignment5 = &data[5];
+        assert_eq!(6.0, assignment5.x);
+        assert_eq!(Some(60.0), assignment5.y);
+        assert_eq!(None, assignment5.m);
+        assert!(assignment5.w.unwrap().is_nan());
+        assert_eq!("peak assignment 6".to_owned(), assignment5.a);
+    }
+
+    #[test]
+    fn peak_assignments_parses_xyma() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYMA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, D, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let data = assignments.get_data().unwrap();
+        assert_eq!(
+            vec![PeakAssignment {
+                x: 1.0,
+                y: Some(10.0),
+                m: Some("D".to_owned()),
+                w: None,
+                a: "peak assignment 1".to_owned(),
+            }],
+            data
+        );
+    }
+
+    #[test]
+    fn peak_assignments_parses_xymwa() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYMWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, D, 100.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let data = assignments.get_data().unwrap();
+        assert_eq!(
+            vec![PeakAssignment {
+                x: 1.0,
+                y: Some(10.0),
+                m: Some("D".to_owned()),
+                w: Some(100.0),
+                a: "peak assignment 1".to_owned(),
+            }],
+            data
+        );
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xya_with_excess_column() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, 100.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xywa_with_excess_column() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, 100.0, 1000.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xywa_with_ambiguous_column() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        // 10.0 could be Y or W
+        let input = b"(1.0, 10.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Ambiguous"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xymwa_with_ambiguous_column() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYMWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        // 10.0 could be Y or W
+        let input = b"(1.0, 10.0, 2.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Ambiguous"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xywa_with_missing_opening_parenthesis() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"1.0, 10.0, 100.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xywa_with_missing_closing_parenthesis() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYWA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, 100.0, <peak assignment 1>\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("No closing parenthesis"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xya_with_assignment_missing_opening_angle_bracket() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xya_with_assignment_missing_closing_angle_bracket() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, <peak assignment 1)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xya_with_illegal_separator() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0 10.0; <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_illegal_variable_list() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYAUVW)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"1.0, 10.0, <peak assignment 1>)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let error = PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap_err();
+
+        assert!(
+            error.to_string().contains("Illegal") && error.to_string().contains("variable list")
+        );
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xya_with_missing_component() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0)\r\n\
+                                ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn peak_assignments_fails_parsing_xya_with_some_missing_closing_parenthesis() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(1.0, 10.0, <peak assignment 1>)\r\n\
+                                 (1.0, 10.0, <peak assignment 1>\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(None, width_function);
+
+        let error = assignments.get_data().unwrap_err();
+        assert!(error.to_string().contains("No closing parenthesis"));
+    }
+
+    #[test]
+    fn peak_assignments_parses_peak_width_function_even_if_zero_peaks() {
+        let label = "PEAKASSIGNMENTS";
+        let variables = "(XYA)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"$$ peak width function\r\n\
+                                 ##END=";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (assignments, _next) =
+            PeakAssignments::new(label, &variables, next_line, reader_ref).unwrap();
+
+        let width_function = assignments.get_width_function().unwrap();
+        assert_eq!(Some("peak width function".to_owned()), width_function);
+
+        let data = assignments.get_data().unwrap();
+        assert!(data.is_empty());
     }
 }

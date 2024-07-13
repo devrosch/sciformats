@@ -61,7 +61,9 @@ pub struct JdxBlock<T: SeekBufRead> {
 
     /// The PEAK TABLE record if available.
     pub peak_table: Option<PeakTable<T>>,
-    // std::optional<PeakAssignments> m_peakAssignments;
+
+    /// The PEAK ASSIGNMENTS record if available.
+    pub peak_assignments: Option<PeakAssignments<T>>,
     // std::optional<NTuples> m_nTuples;
     // std::optional<AuditTrail> m_auditTrail;
     // std::vector<BrukerSpecificParameters> m_brukerSpecificParameters;
@@ -111,6 +113,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut ra_data = Option::<RaData<T>>::None;
         let mut xy_points = Option::<XyPoints<T>>::None;
         let mut peak_table = Option::<PeakTable<T>>::None;
+        let mut peak_assignments = Option::<PeakAssignments<T>>::None;
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -195,7 +198,21 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     peak_table = Some(data);
                     next_line = next;
                 }
-                "PEAKASSIGNMENTS" => todo!(),
+                "PEAKASSIGNMENTS" => {
+                    // todo: refactor to reduce code duplication
+                    if peak_assignments.is_some() {
+                        return Err(JdxError::new(&format!(
+                            "Multiple \"{}\" LDRs found in block: {}",
+                            label, title
+                        )));
+                    }
+                    drop(reader);
+                    let (data, next) =
+                        PeakAssignments::new(&label, &value, next_line, Rc::clone(&reader_ref))?;
+                    reader = reader_ref.borrow_mut();
+                    peak_assignments = Some(data);
+                    next_line = next;
+                }
                 "NTUPLES" => todo!(),
                 "AUDITTRAIL" => todo!(),
                 "$RELAX" => todo!(),
@@ -238,6 +255,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 ra_data,
                 xy_points,
                 peak_table,
+                peak_assignments,
             },
             next_line,
         ))
@@ -1280,6 +1298,44 @@ mod tests {
 
         let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
         assert!(error.to_string().contains("Multiple \"PEAKTABLE\" LDRs"));
+    }
+
+    #[test]
+    fn block_parses_peak_assignments() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##PEAK ASSIGNMENTS= (XYA)\r\n\
+                                $$ peak width function\r\n\
+                                (1.0, 10.0, <peak assignment 1>)\r\n\
+                                (2.0, 20.0, <peak assignment 2> )\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert!(block.peak_assignments.is_some());
+        let assignments = &block.peak_assignments.unwrap();
+        assert_eq!(2, assignments.get_data().unwrap().len());
+    }
+
+    #[test]
+    fn block_fails_parsing_duplicate_peak_assignments() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##PEAK ASSIGNMENTS= (XYA)\r\n\
+                                $$ peak width function\r\n\
+                                (1.0, 10.0, <peak assignment 1>)\r\n\
+                                (2.0, 20.0, <peak assignment 2> )\r\n\
+                                ##PEAK ASSIGNMENTS= (XYA)\r\n\
+                                $$ peak width function\r\n\
+                                (1.0, 10.0, <peak assignment 1>)\r\n\
+                                (2.0, 20.0, <peak assignment 2> )\r\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Multiple \"PEAKASSIGNMENTS\" LDRs"));
     }
 
     #[test]

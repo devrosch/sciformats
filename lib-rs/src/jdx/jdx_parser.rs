@@ -1025,6 +1025,106 @@ pub struct PeakAssignment {
     pub a: String,
 }
 
+/// A JCAMP-DX NTUPLES record.
+#[derive(Debug, PartialEq)]
+pub struct NTuples {
+    /// The data form of the NTUPLES record (value of the
+    /// first line of the LDR), e.g., "NMR FID" or "MASS SPECTRUM".
+    pub data_form: String,
+    /// The LDRs in this record excluding PAGEs.
+    pub ldrs: Vec<StringLdr>,
+    /// The page attributes parsed from the LDRs.
+    pub attributes: Option<NTuplesAttributes>,
+    /// The NTUPLES PAGE LDRs in this record.
+    pub pages: Vec<Page>,
+}
+
+impl NTuples {
+    const LABEL: &'static str = "NTUPLES";
+    const STANDARD_ATTR_NAMES: [&'static str; 11] = [
+        "VARNAME", "SYMBOL", "VARTYPE", "VARFORM", "VARDIM", "UNITS", "FIRST", "LAST", "MIN",
+        "MAX", "FACTOR",
+    ];
+}
+
+/// A JCAMP-DX NTUPLES PAGE record.
+#[derive(Debug, PartialEq)]
+pub struct Page {
+    /// The page variables of the PAGE record (value of
+    /// the first line of the LDR), e.g., "N=1" or "X=2.2, Y=3.3".
+    pub page_variables: String,
+    /// The LDRs contained by the PAGE, e.g.
+    /// "NPOINTS", not including "DATA TABLE".
+    pub page_ldrs: Vec<StringLdr>,
+    /// The DATA TABLE.
+    pub data_table: Option<DataTable>,
+}
+
+impl Page {
+    const LABEL: &'static str = "PAGE";
+}
+
+/// A JCAMP-DX NTUPLES DATA TABLE record.
+#[derive(Debug, PartialEq)]
+pub struct DataTable {
+    /// The plot descriptor of the data table, e.g., "XYDATA" for
+    /// "(X++(R..R)), XYDATA".
+    pub plot_descriptor: Option<String>,
+    /// The attributes for the DATA TABLE.
+    /// The relevant parameters merged from LDRs of BLOCK,
+    /// NTUPLES, and PAGE for the DATA TABLE.
+    pub attributes: (NTuplesAttributes, NTuplesAttributes),
+}
+
+impl DataTable {
+    const LABEL: &'static str = "DATATABLE";
+    const VARIABLE_LISTS: [&'static str; 9] = [
+        "(X++(Y..Y))",
+        "(X++(R..R))",
+        "(X++(I..I))",
+        "(T2++(R..R))",
+        "(T2++(I..I))",
+        "(F2++(Y..Y))",
+        "(XY..XY)",
+        "(XR..XR)",
+        "(XI..XI)",
+    ];
+    const PLOT_DESCRIPTORS: [&'static str; 4] = ["PROFILE", "XYDATA", "PEAKS", "CONTOUR"];
+    const X_SYMBOLS: [&'static str; 3] = ["X", "T2", "F2"];
+    const Y_SYMBOLS: [&'static str; 3] = ["Y", "R", "I"];
+}
+
+/// A collection of attributes describing NTUPLES data.
+#[derive(Debug, PartialEq)]
+pub struct NTuplesAttributes {
+    /// VAR_NAME.
+    pub var_name: String,
+    /// SYMBOL.
+    symbol: String,
+    /// VAR_TYPE.
+    var_type: Option<String>,
+    /// VAR_FORM.
+    var_form: Option<String>,
+    /// VAR_DIM.
+    ///
+    /// Option, as it may be blank for mass spectra.
+    var_dim: Option<u64>,
+    /// UNITS.
+    units: Option<String>,
+    /// FIRST.
+    first: Option<f64>,
+    /// LAST.
+    last: Option<f64>,
+    /// MIN.
+    min: Option<f64>,
+    /// MAX.
+    max: Option<f64>,
+    /// FACTOR.
+    factor: Option<f64>,
+    /// Additional application specific LDRs.
+    application_attributes: Vec<StringLdr>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

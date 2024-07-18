@@ -224,9 +224,9 @@ pub fn parse_parameter<P: FromStr>(key: &str, ldrs: &[StringLdr]) -> Result<Opti
 
 pub fn validate_input(
     label: &str,
-    variable_list: &str,
+    variable_list: Option<&str>,
     expected_label: &str,
-    expected_variable_lists: &[&str],
+    expected_variable_lists: Option<&[&str]>,
 ) -> Result<(), JdxError> {
     if label != expected_label {
         return Err(JdxError::new(&format!(
@@ -234,11 +234,23 @@ pub fn validate_input(
             expected_label, label
         )));
     }
-    if !expected_variable_lists.contains(&variable_list) {
-        return Err(JdxError::new(&format!(
-            "Illegal variable list for \"{}\" encountered: {}",
-            label, variable_list
-        )));
+    if let Some(var_lists) = expected_variable_lists {
+        match variable_list {
+            None => {
+                return Err(JdxError::new(&format!(
+                    "Missing variable list encountered for: {}",
+                    label
+                )));
+            }
+            Some(var_list) => {
+                if !var_lists.contains(&var_list) {
+                    return Err(JdxError::new(&format!(
+                        "Illegal variable list for \"{}\" encountered: {}",
+                        label, var_list
+                    )));
+                }
+            }
+        }
     }
     Ok(())
 }

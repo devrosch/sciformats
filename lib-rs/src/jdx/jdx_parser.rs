@@ -320,11 +320,11 @@ pub struct XyData<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> XyData<T> {
-    const XYDATA_LABEL: &'static str = "XYDATA";
+    const LABEL: &'static str = "XYDATA";
     // quirk variable list found in some sample data
     // that violates the spec but is unambiguous and thus accepted
     const QUIRK_OO_VARIABLE_LIST: &'static str = "(XY..XY)";
-    const XYDATA_VARIABLE_LISTS: [&'static str; 4] = [
+    const VARIABLE_LISTS: [&'static str; 4] = [
         "(X++(Y..Y))",
         "(X++(R..R))",
         "(X++(I..I))",
@@ -340,9 +340,9 @@ impl<T: SeekBufRead> XyData<T> {
     ) -> Result<(XyData<T>, Option<String>), JdxError> {
         validate_input(
             label,
-            variable_list,
-            Self::XYDATA_LABEL,
-            &Self::XYDATA_VARIABLE_LISTS,
+            Some(variable_list),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
@@ -368,7 +368,7 @@ impl<T: SeekBufRead> XyData<T> {
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
         // todo: move check to constructor
         // todo: Required? Should have been caught in new().
-        if !Self::XYDATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for XYDATA: {}",
                 &self.variable_list,
@@ -519,8 +519,8 @@ pub struct RaData<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> RaData<T> {
-    const RADATA_LABEL: &'static str = "RADATA";
-    const RADATA_VARIABLE_LISTS: [&'static str; 1] = ["(R++(A..A))"];
+    const LABEL: &'static str = "RADATA";
+    const VARIABLE_LISTS: [&'static str; 1] = ["(R++(A..A))"];
 
     fn new(
         label: &str,
@@ -531,9 +531,9 @@ impl<T: SeekBufRead> RaData<T> {
     ) -> Result<(RaData<T>, Option<String>), JdxError> {
         validate_input(
             label,
-            variable_list,
-            Self::RADATA_LABEL,
-            &Self::RADATA_VARIABLE_LISTS,
+            Some(variable_list),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
@@ -630,7 +630,7 @@ impl<T: SeekBufRead> RaData<T> {
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
         // todo: Required? Should have been caught in new().
-        if !Self::RADATA_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for RADATA: {}",
                 &self.variable_list,
@@ -703,8 +703,8 @@ pub struct XyPoints<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> XyPoints<T> {
-    const XYPOINTS_LABEL: &'static str = "XYPOINTS";
-    const XYPOINTS_VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XR..XR)", "(XI..XI)"];
+    const LABEL: &'static str = "XYPOINTS";
+    const VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XR..XR)", "(XI..XI)"];
 
     fn new(
         label: &str,
@@ -715,9 +715,9 @@ impl<T: SeekBufRead> XyPoints<T> {
     ) -> Result<(XyPoints<T>, Option<String>), JdxError> {
         validate_input(
             label,
-            variable_list,
-            Self::XYPOINTS_LABEL,
-            &Self::XYPOINTS_VARIABLE_LISTS,
+            Some(variable_list),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
@@ -743,7 +743,7 @@ impl<T: SeekBufRead> XyPoints<T> {
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
         // todo: move check to constructor
-        if !Self::XYPOINTS_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for XYPOINTS: {}",
                 &self.variable_list,
@@ -773,8 +773,8 @@ pub struct PeakTable<T: SeekBufRead> {
 }
 
 impl<T: SeekBufRead> PeakTable<T> {
-    const PEAK_TABLE_LABEL: &'static str = "PEAKTABLE";
-    const PEAK_TABLE_VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XYW..XYW)", "(XYM..XYM)"];
+    const LABEL: &'static str = "PEAKTABLE";
+    const VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XYW..XYW)", "(XYM..XYM)"];
 
     fn new(
         label: &str,
@@ -784,9 +784,9 @@ impl<T: SeekBufRead> PeakTable<T> {
     ) -> Result<(PeakTable<T>, Option<String>), JdxError> {
         validate_input(
             label,
-            variable_list,
-            Self::PEAK_TABLE_LABEL,
-            &Self::PEAK_TABLE_VARIABLE_LISTS,
+            Some(variable_list),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
@@ -837,7 +837,7 @@ impl<T: SeekBufRead> PeakTable<T> {
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<Peak>, JdxError> {
         // todo: Required? Should have been caught in new().
-        if !Self::PEAK_TABLE_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for PEAK TABLE: {}",
                 &self.variable_list,
@@ -903,9 +903,8 @@ pub struct PeakAssignments<T: SeekBufRead> {
 
 // todo: reduce code duplication
 impl<T: SeekBufRead> PeakAssignments<T> {
-    const PEAK_ASSIGNMENTS_LABEL: &'static str = "PEAKASSIGNMENTS";
-    const PEAK_ASSIGNMENTS_VARIABLE_LISTS: [&'static str; 4] =
-        ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];
+    const LABEL: &'static str = "PEAKASSIGNMENTS";
+    const VARIABLE_LISTS: [&'static str; 4] = ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];
 
     fn new(
         label: &str,
@@ -915,9 +914,9 @@ impl<T: SeekBufRead> PeakAssignments<T> {
     ) -> Result<(PeakAssignments<T>, Option<String>), JdxError> {
         validate_input(
             label,
-            variable_list,
-            Self::PEAK_ASSIGNMENTS_LABEL,
-            &Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS,
+            Some(variable_list),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
@@ -968,7 +967,7 @@ impl<T: SeekBufRead> PeakAssignments<T> {
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<PeakAssignment>, JdxError> {
         // todo: Required? Should have been caught in new().
-        if !Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
+        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
             return Err(JdxError::new(&format!(
                 "Unsupported variable list for PEAK ASSIGNMENTS: {}",
                 &self.variable_list,
@@ -1027,7 +1026,7 @@ pub struct PeakAssignment {
 
 /// A JCAMP-DX NTUPLES record.
 #[derive(Debug, PartialEq)]
-pub struct NTuples {
+pub struct NTuples<T: SeekBufRead> {
     /// The data form of the NTUPLES record (value of the
     /// first line of the LDR), e.g., "NMR FID" or "MASS SPECTRUM".
     pub data_form: String,
@@ -1036,20 +1035,56 @@ pub struct NTuples {
     /// The page attributes parsed from the LDRs.
     pub attributes: Option<NTuplesAttributes>,
     /// The NTUPLES PAGE LDRs in this record.
-    pub pages: Vec<Page>,
+    pub pages: Vec<Page<T>>,
 }
 
-impl NTuples {
+impl<T: SeekBufRead> NTuples<T> {
     const LABEL: &'static str = "NTUPLES";
     const STANDARD_ATTR_NAMES: [&'static str; 11] = [
         "VARNAME", "SYMBOL", "VARTYPE", "VARFORM", "VARDIM", "UNITS", "FIRST", "LAST", "MIN",
         "MAX", "FACTOR",
     ];
+
+    fn new(
+        label: &str,
+        data_form: &str,
+        block_ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        validate_input(label, None, Self::LABEL, None)?;
+        let (ldrs, attributes, pages, next_line) = Self::parse(block_ldrs, next_line, reader_ref)?;
+        Ok((
+            Self {
+                data_form: data_form.to_owned(),
+                ldrs,
+                attributes,
+                pages,
+            },
+            next_line,
+        ))
+    }
+
+    fn parse(
+        block_ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<
+        (
+            Vec<StringLdr>,
+            Option<NTuplesAttributes>,
+            Vec<Page<T>>,
+            Option<String>,
+        ),
+        JdxError,
+    > {
+        todo!()
+    }
 }
 
 /// A JCAMP-DX NTUPLES PAGE record.
 #[derive(Debug, PartialEq)]
-pub struct Page {
+pub struct Page<T: SeekBufRead> {
     /// The page variables of the PAGE record (value of
     /// the first line of the LDR), e.g., "N=1" or "X=2.2, Y=3.3".
     pub page_variables: String,
@@ -1058,9 +1093,11 @@ pub struct Page {
     pub page_ldrs: Vec<StringLdr>,
     /// The DATA TABLE.
     pub data_table: Option<DataTable>,
+
+    reader_ref: Rc<RefCell<T>>,
 }
 
-impl Page {
+impl<T: SeekBufRead> Page<T> {
     const LABEL: &'static str = "PAGE";
 }
 

@@ -125,10 +125,10 @@ pub fn is_pure_comment(line: &str) -> bool {
     strip_line_comment(line, true, false).0.is_empty()
 }
 
-pub fn skip_pure_comments<T: SeekBufRead>(
+pub fn skip_pure_comments<T: BufRead>(
     mut next_line: Option<String>,
     must_precede_ldr: bool,
-    mut reader: T,
+    reader: &mut T,
     buf: &mut Vec<u8>,
 ) -> Result<Option<String>, JdxError> {
     while let Some(ref line) = next_line {

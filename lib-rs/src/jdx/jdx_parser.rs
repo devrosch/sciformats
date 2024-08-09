@@ -1033,7 +1033,7 @@ pub struct NTuples<T: SeekBufRead> {
     /// The LDRs in this record excluding PAGEs.
     pub ldrs: Vec<StringLdr>,
     /// The page attributes parsed from the LDRs.
-    pub attributes: Option<NTuplesAttributes>,
+    pub attributes: Vec<NTuplesAttributes>,
     /// The NTUPLES PAGE LDRs in this record.
     pub pages: Vec<Page<T>>,
 }
@@ -1053,7 +1053,7 @@ impl<T: SeekBufRead> NTuples<T> {
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
         validate_input(label, None, Self::LABEL, None)?;
-        let (ldrs, attributes, pages, next_line) = Self::parse(block_ldrs, next_line, reader_ref)?;
+        let (ldrs, attributes, pages, next_line) = Self::parse(block_ldrs, data_form, next_line, reader_ref)?;
         Ok((
             Self {
                 data_form: data_form.to_owned(),
@@ -1067,17 +1067,78 @@ impl<T: SeekBufRead> NTuples<T> {
 
     fn parse(
         block_ldrs: &[StringLdr],
+        data_form: &str,
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<
         (
             Vec<StringLdr>,
-            Option<NTuplesAttributes>,
+            Vec<NTuplesAttributes>,
             Vec<Page<T>>,
             Option<String>,
         ),
         JdxError,
     > {
+        let mut buf = vec![];
+        let mut reader = reader_ref.borrow_mut();
+        // skip potential comment lines
+        let next_line = skip_pure_comments(next_line, true, &mut *reader, &mut buf)?;
+        let mut pages = Vec::<Page<T>>::new();
+        // parse PAGE parameters
+        let (ldrs, attributes, mut next_line) =
+            Self::parse_attributes(next_line, &mut reader, &mut buf)?;
+
+        while let Some(line) = next_line.as_ref() {
+            if is_ldr_start(line) {
+                break;
+            }
+            let (label, page_var) = parse_ldr_start(line)?;
+            let (page_var, _comment) = strip_line_comment(&page_var, true, false);
+
+            if label == "ENDNTUPLES" {
+                // ##END NTUPLES is described as optional in JCAMP6_2b Draft
+                // but is required for indicating the NTUPLES end
+
+                // skip ##END NTUPLES
+                next_line = reader.read_line_iso_8859_1(&mut buf)?;
+                return Ok((ldrs, attributes, pages, next_line));
+            }
+            if label != "PAGE" {
+                return Err(JdxError::new(&format!(
+                    "Unexpected content found in NTUPLES record: {}",
+                    line
+                )));
+            }
+            next_line = reader.read_line_iso_8859_1(&mut buf)?;
+
+            drop(reader);
+            let (page, next) = Page::new(
+                &label,
+                page_var,
+                &attributes,
+                block_ldrs,
+                next_line,
+                Rc::clone(&reader_ref),
+            )?;
+            pages.push(page);
+            next_line = next;
+            reader = reader_ref.borrow_mut();
+        }
+        if next_line.is_none() {
+            return Err(JdxError::new(&format!(
+                "Unexpected end of NTUPLES record: {}",
+                data_form
+            )));
+        }
+        
+        Ok((ldrs, attributes, pages, next_line))
+    }
+
+    fn parse_attributes(
+        next_line: Option<String>,
+        reader: &mut T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Vec<StringLdr>, Vec<NTuplesAttributes>, Option<String>), JdxError> {
         todo!()
     }
 }
@@ -1099,6 +1160,17 @@ pub struct Page<T: SeekBufRead> {
 
 impl<T: SeekBufRead> Page<T> {
     const LABEL: &'static str = "PAGE";
+
+    fn new(
+        label: &str,
+        page_var: &str,
+        attributes: &[NTuplesAttributes],
+        block_ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        todo!()
+    }
 }
 
 /// A JCAMP-DX NTUPLES DATA TABLE record.

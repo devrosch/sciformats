@@ -1479,9 +1479,13 @@ pub struct DataTable<T: SeekBufRead> {
     /// The attributes for the DATA TABLE.
     /// The relevant parameters merged from LDRs of BLOCK,
     /// NTUPLES, and PAGE for the DATA TABLE.
+    /// The fisrt and second tuple items hold attributes for x and y respectively.
     pub attributes: (NTuplesAttributes, NTuplesAttributes),
+    /// The record's variable list.
+    pub variable_list: String,
 
     reader_ref: Rc<RefCell<T>>,
+    address: u64,
 }
 
 impl<T: SeekBufRead> DataTable<T> {
@@ -1503,6 +1507,75 @@ impl<T: SeekBufRead> DataTable<T> {
 
     fn new(
         label: &str,
+        var_list: &str,
+        plot_desc: Option<&str>,
+        attributes: &[NTuplesAttributes],
+        block_ldrs: &[StringLdr],
+        page_ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        // validate label and variable list
+        validate_input(
+            label,
+            Some(var_list),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
+        )?;
+        // validate plot descriptor if present
+        if plot_desc.is_some() && !Self::PLOT_DESCRIPTORS.contains(&plot_desc.unwrap()) {
+            return Err(JdxError::new(&format!(
+                "Illegal plot descriptor in NTUPLES PAGE: {}",
+                plot_desc.unwrap()
+            )));
+        }
+
+        Self::parse(
+            var_list, plot_desc, attributes, block_ldrs, page_ldrs, next_line, reader_ref,
+        )
+    }
+
+    fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+        let mut reader = self.reader_ref.borrow_mut();
+
+        if ["(XY..XY)", "(XR..XR)", "(XI..XI)"].contains(&self.variable_list.as_str()) {
+            let x_factor = self.attributes.0.factor.unwrap_or(1.0);
+            let y_factor = self.attributes.1.factor.unwrap_or(1.0);
+            let n_points = self.attributes.1.var_dim;
+
+            return parse_xyxy_data(
+                Self::LABEL,
+                x_factor,
+                y_factor,
+                n_points,
+                self.address,
+                &mut *reader,
+            );
+        }
+
+        let first_x = self.attributes.0.first.ok_or(JdxError::new(
+            "Required attribute missing for NTUPLES DATA TABLE: FIRSTX",
+        ))?;
+        let last_x = self.attributes.0.last.ok_or(JdxError::new(
+            "Required attribute missing for NTUPLES DATA TABLE: LASTX",
+        ))?;
+        let n_points = self.attributes.1.var_dim.ok_or(JdxError::new(
+            "Required attribute missing for NTUPLES DATA TABLE: VAR_DIM",
+        ))?;
+        let y_factor = self.attributes.1.factor.unwrap_or(1.0);
+
+        parse_xppyy_data(
+            Self::LABEL,
+            first_x,
+            last_x,
+            y_factor,
+            n_points,
+            self.address,
+            &mut *reader,
+        )
+    }
+
+    fn parse(
         var_list: &str,
         plot_desc: Option<&str>,
         attributes: &[NTuplesAttributes],

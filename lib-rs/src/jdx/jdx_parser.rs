@@ -12,8 +12,10 @@ use crate::jdx::jdx_utils::{
     skip_to_next_ldr,
 };
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::io::SeekFrom;
 use std::rc::Rc;
+use std::str::FromStr;
 
 pub struct JdxParser {}
 
@@ -1053,7 +1055,8 @@ impl<T: SeekBufRead> NTuples<T> {
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
         validate_input(label, None, Self::LABEL, None)?;
-        let (ldrs, attributes, pages, next_line) = Self::parse(block_ldrs, data_form, next_line, reader_ref)?;
+        let (ldrs, attributes, pages, next_line) =
+            Self::parse(block_ldrs, data_form, next_line, reader_ref)?;
         Ok((
             Self {
                 data_form: data_form.to_owned(),
@@ -1086,7 +1089,7 @@ impl<T: SeekBufRead> NTuples<T> {
         let mut pages = Vec::<Page<T>>::new();
         // parse PAGE parameters
         let (ldrs, attributes, mut next_line) =
-            Self::parse_attributes(next_line, &mut reader, &mut buf)?;
+            Self::parse_attributes(data_form, next_line, &mut reader, &mut buf)?;
 
         while let Some(line) = next_line.as_ref() {
             if is_ldr_start(line) {
@@ -1130,16 +1133,188 @@ impl<T: SeekBufRead> NTuples<T> {
                 data_form
             )));
         }
-        
+
         Ok((ldrs, attributes, pages, next_line))
     }
 
     fn parse_attributes(
+        data_form: &str,
         next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
     ) -> Result<(Vec<StringLdr>, Vec<NTuplesAttributes>, Option<String>), JdxError> {
-        todo!()
+        let (ldrs, next_line) = Self::read_ldrs(next_line, reader, buf)?;
+        let mut attr_map = Self::split_values(&ldrs)?;
+        let mut standard_attr_map = Self::extract_standard_attributes(&mut attr_map);
+
+        let attr_names_opt = standard_attr_map.get_mut("VARNAME");
+        if attr_names_opt.is_none() {
+            // VARNAMEs are required by the spec
+            return Err(JdxError::new(&format!(
+                "No \"VAR_NAME\" LDR found in NTUPLES: {}",
+                data_form
+            )));
+        }
+        let attr_names = attr_names_opt.unwrap();
+        if let Some(last_var_name) = attr_names.last() {
+            // check if last VAR_NAME is blank, i.e., there is a trailing comma
+            // if so, remove, thus ignore column in subsequent processing
+            // required to sucessfully process test data set
+            if last_var_name.trim().is_empty() {
+                attr_names.pop();
+            }
+        }
+
+        let mut output = vec![];
+        for i in 0..attr_names.len() {
+            let ntv = Self::map(&standard_attr_map, &attr_map, i)?;
+            output.push(ntv);
+        }
+        return Ok((ldrs, output, next_line));
+    }
+
+    fn read_ldrs(
+        mut next_line: Option<String>,
+        reader: &mut T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Vec<StringLdr>, Option<String>), JdxError> {
+        let mut output = vec![];
+        while let Some(line) = &next_line {
+            let (title, value) = parse_ldr_start(line)?;
+            if title == "PAGE" || title == "ENDNTUPLES" || title == "END" {
+                // all NTUPLES LDRs read
+                break;
+            }
+            let (value, next) = parse_string_value(&value, reader, buf)?;
+            output.push(StringLdr::new(title, value));
+            next_line = next;
+        }
+
+        Ok((output, next_line))
+    }
+
+    fn split_values(ldrs: &[StringLdr]) -> Result<HashMap<String, Vec<String>>, JdxError> {
+        let mut output = HashMap::new();
+        for ldr in ldrs {
+            let (value_string, _comment) = strip_line_comment(&ldr.value, true, false);
+            let values: Vec<String> = value_string
+                .split(",")
+                .map(|v| v.trim().to_owned())
+                .collect();
+            let old = output.insert(ldr.label.clone(), values);
+            if old.is_some() {
+                return Err(JdxError::new(&format!(
+                    "Duplicate LDR found in NTUPLE: {}",
+                    &ldr.label
+                )));
+            }
+        }
+
+        Ok(output)
+    }
+
+    fn extract_standard_attributes(
+        attributes: &mut HashMap<String, Vec<String>>,
+    ) -> HashMap<String, Vec<String>> {
+        let mut standard_attrs = HashMap::new();
+
+        let keys: Vec<String> = attributes.keys().map(|k| k.to_owned()).collect();
+        // remove standard attributes
+        for key in keys {
+            let is_standard_attr = Self::STANDARD_ATTR_NAMES.contains(&key.as_str());
+            if is_standard_attr {
+                let value_opt = attributes.remove(&key);
+                if let Some(value) = value_opt {
+                    standard_attrs.insert(key, value);
+                }
+            }
+        }
+
+        standard_attrs
+    }
+
+    fn map(
+        standard_attributes: &HashMap<String, Vec<String>>,
+        additional_attributes: &HashMap<String, Vec<String>>,
+        value_column_index: usize,
+    ) -> Result<NTuplesAttributes, JdxError> {
+        let var_name =
+            Self::parse_attribute::<String>("VARNAME", value_column_index, standard_attributes)?;
+        if var_name.is_none() {
+            // VARNAMEs are required by the spec
+            return Err(JdxError::new(&format!(
+                "VAR_NAME missing in NTUPLES column: {}",
+                value_column_index
+            )));
+        }
+        let var_name = var_name.unwrap();
+        let symbol =
+            Self::parse_attribute::<String>("SYMBOL", value_column_index, standard_attributes)?;
+        if symbol.is_none() {
+            return Err(JdxError::new(&format!(
+                "SYMBOL missing in NTUPLES column: {}",
+                value_column_index
+            )));
+        }
+        let symbol = symbol.unwrap();
+        let var_type =
+            Self::parse_attribute::<String>("VARTYPE", value_column_index, standard_attributes)?;
+        let var_form =
+            Self::parse_attribute::<String>("VARFORM", value_column_index, standard_attributes)?;
+        let var_dim =
+            Self::parse_attribute::<u64>("VARDIM", value_column_index, standard_attributes)?;
+        let units =
+            Self::parse_attribute::<String>("UNITS", value_column_index, standard_attributes)?;
+        let first = Self::parse_attribute::<f64>("FIRST", value_column_index, standard_attributes)?;
+        let last = Self::parse_attribute::<f64>("LAST", value_column_index, standard_attributes)?;
+        let min = Self::parse_attribute::<f64>("MIN", value_column_index, standard_attributes)?;
+        let max = Self::parse_attribute::<f64>("MAX", value_column_index, standard_attributes)?;
+        let factor =
+            Self::parse_attribute::<f64>("FACTOR", value_column_index, standard_attributes)?;
+
+        let mut application_attributes = Vec::<StringLdr>::new();
+        for (key, values) in additional_attributes {
+            let value_opt = values.get(value_column_index);
+            if let Some(value) = value_opt {
+                application_attributes.push(StringLdr::new(key, value));
+            }
+        }
+
+        Ok(NTuplesAttributes {
+            var_name,
+            symbol,
+            var_type,
+            var_form,
+            var_dim,
+            units,
+            first,
+            last,
+            min,
+            max,
+            factor,
+            application_attributes,
+        })
+    }
+
+    pub fn parse_attribute<P: FromStr>(
+        key: &str,
+        index: usize,
+        attributes: &HashMap<String, Vec<String>>,
+    ) -> Result<Option<P>, JdxError> {
+        let value_opt = attributes
+            .get(key)
+            .and_then(|vec| vec.get(index))
+            .map(|v| v.trim());
+        if let Some(value) = value_opt {
+            let parsed_value = value.parse::<P>().map_err(|_e| {
+                JdxError::new(&format!(
+                    "Error parsing NTUPLES. Illegal value for \"{}\": {}",
+                    key, value
+                ))
+            })?;
+            return Ok(Some(parsed_value));
+        }
+        Ok(None)
     }
 }
 

@@ -11,11 +11,13 @@ use crate::jdx::jdx_utils::{
     find_ldr, is_bruker_specific_section_start, parse_string_value, skip_pure_comments,
     skip_to_next_ldr,
 };
+use lazy_static::lazy_static;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::SeekFrom;
 use std::rc::Rc;
 use std::str::FromStr;
+use std::vec;
 
 pub struct JdxParser {}
 
@@ -1328,9 +1330,12 @@ pub struct Page<T: SeekBufRead> {
     /// "NPOINTS", not including "DATA TABLE".
     pub page_ldrs: Vec<StringLdr>,
     /// The DATA TABLE.
-    pub data_table: Option<DataTable>,
+    pub data_table: Option<DataTable<T>>,
+}
 
-    reader_ref: Rc<RefCell<T>>,
+const PAGE_VARS_REGEX_PATTERN: &str = r"(\(.*\))(?:\s*,\s*)?(.*)";
+lazy_static! {
+    static ref PAGE_VARS_REGEX: regex::Regex = regex::Regex::new(PAGE_VARS_REGEX_PATTERN).unwrap();
 }
 
 impl<T: SeekBufRead> Page<T> {
@@ -1344,13 +1349,130 @@ impl<T: SeekBufRead> Page<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
-        todo!()
+        validate_input(label, None, Self::LABEL, None)?;
+        Self::parse(page_var, attributes, block_ldrs, next_line, reader_ref)
+    }
+
+    fn parse(
+        page_var: &str,
+        attributes: &[NTuplesAttributes],
+        block_ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        let mut buf = vec![];
+        let mut reader = reader_ref.borrow_mut();
+
+        // skip potential comment lines
+        let next_line = skip_pure_comments(next_line, false, &mut *reader, &mut buf)?;
+        let (page_ldrs, next_line) = Self::parse_page_ldrs(next_line, &mut reader, &mut buf)?;
+        if next_line.is_none() || !is_ldr_start(next_line.as_ref().unwrap()) {
+            return Err(JdxError::new(&format!(
+                "Unexpected content found while parsing NTUPLES PAGE: {}",
+                next_line.unwrap_or("<end of file>".to_owned())
+            )));
+        }
+        let (label, value) = parse_ldr_start(next_line.as_ref().unwrap())?;
+        if ["PAGE", "ENDNTUPLES", "END"].contains(&label.as_str()) {
+            // end of page, page is empty
+            // todo: read next_line?
+            drop(reader);
+            return Ok((
+                Page {
+                    page_variables: page_var.to_owned(),
+                    page_ldrs,
+                    data_table: None,
+                },
+                next_line,
+            ));
+        }
+        if label != "DATATABLE" {
+            return Err(JdxError::new(&format!(
+                "Unexpected content found while parsing NTUPLES PAGE: {}",
+                next_line.unwrap()
+            )));
+        }
+        let (data_table_var_list, plot_desc) = Self::parse_data_table_vars(&value)?;
+        drop(reader);
+        let (data_table, next_line) = DataTable::new(
+            &label,
+            &data_table_var_list,
+            plot_desc.as_deref(),
+            attributes,
+            block_ldrs,
+            &page_ldrs,
+            next_line,
+            reader_ref,
+        )?;
+
+        return Ok((
+            Page {
+                page_variables: page_var.to_owned(),
+                page_ldrs,
+                data_table: Some(data_table),
+            },
+            next_line,
+        ));
+    }
+
+    fn parse_page_ldrs(
+        mut next_line: Option<String>,
+        reader: &mut T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Vec<StringLdr>, Option<String>), JdxError> {
+        let mut page_ldrs = Vec::<StringLdr>::new();
+        while let Some(line) = &next_line {
+            let (label, mut value) = parse_ldr_start(line)?;
+            if ["PAGE", "ENDNTUPLES", "END", "DATATABLE"].contains(&label.as_str()) {
+                // end of page or start of DATA TABLE
+                break;
+            }
+            // LDR is a regular LDR
+            (value, next_line) = parse_string_value(&value, reader, buf)?;
+            page_ldrs.push(StringLdr::new(label, value));
+        }
+
+        Ok((page_ldrs, next_line))
+    }
+
+    fn parse_data_table_vars(raw_page_vars: &str) -> Result<(String, Option<String>), JdxError> {
+        let raw_page_vars_trimmed = strip_line_comment(raw_page_vars, true, false).0;
+        if raw_page_vars_trimmed.is_empty() {
+            return Err(JdxError::new(&format!(
+                "Missing variable list in DATA TABLE: {}",
+                raw_page_vars
+            )));
+        }
+
+        let caps_opt = PAGE_VARS_REGEX.captures(raw_page_vars);
+        let caps = caps_opt.ok_or(JdxError::new(&format!(
+            "Unexpected content found at DATA TABLE start: {}",
+            raw_page_vars
+        )))?;
+
+        let var_list_opt = caps.get(1);
+        let plot_desc_opt = caps.get(2);
+
+        if var_list_opt.is_none() {
+            return Err(JdxError::new(&format!(
+                "Missing variable list in DATA TABLE: {}",
+                raw_page_vars
+            )));
+        }
+
+        let var_list = var_list_opt.unwrap().as_str().to_owned();
+        let plot_desc = plot_desc_opt.and_then(|m| match m.as_str().trim() {
+            se if se.is_empty() => None,
+            sne => Some(sne.to_owned()),
+        });
+
+        Ok((var_list, plot_desc))
     }
 }
 
 /// A JCAMP-DX NTUPLES DATA TABLE record.
 #[derive(Debug, PartialEq)]
-pub struct DataTable {
+pub struct DataTable<T: SeekBufRead> {
     /// The plot descriptor of the data table, e.g., "XYDATA" for
     /// "(X++(R..R)), XYDATA".
     pub plot_descriptor: Option<String>,
@@ -1358,9 +1480,11 @@ pub struct DataTable {
     /// The relevant parameters merged from LDRs of BLOCK,
     /// NTUPLES, and PAGE for the DATA TABLE.
     pub attributes: (NTuplesAttributes, NTuplesAttributes),
+
+    reader_ref: Rc<RefCell<T>>,
 }
 
-impl DataTable {
+impl<T: SeekBufRead> DataTable<T> {
     const LABEL: &'static str = "DATATABLE";
     const VARIABLE_LISTS: [&'static str; 9] = [
         "(X++(Y..Y))",
@@ -1376,6 +1500,19 @@ impl DataTable {
     const PLOT_DESCRIPTORS: [&'static str; 4] = ["PROFILE", "XYDATA", "PEAKS", "CONTOUR"];
     const X_SYMBOLS: [&'static str; 3] = ["X", "T2", "F2"];
     const Y_SYMBOLS: [&'static str; 3] = ["Y", "R", "I"];
+
+    fn new(
+        label: &str,
+        var_list: &str,
+        plot_desc: Option<&str>,
+        attributes: &[NTuplesAttributes],
+        block_ldrs: &[StringLdr],
+        page_ldrs: &[StringLdr],
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        todo!()
+    }
 }
 
 /// A collection of attributes describing NTUPLES data.

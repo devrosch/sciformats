@@ -1308,7 +1308,8 @@ impl<T: SeekBufRead> NTuples<T> {
         let value_opt = attributes
             .get(key)
             .and_then(|vec| vec.get(index))
-            .map(|v| v.trim());
+            .map(|v| v.trim())
+            .filter(|v| !v.is_empty());
         if let Some(value) = value_opt {
             let parsed_value = value.parse::<P>().map_err(|_e| {
                 JdxError::new(&format!(
@@ -4022,4 +4023,189 @@ mod tests {
         assert_eq!((0.1, 300.0), page_n2_data[0]);
         assert_eq!((0.25, 410.0), page_n2_data[3]);
     }
+
+    #[test]
+    fn ntuples_parses_nmr_fid_record_in_round_robin_format() {
+        let label = "NTUPLES";
+        let variables = "nD NMR FID";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR NAME= TIME1,         TIME2,           FID/REAL,        FID/IMAG\n\
+                                ##SYMBOL=   T1,            T2,              R,               I\n\
+                                ##.NUCLEUS=     1H, 1H\n\
+                                ##VAR TYPE= INDEPENDENT,   INDEPENDENT,     DEPENDENT,       DEPENDENT\n\
+                                ##VAR FORM= AFFN,          ASDF,            ASDF,            ASDF\n\
+                                ##VAR DIM=  2, 4, 4, 4\n\
+                                ##UNITS=    SECONDS,       SECONDS,         ARBITRARY UNITS, ARBITRARY UNITS\n\
+                                ##FIRST=    0.0, 1.0, , $$FIRST for R and I are in PAGEs\n\
+                                ##LAST=     0.1, 2.5, ,\n\
+                                ##FACTOR=   1.0, 1.0, 1.0, 1.0\n\
+                                ##PAGE= T1=0.0\n\
+                                ##FIRST=    0, 1.0, 10.0, 30.0\n\
+                                ##DATA TABLE= (T2++(R..R)), PROFILE   $$ Real data points\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##PAGE= T1=0.1\n\
+                                ##FIRST=    0, 1.0, 10.0, 30.0\n\
+                                ##DATA TABLE= (T2++(I..I)), PROFILE   $$ Imaginary data points\n\
+                                1.0 +30+31\n\
+                                2.0 +40+41\n\
+                                ##END NTUPLES= nD NMR FID\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(10, ntuples.ldrs.len());
+        assert_eq!(
+            StringLdr::new(
+                "VARNAME",
+                "TIME1,         TIME2,           FID/REAL,        FID/IMAG"
+            ),
+            ntuples.ldrs[0]
+        );
+
+        assert_eq!(4, ntuples.attributes.len());
+        let ntuples_attrs_t1 = &ntuples.attributes[0];
+        assert_eq!(1, ntuples_attrs_t1.application_attributes.len());
+        assert_eq!(
+            StringLdr::new(".NUCLEUS", "1H"),
+            ntuples_attrs_t1.application_attributes[0]
+        );
+        let ntuples_attrs_r = &ntuples.attributes[2];
+        assert!(ntuples_attrs_r.application_attributes.is_empty());
+
+        assert_eq!(2, ntuples.pages.len());
+        assert_eq!("nD NMR FID", ntuples.data_form);
+
+        let page_t0 = &ntuples.pages[0];
+        assert_eq!("T1=0.0", &page_t0.page_variables);
+        let page_ldrs0 = &page_t0.page_ldrs;
+        assert_eq!(1, page_ldrs0.len());
+        assert_eq!(StringLdr::new("FIRST", "0, 1.0, 10.0, 30.0"), page_ldrs0[0]);
+
+        assert!(page_t0.data_table.is_some());
+        let page_t0_data_table = page_t0.data_table.as_ref().unwrap();
+        assert_eq!("(T2++(R..R))", page_t0_data_table.variable_list);
+        assert_eq!(
+            Some("PROFILE".to_owned()),
+            page_t0_data_table.plot_descriptor
+        );
+
+        let page_t0_data_r_attributes = &page_t0_data_table.attributes.1;
+        assert_eq!("FID/REAL", page_t0_data_r_attributes.var_name);
+        assert_eq!("R", page_t0_data_r_attributes.symbol);
+        assert_eq!(
+            Some("DEPENDENT".to_owned()),
+            page_t0_data_r_attributes.var_type
+        );
+        assert_eq!(Some("ASDF".to_owned()), page_t0_data_r_attributes.var_form);
+        assert_eq!(Some(4), page_t0_data_r_attributes.var_dim);
+        assert_eq!(
+            Some("ARBITRARY UNITS".to_owned()),
+            page_t0_data_r_attributes.units
+        );
+        assert_eq!(Some(10.0), page_t0_data_r_attributes.first);
+        assert_eq!(None, page_t0_data_r_attributes.last);
+        assert_eq!(None, page_t0_data_r_attributes.min);
+        assert_eq!(None, page_t0_data_r_attributes.max);
+        assert_eq!(Some(1.0), page_t0_data_r_attributes.factor);
+
+        let page_t0_data = page_t0_data_table.get_data().unwrap();
+        assert_eq!(4, page_t0_data.len());
+        assert_eq!((1.0, 10.0), page_t0_data[0]);
+        assert_eq!((2.5, 21.0), page_t0_data[3]);
+    }
+
+    #[test]
+    fn ntuples_parses_nmr_spectrum_record_in_round_robin_format() {
+        let label = "NTUPLES";
+        let variables = "nD NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR NAME= FREQUENCY1,    FREQUENCY2,      SPECTRUM\n\
+                                ##SYMBOL=   F1,            F2,              Y\n\
+                                ##.NUCLEUS=     1H, 1H\n\
+                                ##VAR TYPE= INDEPENDENT,   INDEPENDENT,     DEPENDENT\n\
+                                ##VAR FORM= AFFN,          ASDF,            ASDF\n\
+                                ##VAR DIM=  2, 4, 4\n\
+                                ##UNITS=    SECONDS,       SECONDS,         ARBITRARY UNITS\n\
+                                ##FIRST=    0.0, 1.0\n\
+                                ##LAST=     0.0, 2.5\n\
+                                ##FACTOR=   1.0, 1.0, 1.0\n\
+                                ##PAGE= F1=0.0\n\
+                                ##FIRST=    0, 1.0, 10.0\n\
+                                ##DATA TABLE= (F2++(Y..Y)), PROFILE\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##END NTUPLES= nD NMR SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(10, ntuples.ldrs.len());
+        assert_eq!(
+            StringLdr::new("VARNAME", "FREQUENCY1,    FREQUENCY2,      SPECTRUM"),
+            ntuples.ldrs[0]
+        );
+        assert_eq!(StringLdr::new(".NUCLEUS", "1H, 1H"), ntuples.ldrs[2]);
+        assert!(ntuples.ldrs[2].is_technique_specific());
+        assert_eq!(StringLdr::new("FACTOR", "1.0, 1.0, 1.0"), ntuples.ldrs[9]);
+
+        assert_eq!(3, ntuples.attributes.len());
+        let ntuples_attrs_t1 = &ntuples.attributes[0];
+        assert_eq!(1, ntuples_attrs_t1.application_attributes.len());
+        assert_eq!(
+            StringLdr::new(".NUCLEUS", "1H"),
+            ntuples_attrs_t1.application_attributes[0]
+        );
+        let ntuples_attrs_r = &ntuples.attributes[2];
+        assert!(ntuples_attrs_r.application_attributes.is_empty());
+
+        assert_eq!(1, ntuples.pages.len());
+        assert_eq!("nD NMR SPECTRUM", ntuples.data_form);
+
+        let page_t0 = &ntuples.pages[0];
+        assert_eq!("F1=0.0", &page_t0.page_variables);
+        let page_ldrs0 = &page_t0.page_ldrs;
+        assert_eq!(1, page_ldrs0.len());
+        assert_eq!(StringLdr::new("FIRST", "0, 1.0, 10.0"), page_ldrs0[0]);
+
+        assert!(page_t0.data_table.is_some());
+        let page_f0_data_table = page_t0.data_table.as_ref().unwrap();
+        assert_eq!("(F2++(Y..Y))", page_f0_data_table.variable_list);
+        assert_eq!(
+            Some("PROFILE".to_owned()),
+            page_f0_data_table.plot_descriptor
+        );
+
+        let page_f0_data_r_attributes = &page_f0_data_table.attributes.1;
+        assert_eq!("SPECTRUM", page_f0_data_r_attributes.var_name);
+        assert_eq!("Y", page_f0_data_r_attributes.symbol);
+        assert_eq!(
+            Some("DEPENDENT".to_owned()),
+            page_f0_data_r_attributes.var_type
+        );
+        assert_eq!(Some("ASDF".to_owned()), page_f0_data_r_attributes.var_form);
+        assert_eq!(Some(4), page_f0_data_r_attributes.var_dim);
+        assert_eq!(
+            Some("ARBITRARY UNITS".to_owned()),
+            page_f0_data_r_attributes.units
+        );
+        assert_eq!(Some(10.0), page_f0_data_r_attributes.first);
+        assert_eq!(None, page_f0_data_r_attributes.last);
+        assert_eq!(None, page_f0_data_r_attributes.min);
+        assert_eq!(None, page_f0_data_r_attributes.max);
+        assert_eq!(Some(1.0), page_f0_data_r_attributes.factor);
+
+        let page_t0_data = page_f0_data_table.get_data().unwrap();
+        assert_eq!(4, page_t0_data.len());
+        assert_eq!((1.0, 10.0), page_t0_data[0]);
+        assert_eq!((2.5, 21.0), page_t0_data[3]);
+    }
+
+    // todo: "parses NTUPLES MS record" etc.
 }

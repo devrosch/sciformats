@@ -1087,14 +1087,16 @@ impl<T: SeekBufRead> NTuples<T> {
         let mut buf = vec![];
         let mut reader = reader_ref.borrow_mut();
         // skip potential comment lines
+        let next_line = reader.read_line_iso_8859_1(&mut buf)?;
         let next_line = skip_pure_comments(next_line, true, &mut *reader, &mut buf)?;
+
         let mut pages = Vec::<Page<T>>::new();
         // parse PAGE parameters
         let (ldrs, attributes, mut next_line) =
             Self::parse_attributes(data_form, next_line, &mut reader, &mut buf)?;
 
         while let Some(line) = next_line.as_ref() {
-            if is_ldr_start(line) {
+            if !is_ldr_start(line) {
                 break;
             }
             let (label, page_var) = parse_ldr_start(line)?;
@@ -1460,11 +1462,12 @@ impl<T: SeekBufRead> Page<T> {
             )));
         }
 
-        let var_list = var_list_opt.unwrap().as_str().to_owned();
-        let plot_desc = plot_desc_opt.and_then(|m| match m.as_str().trim() {
-            se if se.is_empty() => None,
-            sne => Some(sne.to_owned()),
-        });
+        let var_list = var_list_opt.unwrap().as_str().trim().to_owned();
+        let plot_desc =
+            plot_desc_opt.and_then(|m| match strip_line_comment(m.as_str(), true, false).0 {
+                se if se.is_empty() => None,
+                sne => Some(sne.to_owned()),
+            });
 
         Ok((var_list, plot_desc))
     }
@@ -3891,5 +3894,132 @@ mod tests {
 
         let data = assignments.get_data().unwrap();
         assert!(data.is_empty());
+    }
+
+    #[test]
+    fn ntuples_parses_nmr_record() {
+        let label = "NTUPLES";
+        let variables = "NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE NUMBER\n\
+                                   ##SYMBOL=             X,                R,                I,           N\n\
+                                   ##VAR_TYPE= INDEPENDENT,        DEPENDENT,        DEPENDENT,        PAGE\n\
+                                   ##VAR_FORM=        AFFN,             ASDF,             ASDF,        AFFN\n\
+                                   ##VAR_DIM=            4,                4,                4,           2\n\
+                                   ##UNITS=             HZ,  ARBITRARY UNITS,  ARBITRARY UNITS,            \n\
+                                   ##FIRST=            0.1,             50.0,            300.0,           1\n\
+                                   ##LAST=            0.25,            105.0,            410.0,           2\n\
+                                   ##MIN=              0.1,             50.0,            300.0,           1\n\
+                                   ##MAX=             0.25,            105.0,            410.0,           2\n\
+                                   ##FACTOR=           0.1,              5.0,             10.0,           1\n\
+                                   ##$CUSTOM_LDR=     VAL1,             VAL2,             VAL3,       VAL4,\n\
+                                   ##PAGE= N=1\n\
+                                   ##DATA TABLE= (X++(R..R)), XYDATA   $$ Real data points\n\
+                                   1.0 +10+11\n\
+                                   2.0 +20+21\n\
+                                   ##PAGE= N=2\n\
+                                   ##DATA TABLE= (X++(I..I)), XYDATA   $$ Imaginary data points\n\
+                                   1.0 +30+31\n\
+                                   2.0 +40+41\n\
+                                   ##END NTUPLES= NMR SPECTRUM\n\
+                                   ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(2, ntuples.pages.len());
+        assert_eq!("NMR SPECTRUM", ntuples.data_form);
+
+        assert_eq!(12, ntuples.ldrs.len());
+        assert_eq!(
+            StringLdr::new(
+                "VARNAME",
+                "FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE NUMBER"
+            ),
+            ntuples.ldrs[0]
+        );
+        assert_eq!(
+            StringLdr::new(
+                "$CUSTOMLDR",
+                "VAL1,             VAL2,             VAL3,       VAL4,"
+            ),
+            ntuples.ldrs[11]
+        );
+        assert!(ntuples.ldrs[11].is_user_defined());
+
+        let page_n1 = &ntuples.pages[0];
+        assert_eq!("N=1", &page_n1.page_variables);
+        assert!(page_n1.page_ldrs.is_empty());
+        assert_eq!(4, ntuples.attributes.len());
+        let page_attrs0 = &ntuples.attributes[0];
+        assert_eq!(1, page_attrs0.application_attributes.len());
+        assert_eq!(
+            StringLdr::new("$CUSTOMLDR", "VAL1"),
+            page_attrs0.application_attributes[0]
+        );
+
+        assert!(page_n1.data_table.is_some());
+        let page_n1_data_table = page_n1.data_table.as_ref().unwrap();
+        assert_eq!("(X++(R..R))", page_n1_data_table.variable_list);
+        assert_eq!(
+            Some("XYDATA".to_owned()),
+            page_n1_data_table.plot_descriptor
+        );
+
+        let page_n1_x_attributes = &page_n1_data_table.attributes.0;
+        assert_eq!("FREQUENCY", page_n1_x_attributes.var_name);
+        assert_eq!("X", page_n1_x_attributes.symbol);
+        assert_eq!(
+            Some("INDEPENDENT".to_owned()),
+            page_n1_x_attributes.var_type
+        );
+        assert_eq!(Some("AFFN".to_owned()), page_n1_x_attributes.var_form);
+        assert_eq!(Some(4), page_n1_x_attributes.var_dim);
+        assert_eq!(Some("HZ".to_owned()), page_n1_x_attributes.units);
+        assert_eq!(Some(0.1), page_n1_x_attributes.first);
+        assert_eq!(Some(0.25), page_n1_x_attributes.last);
+        assert_eq!(Some(0.1), page_n1_x_attributes.min);
+        assert_eq!(Some(0.25), page_n1_x_attributes.max);
+        assert_eq!(Some(0.1), page_n1_x_attributes.factor);
+
+        let page_n1_y_attributes = &page_n1_data_table.attributes.1;
+        assert_eq!("SPECTRUM/REAL", page_n1_y_attributes.var_name);
+        assert_eq!("R", page_n1_y_attributes.symbol);
+        assert_eq!(Some("DEPENDENT".to_owned()), page_n1_y_attributes.var_type);
+        assert_eq!(Some("ASDF".to_owned()), page_n1_y_attributes.var_form);
+        assert_eq!(Some(4), page_n1_y_attributes.var_dim);
+        assert_eq!(
+            Some("ARBITRARY UNITS".to_owned()),
+            page_n1_y_attributes.units
+        );
+        assert_eq!(Some(50.0), page_n1_y_attributes.first);
+        assert_eq!(Some(105.0), page_n1_y_attributes.last);
+        assert_eq!(Some(50.0), page_n1_y_attributes.min);
+        assert_eq!(Some(105.0), page_n1_y_attributes.max);
+        assert_eq!(Some(5.0), page_n1_y_attributes.factor);
+
+        let page_n1_data = page_n1_data_table.get_data().unwrap();
+        assert_eq!(4, page_n1_data.len());
+        assert_eq!((0.1, 50.0), page_n1_data[0]);
+        assert_eq!((0.25, 105.0), page_n1_data[3]);
+
+        let page_n2 = &ntuples.pages[1];
+        assert_eq!("N=2", &page_n2.page_variables);
+        assert!(page_n2.page_ldrs.is_empty());
+
+        assert!(page_n2.data_table.is_some());
+        let page_n2_data_table = page_n2.data_table.as_ref().unwrap();
+        assert_eq!("(X++(I..I))", page_n2_data_table.variable_list);
+        assert_eq!(
+            Some("XYDATA".to_owned()),
+            page_n2_data_table.plot_descriptor
+        );
+
+        let page_n2_data = page_n2_data_table.get_data().unwrap();
+        assert_eq!(4, page_n2_data.len());
+        assert_eq!((0.1, 300.0), page_n2_data[0]);
+        assert_eq!((0.25, 410.0), page_n2_data[3]);
     }
 }

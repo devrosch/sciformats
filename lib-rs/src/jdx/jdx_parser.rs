@@ -2,8 +2,8 @@ use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
 use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
-    is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, strip_line_comment,
-    validate_input, BinBufRead,
+    is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, parse_single_parameter,
+    strip_line_comment, validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
@@ -286,7 +286,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct StringLdr {
     /// The label of the LDR, e.g., "TITLE" for "##TITLE= abc".
     pub label: String,
@@ -1584,12 +1584,214 @@ impl<T: SeekBufRead> DataTable<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
-        todo!()
+        // todo: turn var_list into enum and match OR
+        // use regexes for determining the var names
+        // let s = r"^\((.+)\+\+\((.+)\.\.(.+)\)\)$";
+        // let s = r"^\((.+)(.)\.\.(.+)(.)\)$"
+        let (x_col_index, y_col_index) = match var_list {
+            "(X++(Y..Y))" | "(XY..XY)" => (
+                Self::find_ntuples_index("X", attributes)?,
+                Self::find_ntuples_index("Y", attributes)?,
+            ),
+            "(X++(R..R))" | "(XR..XR)" => (
+                Self::find_ntuples_index("X", attributes)?,
+                Self::find_ntuples_index("R", attributes)?,
+            ),
+            "(X++(I..I))" | "(XI..XI)" => (
+                Self::find_ntuples_index("X", attributes)?,
+                Self::find_ntuples_index("I", attributes)?,
+            ),
+            "(T2++(R..R))" => (
+                Self::find_ntuples_index("T2", attributes)?,
+                Self::find_ntuples_index("R", attributes)?,
+            ),
+            "(T2++(I..I))" => (
+                Self::find_ntuples_index("T2", attributes)?,
+                Self::find_ntuples_index("I", attributes)?,
+            ),
+            "(F2++(Y..Y))" => (
+                Self::find_ntuples_index("F2", attributes)?,
+                Self::find_ntuples_index("Y", attributes)?,
+            ),
+            _ => {
+                // should never happen
+                return Err(JdxError::new(&format!(
+                    "Unsupported variabe list in DATA TABLE: {}",
+                    var_list
+                )));
+            }
+        };
+
+        let x_ntuples_attrs = &attributes[x_col_index];
+        let y_ntuples_attrs = &attributes[y_col_index];
+
+        let mut merged_x_vars = Self::merge_vars(x_ntuples_attrs, block_ldrs, page_ldrs)?;
+        let mut merged_y_vars = Self::merge_vars(y_ntuples_attrs, block_ldrs, page_ldrs)?;
+
+        // special treatment for "FIRST" page LDR if present
+        // this is described in the README for the JCAMP-DX nD-NMR test file round
+        // robin
+        // todo: can this be combined with merge_vars?
+        Self::merge_page_first_ldr(&mut merged_x_vars, page_ldrs, x_col_index)?;
+        Self::merge_page_first_ldr(&mut merged_y_vars, page_ldrs, y_col_index)?;
+
+        let mut reader = reader_ref.borrow_mut();
+        let address = reader.stream_position()?;
+        let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
+        drop(reader);
+
+        Ok((
+            Self {
+                plot_descriptor: plot_desc.map(|s| s.to_owned()),
+                attributes: (merged_x_vars, merged_y_vars),
+                variable_list: var_list.to_owned(),
+                reader_ref,
+                address,
+            },
+            next_line,
+        ))
+    }
+
+    fn find_ntuples_index<'a>(
+        symbol: &str,
+        attributes: &'a [NTuplesAttributes],
+    ) -> Result<usize, JdxError> {
+        let index_opt = attributes.iter().position(|attr| attr.symbol == symbol);
+        match index_opt {
+            Some(idx) => Ok(idx),
+            None => Err(JdxError::new(&format!(
+                "Could not find NTUPLES parameters for SYMBOL: {}",
+                symbol
+            ))),
+        }
+    }
+
+    fn merge_vars(
+        ntuples_vars: &NTuplesAttributes,
+        block_ldrs: &[StringLdr],
+        page_ldrs: &[StringLdr],
+    ) -> Result<NTuplesAttributes, JdxError> {
+        let mut output_vars = ntuples_vars.clone();
+        // todo: why clear?
+        output_vars.application_attributes.clear();
+
+        if Self::X_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
+            // fill in block params for missing NTUPLE attributes
+            Self::merge_x_ldrs(&mut output_vars, block_ldrs, false)?;
+            // replace with page LDR values if available
+            Self::merge_x_ldrs(&mut output_vars, page_ldrs, true)?;
+        } else if Self::Y_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
+            // Also check for other symbols but Y? Does not seem relevant for NMR
+            // and MS.
+            // fill in block params for missing NTUPLE attributes
+            Self::merge_y_ldrs(&mut output_vars, block_ldrs, false)?;
+            // replace with page LDR values if available
+            Self::merge_y_ldrs(&mut output_vars, page_ldrs, true)?;
+        } else {
+            return Err(JdxError::new(&format!(
+                "Unexpected symbol found during parsing of PAGE: {}",
+                &ntuples_vars.symbol
+            )));
+        }
+
+        Ok(output_vars)
+    }
+
+    fn merge_x_ldrs(
+        vars: &mut NTuplesAttributes,
+        ldrs: &[StringLdr],
+        replace: bool,
+    ) -> Result<(), JdxError> {
+        for ldr in ldrs {
+            match ldr.label.as_str() {
+                "XUNITS" if replace || vars.units.is_none() => {
+                    vars.units = parse_single_parameter::<String>(ldr)?
+                }
+                "FIRSTX" if replace || vars.first.is_none() => {
+                    vars.first = parse_single_parameter::<f64>(ldr)?
+                }
+                "LASTX" if replace || vars.last.is_none() => {
+                    vars.last = parse_single_parameter::<f64>(ldr)?
+                }
+                "MINX" if replace || vars.min.is_none() => {
+                    vars.min = parse_single_parameter::<f64>(ldr)?
+                }
+                "MAXX" if replace || vars.max.is_none() => {
+                    vars.max = parse_single_parameter::<f64>(ldr)?
+                }
+                "XFACTOR" if replace || vars.factor.is_none() => {
+                    vars.factor = parse_single_parameter::<f64>(ldr)?
+                }
+                "NPOINTS" if replace || vars.var_dim.is_none() => {
+                    vars.var_dim = parse_single_parameter::<u64>(ldr)?
+                }
+                _ => { /* noop */ }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn merge_y_ldrs(
+        vars: &mut NTuplesAttributes,
+        ldrs: &[StringLdr],
+        replace: bool,
+    ) -> Result<(), JdxError> {
+        for ldr in ldrs {
+            match ldr.label.as_str() {
+                "YUNITS" if replace || vars.units.is_none() => {
+                    vars.units = parse_single_parameter::<String>(ldr)?
+                }
+                "FIRSTY" if replace || vars.first.is_none() => {
+                    vars.first = parse_single_parameter::<f64>(ldr)?
+                }
+                "LASTY" if replace || vars.last.is_none() => {
+                    vars.last = parse_single_parameter::<f64>(ldr)?
+                }
+                "MINY" if replace || vars.min.is_none() => {
+                    vars.min = parse_single_parameter::<f64>(ldr)?
+                }
+                "MAXY" if replace || vars.max.is_none() => {
+                    vars.max = parse_single_parameter::<f64>(ldr)?
+                }
+                "YFACTOR" if replace || vars.factor.is_none() => {
+                    vars.factor = parse_single_parameter::<f64>(ldr)?
+                }
+                "NPOINTS" if replace || vars.var_dim.is_none() => {
+                    vars.var_dim = parse_single_parameter::<u64>(ldr)?
+                }
+                _ => { /* noop */ }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn merge_page_first_ldr(
+        merged_vars: &mut NTuplesAttributes,
+        page_ldrs: &[StringLdr],
+        col_index: usize,
+    ) -> Result<(), JdxError> {
+        for ldr in page_ldrs {
+            if "FIRST" == &ldr.label {
+                let segments: Vec<&str> = ldr.value.split(",").map(|v| v.trim()).collect();
+                if let Some(segment) = segments.get(col_index) {
+                    let value = segment.parse::<f64>().map_err(|_e| {
+                        JdxError::new(&format!(
+                            "Illegal value for \"{}\": {}",
+                            &ldr.label, &ldr.value
+                        ))
+                    })?;
+                    merged_vars.first = Some(value);
+                }
+            }
+        }
+        Ok(())
     }
 }
 
 /// A collection of attributes describing NTUPLES data.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct NTuplesAttributes {
     /// VAR_NAME.
     pub var_name: String,

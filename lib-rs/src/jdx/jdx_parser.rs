@@ -71,7 +71,9 @@ pub struct JdxBlock<T: SeekBufRead> {
 
     /// The PEAK ASSIGNMENTS record if available.
     pub peak_assignments: Option<PeakAssignments<T>>,
-    // std::optional<NTuples> m_nTuples;
+
+    /// The NTUPLES record if available.
+    pub n_tuples: Option<NTuples<T>>,
     // std::optional<AuditTrail> m_auditTrail;
     // std::vector<BrukerSpecificParameters> m_brukerSpecificParameters;
     // std::vector<BrukerRelaxSection> m_brukerRelaxSections;
@@ -131,6 +133,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut xy_points = Option::<XyPoints<T>>::None;
         let mut peak_table = Option::<PeakTable<T>>::None;
         let mut peak_assignments = Option::<PeakAssignments<T>>::None;
+        let mut n_tuples = Option::<NTuples<T>>::None;
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -236,7 +239,21 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     peak_assignments = Some(data);
                     next_line = next;
                 }
-                "NTUPLES" => todo!(),
+                "NTUPLES" => {
+                    // todo: refactor to reduce code duplication
+                    if n_tuples.is_some() {
+                        return Err(JdxError::new(&format!(
+                            "Multiple \"{}\" LDRs found in block: {}",
+                            label, title
+                        )));
+                    }
+                    drop(reader);
+                    let (data, next) =
+                        NTuples::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
+                    reader = reader_ref.borrow_mut();
+                    n_tuples = Some(data);
+                    next_line = next;
+                }
                 "AUDITTRAIL" => todo!(),
                 "$RELAX" => todo!(),
                 _ => {
@@ -280,6 +297,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 xy_points,
                 peak_table,
                 peak_assignments,
+                n_tuples,
             },
             next_line,
         ))
@@ -1053,12 +1071,11 @@ impl<T: SeekBufRead> NTuples<T> {
         label: &str,
         data_form: &str,
         block_ldrs: &[StringLdr],
-        next_line: Option<String>,
+        _next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
         validate_input(label, None, Self::LABEL, None)?;
-        let (ldrs, attributes, pages, next_line) =
-            Self::parse(block_ldrs, data_form, next_line, reader_ref)?;
+        let (ldrs, attributes, pages, next_line) = Self::parse(block_ldrs, data_form, reader_ref)?;
         Ok((
             Self {
                 data_form: data_form.trim().to_owned(),
@@ -1073,7 +1090,6 @@ impl<T: SeekBufRead> NTuples<T> {
     fn parse(
         block_ldrs: &[StringLdr],
         data_form: &str,
-        next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<
         (
@@ -1174,7 +1190,7 @@ impl<T: SeekBufRead> NTuples<T> {
             let ntv = Self::map(&standard_attr_map, &attr_map, i)?;
             output.push(ntv);
         }
-        return Ok((ldrs, output, next_line));
+        Ok((ldrs, output, next_line))
     }
 
     fn read_ldrs(
@@ -1202,7 +1218,7 @@ impl<T: SeekBufRead> NTuples<T> {
         for ldr in ldrs {
             let (value_string, _comment) = strip_line_comment(&ldr.value, true, false);
             let values: Vec<String> = value_string
-                .split(",")
+                .split(',')
                 .map(|v| v.trim().to_owned())
                 .collect();
             let old = output.insert(ldr.label.clone(), values);
@@ -1408,14 +1424,14 @@ impl<T: SeekBufRead> Page<T> {
             reader_ref,
         )?;
 
-        return Ok((
+        Ok((
             Page {
                 page_variables: page_var.to_owned(),
                 page_ldrs,
                 data_table: Some(data_table),
             },
             next_line,
-        ));
+        ))
     }
 
     fn parse_page_ldrs(
@@ -1539,7 +1555,7 @@ impl<T: SeekBufRead> DataTable<T> {
         )
     }
 
-    fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
         let mut reader = self.reader_ref.borrow_mut();
 
         if ["(XY..XY)", "(XR..XR)", "(XI..XI)"].contains(&self.variable_list.as_str()) {
@@ -1656,9 +1672,9 @@ impl<T: SeekBufRead> DataTable<T> {
         ))
     }
 
-    fn find_ntuples_index<'a>(
+    fn find_ntuples_index(
         symbol: &str,
-        attributes: &'a [NTuplesAttributes],
+        attributes: &[NTuplesAttributes],
     ) -> Result<usize, JdxError> {
         let index_opt = attributes.iter().position(|attr| attr.symbol == symbol);
         match index_opt {
@@ -1778,7 +1794,7 @@ impl<T: SeekBufRead> DataTable<T> {
     ) -> Result<(), JdxError> {
         for ldr in page_ldrs {
             if "FIRST" == &ldr.label {
-                let segments: Vec<&str> = ldr.value.split(",").map(|v| v.trim()).collect();
+                let segments: Vec<&str> = ldr.value.split(',').map(|v| v.trim()).collect();
                 if let Some(segment) = segments.get(col_index) {
                     let value = segment.parse::<f64>().map_err(|_e| {
                         JdxError::new(&format!(
@@ -2256,6 +2272,46 @@ mod tests {
         assert!(error
             .to_string()
             .contains("Multiple \"PEAKASSIGNMENTS\" LDRs"));
+    }
+
+    #[test]
+    fn block_parses_ntuples() {
+        let input = b"##TITLE= Test\n\
+                                ##JCAMP-DX= 5.01\n\
+                                ##DATA TYPE= NMR FID\n\
+                                ##DATA CLASS= NTUPLES\n\
+                                ##NTUPLES= NMR FID\n\
+                                ##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE NUMBER\n\
+                                ##SYMBOL=             X,                R,                I,           N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,        DEPENDENT,        PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,             ASDF,        AFFN\n\
+                                ##VAR_DIM=            4,                4,                4,           2\n\
+                                ##UNITS=             HZ,  ARBITRARY UNITS,  ARBITRARY UNITS,            \n\
+                                ##FIRST=            0.1,             50.0,            300.0,           1\n\
+                                ##LAST=            0.25,            105.0,            410.0,           2\n\
+                                ##MIN=              0.1,             50.0,            300.0,           1\n\
+                                ##MAX=             0.25,            105.0,            410.0,           2\n\
+                                ##FACTOR=           0.1,              5.0,             10.0,           1\n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE= (X++(R..R)), XYDATA   $$ Real data points\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##PAGE= N=2\n\
+                                ##DATA TABLE= (X++(I..I)), XYDATA   $$ Imaginary data points\n\
+                                1.0 +30+31\n\
+                                2.0 +40+41\n\
+                                ##END NTUPLES= NMR FID\n\
+                                ##END=";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert_eq!(4, block.ldrs.len());
+        assert!(block.n_tuples.is_some());
+        let ntuples = &block.n_tuples.unwrap();
+        let page_n1 = &ntuples.pages[0];
+        let page_n1_data_table = page_n1.data_table.as_ref().unwrap();
+        let page_n1_data = page_n1_data_table.get_data().unwrap();
+        assert_eq!(4, page_n1_data.len())
     }
 
     #[test]

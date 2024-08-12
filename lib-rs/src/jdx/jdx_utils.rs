@@ -235,7 +235,7 @@ pub fn parse_single_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, 
             ldr.label, ldr.value
         ))
     })?;
-    return Ok(Some(parsed_value));
+    Ok(Some(parsed_value))
 }
 
 pub fn validate_input(

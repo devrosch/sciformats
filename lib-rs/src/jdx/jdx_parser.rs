@@ -2307,6 +2307,9 @@ mod tests {
         assert_eq!(4, page_n1_data.len())
     }
 
+    // todo: remaining block tests:
+    // - parses block with AUDIT TRAIL
+
     #[test]
     fn block_parses_link_block() {
         let input = b"##TITLE= Root LINK BLOCK\r\n\
@@ -2407,10 +2410,6 @@ mod tests {
             inner_block.get_ldr("TITLE")
         );
     }
-
-    // todo: remaining block tests:
-    // - parses block with NTUPLES
-    // - parses block with AUDIT TRAIL
 
     #[test]
     fn xydata_parses_affn_xppyy_data_with_required_parameters_only() {

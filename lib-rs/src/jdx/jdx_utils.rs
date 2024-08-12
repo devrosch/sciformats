@@ -208,23 +208,7 @@ pub fn find_ldr<'ldrs>(raw_label: &str, ldrs: &'ldrs [StringLdr]) -> Option<&'ld
     ldrs.iter().find(|&ldr| label == ldr.label)
 }
 
-// todo: rename
-pub fn parse_parameter<P: FromStr>(key: &str, ldrs: &[StringLdr]) -> Result<Option<P>, JdxError> {
-    if let Some(ldr) = find_ldr(key, ldrs) {
-        let value = strip_line_comment(&ldr.value, true, false).0;
-        if value.is_empty() {
-            return Ok(None);
-        }
-        let parsed_value = value.parse::<P>().map_err(|_e| {
-            JdxError::new(&format!("Illegal value for \"{}\": {}", key, ldr.value))
-        })?;
-        return Ok(Some(parsed_value));
-    }
-    Ok(None)
-}
-
-// todo: rename
-pub fn parse_single_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxError> {
+pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxError> {
     let value = strip_line_comment(&ldr.value, true, false).0;
     if value.is_empty() {
         return Ok(None);
@@ -236,6 +220,16 @@ pub fn parse_single_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, 
         ))
     })?;
     Ok(Some(parsed_value))
+}
+
+pub fn find_and_parse_parameter<P: FromStr>(
+    key: &str,
+    ldrs: &[StringLdr],
+) -> Result<Option<P>, JdxError> {
+    match find_ldr(key, ldrs) {
+        None => Ok(None),
+        Some(ldr) => parse_parameter(ldr),
+    }
 }
 
 pub fn validate_input(

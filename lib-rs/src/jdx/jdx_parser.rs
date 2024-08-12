@@ -2,7 +2,7 @@ use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
 use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
-    is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter, parse_single_parameter,
+    find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter,
     strip_line_comment, validate_input, BinBufRead,
 };
 use super::JdxError;
@@ -425,24 +425,24 @@ impl<T: SeekBufRead> XyData<T> {
 fn parse_xydata_parameters(ldrs: &[StringLdr]) -> Result<XyParameters, JdxError> {
     // required
     // string
-    let x_units = parse_parameter::<String>("XUNITS", ldrs)?;
-    let y_units = parse_parameter::<String>("YUNITS", ldrs)?;
+    let x_units = find_and_parse_parameter::<String>("XUNITS", ldrs)?;
+    let y_units = find_and_parse_parameter::<String>("YUNITS", ldrs)?;
     // double
-    let first_x = parse_parameter::<f64>("FIRSTX", ldrs)?;
-    let last_x = parse_parameter::<f64>("LASTX", ldrs)?;
-    let x_factor = parse_parameter::<f64>("XFACTOR", ldrs)?;
-    let y_factor = parse_parameter::<f64>("YFACTOR", ldrs)?;
+    let first_x = find_and_parse_parameter::<f64>("FIRSTX", ldrs)?;
+    let last_x = find_and_parse_parameter::<f64>("LASTX", ldrs)?;
+    let x_factor = find_and_parse_parameter::<f64>("XFACTOR", ldrs)?;
+    let y_factor = find_and_parse_parameter::<f64>("YFACTOR", ldrs)?;
     // u64
-    let n_points = parse_parameter::<u64>("NPOINTS", ldrs)?;
+    let n_points = find_and_parse_parameter::<u64>("NPOINTS", ldrs)?;
     // optional
     // double
-    let first_y = parse_parameter::<f64>("FIRSTY", ldrs)?;
-    let max_x = parse_parameter::<f64>("MAXX", ldrs)?;
-    let min_x = parse_parameter::<f64>("MINX", ldrs)?;
-    let max_y = parse_parameter::<f64>("MAXY", ldrs)?;
-    let min_y = parse_parameter::<f64>("MINY", ldrs)?;
-    let resolution = parse_parameter::<f64>("RESOLUTION", ldrs)?;
-    let delta_x = parse_parameter::<f64>("DELTAX", ldrs)?;
+    let first_y = find_and_parse_parameter::<f64>("FIRSTY", ldrs)?;
+    let max_x = find_and_parse_parameter::<f64>("MAXX", ldrs)?;
+    let min_x = find_and_parse_parameter::<f64>("MINX", ldrs)?;
+    let max_y = find_and_parse_parameter::<f64>("MAXY", ldrs)?;
+    let min_y = find_and_parse_parameter::<f64>("MINY", ldrs)?;
+    let resolution = find_and_parse_parameter::<f64>("RESOLUTION", ldrs)?;
+    let delta_x = find_and_parse_parameter::<f64>("DELTAX", ldrs)?;
 
     let mut missing = vec![];
     if x_units.is_none() {
@@ -578,27 +578,27 @@ impl<T: SeekBufRead> RaData<T> {
     fn parse_parameters(ldrs: &[StringLdr]) -> Result<RaParameters, JdxError> {
         // required
         // string
-        let r_units = parse_parameter::<String>("RUNITS", ldrs)?;
-        let a_units = parse_parameter::<String>("AUNITS", ldrs)?;
+        let r_units = find_and_parse_parameter::<String>("RUNITS", ldrs)?;
+        let a_units = find_and_parse_parameter::<String>("AUNITS", ldrs)?;
         // double
-        let first_r = parse_parameter::<f64>("FIRSTR", ldrs)?;
-        let last_r = parse_parameter::<f64>("LASTR", ldrs)?;
-        let r_factor = parse_parameter::<f64>("RFACTOR", ldrs)?;
-        let a_factor = parse_parameter::<f64>("AFACTOR", ldrs)?;
+        let first_r = find_and_parse_parameter::<f64>("FIRSTR", ldrs)?;
+        let last_r = find_and_parse_parameter::<f64>("LASTR", ldrs)?;
+        let r_factor = find_and_parse_parameter::<f64>("RFACTOR", ldrs)?;
+        let a_factor = find_and_parse_parameter::<f64>("AFACTOR", ldrs)?;
         // u64
-        let n_points = parse_parameter::<u64>("NPOINTS", ldrs)?;
+        let n_points = find_and_parse_parameter::<u64>("NPOINTS", ldrs)?;
         // optional
         // double
-        let first_a = parse_parameter::<f64>("FIRSTA", ldrs)?;
+        let first_a = find_and_parse_parameter::<f64>("FIRSTA", ldrs)?;
         // required, according to standard
-        let max_a = parse_parameter::<f64>("MAXA", ldrs)?;
+        let max_a = find_and_parse_parameter::<f64>("MAXA", ldrs)?;
         // required, according to standard
-        let min_a = parse_parameter::<f64>("MINA", ldrs)?;
-        let resolution = parse_parameter::<f64>("RESOLUTION", ldrs)?;
-        let delta_r = parse_parameter::<f64>("DELTAR", ldrs)?;
-        let zdp = parse_parameter::<f64>("ZDP", ldrs)?;
+        let min_a = find_and_parse_parameter::<f64>("MINA", ldrs)?;
+        let resolution = find_and_parse_parameter::<f64>("RESOLUTION", ldrs)?;
+        let delta_r = find_and_parse_parameter::<f64>("DELTAR", ldrs)?;
+        let zdp = find_and_parse_parameter::<f64>("ZDP", ldrs)?;
         // string
-        let alias = parse_parameter::<String>("ALIAS", ldrs)?;
+        let alias = find_and_parse_parameter::<String>("ALIAS", ldrs)?;
 
         let mut missing = vec![];
         if r_units.is_none() {
@@ -1726,25 +1726,21 @@ impl<T: SeekBufRead> DataTable<T> {
         for ldr in ldrs {
             match ldr.label.as_str() {
                 "XUNITS" if replace || vars.units.is_none() => {
-                    vars.units = parse_single_parameter::<String>(ldr)?
+                    vars.units = parse_parameter::<String>(ldr)?
                 }
                 "FIRSTX" if replace || vars.first.is_none() => {
-                    vars.first = parse_single_parameter::<f64>(ldr)?
+                    vars.first = parse_parameter::<f64>(ldr)?
                 }
                 "LASTX" if replace || vars.last.is_none() => {
-                    vars.last = parse_single_parameter::<f64>(ldr)?
+                    vars.last = parse_parameter::<f64>(ldr)?
                 }
-                "MINX" if replace || vars.min.is_none() => {
-                    vars.min = parse_single_parameter::<f64>(ldr)?
-                }
-                "MAXX" if replace || vars.max.is_none() => {
-                    vars.max = parse_single_parameter::<f64>(ldr)?
-                }
+                "MINX" if replace || vars.min.is_none() => vars.min = parse_parameter::<f64>(ldr)?,
+                "MAXX" if replace || vars.max.is_none() => vars.max = parse_parameter::<f64>(ldr)?,
                 "XFACTOR" if replace || vars.factor.is_none() => {
-                    vars.factor = parse_single_parameter::<f64>(ldr)?
+                    vars.factor = parse_parameter::<f64>(ldr)?
                 }
                 "NPOINTS" if replace || vars.var_dim.is_none() => {
-                    vars.var_dim = parse_single_parameter::<u64>(ldr)?
+                    vars.var_dim = parse_parameter::<u64>(ldr)?
                 }
                 _ => { /* noop */ }
             }
@@ -1761,25 +1757,21 @@ impl<T: SeekBufRead> DataTable<T> {
         for ldr in ldrs {
             match ldr.label.as_str() {
                 "YUNITS" if replace || vars.units.is_none() => {
-                    vars.units = parse_single_parameter::<String>(ldr)?
+                    vars.units = parse_parameter::<String>(ldr)?
                 }
                 "FIRSTY" if replace || vars.first.is_none() => {
-                    vars.first = parse_single_parameter::<f64>(ldr)?
+                    vars.first = parse_parameter::<f64>(ldr)?
                 }
                 "LASTY" if replace || vars.last.is_none() => {
-                    vars.last = parse_single_parameter::<f64>(ldr)?
+                    vars.last = parse_parameter::<f64>(ldr)?
                 }
-                "MINY" if replace || vars.min.is_none() => {
-                    vars.min = parse_single_parameter::<f64>(ldr)?
-                }
-                "MAXY" if replace || vars.max.is_none() => {
-                    vars.max = parse_single_parameter::<f64>(ldr)?
-                }
+                "MINY" if replace || vars.min.is_none() => vars.min = parse_parameter::<f64>(ldr)?,
+                "MAXY" if replace || vars.max.is_none() => vars.max = parse_parameter::<f64>(ldr)?,
                 "YFACTOR" if replace || vars.factor.is_none() => {
-                    vars.factor = parse_single_parameter::<f64>(ldr)?
+                    vars.factor = parse_parameter::<f64>(ldr)?
                 }
                 "NPOINTS" if replace || vars.var_dim.is_none() => {
-                    vars.var_dim = parse_single_parameter::<u64>(ldr)?
+                    vars.var_dim = parse_parameter::<u64>(ldr)?
                 }
                 _ => { /* noop */ }
             }

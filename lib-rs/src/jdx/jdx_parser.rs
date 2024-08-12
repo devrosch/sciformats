@@ -1061,7 +1061,7 @@ impl<T: SeekBufRead> NTuples<T> {
             Self::parse(block_ldrs, data_form, next_line, reader_ref)?;
         Ok((
             Self {
-                data_form: data_form.to_owned(),
+                data_form: data_form.trim().to_owned(),
                 ldrs,
                 attributes,
                 pages,
@@ -4207,5 +4207,498 @@ mod tests {
         assert_eq!((2.5, 21.0), page_t0_data[3]);
     }
 
-    // todo: "parses NTUPLES MS record" etc.
+    #[test]
+    fn ntuples_parses_ms_record() {
+        let label = "NTUPLES";
+        let variables = "         MASS SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME\n\
+                                ##SYMBOL=          X,             Y,                  T\n\
+                                ##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n\
+                                ##VAR_FORM=        AFFN,          AFFN,               AFFN\n\
+                                ##VAR_DIM=         ,              ,                   3\n\
+                                ##UNITS=           M/Z,           RELATIVE ABUNDANCE, SECONDS\n\
+                                ##FIRST=           ,              ,                   5\n\
+                                ##LAST=            ,              ,                   15\n\
+                                ##PAGE=            T = 5\n\
+                                ##DATA TABLE=      (XY..XY),      PEAKS\n\
+                                100,  50.0;  110,  60.0;  120,  70.0   \n\
+                                130,  80.0;  140,  90.0                \n\
+                                ##PAGE=            T = 10              \n\
+                                ##NPOINTS=         4                   \n\
+                                ##DATA TABLE= (XY..XY), PEAKS          \n\
+                                200,  55.0;  220,  77.0                \n\
+                                230,  88.0;  240,  99.0                \n\
+                                ##PAGE=            T = 15              \n\
+                                ##DATA TABLE= (XY..XY), PEAKS          \n\
+                                300,  55.5;  310,  66.6;  320,  77.7   \n\
+                                330,  88.8;  340,  99.9                \n\
+                                ##END NTUPLES= MASS SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(3, ntuples.pages.len());
+        assert_eq!("MASS SPECTRUM", ntuples.data_form);
+
+        let page_t5 = &ntuples.pages[0];
+        assert_eq!("T = 5", &page_t5.page_variables);
+        assert!(&page_t5.page_ldrs.is_empty());
+
+        assert!(page_t5.data_table.is_some());
+        let page_t5_data_table = page_t5.data_table.as_ref().unwrap();
+        assert_eq!("(XY..XY)", page_t5_data_table.variable_list);
+        assert_eq!(Some("PEAKS".to_owned()), page_t5_data_table.plot_descriptor);
+
+        let page_t5_x_attributes = &page_t5_data_table.attributes.0;
+        assert_eq!("MASS", page_t5_x_attributes.var_name);
+        assert_eq!("X", page_t5_x_attributes.symbol);
+        assert_eq!(
+            Some("INDEPENDENT".to_owned()),
+            page_t5_x_attributes.var_type
+        );
+        assert_eq!(Some("AFFN".to_owned()), page_t5_x_attributes.var_form);
+        assert!(page_t5_x_attributes.var_dim.is_none());
+        assert_eq!(Some("M/Z".to_owned()), page_t5_x_attributes.units);
+        assert_eq!(None, page_t5_x_attributes.first);
+        assert_eq!(None, page_t5_x_attributes.last);
+        assert_eq!(None, page_t5_x_attributes.min);
+        assert_eq!(None, page_t5_x_attributes.max);
+        assert_eq!(None, page_t5_x_attributes.factor);
+
+        let page_t5_y_attributes = &page_t5_data_table.attributes.1;
+        assert_eq!("INTENSITY", page_t5_y_attributes.var_name);
+        assert_eq!("Y", page_t5_y_attributes.symbol);
+        assert_eq!(Some("DEPENDENT".to_owned()), page_t5_y_attributes.var_type);
+        assert_eq!(Some("AFFN".to_owned()), page_t5_y_attributes.var_form);
+        assert!(page_t5_y_attributes.var_dim.is_none());
+        assert_eq!(
+            Some("RELATIVE ABUNDANCE".to_owned()),
+            page_t5_y_attributes.units
+        );
+        assert_eq!(None, page_t5_y_attributes.first);
+        assert_eq!(None, page_t5_y_attributes.last);
+        assert_eq!(None, page_t5_y_attributes.min);
+        assert_eq!(None, page_t5_y_attributes.max);
+        assert_eq!(None, page_t5_y_attributes.factor);
+
+        let page_t5_data = page_t5_data_table.get_data().unwrap();
+        assert_eq!(5, page_t5_data.len());
+        assert_eq!((100.0, 50.0), page_t5_data[0]);
+        assert_eq!((140.0, 90.0), page_t5_data[4]);
+
+        let page_t10 = &ntuples.pages[1];
+        assert_eq!("T = 10", &page_t10.page_variables);
+        assert_eq!(1, page_t10.page_ldrs.len());
+
+        let page_t10_data = page_t10.data_table.as_ref().unwrap().get_data().unwrap();
+        assert_eq!(4, page_t10_data.len());
+        assert_eq!((200.0, 55.0), page_t10_data[0]);
+        assert_eq!((240.0, 99.0), page_t10_data[3]);
+    }
+
+    #[test]
+    fn ntuples_parses_ms_record_with_trailing_blank_var_name() {
+        // strictly, the trailing blank VAR_NAME shoud be interpreted as " " name
+        // however, as the JCAMP-DX test data set contains one such file and
+        // the expectation is to ignore the blank VARN_NAME, have special
+        // treatment for this case
+        let label = "NTUPLES";
+        let variables = "         MASS SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME, \n\
+                                ##SYMBOL=          X,             Y,                  T\n\
+                                ##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n\
+                                ##VAR_FORM=        AFFN,          AFFN,               AFFN\n\
+                                ##VAR_DIM=         ,              ,                   3\n\
+                                ##UNITS=           M/Z,           RELATIVE ABUNDANCE, SECONDS\n\
+                                ##FIRST=           ,              ,                   5\n\
+                                ##LAST=            ,              ,                   15\n\
+                                ##PAGE=            T = 5\n\
+                                ##DATA TABLE=      (XY..XY),      PEAKS\n\
+                                100,  50.0;  110,  60.0;  120,  70.0   \n\
+                                130,  80.0;  140,  90.0                \n\
+                                ##PAGE=            T = 10              \n\
+                                ##NPOINTS=         4                   \n\
+                                ##DATA TABLE= (XY..XY), PEAKS          \n\
+                                200,  55.0;  220,  77.0                \n\
+                                230,  88.0;  240,  99.0                \n\
+                                ##PAGE=            T = 15              \n\
+                                ##DATA TABLE= (XY..XY), PEAKS          \n\
+                                300,  55.5;  310,  66.6;  320,  77.7   \n\
+                                330,  88.8;  340,  99.9                \n\
+                                ##END NTUPLES= MASS SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_result = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_result.is_ok());
+        let ntuples = ntuples_result.unwrap().0;
+        assert_eq!(3, ntuples.attributes.len());
+    }
+
+    #[test]
+    fn ntuples_uses_block_ldrs_to_fill_missing_ntuples_attributes() {
+        let label = "NTUPLES";
+        let variables = "         MASS SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME\n\
+                                ##SYMBOL=          X,             Y,                  T\n\
+                                ##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n\
+                                ##VAR_FORM=        AFFN,          AFFN,               AFFN\n\
+                                ##PAGE=            T = 5\n\
+                                ##DATA TABLE=      (XY..XY)            \n\
+                                100,  50.0;  110,  60.0;  120,  70.0   \n\
+                                130,  80.0;  140,  90.0                \n\
+                                ##END NTUPLES= MASS SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = vec![
+            StringLdr::new("XUNITS", "XUNITS-TEST"),
+            StringLdr::new("FIRSTX", "200.0"),
+            StringLdr::new("LASTX", "280.0"),
+            StringLdr::new("MINX", "200.0"),
+            StringLdr::new("MAXX", "280.0"),
+            StringLdr::new("XFACTOR", "2.0"),
+            StringLdr::new("YUNITS", "YUNITS-TEST"),
+            StringLdr::new("FIRSTY", "150.0"),
+            StringLdr::new("LASTY", "270.0"),
+            StringLdr::new("MINY", "150.0"),
+            StringLdr::new("MAXY", "270.0"),
+            StringLdr::new("YFACTOR", "3.0"),
+            StringLdr::new("NPOINTS", "5"),
+        ];
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(1, ntuples.pages.len());
+        assert_eq!("MASS SPECTRUM", ntuples.data_form);
+
+        let page_t5 = &ntuples.pages[0];
+        assert_eq!("T = 5", &page_t5.page_variables);
+        assert!(&page_t5.page_ldrs.is_empty());
+
+        assert!(page_t5.data_table.is_some());
+        let page_t5_data_table = page_t5.data_table.as_ref().unwrap();
+        assert_eq!("(XY..XY)", page_t5_data_table.variable_list);
+        assert_eq!(None, page_t5_data_table.plot_descriptor);
+
+        let page_t5_x_attributes = &page_t5_data_table.attributes.0;
+        assert_eq!("MASS", page_t5_x_attributes.var_name);
+        assert_eq!("X", page_t5_x_attributes.symbol);
+        assert_eq!(
+            Some("INDEPENDENT".to_owned()),
+            page_t5_x_attributes.var_type
+        );
+        assert_eq!(Some("AFFN".to_owned()), page_t5_x_attributes.var_form);
+        assert_eq!(Some(5), page_t5_x_attributes.var_dim);
+        assert_eq!(Some("XUNITS-TEST".to_owned()), page_t5_x_attributes.units);
+        assert_eq!(Some(200.0), page_t5_x_attributes.first);
+        assert_eq!(Some(280.0), page_t5_x_attributes.last);
+        assert_eq!(Some(200.0), page_t5_x_attributes.min);
+        assert_eq!(Some(280.0), page_t5_x_attributes.max);
+        assert_eq!(Some(2.0), page_t5_x_attributes.factor);
+
+        let page_t5_y_attributes = &page_t5_data_table.attributes.1;
+        assert_eq!("INTENSITY", page_t5_y_attributes.var_name);
+        assert_eq!("Y", page_t5_y_attributes.symbol);
+        assert_eq!(Some("DEPENDENT".to_owned()), page_t5_y_attributes.var_type);
+        assert_eq!(Some("AFFN".to_owned()), page_t5_y_attributes.var_form);
+        assert_eq!(Some(5), page_t5_y_attributes.var_dim);
+        assert_eq!(Some("YUNITS-TEST".to_owned()), page_t5_y_attributes.units);
+        assert_eq!(Some(150.0), page_t5_y_attributes.first);
+        assert_eq!(Some(270.0), page_t5_y_attributes.last);
+        assert_eq!(Some(150.0), page_t5_y_attributes.min);
+        assert_eq!(Some(270.0), page_t5_y_attributes.max);
+        assert_eq!(Some(3.0), page_t5_y_attributes.factor);
+    }
+
+    // todo: harmonize naming attributes / variables
+    #[test]
+    fn ntuples_uses_page_ldrs_to_fill_missing_or_override_ntuples_variables() {
+        let label = "NTUPLES";
+        let variables = "         MASS SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=        MASS,          INTENSITY,          RETENTION TIME\n\
+                                ##SYMBOL=          X,             Y,                  T\n\
+                                ##VAR_TYPE=        INDEPENDENT,   DEPENDENT,          INDEPENDENT\n\
+                                ##VAR_FORM=        AFFN,          AFFN,               AFFN\n\
+                                ##PAGE=            T = 5\n\
+                                ##XUNITS=          XUNITS-TEST\n\
+                                ##FIRSTX=          200.0\n\
+                                ##LASTX=           280.0\n\
+                                ##MINX=            200.0\n\
+                                ##MAXX=            280.0\n\
+                                ##XFACTOR=         2.0\n\
+                                ##YUNITS=          YUNITS-TEST\n\
+                                ##FIRSTY=          150.0\n\
+                                ##LASTY=           270.0\n\
+                                ##MINY=            150.0\n\
+                                ##MAXY=            270.0\n\
+                                ##YFACTOR=         3.0\n\
+                                ##NPOINTS=         5\n\
+                                ##DATA TABLE=      (XY..XY)            \n\
+                                100,  50.0;  110,  60.0;  120,  70.0   \n\
+                                130,  80.0;  140,  90.0                \n\
+                                ##END NTUPLES= MASS SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = vec![
+            // to be overridden by PAGE LDR
+            StringLdr::new("NPOINTS", "10"),
+        ];
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(1, ntuples.pages.len());
+        let page_t5 = &ntuples.pages[0];
+        assert!(page_t5.data_table.is_some());
+        let page_t5_data_table = page_t5.data_table.as_ref().unwrap();
+        let page_t5_x_attributes = &page_t5_data_table.attributes.0;
+        assert_eq!("MASS", page_t5_x_attributes.var_name);
+        assert_eq!("X", page_t5_x_attributes.symbol);
+        assert_eq!(
+            Some("INDEPENDENT".to_owned()),
+            page_t5_x_attributes.var_type
+        );
+        assert_eq!(Some("AFFN".to_owned()), page_t5_x_attributes.var_form);
+        assert_eq!(Some(5), page_t5_x_attributes.var_dim);
+        assert_eq!(Some("XUNITS-TEST".to_owned()), page_t5_x_attributes.units);
+        assert_eq!(Some(200.0), page_t5_x_attributes.first);
+        assert_eq!(Some(280.0), page_t5_x_attributes.last);
+        assert_eq!(Some(200.0), page_t5_x_attributes.min);
+        assert_eq!(Some(280.0), page_t5_x_attributes.max);
+        assert_eq!(Some(2.0), page_t5_x_attributes.factor);
+
+        let page_t5_y_attributes = &page_t5_data_table.attributes.1;
+        assert_eq!("INTENSITY", page_t5_y_attributes.var_name);
+        assert_eq!("Y", page_t5_y_attributes.symbol);
+        assert_eq!(Some("DEPENDENT".to_owned()), page_t5_y_attributes.var_type);
+        assert_eq!(Some("AFFN".to_owned()), page_t5_y_attributes.var_form);
+        assert_eq!(Some(5), page_t5_y_attributes.var_dim);
+        assert_eq!(Some("YUNITS-TEST".to_owned()), page_t5_y_attributes.units);
+        assert_eq!(Some(150.0), page_t5_y_attributes.first);
+        assert_eq!(Some(270.0), page_t5_y_attributes.last);
+        assert_eq!(Some(150.0), page_t5_y_attributes.min);
+        assert_eq!(Some(270.0), page_t5_y_attributes.max);
+        assert_eq!(Some(3.0), page_t5_y_attributes.factor);
+    }
+
+    #[test]
+    fn ntuples_fails_when_record_is_missing_var_name_ldr() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        // missing:
+        // "##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    PAGE NUMBER\n"
+        let input = b"##SYMBOL=             X,                Y,             N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,          AFFN\n\
+                                ##VAR_DIM=            4,                4,             1\n\
+                                ##UNITS=             HZ,  ARBITRARY UNITS,              \n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##PAGE= N=2\n\
+                                ##END NTUPLES= NMR SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_res.is_err());
+        assert!(ntuples_res.unwrap_err().to_string().contains("VAR_NAME"));
+    }
+
+    #[test]
+    fn ntuples_fails_when_record_contains_duplicate_ldrs() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,          AFFN\n\
+                                ##VAR_DIM=            4,                4,             1\n\
+                                ##UNITS=             HZ,  ARBITRARY UNITS,              \n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##PAGE= N=2\n\
+                                ##END NTUPLES= NMR SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_res.is_err());
+        assert!(ntuples_res.unwrap_err().to_string().contains("Duplicate"));
+    }
+
+    #[test]
+    fn ntuples_handles_standard_variable_ldr_missing_columns() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        // only one UNITS column
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,          AFFN\n\
+                                ##VAR_DIM=            4,                4,             1\n\
+                                ##UNITS=             HZ\n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##PAGE= N=2\n\
+                                ##END NTUPLES= NMR SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(3, ntuples.attributes.len());
+        let attributes_x = &ntuples.attributes[0];
+        assert_eq!(Some("HZ".to_owned()), attributes_x.units);
+        let attributes_y = &ntuples.attributes[1];
+        assert_eq!(None, attributes_y.units);
+        let attributes_n = &ntuples.attributes[2];
+        assert_eq!(None, attributes_n.units);
+    }
+
+    #[test]
+    fn ntuples_handles_custom_variable_ldr_missing_columns() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        // only one CUSTOM_LDR column
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,          AFFN\n\
+                                ##VAR_DIM=            4,                4,             1\n\
+                                ##UNITS=             HZ,  ARBITRARY UNITS,              \n\
+                                ##$CUSTOM_LDR=     VAL1\n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE= (X++(Y..Y)), XYDATA   $$ Real data points\n\
+                                1.0 +10+11\n\
+                                2.0 +20+21\n\
+                                ##PAGE= N=2\n\
+                                ##END NTUPLES= NMR SPECTRUM\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, _next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(3, ntuples.attributes.len());
+        let attributes_x = &ntuples.attributes[0];
+        assert_eq!(1, attributes_x.application_attributes.len());
+        assert_eq!(
+            StringLdr::new("$CUSTOMLDR", "VAL1"),
+            attributes_x.application_attributes[0]
+        );
+        let attributes_y = &ntuples.attributes[1];
+        assert!(attributes_y.application_attributes.is_empty());
+        let attributes_n = &ntuples.attributes[2];
+        assert!(attributes_n.application_attributes.is_empty());
+    }
+
+    #[test]
+    fn ntuples_fails_when_ntuples_record_ends_prematurely() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,          AFFN\n\
+                                ##VAR_DIM=            4,                4,             1\n\
+                                ##UNITS=             HZ,  ARBITRARY UNITS,              \n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_res.is_err());
+        assert!(ntuples_res
+            .unwrap_err()
+            .to_string()
+            .contains("Unexpected end"));
+    }
+
+    #[test]
+    fn ntuples_fails_when_page_record_ends_prematurely() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##VAR_TYPE= INDEPENDENT,        DEPENDENT,          PAGE\n\
+                                ##VAR_FORM=        AFFN,             ASDF,          AFFN\n\
+                                ##VAR_DIM=            4,                4,             1\n\
+                                ##UNITS=             HZ,  ARBITRARY UNITS,              \n\
+                                ##PAGE= N=1\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_res.is_err());
+        assert!(ntuples_res.unwrap_err().to_string().contains("Unexpected"));
+    }
+
+    #[test]
+    fn ntuples_fails_for_missing_data_table_variable_list() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE=                   $$ missing variable list\n\
+                                ##END NTUPLES= NMR SPECTRUM\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_res.is_err());
+        assert!(ntuples_res.unwrap_err().to_string().contains("Missing"));
+    }
+
+    #[test]
+    fn ntuples_fails_for_illegal_data_table_variable_list() {
+        let label = "NTUPLES";
+        let variables = " NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,   PAGE NUMBER\n\
+                                ##SYMBOL=             X,                Y,             N\n\
+                                ##PAGE= N=1\n\
+                                ##DATA TABLE= a, b, c           $$ illegal variable list\n\
+                                ##END NTUPLES= NMR SPECTRUM\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
+
+        assert!(ntuples_res.is_err());
+        assert!(ntuples_res.unwrap_err().to_string().contains("Unexpected"));
+    }
 }

@@ -1075,31 +1075,14 @@ impl<T: SeekBufRead> NTuples<T> {
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
         validate_input(label, None, Self::LABEL, None)?;
-        let (ldrs, attributes, pages, next_line) = Self::parse(block_ldrs, data_form, reader_ref)?;
-        Ok((
-            Self {
-                data_form: data_form.trim().to_owned(),
-                ldrs,
-                attributes,
-                pages,
-            },
-            next_line,
-        ))
+        Self::parse(block_ldrs, data_form.trim().to_owned(), reader_ref)
     }
 
     fn parse(
         block_ldrs: &[StringLdr],
-        data_form: &str,
+        data_form: String,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<
-        (
-            Vec<StringLdr>,
-            Vec<NTuplesAttributes>,
-            Vec<Page<T>>,
-            Option<String>,
-        ),
-        JdxError,
-    > {
+    ) -> Result<(Self, Option<String>), JdxError> {
         let mut buf = vec![];
         let mut reader = reader_ref.borrow_mut();
         // skip potential comment lines
@@ -1109,7 +1092,7 @@ impl<T: SeekBufRead> NTuples<T> {
         let mut pages = Vec::<Page<T>>::new();
         // parse PAGE parameters
         let (ldrs, attributes, mut next_line) =
-            Self::parse_attributes(data_form, next_line, &mut reader, &mut buf)?;
+            Self::parse_attributes(&data_form, next_line, &mut reader, &mut buf)?;
 
         while let Some(line) = next_line.as_ref() {
             if !is_ldr_start(line) {
@@ -1124,7 +1107,15 @@ impl<T: SeekBufRead> NTuples<T> {
 
                 // skip ##END NTUPLES
                 next_line = reader.read_line_iso_8859_1(&mut buf)?;
-                return Ok((ldrs, attributes, pages, next_line));
+                return Ok((
+                    Self {
+                        data_form,
+                        ldrs,
+                        attributes,
+                        pages,
+                    },
+                    next_line,
+                ));
             }
             if label != "PAGE" {
                 return Err(JdxError::new(&format!(
@@ -1154,9 +1145,18 @@ impl<T: SeekBufRead> NTuples<T> {
             )));
         }
 
-        Ok((ldrs, attributes, pages, next_line))
+        Ok((
+            Self {
+                data_form,
+                ldrs,
+                attributes,
+                pages,
+            },
+            next_line,
+        ))
     }
 
+    #[allow(clippy::type_complexity)]
     fn parse_attributes(
         data_form: &str,
         next_line: Option<String>,
@@ -1525,6 +1525,7 @@ impl<T: SeekBufRead> DataTable<T> {
     const X_SYMBOLS: [&'static str; 3] = ["X", "T2", "F2"];
     const Y_SYMBOLS: [&'static str; 3] = ["Y", "R", "I"];
 
+    #[allow(clippy::too_many_arguments)]
     fn new(
         label: &str,
         var_list: &str,

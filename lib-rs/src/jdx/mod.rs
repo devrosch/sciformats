@@ -1,5 +1,6 @@
 use std::{error::Error, fmt};
 
+mod jdx_audit_trail_parser;
 mod jdx_data_parser;
 pub mod jdx_parser;
 mod jdx_peak_assignments_parser;

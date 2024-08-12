@@ -7,6 +7,7 @@ use super::jdx_utils::{
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
+use crate::jdx::jdx_audit_trail_parser::AuditTrailParser;
 use crate::jdx::jdx_utils::{
     find_ldr, is_bruker_specific_section_start, parse_string_value, skip_pure_comments,
     skip_to_next_ldr,
@@ -1832,6 +1833,177 @@ pub struct NTuplesAttributes {
     factor: Option<f64>,
     /// Additional application specific LDRs.
     application_attributes: Vec<StringLdr>,
+}
+
+/// A JCAMP-DX NTUPLES DATA TABLE record.
+#[derive(Debug, PartialEq)]
+pub struct AuditTrail<T: SeekBufRead> {
+    /// The record's variable list. The value of the first line of the record
+    /// representing the structure of the data, e.g., "(NUMBER, WHEN, WHO, WHERE, WHAT)".
+    pub variable_list: String,
+    /// The Bruker variable list if present.
+    pub bruker_variable_list: Option<String>,
+
+    reader_ref: Rc<RefCell<T>>,
+    address: u64,
+}
+
+impl<T: SeekBufRead> AuditTrail<T> {
+    const LABEL: &'static str = "AUDITTRAIL";
+    const VARIABLE_LISTS: [&'static str; 6] = [
+        "(NUMBER, WHEN, WHO, WHERE, WHAT)",
+        "$$ (NUMBER, WHEN, WHO, WHERE, WHAT)",
+        "(NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)",
+        "$$ (NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)",
+        "(NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)",
+        "$$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)",
+    ];
+
+    fn new(
+        label: &str,
+        variable_list: String,
+        next_line: Option<String>,
+        reader_ref: Rc<RefCell<T>>,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        validate_input(
+            label,
+            Some(&variable_list.trim()),
+            Self::LABEL,
+            Some(&Self::VARIABLE_LISTS),
+        )?;
+
+        let mut buf = vec![];
+        let mut reader = reader_ref.borrow_mut();
+        let address = reader.stream_position()?;
+
+        // Bruker quirk: check if overruling Bruker var list is present
+        let (bruker_variable_list_opt, next_line) =
+            Self::scan_for_bruker_var_list(next_line, &mut reader, &mut buf)?;
+        if let Some(bruker_variable_list) = &bruker_variable_list_opt {
+            validate_input(
+                label,
+                Some(&bruker_variable_list.trim()),
+                Self::LABEL,
+                Some(&Self::VARIABLE_LISTS),
+            )?;
+        }
+
+        let next_line = skip_to_next_ldr(next_line, false, &mut *reader, &mut buf)?;
+        drop(reader);
+
+        Ok((
+            Self {
+                variable_list,
+                bruker_variable_list: bruker_variable_list_opt,
+                reader_ref,
+                address,
+            },
+            next_line,
+        ))
+    }
+
+    pub fn get_data(&self) -> Result<Vec<AuditTrailEntry>, JdxError> {
+        let mut variable_list = self
+            .bruker_variable_list
+            .as_ref()
+            .unwrap_or(&self.variable_list)
+            .as_str();
+        if is_pure_comment(&variable_list) {
+            // deal with variable lists that sit behind "$$"
+            variable_list = strip_line_comment(&variable_list, false, true)
+                .1
+                .unwrap_or_default();
+        }
+
+        // todo: reduce code duplication (PeakAssignments)
+        // ----------------------------------
+        // remember stream position
+        let reader = &mut *self.reader_ref.borrow_mut();
+        let initial_pos = reader.stream_position()?;
+        reader.seek(SeekFrom::Start(self.address))?;
+
+        // skip possible initial comment lines
+        let mut pos = reader.stream_position()?;
+        let mut buf = Vec::<u8>::with_capacity(128);
+        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+            if !is_pure_comment(&line) {
+                break;
+            }
+            pos = reader.stream_position()?;
+        }
+        // move stream to start of first non pure comment line
+        reader.seek(SeekFrom::Start(pos))?;
+
+        // parse audit trail entries
+        let mut parser = AuditTrailParser::new(variable_list, reader)?;
+        let mut audit_trail_entries = Vec::<AuditTrailEntry>::new();
+        while let Some(entry) = parser.next()? {
+            audit_trail_entries.push(entry);
+        }
+
+        // reset stream position
+        reader.seek(SeekFrom::Start(initial_pos))?;
+
+        Ok(audit_trail_entries)
+        // ----------------------------------
+    }
+
+    fn scan_for_bruker_var_list(
+        next_line: Option<String>,
+        reader: &mut T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Option<String>, Option<String>), JdxError> {
+        let mut next_line = reader.read_line_iso_8859_1(buf)?;
+        if next_line.is_none()
+            || !next_line
+                .as_ref()
+                .unwrap()
+                .starts_with("$$ ##TITLE= Audit trail,")
+        {
+            return Ok((None, next_line));
+        }
+
+        // Bruker audit trail
+        loop {
+            next_line = reader.read_line_iso_8859_1(buf)?;
+            if next_line.is_none() || !is_pure_comment(next_line.as_ref().unwrap()) {
+                break;
+            }
+            let next = next_line.as_ref().unwrap();
+            if next.starts_with("$$ ##AUDIT TRAIL=") {
+                let bruker_audit_trail =
+                    strip_line_comment(&next, false, true)
+                        .1
+                        .ok_or(JdxError::new(&format!(
+                            "Unexpected Bruker AUDIT TRAIL start: {}",
+                            next
+                        )))?;
+                let (mut bruker_var_list, _comment) = parse_ldr_start(bruker_audit_trail)?;
+                bruker_var_list = bruker_var_list.trim().to_owned();
+
+                return Ok((Some(bruker_var_list), next_line));
+            }
+        }
+        Ok((None, next_line))
+    }
+}
+
+/// A JCAMP-DX audit trail entry, i.e. one item in an AUDIT TRAIL.
+pub struct AuditTrailEntry {
+    /// NUMBER. Change number.
+    number: u64,
+    /// WHEN. Timestamp.
+    when: String,
+    /// WHO. Person who made or authorized the change.
+    who: String,
+    /// WHERE. Person’s location.
+    r#where: String,
+    /// PROCESS. The process.
+    process: Option<String>,
+    /// VERSION. Software version.
+    version: Option<String>,
+    /// WHAT. Details of the change made.
+    what: String,
 }
 
 #[cfg(test)]

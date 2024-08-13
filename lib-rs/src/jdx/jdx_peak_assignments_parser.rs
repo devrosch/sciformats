@@ -21,6 +21,7 @@ lazy_static! {
         regex::Regex::new(TUPLE_COMPONENTS_REGEX_PATTERN).unwrap();
 }
 
+/// A parser for PEAK ASSIGNMENTS.
 pub struct PeakAssignmentsParser<'r, T: SeekBufRead> {
     variable_list: &'r str,
     reader: &'r mut T,
@@ -50,6 +51,12 @@ impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
         })
     }
 
+    /// Next peak assignment.
+    ///
+    /// Assumes that a peak assignment tuple always starts on a new line,
+    /// but may span multiple lines. Returns the next peak assignment,
+    /// None if there is none, or JdxError if the next peak assignment is
+    /// malformed.
     pub fn next(&mut self) -> Result<Option<PeakAssignment>, JdxError> {
         let tuple_opt = self.next_tuple()?;
         match tuple_opt {

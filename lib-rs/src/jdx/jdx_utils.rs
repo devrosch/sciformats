@@ -208,18 +208,25 @@ pub fn find_ldr<'ldrs>(raw_label: &str, ldrs: &'ldrs [StringLdr]) -> Option<&'ld
     ldrs.iter().find(|&ldr| label == ldr.label)
 }
 
-pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxError> {
-    let value = strip_line_comment(&ldr.value, true, false).0;
+pub fn parse_str<P: FromStr>(value: &str, context: &str) -> Result<P, JdxError> {
+    value
+        .parse::<P>()
+        .map_err(|_e| JdxError::new(&format!("Illegal value for \"{}\": {}", context, value)))
+}
+
+pub fn parse_str_opt<P: FromStr>(value: &str, context: &str) -> Result<Option<P>, JdxError> {
     if value.is_empty() {
         return Ok(None);
     }
-    let parsed_value = value.parse::<P>().map_err(|_e| {
-        JdxError::new(&format!(
-            "Illegal value for \"{}\": {}",
-            ldr.label, ldr.value
-        ))
-    })?;
+    let parsed_value = value
+        .parse::<P>()
+        .map_err(|_e| JdxError::new(&format!("Illegal value for \"{}\": {}", context, value)))?;
     Ok(Some(parsed_value))
+}
+
+pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxError> {
+    let value = strip_line_comment(&ldr.value, true, false).0;
+    parse_str_opt(value, &ldr.label)
 }
 
 pub fn find_and_parse_parameter<P: FromStr>(

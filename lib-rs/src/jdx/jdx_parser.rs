@@ -1991,19 +1991,19 @@ impl<T: SeekBufRead> AuditTrail<T> {
 /// A JCAMP-DX audit trail entry, i.e. one item in an AUDIT TRAIL.
 pub struct AuditTrailEntry {
     /// NUMBER. Change number.
-    number: u64,
+    pub number: u64,
     /// WHEN. Timestamp.
-    when: String,
+    pub when: String,
     /// WHO. Person who made or authorized the change.
-    who: String,
+    pub who: String,
     /// WHERE. Person’s location.
-    r#where: String,
+    pub r#where: String,
     /// PROCESS. The process.
-    process: Option<String>,
+    pub process: Option<String>,
     /// VERSION. Software version.
-    version: Option<String>,
+    pub version: Option<String>,
     /// WHAT. Details of the change made.
-    what: String,
+    pub what: String,
 }
 
 #[cfg(test)]

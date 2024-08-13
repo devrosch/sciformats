@@ -75,7 +75,9 @@ pub struct JdxBlock<T: SeekBufRead> {
 
     /// The NTUPLES record if available.
     pub n_tuples: Option<NTuples<T>>,
-    // std::optional<AuditTrail> m_auditTrail;
+
+    /// The AUDIT TRAIL record if available.
+    pub audit_trail: Option<AuditTrail<T>>,
     // std::vector<BrukerSpecificParameters> m_brukerSpecificParameters;
     // std::vector<BrukerRelaxSection> m_brukerRelaxSections;
 }
@@ -135,6 +137,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut peak_table = Option::<PeakTable<T>>::None;
         let mut peak_assignments = Option::<PeakAssignments<T>>::None;
         let mut n_tuples = Option::<NTuples<T>>::None;
+        let mut audit_trail = Option::<AuditTrail<T>>::None;
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -255,7 +258,21 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     n_tuples = Some(data);
                     next_line = next;
                 }
-                "AUDITTRAIL" => todo!(),
+                "AUDITTRAIL" => {
+                    // todo: refactor to reduce code duplication
+                    if audit_trail.is_some() {
+                        return Err(JdxError::new(&format!(
+                            "Multiple \"{}\" LDRs found in block: {}",
+                            label, title
+                        )));
+                    }
+                    drop(reader);
+                    let (data, next) =
+                        AuditTrail::new(&label, &value, next_line, Rc::clone(&reader_ref))?;
+                    reader = reader_ref.borrow_mut();
+                    audit_trail = Some(data);
+                    next_line = next;
+                }
                 "$RELAX" => todo!(),
                 _ => {
                     // LDR is a regular LDR
@@ -299,6 +316,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 peak_table,
                 peak_assignments,
                 n_tuples,
+                audit_trail,
             },
             next_line,
         ))
@@ -1867,7 +1885,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
     ) -> Result<(Self, Option<String>), JdxError> {
         validate_input(
             label,
-            Some(&variable_list.trim()),
+            Some(variable_list.trim()),
             Self::LABEL,
             Some(&Self::VARIABLE_LISTS),
         )?;
@@ -1882,7 +1900,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
         if let Some(bruker_variable_list) = &bruker_variable_list_opt {
             validate_input(
                 label,
-                Some(&bruker_variable_list.trim()),
+                Some(bruker_variable_list.trim()),
                 Self::LABEL,
                 Some(&Self::VARIABLE_LISTS),
             )?;
@@ -1908,9 +1926,9 @@ impl<T: SeekBufRead> AuditTrail<T> {
             .as_ref()
             .unwrap_or(&self.variable_list)
             .as_str();
-        if is_pure_comment(&variable_list) {
+        if is_pure_comment(variable_list) {
             // deal with variable lists that sit behind "$$"
-            variable_list = strip_line_comment(&variable_list, false, true)
+            variable_list = strip_line_comment(variable_list, false, true)
                 .1
                 .unwrap_or_default();
         }
@@ -1949,7 +1967,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
     }
 
     fn scan_for_bruker_var_list(
-        next_line: Option<String>,
+        _next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
     ) -> Result<(Option<String>, Option<String>), JdxError> {
@@ -1972,7 +1990,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
             let next = next_line.as_ref().unwrap();
             if next.starts_with("$$ ##AUDIT TRAIL=") {
                 let bruker_audit_trail =
-                    strip_line_comment(&next, false, true)
+                    strip_line_comment(next, false, true)
                         .1
                         .ok_or(JdxError::new(&format!(
                             "Unexpected Bruker AUDIT TRAIL start: {}",
@@ -2480,8 +2498,31 @@ mod tests {
         assert_eq!(4, page_n1_data.len())
     }
 
+    #[test]
+    fn block_parses_audit_trail() {
+        let input = b"##TITLE= Audit Trail Test\n\
+                                ##JCAMP-DX= 5.01\n\
+                                ##DATA TYPE= NMR FID\n\
+                                ##ORIGIN= test\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, WHAT)\n\
+                                (   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,\n\
+                                    <acquisition>)\n\
+                                (   2,<2022-09-01 19:10:12.123 -0200>,<testuser>,<location01>,\n\
+                                    <raw data processing\n\
+                                    line 2\n\
+                                    line 3>)\n\
+                                ##END=\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert!(block.audit_trail.is_some());
+        let audit_trail = &block.audit_trail.unwrap();
+        assert_eq!(2, audit_trail.get_data().unwrap().len());
+    }
+
     // todo: remaining block tests:
-    // - parses block with AUDIT TRAIL
+    // - parses block with Bruker specific section
 
     #[test]
     fn block_parses_link_block() {

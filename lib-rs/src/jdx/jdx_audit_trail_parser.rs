@@ -41,7 +41,18 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         variable_list: &'r str,
         reader: &'r mut T,
     ) -> Result<AuditTrailParser<'r, T>, JdxError> {
-        todo!()
+        if !Self::AUDIT_TRAIL_VARIABLE_LISTS.contains(&variable_list) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for AUDIT TRAIL: {}",
+                &variable_list
+            )));
+        }
+
+        Ok(Self {
+            variable_list,
+            reader,
+            buf: vec![],
+        })
     }
 
     /// Next audit trail entry.
@@ -104,7 +115,8 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
                 )));
             }
 
-            tuple.push(' ');
+            // todo: different from PEAK ASSIGNMENTS: "\n" instead of " "
+            tuple.push('\n');
             tuple.push_str(line_start);
 
             if Self::is_tuple_end(line_start) {
@@ -139,13 +151,13 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         let when_opt = caps.get(2);
         let who_opt = caps.get(3);
         let where_opt = caps.get(4);
-        let process_opt = caps.get(5);
+        let process_or_version_opt = caps.get(5);
         let version_opt = caps.get(6);
         let what_opt = caps.get(7);
 
         // todo: reduce code duplication
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[0] == self.variable_list
-            && (process_opt.is_some() || version_opt.is_some())
+            && (process_or_version_opt.is_some() || version_opt.is_some())
         {
             return Err(JdxError::new(&format!(
                 "Illegal AUDIT TRAIL entry: {}",
@@ -153,7 +165,7 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
             )));
         }
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[1] == self.variable_list
-            && (process_opt.is_none() || version_opt.is_some())
+            && (process_or_version_opt.is_none() || version_opt.is_some())
         {
             return Err(JdxError::new(&format!(
                 "Illegal AUDIT TRAIL entry: {}",
@@ -161,7 +173,7 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
             )));
         }
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[2] == self.variable_list
-            && (process_opt.is_none() || version_opt.is_none())
+            && (process_or_version_opt.is_none() || version_opt.is_none())
         {
             return Err(JdxError::new(&format!(
                 "Illegal AUDIT TRAIL entry: {}",
@@ -175,8 +187,18 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         let when = when_opt.unwrap().as_str();
         let who = who_opt.unwrap().as_str();
         let r#where = where_opt.unwrap().as_str();
-        let process = process_opt.map(|m| m.as_str());
-        let version = version_opt.map(|m| m.as_str());
+        let (process, version) = match self.variable_list {
+            vars if vars == Self::AUDIT_TRAIL_VARIABLE_LISTS[0] => (None, None),
+            vars if vars == Self::AUDIT_TRAIL_VARIABLE_LISTS[1] => {
+                (None, process_or_version_opt.map(|m| m.as_str()))
+            }
+            vars if vars == Self::AUDIT_TRAIL_VARIABLE_LISTS[2] => (
+                process_or_version_opt.map(|m| m.as_str()),
+                version_opt.map(|m| m.as_str()),
+            ),
+            // unreachable, really
+            _ => (None, None),
+        };
         let what = what_opt.unwrap().as_str();
 
         Ok(AuditTrailEntry {

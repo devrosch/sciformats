@@ -1861,7 +1861,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
 
     fn new(
         label: &str,
-        variable_list: String,
+        variable_list: &str,
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
@@ -1893,7 +1893,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
 
         Ok((
             Self {
-                variable_list,
+                variable_list: variable_list.to_owned(),
                 bruker_variable_list: bruker_variable_list_opt,
                 reader_ref,
                 address,
@@ -1978,7 +1978,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
                             "Unexpected Bruker AUDIT TRAIL start: {}",
                             next
                         )))?;
-                let (mut bruker_var_list, _comment) = parse_ldr_start(bruker_audit_trail)?;
+                let (_label, mut bruker_var_list) = parse_ldr_start(bruker_audit_trail)?;
                 bruker_var_list = bruker_var_list.trim().to_owned();
 
                 return Ok((Some(bruker_var_list), next_line));
@@ -1988,6 +1988,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
     }
 }
 
+#[derive(Debug)]
 /// A JCAMP-DX audit trail entry, i.e. one item in an AUDIT TRAIL.
 pub struct AuditTrailEntry {
     /// NUMBER. Change number.
@@ -4920,5 +4921,215 @@ mod tests {
 
         assert!(ntuples_res.is_err());
         assert!(ntuples_res.unwrap_err().to_string().contains("Unexpected"));
+    }
+
+    #[test]
+    fn audit_trail_parses_5_parameters_audit_trail() {
+        let label = "AUDITTRAIL";
+        let variables = "$$ (NUMBER, WHEN, WHO, WHERE, WHAT)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,\n\
+                                \x20       <acquisition>)\n\
+                                (   2,<2022-09-01 19:10:12.123 -0200>,<testuser>,<location01>,\n\
+                                \x20       <raw data processing\n\
+                                \x20       line 2\n\
+                                \x20       line 3>)\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (audit_trail, _next) =
+            AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
+        let entries = audit_trail.get_data().unwrap();
+
+        assert_eq!(2, entries.len());
+        let entry1 = &entries[0];
+        assert_eq!(1, entry1.number);
+        assert_eq!("2022-09-01 09:10:11.123 -0200", entry1.when);
+        assert_eq!("testuser", entry1.who);
+        assert_eq!("location01", entry1.r#where);
+        assert_eq!(None, entry1.process);
+        assert_eq!(None, entry1.version);
+        assert_eq!("acquisition", entry1.what);
+        let entry2 = &entries[1];
+        assert_eq!(2, entry2.number);
+        assert_eq!("2022-09-01 19:10:12.123 -0200", entry2.when);
+        assert_eq!("testuser", entry2.who);
+        assert_eq!("location01", entry2.r#where);
+        assert_eq!(None, entry2.process);
+        assert_eq!(None, entry2.version);
+        assert_eq!("raw data processing\nline 2\nline 3", entry2.what);
+    }
+
+    #[test]
+    fn audit_trail_parses_6_parameters_audit_trail() {
+        let label = "AUDITTRAIL";
+        let variables = "$$ (NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,<SW 1.3>,\n\
+                                \x20       <acquisition>)\n\
+                                (   2,<2022-09-01 19:10:12.123 -0200>,<testuser>,<location01>,<SW 1.3>,\n\
+                                \x20       <raw data processing\n\
+                                \x20       line 2\n\
+                                \x20       line 3>)\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (audit_trail, _next) =
+            AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
+        let entries = audit_trail.get_data().unwrap();
+
+        assert_eq!(2, entries.len());
+        let entry1 = &entries[0];
+        assert_eq!(1, entry1.number);
+        assert_eq!("2022-09-01 09:10:11.123 -0200", entry1.when);
+        assert_eq!("testuser", entry1.who);
+        assert_eq!("location01", entry1.r#where);
+        assert_eq!(None, entry1.process);
+        assert_eq!(Some("SW 1.3".to_owned()), entry1.version);
+        assert_eq!("acquisition", entry1.what);
+        let entry2 = &entries[1];
+        assert_eq!(2, entry2.number);
+        assert_eq!("2022-09-01 19:10:12.123 -0200", entry2.when);
+        assert_eq!("testuser", entry2.who);
+        assert_eq!("location01", entry2.r#where);
+        assert_eq!(None, entry2.process);
+        assert_eq!(Some("SW 1.3".to_owned()), entry2.version);
+        assert_eq!("raw data processing\nline 2\nline 3", entry2.what);
+    }
+
+    #[test]
+    fn audit_trail_parses_7_parameters_audit_trail() {
+        let label = "AUDITTRAIL";
+        let variables = "$$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,<proc1>,<SW 1.3>,\n\
+                                \x20     <acquisition>)\n\
+                                (   2,<2022-09-01 19:10:12.123 -0200>,<testuser>,<location01>,<proc1>,<SW 1.3>,\n\
+                                \x20     <raw data processing\n\
+                                \x20      line 2\n\
+                                \x20      line 3>)\n\
+                                ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (audit_trail, _next) =
+            AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
+        let entries = audit_trail.get_data().unwrap();
+
+        assert_eq!(2, entries.len());
+        let entry1 = &entries[0];
+        assert_eq!(1, entry1.number);
+        assert_eq!("2022-09-01 09:10:11.123 -0200", entry1.when);
+        assert_eq!("testuser", entry1.who);
+        assert_eq!("location01", entry1.r#where);
+        assert_eq!(Some("proc1".to_owned()), entry1.process);
+        assert_eq!(Some("SW 1.3".to_owned()), entry1.version);
+        assert_eq!("acquisition", entry1.what);
+        let entry2 = &entries[1];
+        assert_eq!(2, entry2.number);
+        assert_eq!("2022-09-01 19:10:12.123 -0200", entry2.when);
+        assert_eq!("testuser", entry2.who);
+        assert_eq!("location01", entry2.r#where);
+        assert_eq!(Some("proc1".to_owned()), entry2.process);
+        assert_eq!(Some("SW 1.3".to_owned()), entry2.version);
+        assert_eq!("raw data processing\nline 2\nline 3", entry2.what);
+    }
+
+    #[test]
+    fn audit_trail_parses_bruker_nmr_type_audit_trail() {
+        let label = "AUDITTRAIL";
+        // variables list given may deviate between "##AUDIT TRAIL" and "$$ ##AUDIT
+        // TRAIL" with "$$ ##AUDIT TRAIL" reflecting the actual structure
+        let variables = "$$ (NUMBER, WHEN, WHO, WHERE, WHAT)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"$$ ##TITLE= Audit trail, TOPSPIN		Version 3.2\n\
+                                $$ ##JCAMPDX= 5.01\n\
+                                $$ ##ORIGIN= Bruker BioSpin GmbH\n\
+                                $$ ##OWNER= Test\n\
+                                $$ $$ C:\\Bruker\\TopSpin3.2/testpath/1/pdata/1/auditp.txt\n\
+                                $$ ##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)\n\
+                                (   1,<2022-01-02 03:04:05.999 +0001>,<testuser>,<location01>,<proc1>,<TOPSPIN 3.2>,\n\
+                                \x20       <accumulate start offset = 0 scale = 1 ppm\n\
+                                \x20       3 9876543 \"something/opt/topspin3.2/data/loc01/nmr\"\n\
+                                \x20       data hash MD5: 64K\n\
+                                \x20       01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10>)\n\
+                                (   2,<2022-01-02 04:04:05.999 +0001>,<testuser>,<location01>,<proc1>,<TOPSPIN 3.2>,\n\
+                                \x20       <accumulate start offset = 0 scale = 1 ppm\n\
+                                \x20       3 9876543 \"something/opt/topspin3.2/data/loc01/nmr\"\n\
+                                \x20       data hash MD5: 64K\n\
+                                \x20       02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11>)\n\
+                                (   3,<2022-01-02 05:04:05.999 +0001>,<testuser>,<location01>,<proc1>,<TOPSPIN 3.2>,\n\
+                                \x20       <accumulate start offset = 0 scale = 1 ppm\n\
+                                \x20       3 9876543 \"something/opt/topspin3.2/data/loc01/nmr\"\n\
+                                \x20       data hash MD5: 64K\n\
+                                \x20       03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12>)\n\
+                                $$ ##END=\n\
+                                $$\n\
+                                $$ $$ hash MD5\n\
+                                $$ $$ 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11 12 13\n\
+                                ##$RELAX= \n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (audit_trail, _next) =
+            AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
+        let entries = audit_trail.get_data().unwrap();
+
+        assert_eq!(3, entries.len());
+        let entry1 = &entries[0];
+        assert_eq!(1, entry1.number);
+        assert_eq!("2022-01-02 03:04:05.999 +0001", entry1.when);
+        assert_eq!("testuser", entry1.who);
+        assert_eq!("location01", entry1.r#where);
+        assert_eq!(Some("proc1".to_owned()), entry1.process);
+        assert_eq!(Some("TOPSPIN 3.2".to_owned()), entry1.version);
+        assert_eq!(
+            "accumulate start offset = 0 scale = 1 ppm\n\
+            3 9876543 \"something\
+            /opt/topspin3.2/data/loc01/nmr\"\n\
+            data hash MD5: 64K\n\
+            01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10",
+            entry1.what
+        );
+        let entry2 = &entries[1];
+        assert_eq!(2, entry2.number);
+        assert_eq!("2022-01-02 04:04:05.999 +0001", entry2.when);
+        let entry3 = &entries[2];
+        assert_eq!(3, entry3.number);
+        assert_eq!("2022-01-02 05:04:05.999 +0001", entry3.when);
+    }
+
+    #[test]
+    fn audit_trail_parsing_fails_for_unclosed_parenthesis() {
+        let label = "AUDITTRAIL";
+        let variables = "$$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input =
+            b"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,<proc1>,<SW 1.3>,\n\
+            ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (audit_trail, _next) =
+            AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
+        let error = audit_trail.get_data().unwrap_err();
+
+        assert!(error
+            .to_string()
+            .contains("No closing parenthesis found for"));
+    }
+
+    #[test]
+    fn audit_trail_parsing_fails_when_file_ends_unexpectedly() {
+        let label = "AUDITTRAIL";
+        let variables = " $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input =
+            b"(   1,<2022-09-01 09:10:11.123 -0200>,<testuser>,<location01>,<proc1>,<SW 1.3>,\n\
+            \x20      <acquisition>)\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+
+        let (audit_trail, _next) =
+            AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
+        let error = audit_trail.get_data().unwrap_err();
+
+        assert!(error.to_string().contains("end") && error.to_string().contains("parenthesis"));
     }
 }

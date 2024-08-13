@@ -2025,6 +2025,122 @@ pub struct AuditTrailEntry {
     pub what: String,
 }
 
+#[derive(Debug)]
+/// A JCAMP-DX Bruker specific RELAX section.
+///
+/// This section starts with:
+///
+/// ##$RELAX=
+/// ##$BRUKER FILE EXP= <file name>
+///
+/// and ends with when another LDR starts (which could be another RELAX section)
+/// or a Bruker specific parameters section starts indicated by:
+///
+/// $$ Bruker specific parameters <optional additional text>
+/// $$ --------------------------
+pub struct BrukerRelaxSection {
+    /// The section name.
+    pub name: String,
+    /// The section content.
+    pub content: String,
+}
+
+impl BrukerRelaxSection {
+    const LABEL: &'static str = "$RELAX";
+    const LABEL_FILE_NAME_START: &'static str = "$BRUKERFILE";
+
+    fn new<T: SeekBufRead>(
+        label: &str,
+        value: &str,
+        _next_line: Option<String>,
+        reader: &mut T,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        Self::validate_input(label, value, Self::LABEL)?;
+        Self::parse(label, reader)
+    }
+
+    fn validate_input(label: &str, value: &str, expected_label: &str) -> Result<(), JdxError> {
+        if label != expected_label || !value.trim().is_empty() {
+            Err(JdxError::new(&format!(
+                "Illegal start of Bruker {} section: ##{}: {}",
+                expected_label, label, value
+            )))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn parse<T: SeekBufRead>(
+        label: &str,
+        reader: &mut T,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        let mut buf = vec![];
+        let next_line = reader.read_line_iso_8859_1(&mut buf)?;
+        let file_name = match &next_line {
+            None => {
+                return Err(JdxError::new(&format!(
+                    "Premature end of Bruker {} section.",
+                    label
+                )))
+            }
+            Some(line) => {
+                if is_bruker_specific_section_start(line) {
+                    // RELAX LDR immediately followed by
+                    // $$ Bruker specific parameters
+                    // => skip further parsing
+                    return Ok((
+                        // todo: make properties optional?
+                        Self {
+                            name: "".to_owned(),
+                            content: "".to_owned(),
+                        },
+                        next_line,
+                    ));
+                }
+
+                let (label, file_name) = parse_ldr_start(line)?;
+                if !label.starts_with(Self::LABEL_FILE_NAME_START) {
+                    return Err(JdxError::new(&format!(
+                        "Illegal start of Bruker {} section. {} not followed by {}... .",
+                        label,
+                        label,
+                        Self::LABEL_FILE_NAME_START
+                    )));
+                }
+
+                file_name
+            }
+        };
+
+        let mut content = String::new();
+        let mut next_line = reader.read_line_iso_8859_1(&mut buf)?;
+        while let Some(line) = &next_line {
+            if is_ldr_start(line) || is_bruker_specific_section_start(line) {
+                break;
+            }
+
+            let next_content = match line {
+                s if s.starts_with("$$ ") => &line[3..],
+                s if s.starts_with("$$") => &line[2..],
+                s => s.as_str(),
+            };
+
+            content.push_str(next_content);
+            content.push('\n');
+
+            next_line = reader.read_line_iso_8859_1(&mut buf)?;
+        }
+
+        Ok((
+            Self {
+                name: file_name,
+                content,
+            },
+            next_line,
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

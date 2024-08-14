@@ -78,8 +78,12 @@ pub struct JdxBlock<T: SeekBufRead> {
 
     /// The AUDIT TRAIL record if available.
     pub audit_trail: Option<AuditTrail<T>>,
-    // std::vector<BrukerSpecificParameters> m_brukerSpecificParameters;
-    // std::vector<BrukerRelaxSection> m_brukerRelaxSections;
+
+    /// Data contained in Bruker specific parameter sections if available.
+    pub bruker_specific_parameters: Vec<BrukerSpecificParameters>,
+
+    /// Data contained in Bruker RELAX sections if available.
+    pub bruker_relax_sections: Vec<BrukerRelaxSection>,
 }
 
 impl<T: SeekBufRead> JdxBlock<T> {
@@ -138,6 +142,8 @@ impl<T: SeekBufRead> JdxBlock<T> {
         let mut peak_assignments = Option::<PeakAssignments<T>>::None;
         let mut n_tuples = Option::<NTuples<T>>::None;
         let mut audit_trail = Option::<AuditTrail<T>>::None;
+        let mut bruker_specific_parameters = Vec::<BrukerSpecificParameters>::new();
+        let mut bruker_relax_sections = Vec::<BrukerRelaxSection>::new();
 
         let (title, mut next_line) = parse_string_value(title, &mut *reader, buf)?;
         ldrs.push(StringLdr {
@@ -148,7 +154,10 @@ impl<T: SeekBufRead> JdxBlock<T> {
         while let Some(ref line) = next_line {
             if is_pure_comment(line) {
                 if is_bruker_specific_section_start(line) {
-                    todo!();
+                    let (section, next) = BrukerSpecificParameters::new(next_line, &mut *reader)?;
+                    bruker_specific_parameters.push(section);
+                    next_line = next;
+                    continue;
                 }
                 next_line = skip_pure_comments(next_line, true, &mut *reader, buf)?;
                 continue;
@@ -273,7 +282,17 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     audit_trail = Some(data);
                     next_line = next;
                 }
-                "$RELAX" => todo!(),
+                "$RELAX" => {
+                    let (relax_section, next) =
+                        BrukerRelaxSection::new(&label, &value, next_line, &mut *reader)?;
+                    // only add non blank sections
+                    // section may be blank if ##$RELAX= line is immediately followed by
+                    // $$ Bruker specific parameters
+                    if !relax_section.name.is_empty() || !relax_section.content.is_empty() {
+                        bruker_relax_sections.push(relax_section);
+                    }
+                    next_line = next;
+                }
                 _ => {
                     // LDR is a regular LDR
                     (value, next_line) = parse_string_value(&value, &mut *reader, buf)?;
@@ -317,6 +336,8 @@ impl<T: SeekBufRead> JdxBlock<T> {
                 peak_assignments,
                 n_tuples,
                 audit_trail,
+                bruker_specific_parameters,
+                bruker_relax_sections,
             },
             next_line,
         ))
@@ -2220,9 +2241,9 @@ impl BrukerRelaxSection {
                 let (label, file_name) = parse_ldr_start(line)?;
                 if !label.starts_with(Self::LABEL_FILE_NAME_START) {
                     return Err(JdxError::new(&format!(
-                        "Illegal start of Bruker {} section. {} not followed by {}... .",
-                        label,
-                        label,
+                        "Illegal start of Bruker {} section. {} not followed by \"{}...\".",
+                        Self::LABEL,
+                        Self::LABEL,
                         Self::LABEL_FILE_NAME_START
                     )));
                 }
@@ -2756,8 +2777,55 @@ mod tests {
         assert_eq!(2, audit_trail.get_data().unwrap().len());
     }
 
-    // todo: remaining block tests:
-    // - parses block with Bruker specific section
+    #[test]
+    fn block_parses_bruker_parameters_section() {
+        let input = b"##TITLE= Bruker Parameters Test\n\
+                                ##JCAMP-DX= 5.01\n\
+                                ##DATA TYPE= NMR FID\n\
+                                ##ORIGIN= test\n\
+                                ##OWNER= PUBLIC DOMAIN\n\
+                                $$ Bruker specific parameters\n\
+                                $$ --------------------------\n\
+                                ##$DU= <C:/>\n\
+                                ##$NAME= <Jul11-2023>\n\
+                                ##$AQSEQ= 0\n\
+                                ##$AQ_mod= 3\n\
+                                $$ End of Bruker specific parameters\n\
+                                $$ ---------------------------------\n\
+                                ##END=\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert_eq!(1, block.bruker_specific_parameters.len());
+        let bruker_specific_parameters = &block.bruker_specific_parameters[0];
+        assert_eq!(
+            "Bruker specific parameters",
+            bruker_specific_parameters.name
+        );
+        assert_eq!(4, bruker_specific_parameters.content.len());
+    }
+
+    #[test]
+    fn block_parses_bruker_relax_section() {
+        let input = b"##TITLE= Bruker RELAX Test\n\
+                                ##JCAMP-DX= 5.01\n\
+                                ##DATA TYPE= NMR FID\n\
+                                ##ORIGIN= test\n\
+                                ##OWNER= PUBLIC DOMAIN\n\
+                                ##$RELAX=\n\
+                                ##$BRUKER FILE EXP=file_name_1\n\
+                                $$ 1.0\n\
+                                $$0.0 1.0 2.0\n\
+                                $$    123   \n\
+                                ##END=\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+        assert_eq!(1, block.bruker_relax_sections.len());
+        let bruker_relax_section = &block.bruker_relax_sections[0];
+        assert_eq!("file_name_1", bruker_relax_section.name);
+        assert!(bruker_relax_section.content.contains("123"));
+    }
 
     #[test]
     fn block_parses_link_block() {
@@ -5417,7 +5485,7 @@ mod tests {
                                 ##$NAME= <Jul11-2023>\n\
                                 ##$AQSEQ= 0\n\
                                 ##$AQ_mod= 3\n\
-                                $$ Bruker specific parameters for F1\n\
+                                $$ End of Bruker specific parameters for F1\n\
                                 $$ ---------------------------------\n";
         let mut reader = Cursor::new(input);
 
@@ -5486,7 +5554,7 @@ mod tests {
         let next_line = Some("$$ Bruker specific parameters".to_owned());
         let input = b"##$DU= <C:/>\n\
                                 ##$NAME= <Jul11-2023>\n\
-                                $$ Bruker specific parameters for F1\n\
+                                $$ End of Bruker specific parameters for F1\n\
                                 $$ ---------------------------------\n";
         let mut reader = Cursor::new(input);
 

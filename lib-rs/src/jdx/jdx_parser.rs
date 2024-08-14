@@ -9,8 +9,8 @@ use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
 use crate::jdx::jdx_audit_trail_parser::AuditTrailParser;
 use crate::jdx::jdx_utils::{
-    find_ldr, is_bruker_specific_section_start, parse_string_value, skip_pure_comments,
-    skip_to_next_ldr,
+    find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start, parse_string_value,
+    skip_pure_comments, skip_to_next_ldr,
 };
 use lazy_static::lazy_static;
 use std::cell::RefCell;
@@ -2046,6 +2046,100 @@ pub struct BrukerSpecificParameters {
 
 impl BrukerSpecificParameters {
     const SECTION_END_TEXT: &'static str = "$$ End of Bruker specific parameters";
+
+    fn new<T: SeekBufRead>(
+        next_line: Option<String>,
+        reader: &mut T,
+    ) -> Result<(Self, Option<String>), JdxError> {
+        let (name, content, next_line) = Self::parse(next_line, reader, &mut vec![])?;
+
+        Ok((Self { name, content }, next_line))
+    }
+
+    fn parse<T: SeekBufRead>(
+        next_line: Option<String>,
+        reader: &mut T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(String, Vec<StringLdr>, Option<String>), JdxError> {
+        if next_line.is_none() || !is_bruker_specific_section_start(next_line.as_ref().unwrap()) {
+            return Err(JdxError::new(&format!(
+                "Illegal start of Bruker specific section: {}",
+                next_line.unwrap_or_default()
+            )));
+        }
+        let name = strip_line_comment(next_line.as_ref().unwrap(), false, true)
+            .1
+            .unwrap_or_default();
+
+        let mut next_line = reader.read_line_iso_8859_1(buf)?;
+        if next_line.is_none() {
+            return Err(JdxError::new(&format!(
+                "Illegal body of Bruker specific section. No content in: {}",
+                next_line.unwrap_or_default()
+            )));
+        }
+        if !Self::is_dashed_line(next_line.as_deref()) {
+            return Err(JdxError::new(&format!(
+                "Illegal body of Bruker specific section. No dashed line after: {}",
+                name
+            )));
+        }
+        next_line = reader.read_line_iso_8859_1(buf)?;
+
+        let (content, next_line) = Self::parse_ldrs(next_line, reader, buf)?;
+        Ok((name.to_owned(), content, next_line))
+    }
+
+    fn is_dashed_line(next_line: Option<&str>) -> bool {
+        if let Some(line) = next_line {
+            let (content, comment) = strip_line_comment(line, true, true);
+            if content.is_empty() && comment.is_some() {
+                return comment.unwrap().starts_with("-----");
+            }
+        }
+        false
+    }
+
+    fn parse_ldrs<T: SeekBufRead>(
+        mut next_line: Option<String>,
+        reader: &mut T,
+        buf: &mut Vec<u8>,
+    ) -> Result<(Vec<StringLdr>, Option<String>), JdxError> {
+        let mut content = Vec::<StringLdr>::new();
+        while next_line.is_some()
+            && !is_bruker_specific_section_start(next_line.as_ref().unwrap())
+            && !is_bruker_specific_section_end(next_line.as_ref().unwrap())
+        {
+            // todo: skip other leading comments?
+            let (label, mut value) = parse_ldr_start(next_line.as_ref().unwrap())?;
+            (value, next_line) = parse_string_value(&value, reader, buf)?;
+            content.push(StringLdr::new(label, value));
+        }
+
+        if next_line.is_none()
+            || (!is_bruker_specific_section_start(next_line.as_ref().unwrap())
+                && !is_bruker_specific_section_end(next_line.as_ref().unwrap()))
+        {
+            return Err(JdxError::new(&format!(
+                "Unexpected end of Bruker specific section: {}",
+                next_line.unwrap_or_default()
+            )));
+        }
+        if is_bruker_specific_section_end(next_line.as_ref().unwrap()) {
+            // skip dashes after section end marker
+            next_line = reader.read_line_iso_8859_1(buf)?;
+            if !Self::is_dashed_line(next_line.as_deref()) {
+                return Err(JdxError::new(&format!(
+                    "Illegal end of Bruker specific section. No dash line after \"{}\". Instead: {}",
+                    Self::SECTION_END_TEXT,
+                    next_line.unwrap_or_default()
+                )));
+            }
+            next_line = reader.read_line_iso_8859_1(buf)?;
+        }
+
+        Ok((content, next_line))
+    }
 }
 
 /// A JCAMP-DX Bruker specific RELAX section.

@@ -2037,6 +2037,7 @@ pub struct AuditTrailEntry {
 ///
 /// $$ End of Bruker specific parameters
 /// $$ ---------------------------------
+#[derive(Debug)]
 pub struct BrukerSpecificParameters {
     /// The section name.
     pub name: String,
@@ -2094,6 +2095,7 @@ impl BrukerSpecificParameters {
         if let Some(line) = next_line {
             let (content, comment) = strip_line_comment(line, true, true);
             if content.is_empty() && comment.is_some() {
+                #[allow(clippy::unnecessary_unwrap)]
                 return comment.unwrap().starts_with("-----");
             }
         }
@@ -5405,6 +5407,130 @@ mod tests {
         let error = audit_trail.get_data().unwrap_err();
 
         assert!(error.to_string().contains("end") && error.to_string().contains("parenthesis"));
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parses_regular_content() {
+        let next_line = Some("$$ Bruker specific parameters".to_owned());
+        let input = b"$$ --------------------------\n\
+                                ##$DU= <C:/>\n\
+                                ##$NAME= <Jul11-2023>\n\
+                                ##$AQSEQ= 0\n\
+                                ##$AQ_mod= 3\n\
+                                $$ Bruker specific parameters for F1\n\
+                                $$ ---------------------------------\n";
+        let mut reader = Cursor::new(input);
+
+        let (bruker_parameters_section, _next) =
+            BrukerSpecificParameters::new(next_line, &mut reader).unwrap();
+
+        assert_eq!("Bruker specific parameters", bruker_parameters_section.name);
+        let content = &bruker_parameters_section.content;
+        assert_eq!(4, content.len());
+        assert_eq!(StringLdr::new("$DU", "<C:/>"), content[0]);
+        assert_eq!(StringLdr::new("$NAME", "<Jul11-2023>"), content[1]);
+        assert_eq!(StringLdr::new("$AQSEQ", "0"), content[2]);
+        assert_eq!(StringLdr::new("$AQMOD", "3"), content[3]);
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parses_f1() {
+        let next_line = Some("$$ Bruker specific parameters for F1".to_owned());
+        let input = b"$$ ---------------------------------\n\
+                                ##$AMP= (0..31)\n\
+                                100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 \n\
+                                100 100 100 100 100 100 100 100 100 100 100 100 100 100 \n\
+                                ##$AQSEQ= 0\n\
+                                ##$AQ_mod= 2\n\
+                                $$ End of Bruker specific parameters\n\
+                                $$ ---------------------------------\n";
+        let mut reader = Cursor::new(input);
+
+        let (bruker_parameters_section, _next) =
+            BrukerSpecificParameters::new(next_line, &mut reader).unwrap();
+
+        assert_eq!(
+            "Bruker specific parameters for F1",
+            bruker_parameters_section.name
+        );
+        let content = &bruker_parameters_section.content;
+        assert_eq!(3, content.len());
+        assert_eq!(
+            StringLdr::new(
+                "$AMP",
+                "(0..31)\n\
+                100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 \
+                100 100 \n\
+                100 100 100 100 100 100 100 100 100 100 100 100 100 100 "
+            ),
+            content[0]
+        );
+        assert_eq!(StringLdr::new("$AQSEQ", "0"), content[1]);
+        assert_eq!(StringLdr::new("$AQMOD", "2"), content[2]);
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parsing_fails_when_premature_end() {
+        let next_line = Some("$$ Bruker specific parameters".to_owned());
+        let input = b"$$ --------------------------\n\
+                                ##$DU= <C:/>\n";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerSpecificParameters::new(next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Unexpected"));
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parsing_fails_when_missing_dashes_after_start() {
+        let next_line = Some("$$ Bruker specific parameters".to_owned());
+        let input = b"##$DU= <C:/>\n\
+                                ##$NAME= <Jul11-2023>\n\
+                                $$ Bruker specific parameters for F1\n\
+                                $$ ---------------------------------\n";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerSpecificParameters::new(next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parsing_fails_when_missing_dashes_after_end() {
+        let next_line = Some("$$ Bruker specific parameters for F1".to_owned());
+        let input = b"$$ ---------------------------------\n\
+                                ##$AQSEQ= 0\n\
+                                $$ End of Bruker specific parameters\n";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerSpecificParameters::new(next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parsing_fails_on_illegal_start() {
+        let next_line = Some("$$ Not Bruker specific parameters".to_owned());
+        let input = b"$$ ---------------------------------\n\
+                                ##$AQSEQ= 0\n\
+                                $$ End of Bruker specific parameters\n\
+                                $$ ---------------------------------\n";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerSpecificParameters::new(next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parsing_fails_on_premature_end() {
+        let next_line = Some("$$ Bruker specific parameters".to_owned());
+        let input = b"";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerSpecificParameters::new(next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Illegal"));
     }
 
     #[test]

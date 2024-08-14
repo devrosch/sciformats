@@ -2006,8 +2006,8 @@ impl<T: SeekBufRead> AuditTrail<T> {
     }
 }
 
-#[derive(Debug)]
 /// A JCAMP-DX audit trail entry, i.e. one item in an AUDIT TRAIL.
+#[derive(Debug)]
 pub struct AuditTrailEntry {
     /// NUMBER. Change number.
     pub number: u64,
@@ -2025,7 +2025,29 @@ pub struct AuditTrailEntry {
     pub what: String,
 }
 
-#[derive(Debug)]
+/// A JCAMP-DX Bruker specific parameters section.
+///
+/// This section starts with:
+///
+/// $$ Bruker specific parameters <optional additional text>
+/// $$ --------------------------
+///
+/// and ends when another Bruker specific section starts or the section end is
+/// indicated by:
+///
+/// $$ End of Bruker specific parameters
+/// $$ ---------------------------------
+pub struct BrukerSpecificParameters {
+    /// The section name.
+    pub name: String,
+    /// The section content.
+    pub content: Vec<StringLdr>,
+}
+
+impl BrukerSpecificParameters {
+    const SECTION_END_TEXT: &'static str = "$$ End of Bruker specific parameters";
+}
+
 /// A JCAMP-DX Bruker specific RELAX section.
 ///
 /// This section starts with:
@@ -2038,6 +2060,7 @@ pub struct AuditTrailEntry {
 ///
 /// $$ Bruker specific parameters <optional additional text>
 /// $$ --------------------------
+#[derive(Debug)]
 pub struct BrukerRelaxSection {
     /// The section name.
     pub name: String,
@@ -5288,5 +5311,120 @@ mod tests {
         let error = audit_trail.get_data().unwrap_err();
 
         assert!(error.to_string().contains("end") && error.to_string().contains("parenthesis"));
+    }
+
+    #[test]
+    fn quirk_bruker_relax_section_parses_arbitrary_content() {
+        let label = "$RELAX";
+        let value = "";
+        let next_line = Some(format!("##{label}={value}"));
+        let input = b"##$BRUKER FILE EXP=file_name_1\n\
+                                $$ 1.0\n\
+                                $$0.0 1.0 2.0\n\
+                                $$    123   \n\
+                                ##$RELAX=\n";
+        let mut reader = Cursor::new(input);
+
+        let (bruker_relax_section, _next) =
+            BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap();
+
+        assert_eq!("file_name_1", bruker_relax_section.name);
+        assert_eq!(
+            "1.0\n0.0 1.0 2.0\n   123   \n",
+            bruker_relax_section.content
+        );
+    }
+
+    #[test]
+    fn quirk_bruker_relax_section_parses_with_jdx_content() {
+        let label = "$RELAX";
+        let value = "";
+        let next_line = Some(format!("##{label}={value}"));
+        let input = b"##$BRUKER FILE EXP=file_name_2\n\
+                                $$ ##TITLE= Parameter file\n\
+                                $$ ##JCAMPDX= 5.0\n\
+                                $$ $$ c:/nmr/data/somepath\n\
+                                $$ ##$BLKPA= (0..15)\n\
+                                3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 \n\
+                                $$ ##$BLKTR= (0..15)\n\
+                                3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 \n\
+                                $$ ##$DE1= 2\n\
+                                $$ ##END=\n\
+                                ##$RELAX=\n";
+        let mut reader = Cursor::new(input);
+
+        let (bruker_relax_section, _next) =
+            BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap();
+
+        assert_eq!("file_name_2", bruker_relax_section.name);
+        assert_eq!(
+            "##TITLE= Parameter file\n\
+            ##JCAMPDX= 5.0\n\
+            $$ c:/nmr/data/somepath\n\
+            ##$BLKPA= (0..15)\n\
+            3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 \n\
+            ##$BLKTR= (0..15)\n\
+            3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 \n\
+            ##$DE1= 2\n\
+            ##END=\n",
+            bruker_relax_section.content
+        );
+    }
+
+    #[test]
+    fn quirk_bruker_relax_section_parses_empty_content() {
+        let label = "$RELAX";
+        let value = "";
+        let next_line = Some(format!("##{label}={value}"));
+        let input = b"$$ Bruker specific parameters\n\
+                                $$ --------------------------\n";
+        let mut reader = Cursor::new(input);
+
+        let (bruker_relax_section, _next) =
+            BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap();
+
+        assert!(bruker_relax_section.name.is_empty());
+        assert!(bruker_relax_section.content.is_empty());
+    }
+
+    #[test]
+    fn quirk_bruker_relax_section_parsing_fails_for_illegal_parameters() {
+        let label = "$RELAX";
+        let value = "abc";
+        let next_line = Some(format!("##{label}= {value}"));
+        let input = b"xxx\n";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Illegal"));
+    }
+
+    #[test]
+    fn quirk_bruker_relax_section_parsing_fails_for_premature_end() {
+        let label = "$RELAX";
+        let value = "";
+        let next_line = Some(format!("##{label}={value}"));
+        let input = b"";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap_err();
+
+        assert!(error.to_string().contains("Premature"));
+    }
+
+    #[test]
+    fn quirk_bruker_relax_section_parsing_fails_for_illegal_start() {
+        let label = "$RELAX";
+        let value = "";
+        let next_line = Some(format!("##{label}={value}"));
+        let input = b"##SOME_LABEL= abc\n";
+        let mut reader = Cursor::new(input);
+
+        let error = BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap_err();
+
+        assert!(
+            error.to_string().contains("Illegal") && error.to_string().contains("not followed by")
+        );
     }
 }

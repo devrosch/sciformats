@@ -1849,29 +1849,29 @@ pub struct NTuplesAttributes {
     /// VAR_NAME.
     pub var_name: String,
     /// SYMBOL.
-    symbol: String,
+    pub symbol: String,
     /// VAR_TYPE.
-    var_type: Option<String>,
+    pub var_type: Option<String>,
     /// VAR_FORM.
-    var_form: Option<String>,
+    pub var_form: Option<String>,
     /// VAR_DIM.
     ///
     /// Option, as it may be blank for mass spectra.
-    var_dim: Option<u64>,
+    pub var_dim: Option<u64>,
     /// UNITS.
-    units: Option<String>,
+    pub units: Option<String>,
     /// FIRST.
-    first: Option<f64>,
+    pub first: Option<f64>,
     /// LAST.
-    last: Option<f64>,
+    pub last: Option<f64>,
     /// MIN.
-    min: Option<f64>,
+    pub min: Option<f64>,
     /// MAX.
-    max: Option<f64>,
+    pub max: Option<f64>,
     /// FACTOR.
-    factor: Option<f64>,
+    pub factor: Option<f64>,
     /// Additional application specific LDRs.
-    application_attributes: Vec<StringLdr>,
+    pub application_attributes: Vec<StringLdr>,
 }
 
 /// A JCAMP-DX NTUPLES DATA TABLE record.

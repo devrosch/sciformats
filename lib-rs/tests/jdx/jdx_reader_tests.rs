@@ -22,4 +22,9 @@ fn cosy_read_valid_succeeds() {
     assert!(root_node
         .parameters
         .contains(&Parameter::from_str_str("TITLE", "Root LINK BLOCK")));
+
+    let audit_trail_node = &reader.read("/8").unwrap();
+    assert_eq!("", audit_trail_node.name);
+    let audit_trail = &reader.read("/8/0").unwrap();
+    assert!(audit_trail.table.is_some());
 }

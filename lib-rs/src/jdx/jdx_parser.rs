@@ -2284,7 +2284,37 @@ impl BrukerRelaxSection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
+    use std::io::{BufReader, Cursor};
+
+    #[test]
+    fn parser_parses_valid_jdx_file() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24 $$ or later\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                $$ random comment #1\r\n\
+                                ##ORIGIN=devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\n\
+                                ##SPECTROMETER/DATA SYSTEM= Some=\r\n\
+                                thing\r\n\
+                                $$ random comment #2\r\n\
+                                ##END=\
+                                $$ random comment #3\r\n";
+        let path = "resources/valid.jdx";
+        let cursor = Cursor::new(input);
+        let buf_reader = BufReader::new(cursor);
+        let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);
+        assert!(JdxParser::parse(&path, buf_input).is_ok());
+    }
+
+    #[test]
+    fn parser_fails_parsing_invalid_jdx_file() {
+        let input = b"not a JCAMP-DX file\n";
+        let path = "resources/dummy.txt";
+        let cursor = Cursor::new(input);
+        let buf_reader = BufReader::new(cursor);
+        let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);
+        assert!(JdxParser::parse(&path, buf_input).is_err());
+    }
 
     #[test]
     fn block_parses_all_string_ldrs() {

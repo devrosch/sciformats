@@ -63,9 +63,8 @@ impl<T: Seek + Read + 'static> Scanner<T> for JdxScanner {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
-
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     fn scanner_recognizes_valid_jdx() {

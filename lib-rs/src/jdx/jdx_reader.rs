@@ -9,10 +9,10 @@ use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, SeekBufRead, Table, Value},
     utils::convert_path_to_node_indices,
 };
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, path::Path};
 
 pub struct JdxReader {
-    _path: String,
+    path: String,
     file: JdxBlock<Box<dyn SeekBufRead>>,
 }
 
@@ -26,7 +26,7 @@ impl Reader for JdxReader {
 impl JdxReader {
     pub fn new(path: &str, file: JdxBlock<Box<dyn SeekBufRead>>) -> Self {
         Self {
-            _path: path.to_owned(),
+            path: path.to_owned(),
             file,
         }
     }
@@ -130,7 +130,17 @@ impl JdxReader {
             }
         }
         // block is leaf node
-        Self::map_block(block, Self::is_peak_data(block))
+        let mut block_node = Self::map_block(block, Self::is_peak_data(block))?;
+        if iteration_index == 0 {
+            // root node
+            // replace block node name with file name for root node
+            let path = Path::new(&self.path);
+            let file_name = path.file_name().and_then(|f| f.to_str());
+            if let Some(name) = file_name {
+                block_node.name = name.to_owned();
+            }
+        }
+        Ok(block_node)
     }
 
     fn map_bruker_relax_section(section: &BrukerRelaxSection) -> Result<Node, JdxError> {
@@ -787,7 +797,11 @@ mod tests {
         let reader = JdxReader::new(&path, file);
 
         let root_node = &reader.read("/").unwrap();
-        assert_eq!("Root LINK BLOCK", root_node.name);
+        assert_eq!("CompoundFile.jdx", root_node.name);
+        assert_eq!(4, root_node.parameters.len());
+        assert!(root_node
+            .parameters
+            .contains(&Parameter::from_str_str("TITLE", "Root LINK BLOCK")));
         assert_eq!(4, root_node.parameters.len());
         assert!(root_node.data.is_empty());
         assert_eq!(9, root_node.child_node_names.len());
@@ -1244,8 +1258,12 @@ mod tests {
         let reader = JdxReader::new(&path, file);
 
         let root_node = &reader.read("/").unwrap();
-        assert_eq!("Bruker Relax Type NMR Spectrum", root_node.name);
+        assert_eq!("Bruker_specific_relax.jdx", root_node.name);
         assert_eq!(6, root_node.parameters.len());
+        assert!(root_node.parameters.contains(&Parameter::from_str_str(
+            "TITLE",
+            "Bruker Relax Type NMR Spectrum"
+        )));
         assert!(root_node.data.is_empty());
         assert_eq!(5, root_node.child_node_names.len());
         assert_eq!(

@@ -105,7 +105,7 @@ impl JdxReader {
             }
             if node_index == n_tuples_index && block.n_tuples.is_some() {
                 // consider NTUPLES LDR as child node
-                let n_tuples_indices = &node_indices[node_index..];
+                let n_tuples_indices = &node_indices[(node_index + 1)..];
                 return Self::map_n_tuples(
                     block.n_tuples.as_ref().unwrap(),
                     n_tuples_indices,

@@ -313,7 +313,13 @@ pub(crate) fn read_width_function<T: SeekBufRead>(
         if is_ldr_start(&line) {
             break;
         }
-        if let (_content, Some(comment)) = strip_line_comment(&line, false, true) {
+        if let (content, Some(comment)) = strip_line_comment(&line, true, true) {
+            if !content.is_empty() {
+                return Err(JdxError::new(&format!(
+                    "Unexpected content encountered while parsing width function: {}",
+                    &line
+                )));
+            }
             // todo: error in case of content not empty
             kernel_lines.push(comment.to_owned());
         } else {

@@ -1,5 +1,3 @@
-use std::f64::NAN;
-
 use super::jdx_parser::PeakAssignment;
 use super::jdx_utils::{is_ldr_start, strip_line_comment, BinBufRead};
 use super::JdxError;
@@ -249,7 +247,7 @@ impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
 
     fn parse_f64_token(token: &str) -> Result<f64, JdxError> {
         match token.trim() {
-            "" => Ok(NAN),
+            "" => Ok(f64::NAN),
             v => Ok(v.parse::<f64>().map_err(|_e| {
                 JdxError::new(&format!(
                     "Illegal numeric token encountered while parsing PEAK ASSIGNMENTS: {}",

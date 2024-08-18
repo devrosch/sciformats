@@ -39,6 +39,7 @@ pub struct JdxBlock<T: SeekBufRead> {
     /// - comments ("##=")
     /// - data (XYDATA, XYPOINTS, PEAK TABLE, PEAK ASSIGNMENTS, RADATA,
     ///   NTUPLES)
+    ///
     /// These are available as dedicated peroperties.
     ///
     /// Also does not include "##END=" LDR.
@@ -1522,8 +1523,8 @@ impl<T: SeekBufRead> Page<T> {
         let var_list = var_list_opt.unwrap().as_str().trim().to_owned();
         let plot_desc =
             plot_desc_opt.and_then(|m| match strip_line_comment(m.as_str(), true, false).0 {
-                se if se.is_empty() => None,
-                sne => Some(sne.to_owned()),
+                "" => None,
+                s => Some(s.to_owned()),
             });
 
         Ok((var_list, plot_desc))

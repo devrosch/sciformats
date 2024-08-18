@@ -7,17 +7,17 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2.91"
+wasm-bindgen = "0.2"
 web-sys = { version = "0.3", features = ['console', 'File', 'Blob', 'FileReaderSync'] }
 js-sys = "0.3"
 netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
 strum = { version = "0.26", features = ["derive"] }
-binrw = "0.13"
+binrw = "0.14"
 chrono = "0.4"
-quick-xml = { version = "0.31.0", features = ['encoding'] }
-base64 = "0.22.0"
-regex = "1.10.5"
-lazy_static = "1.4.0"
+quick-xml = { version = "0.36", features = ['encoding'] }
+base64 = "0.22"
+regex = "1.10"
+lazy_static = "1.5"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

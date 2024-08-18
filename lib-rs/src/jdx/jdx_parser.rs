@@ -3,7 +3,7 @@ use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
     find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_element, parse_ldr_start,
-    parse_parameter, strip_line_comment, validate_input, BinBufRead,
+    parse_parameter, read_width_function, strip_line_comment, validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
@@ -790,33 +790,7 @@ impl<T: SeekBufRead> PeakTable<T> {
     }
 
     pub fn get_width_function(&self) -> Result<Option<String>, JdxError> {
-        // remember stream position
-        let reader = &mut *self.reader_ref.borrow_mut();
-        let initial_pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(self.address))?;
-        let mut buf = Vec::<u8>::with_capacity(128);
-
-        // read possible initial comment lines
-        let mut kernel_lines = Vec::<String>::new();
-        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
-            if is_ldr_start(&line) {
-                break;
-            }
-            if let (_content, Some(comment)) = strip_line_comment(&line, false, true) {
-                kernel_lines.push(comment.to_owned());
-            } else {
-                break;
-            }
-        }
-
-        // reset stream position
-        reader.seek(SeekFrom::Start(initial_pos))?;
-
-        if kernel_lines.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(kernel_lines.join("\n")))
-        }
+        read_width_function(&mut *self.reader_ref.borrow_mut(), self.address)
     }
 
     /// Provides the parsed peak data.
@@ -912,33 +886,7 @@ impl<T: SeekBufRead> PeakAssignments<T> {
     }
 
     pub fn get_width_function(&self) -> Result<Option<String>, JdxError> {
-        // remember stream position
-        let reader = &mut *self.reader_ref.borrow_mut();
-        let initial_pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(self.address))?;
-        let mut buf = Vec::<u8>::with_capacity(128);
-
-        // read possible initial comment lines
-        let mut kernel_lines = Vec::<String>::new();
-        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
-            if is_ldr_start(&line) {
-                break;
-            }
-            if let (_content, Some(comment)) = strip_line_comment(&line, false, true) {
-                kernel_lines.push(comment.to_owned());
-            } else {
-                break;
-            }
-        }
-
-        // reset stream position
-        reader.seek(SeekFrom::Start(initial_pos))?;
-
-        if kernel_lines.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(kernel_lines.join("\n")))
-        }
+        read_width_function(&mut *self.reader_ref.borrow_mut(), self.address)
     }
 
     /// Provides the parsed peak data.

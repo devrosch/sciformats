@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use std::{
     cell::{RefCell, RefMut},
-    io::BufRead,
+    io::{BufRead, SeekFrom},
     rc::Rc,
     str::FromStr,
 };
@@ -296,6 +296,39 @@ pub(crate) fn parse_element<'t, T: 't, E>(
     let (element, next_line) = builder()?;
     let reader = reader_ref.borrow_mut();
     Ok((Some(element), reader, next_line))
+}
+
+pub(crate) fn read_width_function<T: SeekBufRead>(
+    reader: &mut T,
+    address: u64,
+) -> Result<Option<String>, JdxError> {
+    // remember stream position
+    let initial_pos = reader.stream_position()?;
+    reader.seek(SeekFrom::Start(address))?;
+    let mut buf = Vec::<u8>::with_capacity(128);
+
+    // read possible initial comment lines
+    let mut kernel_lines = Vec::<String>::new();
+    while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+        if is_ldr_start(&line) {
+            break;
+        }
+        if let (_content, Some(comment)) = strip_line_comment(&line, false, true) {
+            // todo: error in case of content not empty
+            kernel_lines.push(comment.to_owned());
+        } else {
+            break;
+        }
+    }
+
+    // reset stream position
+    reader.seek(SeekFrom::Start(initial_pos))?;
+
+    if kernel_lines.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(kernel_lines.join("\n")))
+    }
 }
 
 #[cfg(test)]

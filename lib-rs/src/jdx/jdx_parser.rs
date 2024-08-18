@@ -2,8 +2,8 @@ use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
 use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
-    find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_ldr_start, parse_parameter,
-    strip_line_comment, validate_input, BinBufRead,
+    find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_element, parse_ldr_start,
+    parse_parameter, strip_line_comment, validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
@@ -180,108 +180,52 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     next_line = next;
                 }
                 "XYDATA" => {
-                    if xy_data.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        XyData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    xy_data = Some(data);
-                    next_line = next;
+                    let builder =
+                        || XyData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    (xy_data, reader, next_line) =
+                        parse_element(&label, &title, &xy_data, builder, reader, &reader_ref)?;
                 }
                 "RADATA" => {
-                    // todo: refactor to reduce code duplication
-                    if ra_data.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        RaData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    ra_data = Some(data);
-                    next_line = next;
+                    let builder =
+                        || RaData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    (ra_data, reader, next_line) =
+                        parse_element(&label, &title, &ra_data, builder, reader, &reader_ref)?;
                 }
                 "XYPOINTS" => {
-                    // todo: refactor to reduce code duplication
-                    if xy_points.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        XyPoints::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    xy_points = Some(data);
-                    next_line = next;
+                    let builder =
+                        || XyPoints::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    (xy_points, reader, next_line) =
+                        parse_element(&label, &title, &xy_points, builder, reader, &reader_ref)?;
                 }
                 "PEAKTABLE" => {
-                    // todo: refactor to reduce code duplication
-                    if peak_table.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        PeakTable::new(&label, &value, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    peak_table = Some(data);
-                    next_line = next;
+                    let builder =
+                        || PeakTable::new(&label, &value, next_line, Rc::clone(&reader_ref));
+                    (peak_table, reader, next_line) =
+                        parse_element(&label, &title, &peak_table, builder, reader, &reader_ref)?;
                 }
                 "PEAKASSIGNMENTS" => {
-                    // todo: refactor to reduce code duplication
-                    if peak_assignments.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        PeakAssignments::new(&label, &value, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    peak_assignments = Some(data);
-                    next_line = next;
+                    let builder =
+                        || PeakAssignments::new(&label, &value, next_line, Rc::clone(&reader_ref));
+                    (peak_assignments, reader, next_line) = parse_element(
+                        &label,
+                        &title,
+                        &peak_assignments,
+                        builder,
+                        reader,
+                        &reader_ref,
+                    )?;
                 }
                 "NTUPLES" => {
-                    // todo: refactor to reduce code duplication
-                    if n_tuples.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        NTuples::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    n_tuples = Some(data);
-                    next_line = next;
+                    let builder =
+                        || NTuples::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    (n_tuples, reader, next_line) =
+                        parse_element(&label, &title, &n_tuples, builder, reader, &reader_ref)?;
                 }
                 "AUDITTRAIL" => {
-                    // todo: refactor to reduce code duplication
-                    if audit_trail.is_some() {
-                        return Err(JdxError::new(&format!(
-                            "Multiple \"{}\" LDRs found in block: {}",
-                            label, title
-                        )));
-                    }
-                    drop(reader);
-                    let (data, next) =
-                        AuditTrail::new(&label, &value, next_line, Rc::clone(&reader_ref))?;
-                    reader = reader_ref.borrow_mut();
-                    audit_trail = Some(data);
-                    next_line = next;
+                    let builder =
+                        || AuditTrail::new(&label, &value, next_line, Rc::clone(&reader_ref));
+                    (audit_trail, reader, next_line) =
+                        parse_element(&label, &title, &audit_trail, builder, reader, &reader_ref)?;
                 }
                 "$RELAX" => {
                     let (relax_section, next) =

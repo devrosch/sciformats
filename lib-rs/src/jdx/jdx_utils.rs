@@ -2,7 +2,12 @@ use super::{jdx_parser::StringLdr, JdxError};
 use crate::{api::SeekBufRead, utils::from_iso_8859_1_cstr};
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::{io::BufRead, str::FromStr};
+use std::{
+    cell::{RefCell, RefMut},
+    io::BufRead,
+    rc::Rc,
+    str::FromStr,
+};
 
 pub trait BinBufRead: BufRead {
     /// Read all bytes until a newline (the `0xA` byte) is reached, and append
@@ -270,6 +275,27 @@ pub fn validate_input(
         }
     }
     Ok(())
+}
+
+#[allow(clippy::type_complexity)]
+pub(crate) fn parse_element<'t, T: 't, E>(
+    label: &str,
+    title: &str,
+    o: &Option<E>,
+    builder: impl FnOnce() -> Result<(E, Option<String>), JdxError>,
+    reader: RefMut<'t, T>,
+    reader_ref: &'t Rc<RefCell<T>>,
+) -> Result<(Option<E>, RefMut<'t, T>, Option<String>), JdxError> {
+    if o.is_some() {
+        return Err(JdxError::new(&format!(
+            "Multiple \"{}\" LDRs found in block: {}",
+            label, title
+        )));
+    }
+    drop(reader);
+    let (element, next_line) = builder()?;
+    let reader = reader_ref.borrow_mut();
+    Ok((Some(element), reader, next_line))
 }
 
 #[cfg(test)]

@@ -429,14 +429,6 @@ impl<T: SeekBufRead> XyData<T> {
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
-        // todo: move check to constructor
-        // todo: Required? Should have been caught in new().
-        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for XYDATA: {}",
-                &self.variable_list,
-            )));
-        }
         let data = if self.variable_list == Self::QUIRK_OO_VARIABLE_LIST {
             // Ocean Optics quirk
             parse_xyxy_data(
@@ -692,13 +684,6 @@ impl<T: SeekBufRead> RaData<T> {
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
-        // todo: Required? Should have been caught in new().
-        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for RADATA: {}",
-                &self.variable_list,
-            )));
-        }
         let data = parse_xppyy_data(
             &self.label,
             self.parameters.first_r,
@@ -805,13 +790,6 @@ impl<T: SeekBufRead> XyPoints<T> {
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
     pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
-        // todo: move check to constructor
-        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for XYPOINTS: {}",
-                &self.variable_list,
-            )));
-        }
         let data = parse_xyxy_data(
             &self.label,
             self.parameters.x_factor,
@@ -899,14 +877,6 @@ impl<T: SeekBufRead> PeakTable<T> {
 
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<Peak>, JdxError> {
-        // todo: Required? Should have been caught in new().
-        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for PEAK TABLE: {}",
-                &self.variable_list,
-            )));
-        }
-
         // remember stream position
         let reader = &mut *self.reader_ref.borrow_mut();
         let initial_pos = reader.stream_position()?;
@@ -1029,14 +999,6 @@ impl<T: SeekBufRead> PeakAssignments<T> {
 
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<PeakAssignment>, JdxError> {
-        // todo: Required? Should have been caught in new().
-        if !Self::VARIABLE_LISTS.contains(&self.variable_list.as_str()) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for PEAK ASSIGNMENTS: {}",
-                &self.variable_list,
-            )));
-        }
-
         // remember stream position
         let reader = &mut *self.reader_ref.borrow_mut();
         let initial_pos = reader.stream_position()?;

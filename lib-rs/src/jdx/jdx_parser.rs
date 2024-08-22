@@ -831,7 +831,6 @@ pub struct PeakAssignments<T: SeekBufRead> {
     variable_list: String,
 }
 
-// todo: reduce code duplication
 impl<T: SeekBufRead> PeakAssignments<T> {
     const LABEL: &'static str = "PEAKASSIGNMENTS";
     const VARIABLE_LISTS: [&'static str; 4] = ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];

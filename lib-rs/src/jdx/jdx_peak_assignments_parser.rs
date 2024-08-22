@@ -47,7 +47,6 @@ impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
         let w_opt = caps.get(4);
         let a_opt = caps.get(5);
 
-        // todo: reduce code duplication
         if x_opt.is_none() || a_opt.is_none() {
             return Err(JdxError::new(&format!(
                 "Illegal PEAK ASSIGNMENTS entry: {}",

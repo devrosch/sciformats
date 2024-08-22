@@ -119,7 +119,6 @@ impl<'r, T: SeekBufRead> PeakTableParser<'r, T> {
             )));
         }
 
-        // todo: reduce code duplication
         let x = x_opt.unwrap().as_str().parse::<f64>().map_err(|_e| {
             JdxError::new(&format!(
                 "Illegal x value encountered while parsing PEAK TABLE token: {}",

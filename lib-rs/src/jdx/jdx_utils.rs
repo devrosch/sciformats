@@ -320,7 +320,6 @@ pub(crate) fn read_width_function<T: SeekBufRead>(
                     &line
                 )));
             }
-            // todo: error in case of content not empty
             kernel_lines.push(comment.to_owned());
         } else {
             break;

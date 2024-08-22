@@ -56,7 +56,6 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         let version_opt = caps.get(6);
         let what_opt = caps.get(7);
 
-        // todo: reduce code duplication
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[0] == self.variable_list
             && (process_or_version_opt.is_some() || version_opt.is_some())
         {

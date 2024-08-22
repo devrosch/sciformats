@@ -1,6 +1,6 @@
 use super::jdx_parser::PeakAssignment;
 use super::jdx_utils::{is_ldr_start, strip_line_comment, BinBufRead};
-use super::JdxError;
+use super::{JdxError, JdxSequenceParser};
 use crate::api::SeekBufRead;
 use lazy_static::lazy_static;
 
@@ -30,38 +30,6 @@ pub struct PeakAssignmentsParser<'r, T: SeekBufRead> {
 impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
     const PEAK_ASSIGNMENTS_VARIABLE_LISTS: [&'static str; 4] =
         ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];
-
-    pub fn new(
-        variable_list: &'r str,
-        reader: &'r mut T,
-    ) -> Result<PeakAssignmentsParser<'r, T>, JdxError> {
-        if !Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS.contains(&variable_list) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for PEAK ASSIGNMENTS: {}",
-                &variable_list
-            )));
-        }
-
-        Ok(Self {
-            variable_list,
-            reader,
-            buf: vec![],
-        })
-    }
-
-    /// Next peak assignment.
-    ///
-    /// Assumes that a peak assignment tuple always starts on a new line,
-    /// but may span multiple lines. Returns the next peak assignment,
-    /// None if there is none, or JdxError if the next peak assignment is
-    /// malformed.
-    pub fn next(&mut self) -> Result<Option<PeakAssignment>, JdxError> {
-        let tuple_opt = self.next_tuple()?;
-        match tuple_opt {
-            None => Ok(None),
-            Some(tuple) => Ok(Some(self.create_peak_assignment(&tuple)?)),
-        }
-    }
 
     fn next_tuple(&mut self) -> Result<Option<String>, JdxError> {
         let mut pos = self.reader.stream_position()?;
@@ -255,5 +223,45 @@ impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
                 ))
             })?),
         }
+    }
+}
+
+impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for PeakAssignmentsParser<'r, T> {
+    type Item = PeakAssignment;
+
+    fn new(
+        variable_list: &'r str,
+        reader: &'r mut T,
+    ) -> Result<PeakAssignmentsParser<'r, T>, JdxError> {
+        if !Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS.contains(&variable_list) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for PEAK ASSIGNMENTS: {}",
+                &variable_list
+            )));
+        }
+
+        Ok(Self {
+            variable_list,
+            reader,
+            buf: vec![],
+        })
+    }
+
+    /// Next peak assignment.
+    ///
+    /// Assumes that a peak assignment tuple always starts on a new line,
+    /// but may span multiple lines. Returns the next peak assignment,
+    /// None if there is none, or JdxError if the next peak assignment is
+    /// malformed.
+    fn next(&mut self) -> Result<Option<PeakAssignment>, JdxError> {
+        let tuple_opt = self.next_tuple()?;
+        match tuple_opt {
+            None => Ok(None),
+            Some(tuple) => Ok(Some(self.create_peak_assignment(&tuple)?)),
+        }
+    }
+
+    fn into_reader(self) -> &'r mut T {
+        self.reader
     }
 }

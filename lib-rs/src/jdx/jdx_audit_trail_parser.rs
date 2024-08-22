@@ -1,4 +1,5 @@
 use super::jdx_utils::{is_ldr_start, parse_str, strip_line_comment, BinBufRead};
+use super::JdxSequenceParser;
 use super::{jdx_parser::AuditTrailEntry, JdxError};
 use crate::api::SeekBufRead;
 use lazy_static::lazy_static;
@@ -36,38 +37,6 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         "(NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)",
         "(NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)",
     ];
-
-    pub fn new(
-        variable_list: &'r str,
-        reader: &'r mut T,
-    ) -> Result<AuditTrailParser<'r, T>, JdxError> {
-        if !Self::AUDIT_TRAIL_VARIABLE_LISTS.contains(&variable_list) {
-            return Err(JdxError::new(&format!(
-                "Unsupported variable list for AUDIT TRAIL: {}",
-                &variable_list
-            )));
-        }
-
-        Ok(Self {
-            variable_list,
-            reader,
-            buf: vec![],
-        })
-    }
-
-    /// Next audit trail entry.
-    ///
-    /// Assumes that an audit trail entry tuple always starts on a new
-    /// line, but may span multiple lines. Returns the next audit trail
-    /// entry, None if there is none, and JdxError if next audit trail
-    /// entry is malformed.
-    pub fn next(&mut self) -> Result<Option<AuditTrailEntry>, JdxError> {
-        let tuple_opt = self.next_tuple()?;
-        match tuple_opt {
-            None => Ok(None),
-            Some(tuple) => Ok(Some(self.create_audit_trail_entry(&tuple)?)),
-        }
-    }
 
     // todo: reduce code duplication
     // copied from PeakAssignmentsParser and and PEAK ASSIGNMENTS renamed to AUDIT TRAIL
@@ -210,5 +179,42 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
             version: version.map(|v| v.to_owned()),
             what: what.to_owned(),
         })
+    }
+}
+
+impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for AuditTrailParser<'r, T> {
+    type Item = AuditTrailEntry;
+
+    fn new(variable_list: &'r str, reader: &'r mut T) -> Result<AuditTrailParser<'r, T>, JdxError> {
+        if !Self::AUDIT_TRAIL_VARIABLE_LISTS.contains(&variable_list) {
+            return Err(JdxError::new(&format!(
+                "Unsupported variable list for AUDIT TRAIL: {}",
+                &variable_list
+            )));
+        }
+
+        Ok(Self {
+            variable_list,
+            reader,
+            buf: vec![],
+        })
+    }
+
+    /// Next audit trail entry.
+    ///
+    /// Assumes that an audit trail entry tuple always starts on a new
+    /// line, but may span multiple lines. Returns the next audit trail
+    /// entry, None if there is none, and JdxError if next audit trail
+    /// entry is malformed.
+    fn next(&mut self) -> Result<Option<AuditTrailEntry>, JdxError> {
+        let tuple_opt = self.next_tuple()?;
+        match tuple_opt {
+            None => Ok(None),
+            Some(tuple) => Ok(Some(self.create_audit_trail_entry(&tuple)?)),
+        }
+    }
+
+    fn into_reader(self) -> &'r mut T {
+        self.reader
     }
 }

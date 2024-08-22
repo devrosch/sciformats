@@ -3,7 +3,8 @@ use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
     find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_element, parse_ldr_start,
-    parse_parameter, read_width_function, strip_line_comment, validate_input, BinBufRead,
+    parse_parameter, read_width_function, seek_and_read_sequence_data, strip_line_comment,
+    validate_input, BinBufRead,
 };
 use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
@@ -15,7 +16,6 @@ use crate::jdx::jdx_utils::{
 use lazy_static::lazy_static;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::io::SeekFrom;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::vec;
@@ -795,33 +795,12 @@ impl<T: SeekBufRead> PeakTable<T> {
 
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<Peak>, JdxError> {
-        // remember stream position
         let reader = &mut *self.reader_ref.borrow_mut();
-        let initial_pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(self.address))?;
-
-        // skip possible initial comment lines
-        let mut pos = reader.stream_position()?;
-        let mut buf = Vec::<u8>::with_capacity(128);
-        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
-            if !is_pure_comment(&line) {
-                break;
-            }
-            pos = reader.stream_position()?;
-        }
-        // move stream to start of first non pure comment line
-        reader.seek(SeekFrom::Start(pos))?;
-
-        // parse peaks
-        let mut parser = PeakTableParser::new(&self.variable_list, reader)?;
-        let mut peaks = Vec::<Peak>::new();
-        while let Some(peak) = parser.next()? {
-            peaks.push(peak);
-        }
-
-        // reset stream position
-        reader.seek(SeekFrom::Start(initial_pos))?;
-
+        let peaks: Vec<Peak> = seek_and_read_sequence_data::<T, PeakTableParser<T>>(
+            &self.variable_list,
+            self.address,
+            reader,
+        )?;
         Ok(peaks)
     }
 }
@@ -891,33 +870,12 @@ impl<T: SeekBufRead> PeakAssignments<T> {
 
     /// Provides the parsed peak data.
     pub fn get_data(&self) -> Result<Vec<PeakAssignment>, JdxError> {
-        // remember stream position
         let reader = &mut *self.reader_ref.borrow_mut();
-        let initial_pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(self.address))?;
-
-        // skip possible initial comment lines
-        let mut pos = reader.stream_position()?;
-        let mut buf = Vec::<u8>::with_capacity(128);
-        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
-            if !is_pure_comment(&line) {
-                break;
-            }
-            pos = reader.stream_position()?;
-        }
-        // move stream to start of first non pure comment line
-        reader.seek(SeekFrom::Start(pos))?;
-
-        // parse peaks
-        let mut parser = PeakAssignmentsParser::new(&self.variable_list, reader)?;
-        let mut peaks = Vec::<PeakAssignment>::new();
-        while let Some(peak) = parser.next()? {
-            peaks.push(peak);
-        }
-
-        // reset stream position
-        reader.seek(SeekFrom::Start(initial_pos))?;
-
+        let peaks: Vec<PeakAssignment> = seek_and_read_sequence_data::<T, PeakAssignmentsParser<T>>(
+            &self.variable_list,
+            self.address,
+            reader,
+        )?;
         Ok(peaks)
     }
 }
@@ -1809,37 +1767,14 @@ impl<T: SeekBufRead> AuditTrail<T> {
                 .unwrap_or_default();
         }
 
-        // todo: reduce code duplication (PeakAssignments)
-        // ----------------------------------
-        // remember stream position
         let reader = &mut *self.reader_ref.borrow_mut();
-        let initial_pos = reader.stream_position()?;
-        reader.seek(SeekFrom::Start(self.address))?;
-
-        // skip possible initial comment lines
-        let mut pos = reader.stream_position()?;
-        let mut buf = Vec::<u8>::with_capacity(128);
-        while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
-            if !is_pure_comment(&line) {
-                break;
-            }
-            pos = reader.stream_position()?;
-        }
-        // move stream to start of first non pure comment line
-        reader.seek(SeekFrom::Start(pos))?;
-
-        // parse audit trail entries
-        let mut parser = AuditTrailParser::new(variable_list, reader)?;
-        let mut audit_trail_entries = Vec::<AuditTrailEntry>::new();
-        while let Some(entry) = parser.next()? {
-            audit_trail_entries.push(entry);
-        }
-
-        // reset stream position
-        reader.seek(SeekFrom::Start(initial_pos))?;
-
+        let audit_trail_entries: Vec<AuditTrailEntry> = seek_and_read_sequence_data::<
+            T,
+            AuditTrailParser<T>,
+        >(
+            variable_list, self.address, reader
+        )?;
         Ok(audit_trail_entries)
-        // ----------------------------------
     }
 
     fn scan_for_bruker_var_list(

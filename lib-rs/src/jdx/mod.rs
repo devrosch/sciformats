@@ -1,5 +1,3 @@
-use std::{error::Error, fmt};
-
 mod jdx_audit_trail_parser;
 mod jdx_data_parser;
 pub mod jdx_parser;
@@ -8,6 +6,9 @@ mod jdx_peak_table_parser;
 pub mod jdx_reader;
 pub mod jdx_scanner;
 mod jdx_utils;
+
+use crate::api::SeekBufRead;
+use std::{error::Error, fmt};
 
 #[derive(Debug)]
 pub struct JdxError {
@@ -47,4 +48,12 @@ impl From<std::io::Error> for JdxError {
     fn from(value: std::io::Error) -> Self {
         Self::from_source(value, "I/O error parsing JCAMP-DX.")
     }
+}
+
+trait JdxSequenceParser<'r, T: SeekBufRead>: Sized {
+    type Item;
+
+    fn new(variable_list: &'r str, reader: &'r mut T) -> Result<Self, JdxError>;
+    fn next(&mut self) -> Result<Option<Self::Item>, JdxError>;
+    fn into_reader(self) -> &'r mut T;
 }

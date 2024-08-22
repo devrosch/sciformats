@@ -1,4 +1,4 @@
-use super::{jdx_parser::StringLdr, JdxError};
+use super::{jdx_parser::StringLdr, JdxError, JdxSequenceParser};
 use crate::{api::SeekBufRead, utils::from_iso_8859_1_cstr};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -335,6 +335,47 @@ pub(crate) fn read_width_function<T: SeekBufRead>(
     } else {
         Ok(Some(kernel_lines.join("\n")))
     }
+}
+
+pub(crate) fn seek_and_read_sequence_data<'r, T, P>(
+    variable_list: &'r str,
+    address: u64,
+    reader: &'r mut T,
+) -> Result<Vec<<P as JdxSequenceParser<'r, T>>::Item>, JdxError>
+where
+    T: SeekBufRead,
+    // for lifetimes, see: https://stackoverflow.com/a/78894632/26912077
+    P: JdxSequenceParser<'r, T>,
+{
+    // remember stream position
+    let initial_pos = reader.stream_position()?;
+    reader.seek(SeekFrom::Start(address))?;
+
+    // skip possible initial comment lines
+    let mut pos = reader.stream_position()?;
+    let mut buf = Vec::<u8>::with_capacity(128);
+    while let Some(line) = reader.read_line_iso_8859_1(&mut buf)? {
+        if !is_pure_comment(&line) {
+            break;
+        }
+        pos = reader.stream_position()?;
+    }
+    // move stream to start of first non pure comment line
+    reader.seek(SeekFrom::Start(pos))?;
+
+    // parse peaks
+    let mut parser = P::new(variable_list, reader)?;
+    let mut items = Vec::<P::Item>::new();
+    while let Some(item) = parser.next()? {
+        items.push(item);
+    }
+
+    // work around lifetime issue
+    let reader = parser.into_reader();
+    // reset stream position
+    reader.seek(SeekFrom::Start(initial_pos))?;
+
+    Ok(items)
 }
 
 #[cfg(test)]

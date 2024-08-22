@@ -378,6 +378,74 @@ where
     Ok(items)
 }
 
+pub(crate) fn next_multiline_parser_tuple<T: SeekBufRead>(
+    ldr_name: &str,
+    reader: &mut T,
+    buf: &mut Vec<u8>,
+    line_separator: char,
+) -> Result<Option<String>, JdxError> {
+    let mut pos = reader.stream_position()?;
+    let mut tuple = String::new();
+
+    let is_tuple_start = |value: &str| value.trim_start().starts_with('(');
+    let is_tuple_end = |value: &str| value.trim_end().ends_with(')');
+
+    // find start
+    while let Some(line) = reader.read_line_iso_8859_1(buf)? {
+        let (line_start, _comment) = strip_line_comment(&line, true, false);
+
+        if is_tuple_start(line_start) {
+            tuple.push_str(line_start);
+            break;
+        }
+        if is_ldr_start(line_start) {
+            // LDR ended, no tuple
+            reader.seek(std::io::SeekFrom::Start(pos))?;
+            return Ok(None);
+        }
+        if !line_start.is_empty() {
+            return Err(JdxError::new(&format!(
+                "Illegal string found in {}: {}",
+                ldr_name, line
+            )));
+        }
+        pos = reader.stream_position()?;
+    }
+
+    if is_tuple_end(&tuple) {
+        return Ok(Some(tuple));
+    }
+
+    // read to end of tuple
+    pos = reader.stream_position()?;
+    while let Some(line) = reader.read_line_iso_8859_1(buf)? {
+        let (line_start, _comment) = strip_line_comment(&line, true, false);
+
+        if is_ldr_start(line_start) {
+            // LDR ended before end of last tuple
+            reader.seek(std::io::SeekFrom::Start(pos))?;
+            return Err(JdxError::new(&format!(
+                "No closing parenthesis found for {} entry: {}",
+                ldr_name, tuple
+            )));
+        }
+
+        tuple.push(line_separator);
+        tuple.push_str(line_start);
+
+        if is_tuple_end(line_start) {
+            return Ok(Some(tuple));
+        }
+
+        pos = reader.stream_position()?;
+    }
+
+    Err(JdxError::new(&format!(
+        "File ended before closing parenthesis was found for {}: {}",
+        ldr_name, tuple
+    )))
+}
+
 #[cfg(test)]
 mod tests {
     use std::io::Cursor;

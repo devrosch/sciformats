@@ -1,4 +1,4 @@
-use super::jdx_utils::{is_ldr_start, parse_str, strip_line_comment, BinBufRead};
+use super::jdx_utils::{next_multiline_parser_tuple, parse_str};
 use super::JdxSequenceParser;
 use super::{jdx_parser::AuditTrailEntry, JdxError};
 use crate::api::SeekBufRead;
@@ -30,7 +30,6 @@ pub struct AuditTrailParser<'r, T: SeekBufRead> {
     buf: Vec<u8>,
 }
 
-// todo: reduce code duplication
 impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
     const AUDIT_TRAIL_VARIABLE_LISTS: [&'static str; 3] = [
         "(NUMBER, WHEN, WHO, WHERE, WHAT)",
@@ -38,75 +37,8 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         "(NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)",
     ];
 
-    // todo: reduce code duplication
-    // copied from PeakAssignmentsParser and and PEAK ASSIGNMENTS renamed to AUDIT TRAIL
     fn next_tuple(&mut self) -> Result<Option<String>, JdxError> {
-        let mut pos = self.reader.stream_position()?;
-        let mut tuple = String::new();
-
-        // find start
-        while let Some(line) = self.reader.read_line_iso_8859_1(&mut self.buf)? {
-            let (line_start, _comment) = strip_line_comment(&line, true, false);
-
-            if Self::is_tuple_start(line_start) {
-                tuple.push_str(line_start);
-                break;
-            }
-            if is_ldr_start(line_start) {
-                // LDR ended, no tuple
-                self.reader.seek(std::io::SeekFrom::Start(pos))?;
-                return Ok(None);
-            }
-            if !line_start.is_empty() {
-                return Err(JdxError::new(&format!(
-                    "Illegal string found in AUDIT TRAIL: {}",
-                    line
-                )));
-            }
-            pos = self.reader.stream_position()?;
-        }
-
-        if Self::is_tuple_end(&tuple) {
-            return Ok(Some(tuple));
-        }
-
-        // read to end of tuple
-        pos = self.reader.stream_position()?;
-        while let Some(line) = self.reader.read_line_iso_8859_1(&mut self.buf)? {
-            let (line_start, _comment) = strip_line_comment(&line, true, false);
-
-            if is_ldr_start(line_start) {
-                // LDR ended before end of last tuple
-                self.reader.seek(std::io::SeekFrom::Start(pos))?;
-                return Err(JdxError::new(&format!(
-                    "No closing parenthesis found for AUDIT TRAIL entry: {}",
-                    tuple
-                )));
-            }
-
-            // todo: different from PEAK ASSIGNMENTS: "\n" instead of " "
-            tuple.push('\n');
-            tuple.push_str(line_start);
-
-            if Self::is_tuple_end(line_start) {
-                return Ok(Some(tuple));
-            }
-
-            pos = self.reader.stream_position()?;
-        }
-
-        Err(JdxError::new(&format!(
-            "File ended before closing parenthesis was found for PEAK ASSIGNMENTS: {}",
-            tuple
-        )))
-    }
-
-    fn is_tuple_start(value: &str) -> bool {
-        value.trim_start().starts_with('(')
-    }
-
-    fn is_tuple_end(value: &str) -> bool {
-        value.trim_end().ends_with(')')
+        next_multiline_parser_tuple("AUDIT TRAIL", self.reader, &mut self.buf, '\n')
     }
 
     fn create_audit_trail_entry(&self, tuple: &str) -> Result<AuditTrailEntry, JdxError> {

@@ -274,7 +274,6 @@ impl DataParser {
                         line, token
                     ))
                 })?;
-                // todo: "-1" correct?
                 for _ in 0..(num_repeats - 1) {
                     if previous_token_type == TokenType::Dif {
                         // todo: empty y_value or none previous_value caught earlier in loop; necessary there?

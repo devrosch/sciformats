@@ -15,7 +15,7 @@ use crate::jdx::jdx_utils::{
 };
 use lazy_static::lazy_static;
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::str::FromStr;
 use std::vec;
@@ -1360,22 +1360,31 @@ pub struct DataTable<T: SeekBufRead> {
     address: u64,
 }
 
+lazy_static! {
+    static ref DATA_TABLE_VAR_MAP: HashMap<&'static str, (&'static str, &'static str)> = {
+        HashMap::from([
+            ("(X++(Y..Y))", ("X", "Y")),
+            ("(X++(R..R))", ("X", "R")),
+            ("(X++(I..I))", ("X", "I")),
+            ("(T2++(R..R))", ("T2", "R")),
+            ("(T2++(I..I))", ("T2", "I")),
+            ("(F2++(Y..Y))", ("F2", "Y")),
+            ("(XY..XY)", ("X", "Y")),
+            ("(XR..XR)", ("X", "R")),
+            ("(XI..XI)", ("X", "I")),
+        ])
+    };
+    static ref DATA_TABLE_VARIABLE_LISTS: Vec<&'static str> =
+        DATA_TABLE_VAR_MAP.keys().copied().collect();
+    static ref DATA_TABLE_X_SYMBOLS: HashSet<&'static str> =
+        DATA_TABLE_VAR_MAP.values().map(|(x, _y)| *x).collect();
+    static ref DATA_TABLE_Y_SYMBOLS: HashSet<&'static str> =
+        DATA_TABLE_VAR_MAP.values().map(|(_x, y)| *y).collect();
+}
+
 impl<T: SeekBufRead> DataTable<T> {
     const LABEL: &'static str = "DATATABLE";
-    const VARIABLE_LISTS: [&'static str; 9] = [
-        "(X++(Y..Y))",
-        "(X++(R..R))",
-        "(X++(I..I))",
-        "(T2++(R..R))",
-        "(T2++(I..I))",
-        "(F2++(Y..Y))",
-        "(XY..XY)",
-        "(XR..XR)",
-        "(XI..XI)",
-    ];
     const PLOT_DESCRIPTORS: [&'static str; 4] = ["PROFILE", "XYDATA", "PEAKS", "CONTOUR"];
-    const X_SYMBOLS: [&'static str; 3] = ["X", "T2", "F2"];
-    const Y_SYMBOLS: [&'static str; 3] = ["Y", "R", "I"];
 
     #[allow(clippy::too_many_arguments)]
     fn new(
@@ -1393,7 +1402,7 @@ impl<T: SeekBufRead> DataTable<T> {
             label,
             Some(var_list),
             Self::LABEL,
-            Some(&Self::VARIABLE_LISTS),
+            Some(&DATA_TABLE_VARIABLE_LISTS),
         )?;
         // validate plot descriptor if present
         if plot_desc.is_some() && !Self::PLOT_DESCRIPTORS.contains(&plot_desc.unwrap()) {
@@ -1457,36 +1466,9 @@ impl<T: SeekBufRead> DataTable<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), JdxError> {
-        // todo: turn var_list into enum and match OR
-        // use regexes for determining the var names
-        // let s = r"^\((.+)\+\+\((.+)\.\.(.+)\)\)$";
-        // let s = r"^\((.+)(.)\.\.(.+)(.)\)$"
-        let (x_col_index, y_col_index) = match var_list {
-            "(X++(Y..Y))" | "(XY..XY)" => (
-                Self::find_ntuples_index("X", attributes)?,
-                Self::find_ntuples_index("Y", attributes)?,
-            ),
-            "(X++(R..R))" | "(XR..XR)" => (
-                Self::find_ntuples_index("X", attributes)?,
-                Self::find_ntuples_index("R", attributes)?,
-            ),
-            "(X++(I..I))" | "(XI..XI)" => (
-                Self::find_ntuples_index("X", attributes)?,
-                Self::find_ntuples_index("I", attributes)?,
-            ),
-            "(T2++(R..R))" => (
-                Self::find_ntuples_index("T2", attributes)?,
-                Self::find_ntuples_index("R", attributes)?,
-            ),
-            "(T2++(I..I))" => (
-                Self::find_ntuples_index("T2", attributes)?,
-                Self::find_ntuples_index("I", attributes)?,
-            ),
-            "(F2++(Y..Y))" => (
-                Self::find_ntuples_index("F2", attributes)?,
-                Self::find_ntuples_index("Y", attributes)?,
-            ),
-            _ => {
+        let (x_symbol, y_symbol) = match DATA_TABLE_VAR_MAP.get(var_list) {
+            Some((x, y)) => (*x, *y),
+            None => {
                 // should never happen
                 return Err(JdxError::new(&format!(
                     "Unsupported variabe list in DATA TABLE: {}",
@@ -1494,6 +1476,8 @@ impl<T: SeekBufRead> DataTable<T> {
                 )));
             }
         };
+        let x_col_index = Self::find_ntuples_index(x_symbol, attributes)?;
+        let y_col_index = Self::find_ntuples_index(y_symbol, attributes)?;
 
         let x_ntuples_attrs = &attributes[x_col_index];
         let y_ntuples_attrs = &attributes[y_col_index];
@@ -1502,9 +1486,7 @@ impl<T: SeekBufRead> DataTable<T> {
         let mut merged_y_vars = Self::merge_vars(y_ntuples_attrs, block_ldrs, page_ldrs)?;
 
         // special treatment for "FIRST" page LDR if present
-        // this is described in the README for the JCAMP-DX nD-NMR test file round
-        // robin
-        // todo: can this be combined with merge_vars?
+        // this is described in the README for the JCAMP-DX nD-NMR test file round robin
         Self::merge_page_first_ldr(&mut merged_x_vars, page_ldrs, x_col_index)?;
         Self::merge_page_first_ldr(&mut merged_y_vars, page_ldrs, y_col_index)?;
 
@@ -1548,14 +1530,13 @@ impl<T: SeekBufRead> DataTable<T> {
         // todo: why clear?
         output_vars.application_attributes.clear();
 
-        if Self::X_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
+        if DATA_TABLE_X_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
             // fill in block params for missing NTUPLE attributes
             Self::merge_x_ldrs(&mut output_vars, block_ldrs, false)?;
             // replace with page LDR values if available
             Self::merge_x_ldrs(&mut output_vars, page_ldrs, true)?;
-        } else if Self::Y_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
-            // Also check for other symbols but Y? Does not seem relevant for NMR
-            // and MS.
+        } else if DATA_TABLE_Y_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
+            // Also check for other symbols but Y? Does not seem relevant for NMR and MS.
             // fill in block params for missing NTUPLE attributes
             Self::merge_y_ldrs(&mut output_vars, block_ldrs, false)?;
             // replace with page LDR values if available

@@ -1,5 +1,5 @@
 use super::jdx_parser::PeakAssignment;
-use super::jdx_utils::next_multiline_parser_tuple;
+use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str, parse_str};
 use super::{JdxError, JdxSequenceParser};
 use crate::api::SeekBufRead;
 use lazy_static::lazy_static;
@@ -99,13 +99,7 @@ impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
             )));
         }
 
-        // todo: unwrap?
-        let x = x_opt.unwrap().as_str().parse::<f64>().map_err(|_e| {
-            JdxError::new(&format!(
-                "Illegal x value encountered while parsing PEAK ASSIGNMENTS: {}",
-                tuple
-            ))
-        })?;
+        let x = parse_opt_str(x_opt.map(|m| m.as_str()), "x value in PEAK ASSIGNMENTS")?;
         let a = a_opt.unwrap().as_str().to_owned();
         let (y, m, w) =
             if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[0] == self.variable_list && y_opt.is_some() {
@@ -150,12 +144,7 @@ impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
     fn parse_f64_token(token: &str) -> Result<f64, JdxError> {
         match token.trim() {
             "" => Ok(f64::NAN),
-            v => Ok(v.parse::<f64>().map_err(|_e| {
-                JdxError::new(&format!(
-                    "Illegal numeric token encountered while parsing PEAK ASSIGNMENTS: {}",
-                    v
-                ))
-            })?),
+            v => parse_str(v, "numeric token in PEAK ASSIGNMENTS"),
         }
     }
 }

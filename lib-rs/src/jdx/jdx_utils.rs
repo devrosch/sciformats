@@ -219,14 +219,21 @@ pub fn parse_str<P: FromStr>(value: &str, context: &str) -> Result<P, JdxError> 
         .map_err(|_e| JdxError::new(&format!("Illegal value for \"{}\": {}", context, value)))
 }
 
+pub fn parse_opt_str<P: FromStr>(value_opt: Option<&str>, context: &str) -> Result<P, JdxError> {
+    match value_opt {
+        None => Err(JdxError::new(&format!(
+            "No value provided for parsing: {}",
+            context
+        ))),
+        Some(value) => parse_str(value, context),
+    }
+}
+
 pub fn parse_str_opt<P: FromStr>(value: &str, context: &str) -> Result<Option<P>, JdxError> {
     if value.is_empty() {
         return Ok(None);
     }
-    let parsed_value = value
-        .parse::<P>()
-        .map_err(|_e| JdxError::new(&format!("Illegal value for \"{}\": {}", context, value)))?;
-    Ok(Some(parsed_value))
+    Ok(Some(parse_str(value, context)?))
 }
 
 pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxError> {

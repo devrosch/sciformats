@@ -1,4 +1,4 @@
-use super::jdx_utils::{next_multiline_parser_tuple, parse_str};
+use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str};
 use super::JdxSequenceParser;
 use super::{jdx_parser::AuditTrailEntry, JdxError};
 use crate::api::SeekBufRead;
@@ -82,11 +82,11 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
         }
 
         // map
-        // todo: replace unwrap with something safer
-        let number = parse_str::<u64>(number_opt.unwrap().as_str(), "NUMBER")?;
-        let when = when_opt.unwrap().as_str();
-        let who = who_opt.unwrap().as_str();
-        let r#where = where_opt.unwrap().as_str();
+        let number = parse_opt_str::<u64>(number_opt.map(|m| m.as_str()), "NUMBER in AUDIT TRAIL")?;
+        let when = parse_opt_str::<String>(when_opt.map(|m| m.as_str()), "WHEN in AUDIT TRAIL")?;
+        let who = parse_opt_str::<String>(who_opt.map(|m| m.as_str()), "WHO in AUDIT TRAIL")?;
+        let r#where =
+            parse_opt_str::<String>(where_opt.map(|m| m.as_str()), "WHERE in AUDIT TRAIL")?;
         let (process, version) = match self.variable_list {
             vars if vars == Self::AUDIT_TRAIL_VARIABLE_LISTS[0] => (None, None),
             vars if vars == Self::AUDIT_TRAIL_VARIABLE_LISTS[1] => {
@@ -99,16 +99,16 @@ impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
             // unreachable, really
             _ => (None, None),
         };
-        let what = what_opt.unwrap().as_str();
+        let what = parse_opt_str::<String>(what_opt.map(|m| m.as_str()), "WHAT in AUDIT TRAIL")?;
 
         Ok(AuditTrailEntry {
             number,
-            when: when.to_owned(),
-            who: who.to_owned(),
-            r#where: r#where.to_owned(),
+            when,
+            who,
+            r#where,
             process: process.map(|v| v.to_owned()),
             version: version.map(|v| v.to_owned()),
-            what: what.to_owned(),
+            what,
         })
     }
 }

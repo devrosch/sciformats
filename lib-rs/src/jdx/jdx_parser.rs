@@ -1907,7 +1907,7 @@ impl BrukerSpecificParameters {
             && !is_bruker_specific_section_start(next_line.as_ref().unwrap())
             && !is_bruker_specific_section_end(next_line.as_ref().unwrap())
         {
-            // todo: skip other leading comments?
+            next_line = skip_to_next_ldr(next_line, false, reader, buf)?;
             let (label, mut value) = parse_ldr_start(next_line.as_ref().unwrap())?;
             (value, next_line) = parse_string_value(&value, reader, buf)?;
             content.push(StringLdr::new(label, value));
@@ -5341,6 +5341,27 @@ mod tests {
         assert_eq!(StringLdr::new("$NAME", "<Jul11-2023>"), content[1]);
         assert_eq!(StringLdr::new("$AQSEQ", "0"), content[2]);
         assert_eq!(StringLdr::new("$AQMOD", "3"), content[3]);
+    }
+
+    #[test]
+    fn quirk_bruker_parameters_section_parses_regular_content_with_leading_comment() {
+        let next_line = Some("$$ Bruker specific parameters".to_owned());
+        let input = b"$$ --------------------------\n\
+                                $$ a comment\n\
+                                ##$DU= <C:/>\n\
+                                ##$NAME= <Jul11-2023>\n\
+                                $$ End of Bruker specific parameters for F1\n\
+                                $$ ---------------------------------\n";
+        let mut reader = Cursor::new(input);
+
+        let (bruker_parameters_section, _next) =
+            BrukerSpecificParameters::new(next_line, &mut reader).unwrap();
+
+        assert_eq!("Bruker specific parameters", bruker_parameters_section.name);
+        let content = &bruker_parameters_section.content;
+        assert_eq!(2, content.len());
+        assert_eq!(StringLdr::new("$DU", "<C:/>"), content[0]);
+        assert_eq!(StringLdr::new("$NAME", "<Jul11-2023>"), content[1]);
     }
 
     #[test]

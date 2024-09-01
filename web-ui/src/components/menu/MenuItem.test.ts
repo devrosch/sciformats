@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import 'components/menu/MenuItem'; // for side effects
 import MenuItem from 'components/menu/MenuItem';
 

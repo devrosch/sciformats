@@ -66,6 +66,7 @@ export default class Footer extends HTMLElement {
     }
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('Footer adoptedCallback() called');
   }

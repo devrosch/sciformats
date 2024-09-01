@@ -28,7 +28,6 @@ export const initConverterService = async (workerSelf: any) => {
   let scanners = null;
   try {
     jdxScanner = new workerSelf.Module.JdxScanner();
-    /* eslint-disable-next-line new-cap */
     scanners = new workerSelf.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
     scanners.push_back(jdxScanner);
     jdxScanner.delete();

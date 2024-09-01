@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import './AboutDialog'; // for side effects
 import AboutDialog from './AboutDialog';
 

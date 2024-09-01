@@ -291,6 +291,7 @@ export default class DataChart extends HTMLElement {
     }
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('DataChart adoptedCallback() called');
   }

@@ -5,9 +5,6 @@ import {
   onMessageClose,
 } from './WorkerInternalUtils';
 
-// quench warnings for using "self", alternatively "globalThis" could be used instead
-/* eslint-disable no-restricted-globals */
-
 self.importScripts('libsf.js');
 
 const workingDir = '/work';

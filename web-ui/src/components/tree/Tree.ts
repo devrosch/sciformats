@@ -304,6 +304,7 @@ export default class Tree extends HTMLElement {
     }
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('Tree adoptedCallback() called');
   }

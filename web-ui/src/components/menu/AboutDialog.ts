@@ -95,6 +95,7 @@ export default class AboutDialog extends HTMLElement {
     this.removeEventListener('click', this.onClick);
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('AboutDialog adoptedCallback() called');
   }

@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import './MenuItem';
 import './MenuItemFileOpen';
 import './Submenu';

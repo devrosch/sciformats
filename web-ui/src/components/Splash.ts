@@ -82,6 +82,7 @@ export default class Splash extends HTMLElement {
     dialog.removeEventListener('cancel', this.onCancel);
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('AboutDialog adoptedCallback() called');
   }

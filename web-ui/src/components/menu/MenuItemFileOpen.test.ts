@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import 'components/menu/MenuItemFileOpen'; // for side effects
 import MenuItemFileOpen from 'components/menu/MenuItemFileOpen';

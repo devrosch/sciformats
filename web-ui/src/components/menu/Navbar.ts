@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import SysInfoProvider from 'util/SysInfoProvider';
 import Channel from 'model/Channel';
@@ -115,7 +115,6 @@ export default class Navbar extends HTMLElement {
     fileOpenMenuItems.forEach((item) => { (item as MenuItemFileOpen).activateShortcut(); });
   }
 
-  // eslint-disable-next-line class-methods-use-this
   onClick = (e: MouseEvent) => {
     console.log('Navbar item clicked.');
     e.preventDefault();
@@ -237,7 +236,6 @@ export default class Navbar extends HTMLElement {
     const items = e.dataTransfer.items;
     let files: File[] = [];
     for (let i = 0; i < items.length; i += 1) {
-      /* eslint-disable no-extra-boolean-cast */
       if (!!items[i].webkitGetAsEntry) {
         const entry = items[i].webkitGetAsEntry(); // non-standard
         if (entry && entry.isFile) {

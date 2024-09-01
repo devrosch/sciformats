@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './Footer'; // for side effects
 import Footer from './Footer';

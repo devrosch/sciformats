@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './DataData'; // for side effects
 import DataData from './DataData';

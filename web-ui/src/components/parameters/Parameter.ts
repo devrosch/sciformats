@@ -49,10 +49,12 @@ export default class Parameter extends HTMLElement {
     this.render();
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   disconnectedCallback() {
     console.log('Parameter disconnectedCallback() called');
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('Parameter adoptedCallback() called');
   }

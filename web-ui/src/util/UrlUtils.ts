@@ -1,6 +1,3 @@
-/* disable rule for now until more helpers are added */
-/* eslint-disable import/prefer-default-export */
-
 /**
  * Test if two URLs are the same.
  * @param url0 A URL.
@@ -9,7 +6,6 @@
  * False if either or both URLs are null, undefined or invalid
  * or their normalized string representations do not match.
  */
-/* eslint-disable-next-line function-paren-newline */
 export const isSameUrl = (
   url0: URL | string | null | undefined, url1: URL | string | null | undefined) => {
   if (typeof url0 === 'undefined'
@@ -23,6 +19,7 @@ export const isSameUrl = (
     const urlLhs = typeof url0 === 'string' ? new URL(url0).toString() : url0!.toString();
     const urlRhs = typeof url1 === 'string' ? new URL(url1).toString() : url1!.toString();
     return urlLhs === urlRhs;
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   } catch (error) {
     return false;
   }

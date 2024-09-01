@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import './DataPanel'; // for side effects
 import DataPanel from './DataPanel';
 

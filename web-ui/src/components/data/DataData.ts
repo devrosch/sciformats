@@ -101,6 +101,7 @@ export default class DataData extends HTMLElement {
     }
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('DataData adoptedCallback() called');
   }

@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import NodeData from 'model/NodeData';
@@ -78,7 +78,6 @@ class StubParser implements Parser {
     };
   }
 
-  // eslint-disable-next-line class-methods-use-this
   async close() {
     // noop
   }

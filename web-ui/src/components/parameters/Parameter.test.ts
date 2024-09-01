@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import './Parameter'; // for side effects
 import Parameter from './Parameter';
 

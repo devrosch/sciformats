@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import 'components/menu/NavbarMatchMediaMock'; // mock window.matchMedia()
 import './App'; // for side effects
 import App from './App';

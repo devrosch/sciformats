@@ -6,9 +6,6 @@ import {
   onClose, onOpen, onRead, onScan,
 } from './WorkerRsInternalUtils';
 
-// quench warnings for using "self", alternatively "globalThis" could be used instead
-/* eslint-disable no-restricted-globals */
-
 const openFiles = new Map<string, sf_rs.Reader>();
 const scanner = new sf_rs.ScannerRepository();
 

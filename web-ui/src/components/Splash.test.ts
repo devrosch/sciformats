@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import './Splash'; // for side effects
 import Splash from './Splash';
 

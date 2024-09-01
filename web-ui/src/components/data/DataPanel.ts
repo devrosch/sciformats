@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import './DataChart';
 import DataChart from './DataChart';
 import './DataTable';
@@ -101,6 +101,7 @@ export default class DataPanel extends HTMLElement {
     this.removeEventListener('click', this.onClick);
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('DataPanel adoptedCallback() called');
   }

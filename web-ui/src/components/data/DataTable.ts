@@ -129,6 +129,7 @@ export default class DataTable extends HTMLElement {
     }
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('DataTable adoptedCallback() called');
   }

@@ -202,7 +202,7 @@ export default class TreeNode extends HTMLElement {
     try {
       await this.#parser.close();
     } catch (error) {
-      console.warn(`Error closing file: ${this.#url}`);
+      console.warn(`Error closing file "${this.#url}": ${error?.toString()}`);
     }
   }
 
@@ -246,6 +246,7 @@ export default class TreeNode extends HTMLElement {
     this.#channel.removeListener(this.#eventListener);
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('TreeNode adoptedCallback() called');
   }

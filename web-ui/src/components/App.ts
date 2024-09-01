@@ -1,4 +1,4 @@
-/* eslint-disable import/no-duplicates */
+/* eslint-disable no-duplicate-imports */
 import { initWorkerCpp, initWorkerRs } from 'util/WorkerUtils';
 import 'components/Splash';
 import Splash from 'components/Splash';

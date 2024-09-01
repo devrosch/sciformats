@@ -62,6 +62,7 @@ export default class MenuItem extends HTMLElement {
     this.removeEventListener('click', this.onClick);
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('MenuItem adoptedCallback() called');
   }

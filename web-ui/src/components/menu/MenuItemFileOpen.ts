@@ -118,6 +118,7 @@ export default class MenuItemFileOpen extends HTMLElement {
     this.removeEventListener('change', this.onChange);
   }
 
+  /* eslint-disable-next-line class-methods-use-this */
   adoptedCallback() {
     console.log('MenuItemFileOpen adoptedCallback() called');
   }

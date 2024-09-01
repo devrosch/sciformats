@@ -1,4 +1,8 @@
-import { setElementAttribute, setElementTextContent, updateStateAndRender } from 'util/RenderUtils';
+import {
+  setElementAttribute,
+  setElementTextContent,
+  updateStateAndRender,
+} from 'util/RenderUtils';
 import './Submenu.css';
 
 /**
@@ -7,7 +11,9 @@ import './Submenu.css';
 const maxWidth = 576;
 
 export default class Submenu extends HTMLElement {
-  static get observedAttributes() { return ['title', 'key', 'expand']; }
+  static get observedAttributes() {
+    return ['title', 'key', 'expand'];
+  }
 
   #initialized = false;
 
@@ -26,7 +32,9 @@ export default class Submenu extends HTMLElement {
     if (!this.#initialized) {
       this._title = this.getAttribute('title');
       this._key = this.getAttribute('key');
-      this._expand = this.hasAttribute('expand') ? this.getAttribute('expand') === 'true' : false;
+      this._expand = this.hasAttribute('expand')
+        ? this.getAttribute('expand') === 'true'
+        : false;
 
       // add <a> at beginning
       const innerHtml = this.innerHTML;
@@ -45,7 +53,9 @@ export default class Submenu extends HTMLElement {
 
   render() {
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aExpandCollapseSpan = a.querySelector('.sf-expand-collapse-indicator') as HTMLSpanElement;
+    const aExpandCollapseSpan = a.querySelector(
+      '.sf-expand-collapse-indicator',
+    ) as HTMLSpanElement;
     const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
     const expandendChar = this._expand ? '▾' : '▸';
 
@@ -63,8 +73,10 @@ export default class Submenu extends HTMLElement {
       this.classList.remove('sf-submenu-expand');
       const subMenus = this.getElementsByClassName('sf-submenu-expand');
       for (const subMenu of subMenus) {
-        if (subMenu.hasAttribute('expand')
-          && subMenu.getAttribute('expand') !== 'false') {
+        if (
+          subMenu.hasAttribute('expand') &&
+          subMenu.getAttribute('expand') !== 'false'
+        ) {
           subMenu.setAttribute('expand', 'false');
         }
       }
@@ -128,7 +140,15 @@ export default class Submenu extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Submenu attributeChangedCallback() called', this._key, name, this._expand, oldValue, newValue, this.getAttribute('expand'));
+    console.log(
+      'Submenu attributeChangedCallback() called',
+      this._key,
+      name,
+      this._expand,
+      oldValue,
+      newValue,
+      this.getAttribute('expand'),
+    );
     this.init();
     updateStateAndRender(this, 'title', '_title', name, newValue);
     updateStateAndRender(this, 'key', '_key', name, newValue);

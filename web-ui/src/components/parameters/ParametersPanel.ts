@@ -21,7 +21,9 @@ const nodeDeselectedEvent = 'sf-tree-node-deselected';
 const nodeDataUpdatedEvent = 'sf-tree-node-data-updated';
 
 export default class ParametersPanel extends HTMLElement {
-  static get observedAttributes() { return ['title']; }
+  static get observedAttributes() {
+    return ['title'];
+  }
 
   #initialized = false;
 
@@ -33,7 +35,7 @@ export default class ParametersPanel extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: { key: string, value: string }[] = [];
+  #data: { key: string; value: string }[] = [];
 
   constructor() {
     super();
@@ -44,7 +46,7 @@ export default class ParametersPanel extends HTMLElement {
     return this.#data;
   }
 
-  set data(data: { key: string, value: string }[]) {
+  set data(data: { key: string; value: string }[]) {
     this.#data = data;
     this.render();
   }
@@ -71,19 +73,26 @@ export default class ParametersPanel extends HTMLElement {
     console.log('ParametersPanel render() completed');
   }
 
-  static async renderAsync(ul: HTMLUListElement, parameters: { key: string, value: string }[]) {
+  static async renderAsync(
+    ul: HTMLUListElement,
+    parameters: { key: string; value: string }[],
+  ) {
     let index = 0;
     for (const param of parameters) {
       if (ul.parentElement === null || !ul.isConnected) {
         // the ul is no longer attached to the DOM
-        console.log('Stopping async population of ParametersPanel as ul is detached');
+        console.log(
+          'Stopping async population of ParametersPanel as ul is detached',
+        );
         break;
       }
       if (index % parametersBatchSize === 0) {
         // let other events get processed after every n parameters first
         // this allows for a responsive UI in case of many parameters
         /* eslint-disable-next-line no-await-in-loop */
-        await new Promise((resolve) => { setTimeout(resolve, 0); });
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
       }
       const li = document.createElement('li');
       const parameterEl = document.createElement('sf-parameter');

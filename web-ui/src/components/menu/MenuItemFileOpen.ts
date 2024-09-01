@@ -14,7 +14,9 @@ const template = `
 `;
 
 export default class MenuItemFileOpen extends HTMLElement {
-  static get observedAttributes() { return ['title', 'key', 'shortcut']; }
+  static get observedAttributes() {
+    return ['title', 'key', 'shortcut'];
+  }
 
   #initialized = false;
 
@@ -43,7 +45,9 @@ export default class MenuItemFileOpen extends HTMLElement {
   render() {
     setElementAttribute(this, 'role', 'none');
 
-    const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
+    const input = this.getElementsByTagName('input').item(
+      0,
+    ) as HTMLInputElement;
     setElementAttribute(input, 'key', `${this._key}-input`);
 
     const label = this.querySelector('label') as HTMLLabelElement;
@@ -75,7 +79,9 @@ export default class MenuItemFileOpen extends HTMLElement {
       console.log('MenuItemFileOpen sf-file-open-input-menu-item clicked.');
       e.stopPropagation();
       e.preventDefault();
-      const input = this.getElementsByTagName('input').item(0) as HTMLInputElement;
+      const input = this.getElementsByTagName('input').item(
+        0,
+      ) as HTMLInputElement;
       input.click();
     }
     if (key === `${this._key}-input`) {

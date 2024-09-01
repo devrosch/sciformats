@@ -40,7 +40,9 @@ export default class Splash extends HTMLElement {
   }
 
   render() {
-    const dialog = this.getElementsByTagName('dialog').item(0) as HTMLDialogElement;
+    const dialog = this.getElementsByTagName('dialog').item(
+      0,
+    ) as HTMLDialogElement;
     if (this.#open) {
       if (!dialog.hasAttribute('open')) {
         dialog.showModal();

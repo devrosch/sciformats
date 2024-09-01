@@ -1,4 +1,8 @@
-import { setElementAttribute, setElementTextContent, updateStateAndRender } from 'util/RenderUtils';
+import {
+  setElementAttribute,
+  setElementTextContent,
+  updateStateAndRender,
+} from 'util/RenderUtils';
 import './MenuItem.css';
 
 const template = `
@@ -9,7 +13,9 @@ const template = `
 `;
 
 export default class MenuItem extends HTMLElement {
-  static get observedAttributes() { return ['title', 'shortcut']; }
+  static get observedAttributes() {
+    return ['title', 'shortcut'];
+  }
 
   #initialized = false;
 

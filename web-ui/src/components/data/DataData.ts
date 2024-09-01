@@ -21,7 +21,7 @@ export default class DataData extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: { x: number, y: number }[] = [];
+  #data: { x: number; y: number }[] = [];
 
   constructor() {
     super();
@@ -35,7 +35,7 @@ export default class DataData extends HTMLElement {
     return this.#data;
   }
 
-  set data(data: { x: number, y: number }[]) {
+  set data(data: { x: number; y: number }[]) {
     this.#data = data;
     this.render();
   }

@@ -35,7 +35,9 @@ test('sf-menu-item-file-open renders and observes attribute changes', async () =
   const input = menuItem.querySelector('input') as HTMLInputElement;
   expect(input).toBeTruthy();
   expect(input.getAttribute(keyAttr)).toBe(key + inputKeyPostfix);
-  const labelMenuItem = menuItem.querySelector('label > sf-menu-item') as MenuItem;
+  const labelMenuItem = menuItem.querySelector(
+    'label > sf-menu-item',
+  ) as MenuItem;
   expect(labelMenuItem).toBeTruthy();
   expect(labelMenuItem.getAttribute(keyAttr)).toBe(key + aKeyPostfix);
   expect(labelMenuItem.getAttribute(titleAttr)).toBe(title);
@@ -109,7 +111,10 @@ test('sf-menu-item-file-open dispatches click and custom event on file upload', 
 
   const customEventHandler = jest.fn((e) => e.detail.files);
   const clickEventHandler = jest.fn();
-  const handle = channel.addListener('sf-file-open-requested', customEventHandler);
+  const handle = channel.addListener(
+    'sf-file-open-requested',
+    customEventHandler,
+  );
   document.addEventListener('click', clickEventHandler);
   menuItem.onChange(event);
   channel.removeListener(handle);

@@ -90,7 +90,10 @@ const module = {};
 const checkWorkerNodeData = (workerNode: WorkerNodeData) => {
   expect(workerNode.url).toBe(url.toString());
   expect(workerNode.parameters).toHaveLength(2);
-  expect(workerNode.parameters[0]).toEqual({ key: 'key value', value: 'value value' });
+  expect(workerNode.parameters[0]).toEqual({
+    key: 'key value',
+    value: 'value value',
+  });
   expect(workerNode.data).toHaveLength(3);
   expect(workerNode.data[0]).toEqual({ x: 1, y: 2 });
   expect(workerNode.childNodeNames).toHaveLength(1);
@@ -107,9 +110,9 @@ test('initConverterService() waits for Module init and initializes ConverterServ
     Module: {
       Scanner: jest.fn(),
       JdxScanner: jest.fn(() => ({ delete: jest.fn() })),
-      vector$std$$shared_ptr$sciformats$$api$$Scanner$$: jest.fn(
-        () => ({ push_back: pushBackMock }),
-      ),
+      vector$std$$shared_ptr$sciformats$$api$$Scanner$$: jest.fn(() => ({
+        push_back: pushBackMock,
+      })),
       ConverterService: jest.fn(),
     },
   };
@@ -117,29 +120,34 @@ test('initConverterService() waits for Module init and initializes ConverterServ
   await WorkerInternalUtils.initConverterService(workerSelfMock);
 
   expect(workerSelfMock.Module.JdxScanner).toHaveBeenCalledTimes(1);
-  expect(workerSelfMock.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$)
-    .toHaveBeenCalledTimes(1);
+  expect(
+    workerSelfMock.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$,
+  ).toHaveBeenCalledTimes(1);
   expect(pushBackMock).toHaveBeenCalledTimes(1);
   expect(workerSelfMock.Module.ConverterService).toHaveBeenCalledTimes(1);
 });
 
 test('initConverterService() cleans up resources if init fails', async () => {
-  const pushBackMock = jest.fn(() => { throw new Error(); });
+  const pushBackMock = jest.fn(() => {
+    throw new Error();
+  });
   const jdxScannerDeleteMock = jest.fn();
   const vectorDeleteMock = jest.fn();
   const workerSelfMock = {
     Module: {
       Scanner: jest.fn(),
       JdxScanner: jest.fn(() => ({ delete: jdxScannerDeleteMock })),
-      vector$std$$shared_ptr$sciformats$$api$$Scanner$$: jest.fn(
-        () => ({ push_back: pushBackMock, delete: vectorDeleteMock }),
-      ),
+      vector$std$$shared_ptr$sciformats$$api$$Scanner$$: jest.fn(() => ({
+        push_back: pushBackMock,
+        delete: vectorDeleteMock,
+      })),
       ConverterService: jest.fn(),
     },
   };
 
-  await expect(async () => { await WorkerInternalUtils.initConverterService(workerSelfMock); })
-    .rejects.toThrowError();
+  await expect(async () => {
+    await WorkerInternalUtils.initConverterService(workerSelfMock);
+  }).rejects.toThrowError();
 
   expect(jdxScannerDeleteMock).toHaveBeenCalledTimes(1);
   expect(vectorDeleteMock).toHaveBeenCalledTimes(1);
@@ -154,7 +162,13 @@ test('mountFile() creates workingDir and UUID directories and mounts WORKERFS', 
     mount: jest.fn(),
   };
 
-  WorkerInternalUtils.mountFile(url, blob, workingDir, filesystemMock, workerFsStub);
+  WorkerInternalUtils.mountFile(
+    url,
+    blob,
+    workingDir,
+    filesystemMock,
+    workerFsStub,
+  );
 
   expect(filesystemMock.analyzePath).toHaveBeenCalledTimes(2);
   expect(filesystemMock.analyzePath).toHaveBeenCalledWith(workingDir, false);
@@ -175,9 +189,13 @@ test('unmountFile() unmounts WORKERFS and deletes UUID directory', async () => {
 
   expect(filesystemFileExistsMock.analyzePath).toHaveBeenCalledTimes(3);
   expect(filesystemFileExistsMock.unmount).toBeCalledTimes(1);
-  expect(filesystemFileExistsMock.unmount).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
+  expect(filesystemFileExistsMock.unmount).toHaveBeenCalledWith(
+    `${workingDir}/${uuid}`,
+  );
   expect(filesystemFileExistsMock.rmdir).toBeCalledTimes(1);
-  expect(filesystemFileExistsMock.rmdir).toHaveBeenCalledWith(`${workingDir}/${uuid}`);
+  expect(filesystemFileExistsMock.rmdir).toHaveBeenCalledWith(
+    `${workingDir}/${uuid}`,
+  );
 
   const filesystemNoDirMock = {
     analyzePath: jest.fn(() => ({ exists: false })),
@@ -226,7 +244,11 @@ test('createConverter() uses scanner to retrieve converter', async () => {
     getConverter: jest.fn(() => mockConverter),
   };
 
-  const converter = WorkerInternalUtils.createConverter(url, workingDir, scanner);
+  const converter = WorkerInternalUtils.createConverter(
+    url,
+    workingDir,
+    scanner,
+  );
 
   expect(scanner.getConverter).toHaveBeenCalledTimes(1);
   expect(scanner.getConverter).toHaveBeenCalledWith(filePath);
@@ -253,7 +275,9 @@ test('readNode() throws for illegal URL hash', async () => {
   const converterMapStub = new Map([[rootUrl.toString(), converterMock]]);
   const urlIllegalHash = new URL(`${rootUrl.toString()}#illegal`);
 
-  expect(() => WorkerInternalUtils.readNode(urlIllegalHash, converterMapStub)).toThrow();
+  expect(() =>
+    WorkerInternalUtils.readNode(urlIllegalHash, converterMapStub),
+  ).toThrow();
 });
 
 test('nodeToJson() maps C++ node data to WorkerNode', async () => {
@@ -339,7 +363,9 @@ test('onMessageScan() uses ConverterService to scan if a file could be parsed', 
 test('onMessageOpen() uses existing converter to parse data', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
   /* @ts-expect-error */
-  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+  const openFiles = new Map<string, Module.Converter>([
+    [rootUrl.toString(), converterMock],
+  ]);
 
   const openResponse = WorkerInternalUtils.onMessageOpen(
     requestStub,
@@ -387,7 +413,9 @@ test('onMessageOpen() returns error response in case of error', async () => {
   const openFiles = new Map<string, Module.Converter>();
   const errorConverterServiceMock = {
     isRecognized: jest.fn(() => true),
-    getConverter: jest.fn(() => { throw new Error('open error message'); }),
+    getConverter: jest.fn(() => {
+      throw new Error('open error message');
+    }),
   };
 
   const openResponse = WorkerInternalUtils.onMessageOpen(
@@ -408,7 +436,9 @@ test('onMessageOpen() returns error response in case of error', async () => {
 test('onMessageRead() reads node data', async () => {
   const requestStub = new WorkerRequest('read', '123', fileInfoStub);
   /* @ts-expect-error */
-  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+  const openFiles = new Map<string, Module.Converter>([
+    [rootUrl.toString(), converterMock],
+  ]);
 
   const readResponse = WorkerInternalUtils.onMessageRead(
     requestStub,
@@ -425,10 +455,14 @@ test('onMessageRead() reads node data', async () => {
 test('onMessageRead() returns error response in case of error', async () => {
   const requestStub = new WorkerRequest('read', '123', fileInfoStub);
   const errorConverterMock = {
-    read: jest.fn(() => { throw new Error('read error message'); }),
+    read: jest.fn(() => {
+      throw new Error('read error message');
+    }),
   };
   /* @ts-expect-error */
-  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), errorConverterMock]]);
+  const openFiles = new Map<string, Module.Converter>([
+    [rootUrl.toString(), errorConverterMock],
+  ]);
 
   const readResponse = WorkerInternalUtils.onMessageRead(
     requestStub,
@@ -444,7 +478,9 @@ test('onMessageRead() returns error response in case of error', async () => {
 test('onMessageClose() removes converter from open files map and deletes file in filesystem', async () => {
   const requestStub = new WorkerRequest('close', '123', fileInfoStub);
   /* @ts-expect-error */
-  const openFiles = new Map<string, Module.Converter>([[rootUrl.toString(), converterMock]]);
+  const openFiles = new Map<string, Module.Converter>([
+    [rootUrl.toString(), converterMock],
+  ]);
 
   const closeResponse = WorkerInternalUtils.onMessageClose(
     requestStub,

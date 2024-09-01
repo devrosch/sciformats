@@ -33,8 +33,10 @@ export default class Menu extends HTMLElement {
       this.classList.remove('sf-show-menu');
       const subMenus = this.querySelectorAll('sf-submenu');
       for (const subMenu of subMenus) {
-        if (subMenu.hasAttribute('expand')
-          && subMenu.getAttribute('expand') !== 'false') {
+        if (
+          subMenu.hasAttribute('expand') &&
+          subMenu.getAttribute('expand') !== 'false'
+        ) {
           subMenu.setAttribute('expand', 'false');
         }
       }
@@ -49,8 +51,10 @@ export default class Menu extends HTMLElement {
       // close all submenus that are not parents of the clicked submenu
       for (const child of this.children) {
         if (child instanceof Submenu && child !== topLevelSubmenu) {
-          if (child.hasAttribute('expand')
-            && child.getAttribute('expand') !== 'false') {
+          if (
+            child.hasAttribute('expand') &&
+            child.getAttribute('expand') !== 'false'
+          ) {
             child.setAttribute('expand', 'false');
           }
         }

@@ -79,8 +79,12 @@ export default class DataTable extends HTMLElement {
       const tr = document.createElement('tr');
       columns.forEach((column) => {
         const td = document.createElement('td');
-        const value: string = Object.prototype.hasOwnProperty.call(row, column.key)
-          ? row[column.key] as string : '';
+        const value: string = Object.prototype.hasOwnProperty.call(
+          row,
+          column.key,
+        )
+          ? (row[column.key] as string)
+          : '';
         td.textContent = value;
         tr.append(td);
       });

@@ -6,7 +6,7 @@ export default interface Parser {
    * @example
    * file:///local/path/to/file
    * https://host/path/to/file
-  */
+   */
   readonly rootUrl: URL;
 
   /**

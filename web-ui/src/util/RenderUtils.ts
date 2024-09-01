@@ -55,8 +55,10 @@ export const updateStateAndRender = (
   attributeName: string,
   newAttributeValue: any,
 ) => {
-  if (expectedAttributeName === attributeName
-    && instance[instanceFieldName] !== newAttributeValue) {
+  if (
+    expectedAttributeName === attributeName &&
+    instance[instanceFieldName] !== newAttributeValue
+  ) {
     instance[instanceFieldName] = newAttributeValue;
     instance.render();
   }

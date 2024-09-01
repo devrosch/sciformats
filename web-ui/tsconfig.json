@@ -20,8 +20,8 @@
       "components/*": ["src/components/*"],
       "model/*": ["src/model/*"],
       "util/*": ["src/util/*"],
-      "worker/*": ["src/worker/*"],
+      "worker/*": ["src/worker/*"]
     }
-  },
+  }
   //"exclude": ["src/**/libsf.js", "src/**/libsf.wasm"]
 }

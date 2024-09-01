@@ -2,9 +2,7 @@ import * as sf_rs from 'sf_rs';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerStatus from './WorkerStatus';
-import {
-  onClose, onOpen, onRead, onScan,
-} from './WorkerRsInternalUtils';
+import { onClose, onOpen, onRead, onScan } from './WorkerRsInternalUtils';
 
 const openFiles = new Map<string, sf_rs.Reader>();
 const scanner = new sf_rs.ScannerRepository();
@@ -14,7 +12,13 @@ self.onmessage = (event) => {
   switch (request.name) {
     case 'status': {
       // library has been imported already when onmessage gets defined
-      self.postMessage(new WorkerResponse('status', request.correlationId, WorkerStatus.Initialized));
+      self.postMessage(
+        new WorkerResponse(
+          'status',
+          request.correlationId,
+          WorkerStatus.Initialized,
+        ),
+      );
       break;
     }
     case 'scan': {
@@ -35,7 +39,11 @@ self.onmessage = (event) => {
     }
     default:
       self.postMessage(
-        new WorkerResponse('error', request.correlationId, `Unknown command: ${request.name}`),
+        new WorkerResponse(
+          'error',
+          request.correlationId,
+          `Unknown command: ${request.name}`,
+        ),
       );
       break;
   }

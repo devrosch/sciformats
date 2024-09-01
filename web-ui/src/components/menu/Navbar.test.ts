@@ -61,7 +61,11 @@ const testEventDispatchedForShortcut = (
     'keydown',
     // modifier keys for Linux, guaranteed to be used by mock at beginning of file
     {
-      key, shiftKey: true, ctrlKey: false, altKey: true, metaKey: false,
+      key,
+      shiftKey: true,
+      ctrlKey: false,
+      altKey: true,
+      metaKey: false,
     },
   );
   const listener = (message: Message) => {
@@ -81,7 +85,9 @@ const testEventDispatchedForShortcut = (
 const file = new File(['dummy'], 'test.txt');
 const file2 = new File(['dummy2'], 'test2.txt');
 const item = {
-  webkitGetAsEntry() { return { isFile: true }; },
+  webkitGetAsEntry() {
+    return { isFile: true };
+  },
 };
 let dataTransfer: DataTransfer;
 
@@ -234,15 +240,27 @@ test('sf-navbar - about click opens AboutDialog', async () => {
 });
 
 test('sf-navbar - file export event dispatched when "export - json" is clicked', (done) => {
-  testEventDispatchedForClickedKey('sf-export-json', 'sf-file-export-requested', done);
+  testEventDispatchedForClickedKey(
+    'sf-export-json',
+    'sf-file-export-requested',
+    done,
+  );
 });
 
 test('sf-navbar - close event dispatched when "file - close" is clicked', (done) => {
-  testEventDispatchedForClickedKey('sf-file-close', 'sf-file-close-requested', done);
+  testEventDispatchedForClickedKey(
+    'sf-file-close',
+    'sf-file-close-requested',
+    done,
+  );
 });
 
 test('sf-navbar - close event dispatched when "file - close all" is clicked', (done) => {
-  testEventDispatchedForClickedKey('sf-file-close-all', 'sf-file-close-all-requested', done);
+  testEventDispatchedForClickedKey(
+    'sf-file-close-all',
+    'sf-file-close-all-requested',
+    done,
+  );
 });
 
 test('sf-navbar dispatches custom event on file drop', () => {
@@ -260,7 +278,10 @@ test('sf-navbar dispatches custom event on file drop', () => {
   event.dataTransfer = dataTransfer;
 
   const customEventHandler = jest.fn((e) => e.detail.files);
-  const handle = channel.addListener('sf-file-open-requested', customEventHandler);
+  const handle = channel.addListener(
+    'sf-file-open-requested',
+    customEventHandler,
+  );
   app.dispatchEvent(event as DragEvent);
   expect(customEventHandler).toHaveBeenCalledTimes(1);
   channel.removeListener(handle);

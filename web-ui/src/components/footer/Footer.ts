@@ -53,8 +53,14 @@ export default class Footer extends HTMLElement {
   connectedCallback() {
     console.log('Footer connectedCallback() called');
     this.init();
-    const handle0 = this.#channel.addListener('sf-tree-node-selected', this.handleUrlChanged.bind(this));
-    const handle1 = this.#channel.addListener('sf-tree-node-deselected', this.handleUrlChanged.bind(this));
+    const handle0 = this.#channel.addListener(
+      'sf-tree-node-selected',
+      this.handleUrlChanged.bind(this),
+    );
+    const handle1 = this.#channel.addListener(
+      'sf-tree-node-deselected',
+      this.handleUrlChanged.bind(this),
+    );
     this.#handles.push(handle0, handle1);
     this.render();
   }

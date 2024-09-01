@@ -8,6 +8,7 @@
     "import-wasm-rs": "rm -rf ./node_modules/sf_rs/ && cp -R ../lib-rs/pkg/. ./node_modules/sf_rs",
     "test": "APP_VERSION=$npm_package_version jest",
     "lint": "eslint ./src",
+    "format": "prettier . --check",
     "start": "APP_VERSION=$npm_package_version webpack serve --open",
     "build": "APP_VERSION=$npm_package_version webpack"
   },
@@ -16,7 +17,9 @@
     "transform": {
       "^.+\\.[t|j]sx?$": "babel-jest"
     },
-    "modulePaths": ["<rootDir>/../lib-rs/pkg/"],
+    "modulePaths": [
+      "<rootDir>/../lib-rs/pkg/"
+    ],
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/src/assetMock.ts",
       "\\.(css|less|sass)$": "<rootDir>/src/styleMock.ts",
@@ -57,6 +60,7 @@
     "html-webpack-plugin": "^5.5.3",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.3.3",
     "style-loader": "^4.0.0",
     "ts-loader": "^9.4.4",
     "typescript": "^5.2.2",

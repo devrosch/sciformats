@@ -7,7 +7,7 @@ type WorkerFileInfo = WorkerFileUrl & {
   /**
    * File data.
    */
-  blob: Blob,
+  blob: Blob;
 };
 
 export default WorkerFileInfo;

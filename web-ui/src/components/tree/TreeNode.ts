@@ -71,7 +71,8 @@ export default class TreeNode extends HTMLElement {
     // span is focusable and thus is keyboard event target and requires URL
     setElementAttribute(nameSpan, 'url', this.#url.toString());
     // render something as name even if name is blank
-    const renderName = this.name === '' || this.name === null ? '""' : this.name;
+    const renderName =
+      this.name === '' || this.name === null ? '""' : this.name;
     setElementTextContent(nameSpan, renderName);
     if (this.#selected) {
       nameSpan.classList.add('selected');
@@ -102,7 +103,7 @@ export default class TreeNode extends HTMLElement {
         for (let i = 0; i < this.#nodeData.childNodeNames.length; i += 1) {
           const childUrl = new URL(this.#url);
           if (!this.#url.hash.endsWith('/')) {
-            childUrl.hash += ('/');
+            childUrl.hash += '/';
           }
           const childNodeName = this.#nodeData.childNodeNames[i];
           childUrl.hash += `${i}-${encodeURIComponent(childNodeName)}`;
@@ -233,7 +234,10 @@ export default class TreeNode extends HTMLElement {
   connectedCallback() {
     console.log('TreeNode connectedCallback() called');
     this.init();
-    this.#eventListener = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelected.bind(this));
+    this.#eventListener = this.#channel.addListener(
+      'sf-tree-node-selected',
+      this.handleTreeNodeSelected.bind(this),
+    );
     this.#retrieveNodeData();
     this.render();
   }

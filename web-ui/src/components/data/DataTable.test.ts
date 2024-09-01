@@ -47,7 +47,9 @@ const checkDataIsRendered = (
   document: Document,
   expectRender: boolean,
 ) => {
-  const htmlTable = document.querySelector(`${element} table`) as HTMLTableElement;
+  const htmlTable = document.querySelector(
+    `${element} table`,
+  ) as HTMLTableElement;
   expect(htmlTable).not.toBeNull();
 
   const header = htmlTable.querySelector('thead > tr') as HTMLElement;
@@ -69,8 +71,12 @@ const checkDataIsRendered = (
       expect(cells.length).toBe(peakData.columnNames.length);
       for (let j = 0; j < peakData.columnNames.length; j += 1) {
         const columnKey = peakData.columnNames[j].key;
-        const expectedCellValue = Object.prototype.hasOwnProperty.call(peakData.rows[i], columnKey)
-          ? peakData.rows[i][columnKey] : '';
+        const expectedCellValue = Object.prototype.hasOwnProperty.call(
+          peakData.rows[i],
+          columnKey,
+        )
+          ? peakData.rows[i][columnKey]
+          : '';
         expect(cells[j].textContent).toBe(expectedCellValue);
       }
     }

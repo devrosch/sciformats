@@ -20,8 +20,8 @@ export default class MockParser implements Parser {
 
   // eslint-disable-next-line class-methods-use-this
   read(url: URL): Promise<NodeData> {
-    const parameters: { key: string, value: string }[] = [];
-    const data: { x: number, y: number }[] = [];
+    const parameters: { key: string; value: string }[] = [];
+    const data: { x: number; y: number }[] = [];
     const table: Table = {
       columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],
       rows: [new Map([['col0', 'Cloumn 0 Value']])],
@@ -38,7 +38,9 @@ export default class MockParser implements Parser {
       childNodeNames,
     };
 
-    return new Promise((resolve) => { resolve(nodeData); });
+    return new Promise((resolve) => {
+      resolve(nodeData);
+    });
   }
 
   // eslint-disable-next-line class-methods-use-this

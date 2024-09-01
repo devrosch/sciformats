@@ -29,14 +29,21 @@ class StubParser implements Parser {
 
     const parameters = [{ key: 'key 1', value: 'value 1' }];
 
-    let data: { x: number, y: number }[] = [];
+    let data: { x: number; y: number }[] = [];
     data = [{ x: 1, y: 2 }];
     if (hash.endsWith('/child 2')) {
-      data = [{ x: 1, y: 2 }, { x: 2, y: 4 }];
+      data = [
+        { x: 1, y: 2 },
+        { x: 2, y: 4 },
+      ];
       parameters.push({ key: 'key 2', value: 'value 2' });
     }
     if (hash.endsWith('/child 3')) {
-      data = [{ x: 1, y: 2 }, { x: 2, y: 4 }, { x: 3, y: 6 }];
+      data = [
+        { x: 1, y: 2 },
+        { x: 2, y: 4 },
+        { x: 3, y: 6 },
+      ];
       parameters.push({ key: 'key 2', value: 'value 2' });
       parameters.push({ key: 'key 3', value: 'value 3' });
     }
@@ -105,7 +112,9 @@ test('sf-tree-node renders', (done) => {
     try {
       expect(treeNode.textContent).toContain('dummy.txt');
 
-      let plusMinusSpan = document.body.querySelector('.plusminus') as HTMLSpanElement;
+      let plusMinusSpan = document.body.querySelector(
+        '.plusminus',
+      ) as HTMLSpanElement;
       expect(plusMinusSpan?.innerHTML).toContain('⊞');
       expect(document.body.innerHTML).not.toContain(child1);
       expect(document.body.innerHTML).not.toContain(child2);
@@ -113,7 +122,9 @@ test('sf-tree-node renders', (done) => {
 
       treeNode.onToggleCollapsed();
       // new span is created, so query it again
-      plusMinusSpan = document.body.querySelector('.plusminus') as HTMLSpanElement;
+      plusMinusSpan = document.body.querySelector(
+        '.plusminus',
+      ) as HTMLSpanElement;
       expect(plusMinusSpan?.innerHTML).toContain('⊟');
       expect(document.body.innerHTML).toContain(child1);
       expect(document.body.innerHTML).toContain(child2);
@@ -170,9 +181,11 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
   const errorEvent = 'sf-error';
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
-    open: () => new Promise<void>(() => { }),
-    read: () => { throw new Error('Test Error.'); },
-    close: () => new Promise<void>(() => { }),
+    open: () => new Promise<void>(() => {}),
+    read: () => {
+      throw new Error('Test Error.');
+    },
+    close: () => new Promise<void>(() => {}),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
 
@@ -195,9 +208,11 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
 test('sf-tree-node displays error in case of data loading error', (done) => {
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
-    open: () => new Promise<void>(() => { }),
-    read: () => { throw new Error('Test Error.'); },
-    close: () => new Promise<void>(() => { }),
+    open: () => new Promise<void>(() => {}),
+    read: () => {
+      throw new Error('Test Error.');
+    },
+    close: () => new Promise<void>(() => {}),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
   document.body.append(treeNode);

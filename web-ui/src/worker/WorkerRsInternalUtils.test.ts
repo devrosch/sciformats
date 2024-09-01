@@ -49,10 +49,7 @@ test('onScan() uses Scanner to scan if a file could be parsed', async () => {
   const requestStub = new WorkerRequest('scan', '123', fileInfoStub);
   const mockScanner = new AndiScanner();
 
-  const response = WorkerRsInternalUtils.onScan(
-    requestStub,
-    mockScanner,
-  );
+  const response = WorkerRsInternalUtils.onScan(requestStub, mockScanner);
 
   expect(mockScanner.isRecognized).toHaveBeenCalledTimes(1);
   expect(mockScanner.getReader).toHaveBeenCalledTimes(0);
@@ -73,10 +70,7 @@ test('onScan() returns error for illegal input', async () => {
   const requestStub = new WorkerRequest('scan', '123', illegalFileInfoStub);
   const mockScanner = new AndiScanner();
 
-  const response = WorkerRsInternalUtils.onScan(
-    requestStub,
-    mockScanner,
-  );
+  const response = WorkerRsInternalUtils.onScan(requestStub, mockScanner);
 
   expect(mockScanner.isRecognized).toHaveBeenCalledTimes(0);
   expect(response.name).toBe('error');
@@ -110,7 +104,9 @@ test('onOpen() returns error if exception occurs', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
   const mockScanner = {
     isRecognized: jest.fn(() => true),
-    getReader: jest.fn(() => { throw new Error('getReader() error'); }),
+    getReader: jest.fn(() => {
+      throw new Error('getReader() error');
+    }),
     free: jest.fn(),
   };
   const openFiles = new Map<string, Reader>();
@@ -130,10 +126,7 @@ test('onRead() uses openFiles to read node', async () => {
   const openFiles = new Map<string, Reader>();
   openFiles.set(rootUrl.toString(), mockReader);
 
-  const response = WorkerRsInternalUtils.onRead(
-    requestStub,
-    openFiles,
-  );
+  const response = WorkerRsInternalUtils.onRead(requestStub, openFiles);
 
   expect(response.name).toBe('read');
   expect(response.correlationId).toBe(requestStub.correlationId);
@@ -146,10 +139,7 @@ test('onRead() returns error if file not open', async () => {
   const requestStub = new WorkerRequest('read', '123', workerFileUrlStub);
   const openFiles = new Map<string, Reader>();
 
-  const response = WorkerRsInternalUtils.onRead(
-    requestStub,
-    openFiles,
-  );
+  const response = WorkerRsInternalUtils.onRead(requestStub, openFiles);
 
   expect(response.name).toBe('error');
   expect(response.correlationId).toBe(requestStub.correlationId);
@@ -160,10 +150,7 @@ test('onClose() removes file from openFiles map', async () => {
   const openFiles = new Map<string, Reader>();
   openFiles.set(rootUrl.toString(), mockReader);
 
-  const response = WorkerRsInternalUtils.onClose(
-    requestStub,
-    openFiles,
-  );
+  const response = WorkerRsInternalUtils.onClose(requestStub, openFiles);
 
   expect(mockReader.read).toHaveBeenCalledTimes(0);
   expect(mockReader.free).toHaveBeenCalledTimes(1);
@@ -180,10 +167,7 @@ test('onClose() also succeeds if file not open', async () => {
   const requestStub = new WorkerRequest('close', '123', workerFileUrlStub);
   const openFiles = new Map<string, Reader>();
 
-  const response = WorkerRsInternalUtils.onClose(
-    requestStub,
-    openFiles,
-  );
+  const response = WorkerRsInternalUtils.onClose(requestStub, openFiles);
 
   expect(response.name).toBe('closed');
 });

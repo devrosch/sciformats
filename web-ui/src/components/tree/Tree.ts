@@ -143,7 +143,9 @@ export default class Tree extends HTMLElement {
   }
 
   handleTreeNodeSelection(message: Message) {
-    console.log(`handleTreeNodeSelection() -> ${message.name}: ${message.detail.url}`);
+    console.log(
+      `handleTreeNodeSelection() -> ${message.name}: ${message.detail.url}`,
+    );
     const url = message.detail.url;
     if (message.name === 'sf-tree-node-selected') {
       this.#selectedNodeUrl = url;
@@ -157,7 +159,10 @@ export default class Tree extends HTMLElement {
   static #findLastLeafNode(node: Element): TreeNode {
     // recursively find last TreeNode
     let currentNode = node;
-    while (currentNode.hasAttribute('expand') && currentNode.getAttribute('expand') === 'true') {
+    while (
+      currentNode.hasAttribute('expand') &&
+      currentNode.getAttribute('expand') === 'true'
+    ) {
       currentNode = currentNode.lastChild as Element;
     }
     return currentNode as TreeNode;
@@ -170,7 +175,11 @@ export default class Tree extends HTMLElement {
       if (!(prev instanceof TreeNode)) {
         prev = null;
       }
-    } else if (prev !== null && prev.hasAttribute('expand') && prev.getAttribute('expand') === 'true') {
+    } else if (
+      prev !== null &&
+      prev.hasAttribute('expand') &&
+      prev.getAttribute('expand') === 'true'
+    ) {
       prev = Tree.#findLastLeafNode(prev);
     }
     return prev as TreeNode;
@@ -179,7 +188,7 @@ export default class Tree extends HTMLElement {
   static #findParentNextSibling(node: Element): TreeNode | null {
     // recursively move up tree to find parent's next sibling
     let parent = node.parentElement;
-    while ((parent instanceof TreeNode) || (parent instanceof Tree)) {
+    while (parent instanceof TreeNode || parent instanceof Tree) {
       const nextSibling = parent.nextSibling;
       if (nextSibling instanceof TreeNode) {
         return nextSibling;
@@ -191,7 +200,10 @@ export default class Tree extends HTMLElement {
 
   static #findNextTreeNode(element: Element): TreeNode | null {
     let next = null;
-    if (element.hasAttribute('expand') && element.getAttribute('expand') === 'true') {
+    if (
+      element.hasAttribute('expand') &&
+      element.getAttribute('expand') === 'true'
+    ) {
       // find first child node
       next = element.querySelector('sf-tree-node');
     } else {
@@ -220,8 +232,10 @@ export default class Tree extends HTMLElement {
     console.log(key);
 
     // event originates from span within TreeNode => parentElement
-    const treeNode = e.target instanceof TreeNode
-      ? e.target : (e?.target as Element | null)?.parentElement as TreeNode | null;
+    const treeNode =
+      e.target instanceof TreeNode
+        ? e.target
+        : ((e?.target as Element | null)?.parentElement as TreeNode | null);
     if (treeNode === null) {
       return;
     }
@@ -268,7 +282,9 @@ export default class Tree extends HTMLElement {
   onClick = (e: Event) => {
     if (e.target instanceof TreeNode || e.target instanceof Tree) {
       // TODO: refactor to avoid code duplication and knowledge of TreeNode implementation
-      const nameElement = this.querySelector(`span[url="${this.#selectedNodeUrl}"]`) as HTMLSpanElement | null;
+      const nameElement = this.querySelector(
+        `span[url="${this.#selectedNodeUrl}"]`,
+      ) as HTMLSpanElement | null;
       nameElement?.focus({ focusVisible: false } as FocusOptions);
     }
   };
@@ -282,11 +298,26 @@ export default class Tree extends HTMLElement {
     this.init();
     this.addEventListener('keydown', Tree.onKeyDown);
     this.addEventListener('click', this.onClick);
-    const fileOpenHandle = this.#channel.addListener('sf-file-open-requested', this.handleFilesOpenRequested.bind(this));
-    const fileCloseHandle = this.#channel.addListener('sf-file-close-requested', this.handleFileCloseRequested.bind(this));
-    const fileCloseAllHandle = this.#channel.addListener('sf-file-close-all-requested', this.handleFileCloseAllRequested.bind(this));
-    const selectedHandle = this.#channel.addListener('sf-tree-node-selected', this.handleTreeNodeSelection.bind(this));
-    const deselectedHandle = this.#channel.addListener('sf-tree-node-deselected', this.handleTreeNodeSelection.bind(this));
+    const fileOpenHandle = this.#channel.addListener(
+      'sf-file-open-requested',
+      this.handleFilesOpenRequested.bind(this),
+    );
+    const fileCloseHandle = this.#channel.addListener(
+      'sf-file-close-requested',
+      this.handleFileCloseRequested.bind(this),
+    );
+    const fileCloseAllHandle = this.#channel.addListener(
+      'sf-file-close-all-requested',
+      this.handleFileCloseAllRequested.bind(this),
+    );
+    const selectedHandle = this.#channel.addListener(
+      'sf-tree-node-selected',
+      this.handleTreeNodeSelection.bind(this),
+    );
+    const deselectedHandle = this.#channel.addListener(
+      'sf-tree-node-deselected',
+      this.handleTreeNodeSelection.bind(this),
+    );
     this.#eventListeners.push(fileOpenHandle);
     this.#eventListeners.push(fileCloseHandle);
     this.#eventListeners.push(fileCloseAllHandle);

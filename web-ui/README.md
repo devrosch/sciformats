@@ -11,32 +11,39 @@ Minimum Node.js v15 (for @typescript-eslint). Tested with Node.js v20 only.
 ## Build
 
 First, build the WASM library as described in `lib-cpp` and then import it with:
+
 ```
 npm import-wasm
 ```
 
 To install the required packages run:
+
 ```
 npm install
 ```
 
 After that, to run the tests, run:
+
 ```
 npm test
 ```
+
 Test coverage information can be generated with `npm test -- --coverage`.
 
 To lint the code, run:
+
 ```
 npm run lint
 ```
 
 To start the development server, run:
+
 ```
 npm start
 ```
 
 For builing a release version, run:
+
 ```
 npm run build
 ```
@@ -59,4 +66,4 @@ This program is free software: you can redistribute it and/or modify it under th
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.

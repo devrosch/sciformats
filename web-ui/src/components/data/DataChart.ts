@@ -81,7 +81,8 @@ export default class DataChart extends HTMLElement {
     if (range.length > 1) {
       reversedX = range[0] > range[range.length - 1];
     }
-    const plotSticks = typeof (this.#chartState.data as any).error_y !== 'undefined';
+    const plotSticks =
+      typeof (this.#chartState.data as any).error_y !== 'undefined';
     return {
       xyData,
       metadata: {
@@ -93,17 +94,19 @@ export default class DataChart extends HTMLElement {
     };
   }
 
-  set data(
-    data: {
-      xyData: { x: number, y: number }[],
-      metadata: { [key: string]: string },
-    },
-  ) {
+  set data(data: {
+    xyData: { x: number; y: number }[];
+    metadata: { [key: string]: string };
+  }) {
     const xyData = DataChart.toXyArrays(data.xyData);
     this.#chartState.data.x = xyData.x;
     this.#chartState.data.y = xyData.y;
-    this.#chartState.layout.xaxis.title = DataChart.#extractXAxisTitle(data.metadata);
-    this.#chartState.layout.yaxis.title = DataChart.#extractYAxisTitle(data.metadata);
+    this.#chartState.layout.xaxis.title = DataChart.#extractXAxisTitle(
+      data.metadata,
+    );
+    this.#chartState.layout.yaxis.title = DataChart.#extractYAxisTitle(
+      data.metadata,
+    );
 
     if (data.metadata && data.metadata['x.reverse']) {
       delete (this.#chartState.layout.xaxis as any).range;
@@ -114,7 +117,11 @@ export default class DataChart extends HTMLElement {
       this.#chartState.layout.xaxis.autorange = true;
     }
 
-    if (data.metadata && data.metadata['plot.style'] && data.metadata['plot.style'] === 'sticks') {
+    if (
+      data.metadata &&
+      data.metadata['plot.style'] &&
+      data.metadata['plot.style'] === 'sticks'
+    ) {
       // error bars as MS stick display, see:
       // https://plotly.com/javascript/line-and-scatter/
       // https://plotly.com/javascript/error-bars/
@@ -129,7 +136,8 @@ export default class DataChart extends HTMLElement {
         width: 0, // no marker on ends of error bar
       };
       (this.#chartState.data as any).marker = { size: 1 };
-      (this.#chartState.data as any).hovertemplate = '(%{x:.f}, %{y:.f})<extra></extra>';
+      (this.#chartState.data as any).hovertemplate =
+        '(%{x:.f}, %{y:.f})<extra></extra>';
       this.#chartState.data.mode = 'none';
     } else {
       delete (this.#chartState.data as any).error_y;
@@ -147,9 +155,11 @@ export default class DataChart extends HTMLElement {
     }
 
     const xLabel = Object.prototype.hasOwnProperty.call(metadata, 'x.label')
-      ? metadata['x.label'] : null;
+      ? metadata['x.label']
+      : null;
     const xUnit = Object.prototype.hasOwnProperty.call(metadata, 'x.unit')
-      ? metadata['x.unit'] : null;
+      ? metadata['x.unit']
+      : null;
 
     let xTitle = '';
     if (xLabel !== null && xUnit !== null) {
@@ -169,9 +179,11 @@ export default class DataChart extends HTMLElement {
     }
 
     const yLabel = Object.prototype.hasOwnProperty.call(metadata, 'y.label')
-      ? metadata['y.label'] : null;
+      ? metadata['y.label']
+      : null;
     const yUnit = Object.prototype.hasOwnProperty.call(metadata, 'y.unit')
-      ? metadata['y.unit'] : null;
+      ? metadata['y.unit']
+      : null;
 
     let yTitle = '';
     if (yLabel !== null && yUnit !== null) {
@@ -191,7 +203,9 @@ export default class DataChart extends HTMLElement {
       this.classList.add('init');
 
       this.innerHTML = template;
-      this.#chartContainer = this.querySelector('#sf-data-chart-placeholder') as Plotly.Root;
+      this.#chartContainer = this.querySelector(
+        '#sf-data-chart-placeholder',
+      ) as Plotly.Root;
       Plotly.newPlot(
         this.#chartContainer!,
         [this.#chartState.data] as Plotly.Data[],
@@ -204,7 +218,9 @@ export default class DataChart extends HTMLElement {
       this.#initialized = true;
 
       // unhide chart
-      setTimeout(() => { this.classList.remove('init'); }, 100);
+      setTimeout(() => {
+        this.classList.remove('init');
+      }, 100);
     }
   }
 
@@ -212,7 +228,7 @@ export default class DataChart extends HTMLElement {
     Plotly.Plots.resize(this.#chartContainer!);
   }
 
-  static toXyArrays(data: { x: number, y: number }[]) {
+  static toXyArrays(data: { x: number; y: number }[]) {
     const xArray: number[] = [];
     const yArray: number[] = [];
     if (data !== null && typeof data !== 'undefined') {
@@ -224,8 +240,8 @@ export default class DataChart extends HTMLElement {
     return { x: xArray, y: yArray };
   }
 
-  static fromXyArrays(data: { x: number[], y: number[] }) {
-    const xyArray: { x: number, y: number }[] = [];
+  static fromXyArrays(data: { x: number[]; y: number[] }) {
+    const xyArray: { x: number; y: number }[] = [];
     for (let index = 0; index < data.x.length; index += 1) {
       const x = data.x[index];
       const y = data.y[index];
@@ -235,7 +251,11 @@ export default class DataChart extends HTMLElement {
   }
 
   render() {
-    const mode = this.#chartState.data.mode !== 'none' && this.#chartState.data.x.length > 1 ? 'lines' : 'markers';
+    const mode =
+      this.#chartState.data.mode !== 'none' &&
+      this.#chartState.data.x.length > 1
+        ? 'lines'
+        : 'markers';
     this.#chartState.data.mode = mode;
     Plotly.newPlot(
       this.#chartContainer!,
@@ -249,8 +269,10 @@ export default class DataChart extends HTMLElement {
     console.log('DataChart handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
-    if ((!sameUrl && message.name === nodeSelectedEvent)
-      || (sameUrl && message.name === nodeDataUpdatedEvent)) {
+    if (
+      (!sameUrl && message.name === nodeSelectedEvent) ||
+      (sameUrl && message.name === nodeDataUpdatedEvent)
+    ) {
       this.#url = url;
       this.data = {
         xyData: message.detail.data,

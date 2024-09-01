@@ -17,11 +17,13 @@ const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
  * @param expectRender Whether the data should or should not have been rendered.
  */
 const checkDataIsRendered = (
-  dataArray: { x: number, y: number }[],
+  dataArray: { x: number; y: number }[],
   document: Document,
   expectRender: boolean,
 ) => {
-  const textarea = document.querySelector(`${element} textarea`) as HTMLTextAreaElement;
+  const textarea = document.querySelector(
+    `${element} textarea`,
+  ) as HTMLTextAreaElement;
   expect(textarea).not.toBeNull();
   const value = textarea.value;
   for (const dataPoint of dataArray) {

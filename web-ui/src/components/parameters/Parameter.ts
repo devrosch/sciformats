@@ -4,7 +4,9 @@ const keyValueTemplate = '<span></span>: <span></span>';
 const valueOnlyTemplate = '<span></span>';
 
 export default class Parameter extends HTMLElement {
-  static get observedAttributes() { return ['key', 'value']; }
+  static get observedAttributes() {
+    return ['key', 'value'];
+  }
 
   #initialized = false;
 

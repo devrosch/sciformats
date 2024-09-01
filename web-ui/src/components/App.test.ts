@@ -56,7 +56,9 @@ test('sf-app supresses dragging UI elements', async () => {
   };
 
   const preventDefaultMock = jest.fn();
-  const dragStartEvent = createEvent('dragstart', { preventDefault: preventDefaultMock });
+  const dragStartEvent = createEvent('dragstart', {
+    preventDefault: preventDefaultMock,
+  });
 
   app.dispatchEvent(dragStartEvent);
 

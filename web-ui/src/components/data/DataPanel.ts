@@ -85,7 +85,7 @@ export default class DataPanel extends HTMLElement {
         this.render();
         break;
       default:
-        // noop
+      // noop
     }
   };
 

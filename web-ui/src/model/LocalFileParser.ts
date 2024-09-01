@@ -23,8 +23,15 @@ export default class LocalFileParser implements Parser {
   }
 
   async open() {
-    const payload: WorkerFileInfo = { url: this.#rootUrl.toString(), blob: this.#file };
-    const openReply: WorkerResponse = await postMessage(this.#worker, 'open', payload) as any;
+    const payload: WorkerFileInfo = {
+      url: this.#rootUrl.toString(),
+      blob: this.#file,
+    };
+    const openReply: WorkerResponse = (await postMessage(
+      this.#worker,
+      'open',
+      payload,
+    )) as any;
     if (openReply.name !== 'opened') {
       throw new Error(`Could not open file: "${this.#file.name}."`);
     }
@@ -37,7 +44,11 @@ export default class LocalFileParser implements Parser {
     }
 
     const payload: WorkerFileUrl = { url: url.toString() };
-    const response = await postMessage(this.#worker, 'read', payload) as WorkerResponse;
+    const response = (await postMessage(
+      this.#worker,
+      'read',
+      payload,
+    )) as WorkerResponse;
     const json = response.detail as WorkerNodeData;
 
     // TODO: harmonize?
@@ -53,7 +64,11 @@ export default class LocalFileParser implements Parser {
 
   async close() {
     const payload: WorkerFileUrl = { url: this.#rootUrl.toString() };
-    const closeReply: WorkerResponse = await postMessage(this.#worker, 'close', payload) as any;
+    const closeReply: WorkerResponse = (await postMessage(
+      this.#worker,
+      'close',
+      payload,
+    )) as any;
     if (closeReply.name !== 'closed') {
       throw new Error(`Could not close file: "${this.#file.name}."`);
     }

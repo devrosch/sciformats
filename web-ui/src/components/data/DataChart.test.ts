@@ -77,8 +77,12 @@ test('sf-data-chart reacts to sf-tree-node-(de)selected events', async () => {
   expect(chartData[0].y).toBeCloseTo(1.2);
   expect(chartData[1].x).toBeCloseTo(2.1);
   expect(chartData[1].y).toBeCloseTo(2.2);
-  expect(chart.data.metadata.xTitle).toBe(`${metadata['x.label']} / ${metadata['x.unit']}`);
-  expect(chart.data.metadata.yTitle).toBe(`${metadata['y.label']} / ${metadata['y.unit']}`);
+  expect(chart.data.metadata.xTitle).toBe(
+    `${metadata['x.label']} / ${metadata['x.unit']}`,
+  );
+  expect(chart.data.metadata.yTitle).toBe(
+    `${metadata['y.label']} / ${metadata['y.unit']}`,
+  );
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
   plotElement = document.body.querySelector('g.scatterlayer');
@@ -120,8 +124,12 @@ test('sf-data-chart reacts to sf-tree-node-data-updated events', async () => {
   expect(chartData[0].y).toBeCloseTo(1.2);
   expect(chartData[1].x).toBeCloseTo(2.1);
   expect(chartData[1].y).toBeCloseTo(2.2);
-  expect(chart.data.metadata.xTitle).toBe(`${metadata['x.label']} / ${metadata['x.unit']}`);
-  expect(chart.data.metadata.yTitle).toBe(`${metadata['y.label']} / ${metadata['y.unit']}`);
+  expect(chart.data.metadata.xTitle).toBe(
+    `${metadata['x.label']} / ${metadata['x.unit']}`,
+  );
+  expect(chart.data.metadata.yTitle).toBe(
+    `${metadata['y.label']} / ${metadata['y.unit']}`,
+  );
 });
 
 test('sf-data-chart renders axes titles with (partially) missing labels or units', async () => {

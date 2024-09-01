@@ -7,32 +7,32 @@ type NodeData = {
   /**
    * The URL identifying this data.
    */
-  url: URL,
+  url: URL;
 
   /**
    * Meta data represented as key-value pairs.
    */
-  parameters: { key: string, value: string }[],
+  parameters: { key: string; value: string }[];
 
   /**
    * XY data.
    */
-  data: { x: number, y: number }[],
+  data: { x: number; y: number }[];
 
   /**
    * Metadata key/value pairs.
    */
-  metadata: { [key: string]: string },
+  metadata: { [key: string]: string };
 
   /**
    * A peak table.
    */
-  table: Table,
+  table: Table;
 
   /**
    * Child nodes/fragments.
    */
-  childNodeNames: string[],
+  childNodeNames: string[];
 };
 
 export default NodeData;

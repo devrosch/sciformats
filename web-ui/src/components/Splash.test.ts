@@ -24,7 +24,10 @@ test('sf-splash supresses cancel', async () => {
 
   const stopPropagationMock = jest.fn();
   const preventDefaultMock = jest.fn();
-  const cancelEvent = createEvent('cancel', { stopPropagation: stopPropagationMock, preventDefault: preventDefaultMock });
+  const cancelEvent = createEvent('cancel', {
+    stopPropagation: stopPropagationMock,
+    preventDefault: preventDefaultMock,
+  });
 
   dialog.dispatchEvent(cancelEvent);
 

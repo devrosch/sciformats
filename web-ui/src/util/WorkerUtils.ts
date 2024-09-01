@@ -43,16 +43,24 @@ export const initWorker = async (worker: Worker) => {
   let isWorkerInitialized = false;
   while (!isWorkerInitialized) {
     const scanReply = postMessage(worker, 'status', null);
-    const timeout = new Promise((resolve) => { setTimeout(resolve, 500); });
+    const timeout = new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
     /* eslint-disable-next-line no-await-in-loop */
-    const response = await Promise.any([scanReply, timeout]) as any;
-    if (response !== null && typeof response === 'object' && Object.hasOwn(response, 'correlationId')) {
+    const response = (await Promise.any([scanReply, timeout])) as any;
+    if (
+      response !== null &&
+      typeof response === 'object' &&
+      Object.hasOwn(response, 'correlationId')
+    ) {
       const statusResponse = response as WorkerResponse;
       if (statusResponse.detail === WorkerStatus.Initialized) {
         isWorkerInitialized = true;
       } else {
         /* eslint-disable-next-line no-await-in-loop */
-        await new Promise((resolve) => { setTimeout(resolve, 500); });
+        await new Promise((resolve) => {
+          setTimeout(resolve, 500);
+        });
       }
     }
   }

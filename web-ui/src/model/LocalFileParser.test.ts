@@ -14,7 +14,10 @@ const worker = {} as Worker;
 const workerNodeData: WorkerNodeData = {
   url: url.toString(),
   parameters: [{ key: 'param 1', value: 'param value 1' }],
-  data: [{ x: 1, y: 2 }, { x: 3, y: 4 }],
+  data: [
+    { x: 1, y: 2 },
+    { x: 3, y: 4 },
+  ],
   metadata: {},
   table: {
     columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],
@@ -23,8 +26,12 @@ const workerNodeData: WorkerNodeData = {
   childNodeNames: ['child 1', 'child 2'],
 };
 
-const mockOpenedResponse = new WorkerResponse('opened', '123', { url: rootUrl.toString() });
-const mockClosedResponse = new WorkerResponse('closed', '123', { url: rootUrl.toString() });
+const mockOpenedResponse = new WorkerResponse('opened', '123', {
+  url: rootUrl.toString(),
+});
+const mockClosedResponse = new WorkerResponse('closed', '123', {
+  url: rootUrl.toString(),
+});
 const mockReadResponse = new WorkerResponse('read', '123', workerNodeData);
 const mockErrorResponse = new WorkerResponse('error', '123', 'error message');
 
@@ -97,5 +104,7 @@ test('reading an illegal URL throws', async () => {
   const parser = new LocalFileParser(worker, rootUrl, file);
 
   // see: https://stackoverflow.com/a/47887098 for how to test throw of async function
-  await expect(parser.read(new URL(`file:///${wrongUuid}/error.txt#/`))).rejects.toThrowError(/URL/);
+  await expect(
+    parser.read(new URL(`file:///${wrongUuid}/error.txt#/`)),
+  ).rejects.toThrowError(/URL/);
 });

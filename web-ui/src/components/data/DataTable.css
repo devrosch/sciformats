@@ -6,7 +6,9 @@ sf-data-table > table {
   margin: 0.5em;
 }
 
-sf-data-table > table, th, td {
+sf-data-table > table,
+th,
+td {
   border: 1px solid black;
   border-collapse: collapse;
 }

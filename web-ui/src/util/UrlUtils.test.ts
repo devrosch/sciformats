@@ -1,5 +1,8 @@
 import {
-  extractFilename, extractHashPath, extractUuid, isSameUrl,
+  extractFilename,
+  extractHashPath,
+  extractUuid,
+  isSameUrl,
 } from 'util/UrlUtils';
 
 test('isSameURL() is false if any parameter is null or undefined', async () => {
@@ -48,7 +51,9 @@ test('isSameURL() is false when comparing illegal URLs', async () => {
 });
 
 test('extractUuid() extracts UUID for well-formed file URL with slah before hash', async () => {
-  const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const url = new URL(
+    'file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#',
+  );
   const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
   expect(extractUuid(url)).toBe(uuid);
 });
@@ -72,13 +77,17 @@ test('extractUuid() extracts UUID for well-formed http URL', async () => {
 });
 
 test('extractUuid() extracts UUID for well-formed https URL', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#',
+  );
   const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
   expect(extractUuid(url)).toBe(uuid);
 });
 
 test('extractFilename() extracts filename for well-formed file URL with slah before hash', async () => {
-  const url = new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const url = new URL(
+    'file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#',
+  );
   const filename = 'test.jdx';
   expect(extractFilename(url)).toBe(filename);
 });
@@ -102,31 +111,41 @@ test('extractFilename() extracts UUID for well-formed http URL', async () => {
 });
 
 test('extractFilename() extracts UUID for well-formed https URL', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#',
+  );
   const filename = 'test.jdx';
   expect(extractFilename(url)).toBe(filename);
 });
 
 test('extractHashPath() extracts the path from regular hash', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#/hash/path');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#/hash/path',
+  );
   const path = '/hash/path';
   expect(extractHashPath(url)).toBe(path);
 });
 
 test('extractHashPath() extracts the path from hash ending with slash', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#/hash/path/');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#/hash/path/',
+  );
   const path = '/hash/path/';
   expect(extractHashPath(url)).toBe(path);
 });
 
 test('extractHashPath() extracts the path from blank hash', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#',
+  );
   const path = '/';
   expect(extractHashPath(url)).toBe(path);
 });
 
 test('extractHashPath() extracts the path from slash only hash', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#/');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#/',
+  );
   const path = '/';
   expect(extractHashPath(url)).toBe(path);
 });
@@ -138,6 +157,8 @@ test('extractHashPath() extracts the path for missing hash', async () => {
 });
 
 test('extractHashPath() throws for ill-formed non blank hash not starting with slash', async () => {
-  const url = new URL('https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#abc/def');
+  const url = new URL(
+    'https://aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx/#abc/def',
+  );
   expect(() => extractHashPath(url)).toThrow();
 });

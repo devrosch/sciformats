@@ -4,7 +4,7 @@ import './Footer'; // for side effects
 import Footer from './Footer';
 
 const element = 'sf-footer';
-const data: { x: number, y: number }[] = [];
+const data: { x: number; y: number }[] = [];
 const urlChild2 = new URL('file:///test/path/root.txt#/child 2');
 
 afterEach(() => {

@@ -7,7 +7,7 @@ sf-data-chart {
 /* set initially to prevent flash of unstyled chart */
 sf-data-chart.init {
   visibility: hidden;
-  overflow:hidden;
+  overflow: hidden;
 }
 
 sf-data-chart > div {

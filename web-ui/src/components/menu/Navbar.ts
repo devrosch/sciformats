@@ -12,7 +12,9 @@ import MenuItemFileOpen from './MenuItemFileOpen';
 
 const isMacOs = SysInfoProvider.detectOS() === 'macOS';
 const fileShortcutsModifierKeys = isMacOs ? '⇧ ⌃ ' : 'Alt-Shift';
-const fileOpenShortcutModifierKeys = isMacOs ? '⌃ ⌥ ' : fileShortcutsModifierKeys;
+const fileOpenShortcutModifierKeys = isMacOs
+  ? '⌃ ⌥ '
+  : fileShortcutsModifierKeys;
 // const editShortcutsModifierKeys = isMacOs ? '⌃ ' : 'Ctrl-';
 
 // no template with slots required/possible
@@ -112,7 +114,9 @@ export default class Navbar extends HTMLElement {
   activateShortcuts() {
     this.#shortcutsActive = true;
     const fileOpenMenuItems = this.querySelectorAll('sf-menu-item-file-open');
-    fileOpenMenuItems.forEach((item) => { (item as MenuItemFileOpen).activateShortcut(); });
+    fileOpenMenuItems.forEach((item) => {
+      (item as MenuItemFileOpen).activateShortcut();
+    });
   }
 
   onClick = (e: MouseEvent) => {

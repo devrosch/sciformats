@@ -9,32 +9,32 @@ type WorkerNodeData = {
    * The @type { string } type is used here as @type { URL }
    * is not serializable for messages between a web worker and the main thread.
    */
-  url: string,
+  url: string;
 
   /**
    * Meta data represented as key-value pairs.
    */
-  parameters: { key: string, value: string }[],
+  parameters: { key: string; value: string }[];
 
   /**
    * XY data.
    */
-  data: { x: number, y: number }[],
+  data: { x: number; y: number }[];
 
   /**
    * Metadata key/value pairs.
    */
-  metadata: { [key: string]: string },
+  metadata: { [key: string]: string };
 
   /**
    * A table, e.g., a peak table.
    */
-  table: Table,
+  table: Table;
 
   /**
    * Child nodes/fragments.
    */
-  childNodeNames: string[],
+  childNodeNames: string[];
 };
 
 export default WorkerNodeData;

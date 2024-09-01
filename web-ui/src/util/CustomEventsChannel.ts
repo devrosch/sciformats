@@ -15,7 +15,9 @@ export default class CustomEventsChannel implements Channel {
   }
 
   static findOrCreateNode(name: string): HTMLUnknownElement {
-    let bus: HTMLUnknownElement | null = document.getElementById(name) as HTMLUnknownElement | null;
+    let bus: HTMLUnknownElement | null = document.getElementById(
+      name,
+    ) as HTMLUnknownElement | null;
     if (typeof bus === 'undefined' || bus === null) {
       bus = document.createElement(elementName);
       bus.id = name;
@@ -35,12 +37,14 @@ export default class CustomEventsChannel implements Channel {
   }
 
   dispatch(name: string, detail: any) {
-    this.#domElement.dispatchEvent(new CustomEvent(name, {
-      bubbles: true,
-      cancelable: true,
-      composed: true,
-      detail,
-    }));
+    this.#domElement.dispatchEvent(
+      new CustomEvent(name, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        detail,
+      }),
+    );
   }
 
   addListener(name: string, listener: (message: Message) => void) {
@@ -64,6 +68,9 @@ export default class CustomEventsChannel implements Channel {
     if (channelName !== this.#name) {
       throw new Error('Illegal listener for removal from this channel.');
     }
-    this.#domElement.removeEventListener(handle.meta.name, handle.customEventListener);
+    this.#domElement.removeEventListener(
+      handle.meta.name,
+      handle.customEventListener,
+    );
   }
 }

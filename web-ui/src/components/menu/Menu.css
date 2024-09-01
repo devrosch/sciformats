@@ -12,7 +12,9 @@ sf-menu {
 
 /* menu items */
 
-sf-menu-item, sf-menu-item-file-open, sf-submenu {
+sf-menu-item,
+sf-menu-item-file-open,
+sf-submenu {
   display: flex;
   position: relative;
 }
@@ -28,7 +30,7 @@ sf-menu a {
   outline-offset: -0.2em;
 }
 
-sf-menu a:hover  {
+sf-menu a:hover {
   background-color: blanchedalmond;
 }
 
@@ -43,7 +45,9 @@ sf-menu a:hover  {
   sf-menu.sf-show-menu {
     display: block;
   }
-  sf-menu-item, sf-menu-item-file-open, sf-submenu {
+  sf-menu-item,
+  sf-menu-item-file-open,
+  sf-submenu {
     display: block;
     background-color: #f9f9f9;
     box-sizing: border-box;

@@ -2,7 +2,11 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Channel from 'model/Channel';
 import Message from 'model/Message';
 
-const checker = (eventType: string, payload: { test: string }, channel: Channel) => {
+const checker = (
+  eventType: string,
+  payload: { test: string },
+  channel: Channel,
+) => {
   const eventHandler = jest.fn((message: Message) => message.detail);
 
   expect(eventHandler).toHaveBeenCalledTimes(0);

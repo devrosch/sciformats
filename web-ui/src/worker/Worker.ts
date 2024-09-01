@@ -1,7 +1,11 @@
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import {
-  initConverterService, onMessageStatus, onMessageScan, onMessageOpen, onMessageRead,
+  initConverterService,
+  onMessageStatus,
+  onMessageScan,
+  onMessageOpen,
+  onMessageRead,
   onMessageClose,
 } from './WorkerInternalUtils';
 
@@ -17,18 +21,32 @@ self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
   switch (request.name) {
     case 'status': {
-      self.postMessage(onMessageStatus(converterService, request.correlationId));
+      self.postMessage(
+        onMessageStatus(converterService, request.correlationId),
+      );
       break;
     }
     case 'scan': {
-      /* @ts-expect-error */
-      self.postMessage(onMessageScan(request, workingDir, converterService, FS, WORKERFS));
+      self.postMessage(
+        /* @ts-expect-error */
+        onMessageScan(request, workingDir, converterService, FS, WORKERFS),
+      );
       break;
     }
     case 'open': {
       self.postMessage(
-        /* @ts-expect-error */
-        onMessageOpen(request, workingDir, openFiles, converterService, FS, WORKERFS, Module),
+        onMessageOpen(
+          request,
+          workingDir,
+          openFiles,
+          converterService,
+          /* @ts-expect-error */
+          FS,
+          /* @ts-expect-error */
+          WORKERFS,
+          /* @ts-expect-error */
+          Module,
+        ),
       );
       break;
     }
@@ -44,7 +62,11 @@ self.onmessage = (event) => {
     }
     default:
       self.postMessage(
-        new WorkerResponse('error', request.correlationId, `Unknown command: ${request.name}`),
+        new WorkerResponse(
+          'error',
+          request.correlationId,
+          `Unknown command: ${request.name}`,
+        ),
       );
       break;
   }

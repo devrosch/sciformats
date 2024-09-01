@@ -11,9 +11,14 @@ import WorkerFileUrl from './WorkerFileUrl';
  * Check if library module has been initialized.
  * @returns True if initialized, otherwise false.
  */
-const hasModuleInitCompleted: (workerSelf: any) => boolean = (workerSelf: any) => !(
-  typeof workerSelf.Module === 'undefined' || workerSelf.Module === null || typeof workerSelf.Module.Scanner === 'undefined'
-);
+const hasModuleInitCompleted: (workerSelf: any) => boolean = (
+  workerSelf: any,
+) =>
+  !(
+    typeof workerSelf.Module === 'undefined' ||
+    workerSelf.Module === null ||
+    typeof workerSelf.Module.Scanner === 'undefined'
+  );
 
 /**
  * Initialize the converter service.
@@ -22,13 +27,16 @@ const hasModuleInitCompleted: (workerSelf: any) => boolean = (workerSelf: any) =
 export const initConverterService = async (workerSelf: any) => {
   while (!hasModuleInitCompleted(workerSelf)) {
     /* eslint-disable-next-line no-await-in-loop */
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
   }
   let jdxScanner = null;
   let scanners = null;
   try {
     jdxScanner = new workerSelf.Module.JdxScanner();
-    scanners = new workerSelf.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
+    scanners =
+      new workerSelf.Module.vector$std$$shared_ptr$sciformats$$api$$Scanner$$();
     scanners.push_back(jdxScanner);
     jdxScanner.delete();
   } catch (error) {
@@ -71,9 +79,13 @@ export const mountFile = (
   if (!uuidDirExists) {
     filesystem.mkdir(uuidDirPath);
   }
-  filesystem.mount(workerFS, {
-    blobs: [{ name: filename, data: blob }],
-  }, uuidDirPath);
+  filesystem.mount(
+    workerFS,
+    {
+      blobs: [{ name: filename, data: blob }],
+    },
+    uuidDirPath,
+  );
 };
 
 /**
@@ -110,8 +122,12 @@ export const unmountFile = (url: URL, workingDir: string, filesystem: FS) => {
  * @param scanner Scanner (e.g. ConverterService) to check if file is recognized.
  * @returns True if a file parser exists, false otherwise.
  */
-/* @ts-expect-error */
-export const isFileRecognized = (url: URL, workingDir: string, scanner: Module.Scanner) => {
+export const isFileRecognized = (
+  url: URL,
+  workingDir: string,
+  /* @ts-expect-error */
+  scanner: Module.Scanner,
+) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   const filePath = `${workingDir}/${uuid}/${filename}`;
@@ -126,8 +142,12 @@ export const isFileRecognized = (url: URL, workingDir: string, scanner: Module.S
  * @param scanner Scanner (e.g. ConverterService) to check if file is recognized.
  * @returns Converter for URL.
  */
-/* @ts-expect-error */
-export const createConverter = (url: URL, workingDir: string, scanner: Module.Scanner) => {
+export const createConverter = (
+  url: URL,
+  workingDir: string,
+  /* @ts-expect-error */
+  scanner: Module.Scanner,
+) => {
   const uuid = extractUuid(url);
   const filename = extractFilename(url);
   const filePath = `${workingDir}/${uuid}/${filename}`;
@@ -140,8 +160,11 @@ export const createConverter = (url: URL, workingDir: string, scanner: Module.Sc
  * @param openFiles Map of root URLs and corresponding converters.
  * @returns The node corresponding to the URL.
  */
-/* @ts-expect-error */
-export const readNode = (url: URL, openFiles: Map<string, Module.Converter>) => {
+export const readNode = (
+  url: URL,
+  /* @ts-expect-error */
+  openFiles: Map<string, Module.Converter>,
+) => {
   const rootUrl = new URL(url.toString().split('#')[0]);
 
   if (!openFiles.has(rootUrl.toString())) {
@@ -216,9 +239,10 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   const peakColumnCount = tableColumnNames.size();
   for (let index = 0; index < peakColumnCount; index += 1) {
     const columnKeyValuePair = tableColumnNames.get(index);
-    jsonTable.columnNames.push(
-      { key: columnKeyValuePair.first, value: columnKeyValuePair.second },
-    );
+    jsonTable.columnNames.push({
+      key: columnKeyValuePair.first,
+      value: columnKeyValuePair.second,
+    });
     // columnKeyValuePair is value object => no delete()
   }
 
@@ -291,8 +315,10 @@ export const onMessageStatus = (
   converterService: Module.ConverterService,
   correlationId: string,
 ) => {
-  const moduleInitCompleted = converterService === null ? WorkerStatus.Initializing
-    : WorkerStatus.Initialized;
+  const moduleInitCompleted =
+    converterService === null
+      ? WorkerStatus.Initializing
+      : WorkerStatus.Initialized;
   return new WorkerResponse('status', correlationId, moduleInitCompleted);
 };
 
@@ -344,7 +370,9 @@ export const onMessageOpen = (
       return new WorkerResponse('error', correlationId, message);
     }
   }
-  return new WorkerResponse('opened', correlationId, { url: rootUrl.toString() });
+  return new WorkerResponse('opened', correlationId, {
+    url: rootUrl.toString(),
+  });
 };
 
 export const onMessageRead = (
@@ -385,5 +413,7 @@ export const onMessageClose = (
     node.delete();
   }
   unmountFile(url, workingDir, filesystem);
-  return new WorkerResponse('closed', correlationId, { url: rootUrl.toString() });
+  return new WorkerResponse('closed', correlationId, {
+    url: rootUrl.toString(),
+  });
 };

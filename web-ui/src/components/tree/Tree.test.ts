@@ -31,13 +31,16 @@ const prepareSimpleTree = () => {
   tree.setParserRepository(parserRepository);
 };
 
-const mockErrorParser = new ErrorParser(new URL(`file:///${errorFileName}`), errorMessage);
-jest.mock('model/LocalParserRepository', () => jest.fn().mockImplementation(
-  () => ({
-    findParser: async (file: File) => (file.name === errorFileName
-      ? mockErrorParser : new MockParser(file)),
-  }),
-));
+const mockErrorParser = new ErrorParser(
+  new URL(`file:///${errorFileName}`),
+  errorMessage,
+);
+jest.mock('model/LocalParserRepository', () =>
+  jest.fn().mockImplementation(() => ({
+    findParser: async (file: File) =>
+      file.name === errorFileName ? mockErrorParser : new MockParser(file),
+  })),
+);
 
 const prepareFileOpenMessage = (fileNames: string[]) => {
   const blob = new Blob([fileContent]);
@@ -54,7 +57,9 @@ const waitForChildrenCount = async (el: HTMLElement, childrenCount: number) => {
   // wait for DOM change
   while (el.children.length !== childrenCount) {
     /* eslint-disable-next-line no-await-in-loop */
-    await new Promise((resolve) => { setTimeout(resolve, 1); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1);
+    });
   }
 };
 
@@ -97,7 +102,12 @@ const prepareActualKeyDownEvent = (key: string) => {
     'keydown',
     // modifier keys for Linux, guaranteed to be used by mock at beginning of file
     {
-      key, shiftKey: true, ctrlKey: false, altKey: true, metaKey: false, bubbles: true,
+      key,
+      shiftKey: true,
+      ctrlKey: false,
+      altKey: true,
+      metaKey: false,
+      bubbles: true,
     },
   );
   return event;
@@ -107,7 +117,7 @@ const prepareStubKeyDownEvent = (key: string, target: Element) => {
   const event = {
     key,
     target,
-    preventDefault: () => { },
+    preventDefault: () => {},
   };
   return event as unknown as KeyboardEvent;
 };
@@ -194,7 +204,9 @@ test('sf-tree shows error and dispatches error event when file open fails', asyn
 
   const stubParserRepository: ParserRepository = {
     findParser(): Promise<Parser> {
-      return new Promise((resolve) => { resolve(mockErrorParser); });
+      return new Promise((resolve) => {
+        resolve(mockErrorParser);
+      });
     },
   };
   tree.setParserRepository(stubParserRepository);
@@ -238,7 +250,9 @@ test('sf-tree listenes to file close events', async () => {
   // no node selected => noop
   tree.handleFileCloseRequested();
   // allow for potential changes to take place
-  await new Promise((resolve) => { setTimeout(resolve, 10); });
+  await new Promise((resolve) => {
+    setTimeout(resolve, 10);
+  });
 
   expect(tree.children).toHaveLength(3);
 
@@ -273,13 +287,15 @@ test('sf-tree listenes to file close all events', async () => {
 test('sf-tree observes key down events', async () => {
   // workaround for using "done" in async method
   // see: https://github.com/facebook/jest/issues/11404
-  let done: (value: unknown) => void = () => { };
+  let done: (value: unknown) => void = () => {};
 
   const nodes = await prepareTreeStructure();
   const arrowDownEvent = prepareActualKeyDownEvent('ArrowDown');
 
   // root1
-  const callback1Resolved = new Promise((resolve) => { done = resolve; });
+  const callback1Resolved = new Promise((resolve) => {
+    done = resolve;
+  });
   prepareListener(done);
   nodes.root1.dispatchEvent(arrowDownEvent);
   await callback1Resolved;

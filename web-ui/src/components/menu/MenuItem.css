@@ -7,7 +7,7 @@ sf-menu-item > a > span.menu-item-shortcut {
 }
 
 @media screen and (max-width: 576px) {
-  sf-menu-item > a > span.menu-item-shortcut{
+  sf-menu-item > a > span.menu-item-shortcut {
     display: none;
   }
 }

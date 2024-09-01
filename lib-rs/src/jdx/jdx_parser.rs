@@ -1248,7 +1248,6 @@ impl<T: SeekBufRead> Page<T> {
         let (label, value) = parse_ldr_start(next_line.as_ref().unwrap())?;
         if ["PAGE", "ENDNTUPLES", "END"].contains(&label.as_str()) {
             // end of page, page is empty
-            // todo: read next_line?
             drop(reader);
             return Ok((
                 Page {
@@ -4389,6 +4388,41 @@ mod tests {
         assert_eq!(4, page_n2_data.len());
         assert_eq!((0.1, 300.0), page_n2_data[0]);
         assert_eq!((0.25, 410.0), page_n2_data[3]);
+    }
+
+    #[test]
+    fn ntuples_parses_nmr_record_with_empty_pages() {
+        let label = "NTUPLES";
+        let variables = "NMR SPECTRUM";
+        let next_line = Some(format!("##{label}= {variables}"));
+        let input = b"##VAR_NAME=   FREQUENCY,    SPECTRUM/REAL,    SPECTRUM/IMAG, PAGE NUMBER\n\
+                                   ##SYMBOL=             X,                R,                I,           N\n\
+                                   ##VAR_TYPE= INDEPENDENT,        DEPENDENT,        DEPENDENT,        PAGE\n\
+                                   ##VAR_FORM=        AFFN,             ASDF,             ASDF,        AFFN\n\
+                                   ##VAR_DIM=            0,                0,                0,           2\n\
+                                   ##UNITS=             HZ,  ARBITRARY UNITS,  ARBITRARY UNITS,            \n\
+                                   ##FIRST=              0,                0,                0,           1\n\
+                                   ##LAST=               0,                0,                0,           2\n\
+                                   ##MIN=                0,                0,                0,           1\n\
+                                   ##MAX=                0,                0,                0,           2\n\
+                                   ##FACTOR=             0,                0,                0,           1\n\
+                                   ##PAGE= N=1\n\
+                                   ##PAGE= N=2\n\
+                                   ##END NTUPLES= NMR SPECTRUM\n\
+                                   ##END=\n";
+        let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
+        let block_ldrs = Vec::<StringLdr>::new();
+
+        let (ntuples, next) =
+            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+
+        assert_eq!(2, ntuples.pages.len());
+        let page_n1 = &ntuples.pages[0];
+        assert_eq!(None, page_n1.data_table);
+        let page_n2 = &ntuples.pages[1];
+        assert_eq!(None, page_n2.data_table);
+
+        assert_eq!(Some("##END=".to_owned()), next);
     }
 
     #[test]

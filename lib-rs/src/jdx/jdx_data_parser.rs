@@ -230,9 +230,7 @@ impl DataParser {
         let mut previous_token_type = TokenType::Affn;
 
         while let (Some(token), tail) = Self::next_token(line, is_asdf)? {
-            let mut token = token.to_owned();
-            // todo: change fn signature to accept &str and return tuple
-            let token_type = Self::to_affn(&mut token);
+            let (token, token_type) = Self::to_affn(token)?;
             // it's not quite clear if DUP of DIF should also count as DIF encoded
             // Bruker seems to think so => apply same logic here
             dif_encoded =
@@ -276,7 +274,7 @@ impl DataParser {
                 })?;
                 for _ in 0..(num_repeats - 1) {
                     if previous_token_type == TokenType::Dif {
-                        // todo: empty y_value or none previous_value caught earlier in loop; necessary there?
+                        // non empty y_values ensured by none previous_token_value checked earlier in loop
                         let last_value = y_values.last().unwrap();
                         let next_value = last_value + previous_token_value.unwrap();
                         y_values.push(next_value);
@@ -298,6 +296,7 @@ impl DataParser {
                             line, token
                         )));
                     }
+                    // non empty y_values ensured by none previous_token_value checked earlier in loop
                     let last_value = y_values.last().unwrap();
                     let next_value = last_value + value;
                     y_values.push(next_value);
@@ -352,28 +351,35 @@ impl DataParser {
         }
     }
 
-    fn to_affn(token: &mut String) -> TokenType {
-        // todo: dangerous, token may be empty(?)
-        let c = token.chars().next().unwrap();
-        let (first_digit, token_type) = match c {
-            '?' => (None, TokenType::Missing),
-            ch if Self::is_sqz_digit(ch) => (Self::get_sqz_digit_value(ch), TokenType::Sqz),
-            ch if Self::is_dif_digit(ch) => (Self::get_dif_digit_value(ch), TokenType::Dif),
-            ch if Self::is_dup_digit(ch) => (Self::get_dup_digit_value(ch), TokenType::Dup),
+    fn to_affn(token: &str) -> Result<(String, TokenType), JdxError> {
+        let (first_digit, token_type) = match token.chars().next() {
+            None => {
+                return Err(JdxError::new(&format!(
+                    "Illegal token encountered while converting to AFFN: {}",
+                    token
+                )))
+            }
+            Some('?') => (None, TokenType::Missing),
+            Some(ch) if Self::is_sqz_digit(ch) => (Self::get_sqz_digit_value(ch), TokenType::Sqz),
+            Some(ch) if Self::is_dif_digit(ch) => (Self::get_dif_digit_value(ch), TokenType::Dif),
+            Some(ch) if Self::is_dup_digit(ch) => (Self::get_dup_digit_value(ch), TokenType::Dup),
             _ => (None, TokenType::Affn),
         };
 
-        if token_type != TokenType::Affn && token_type != TokenType::Missing {
+        let decoded_token = if token_type != TokenType::Affn && token_type != TokenType::Missing {
             // replace SQZ/DIF/DUP char (first char) with (signed) value
             let value = first_digit.unwrap();
-            let replacement = if value >= 0 {
+            let start = if value >= 0 {
                 ((b'0' as i8 + value) as u8 as char).to_string()
             } else {
                 ['-', (b'0' as i8 - value) as u8 as char].iter().collect()
             };
-            token.replace_range(..1, &replacement);
-        }
-        token_type
+            format!("{}{}", start, &token[1..])
+        } else {
+            token.to_owned()
+        };
+
+        Ok((decoded_token, token_type))
     }
 
     fn is_token_start(encoded_values: &str, prev_char: Option<char>, is_asdf: bool) -> bool {
@@ -398,7 +404,6 @@ impl DataParser {
             if prev_char.is_none() || (prev_char != Some('E') && prev_char != Some('e')) {
                 return true;
             }
-            // todo: efficient?
             let prepended_encoded_value = format!("{}{}", prev_char.unwrap(), &encoded_values);
             return !Self::is_exponent_start(&prepended_encoded_value, is_asdf);
         }

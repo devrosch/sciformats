@@ -34,7 +34,7 @@ pub fn parse_xppyy_data<T: SeekBufRead>(
     // remember stream position
     let pos = reader.stream_position()?;
     reader.seek(SeekFrom::Start(data_address))?;
-    let y_data = DataParser::read_xppyy_data(reader)?;
+    let y_data = DataParser::read_xppyy_data(reader, n_points as usize)?;
     // reset stream position
     reader.seek(SeekFrom::Start(pos))?;
     if y_data.len() as u64 != n_points {
@@ -109,9 +109,11 @@ pub struct DataParser {}
 
 impl DataParser {
     /// read (X++(Y..Y)) data
-    pub fn read_xppyy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<f64>, JdxError> {
-        // todo: possible performance tweak: pass NPOINTS as parameter and initialize Vec::<f64>::with_capacity()
-        let mut y_values = Vec::<f64>::new();
+    pub fn read_xppyy_data<T: SeekBufRead>(
+        reader: &mut T,
+        expected_n_points: usize,
+    ) -> Result<Vec<f64>, JdxError> {
+        let mut y_values = Vec::<f64>::with_capacity(expected_n_points);
         let mut y_value_check = Option::<f64>::None;
         let mut pos = reader.stream_position()?;
         let mut buf = Vec::<u8>::with_capacity(128);
@@ -635,7 +637,7 @@ mod tests {
             ##END=";
         let mut reader = Cursor::new(input);
 
-        let actual = DataParser::read_xppyy_data(&mut reader).unwrap();
+        let actual = DataParser::read_xppyy_data(&mut reader, 53).unwrap();
         let last_line = reader.read_line_iso_8859_1(&mut vec![]);
 
         assert_eq!(
@@ -657,7 +659,7 @@ mod tests {
                                 ##END=";
         let mut reader = Cursor::new(input);
 
-        let actual = DataParser::read_xppyy_data(&mut reader);
+        let actual = DataParser::read_xppyy_data(&mut reader, 0);
 
         assert!(actual.is_err());
         assert!(actual
@@ -673,7 +675,7 @@ mod tests {
                                 ##END=";
         let mut reader = Cursor::new(input);
 
-        let actual = DataParser::read_xppyy_data(&mut reader).unwrap();
+        let actual = DataParser::read_xppyy_data(&mut reader, 53).unwrap();
         let last_line = reader.read_line_iso_8859_1(&mut vec![]);
 
         assert_eq!(

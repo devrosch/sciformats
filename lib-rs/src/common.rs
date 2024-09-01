@@ -1,9 +1,10 @@
 use crate::andi::andi_scanner::AndiScanner;
 use crate::api::{Reader, Scanner, SeekRead};
 use crate::gaml::gaml_scanner::GamlScanner;
+use crate::jdx::jdx_scanner::JdxScanner;
 use crate::spc::spc_scanner::SpcScanner;
 use std::fmt;
-use std::io::{BufReader, SeekFrom};
+use std::io::{BufReader, ErrorKind, SeekFrom};
 use std::{
     error::Error,
     io::{Read, Seek},
@@ -60,8 +61,9 @@ impl ScannerRepository {
         let andi_scanner: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiScanner::new());
         let spc_scanner = Box::new(SpcScanner::new());
         let gaml_scanner = Box::new(GamlScanner::new());
+        let jdx_scanner = Box::new(JdxScanner::new());
         let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> =
-            vec![andi_scanner, spc_scanner, gaml_scanner];
+            vec![andi_scanner, spc_scanner, gaml_scanner, jdx_scanner];
         ScannerRepository { scanners }
     }
 
@@ -129,20 +131,45 @@ impl<T: Seek + Read> Seek for BufSeekRead<T> {
     fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
         match pos {
             SeekFrom::Current(offset) => {
+                let new_pos = self
+                    .pos
+                    .checked_add_signed(offset)
+                    .ok_or(std::io::Error::from(ErrorKind::InvalidInput))?;
                 self.input.seek_relative(offset)?;
-                // todo: handle error cases
-                self.pos = (self.pos as i64 + offset) as u64;
+                self.pos = new_pos;
                 Ok(self.pos)
             }
             SeekFrom::Start(offset) => {
-                // todo: handle error cases
-                let rel_offset = (offset as i64) - (self.pos as i64);
+                let (is_positive_diff, abs_diff) = if offset >= self.pos {
+                    (
+                        true,
+                        offset
+                            .checked_sub(self.pos)
+                            .ok_or(std::io::Error::from(ErrorKind::InvalidInput))?,
+                    )
+                } else {
+                    (
+                        false,
+                        self.pos
+                            .checked_sub(offset)
+                            .ok_or(std::io::Error::from(ErrorKind::InvalidInput))?,
+                    )
+                };
+                let rel_offset = if is_positive_diff {
+                    i64::try_from(abs_diff)
+                        .map_err(|_| std::io::Error::from(ErrorKind::InvalidInput))?
+                } else {
+                    i64::try_from(abs_diff)
+                        .map_err(|_| std::io::Error::from(ErrorKind::InvalidInput))?
+                        .checked_neg()
+                        .ok_or(std::io::Error::from(ErrorKind::InvalidInput))?
+                };
                 self.input.seek_relative(rel_offset)?;
                 self.pos = offset;
                 Ok(self.pos)
             }
             SeekFrom::End(offset) => {
-                // todo: make more efficient
+                // clears buffer which is inefficient but it's rarely used
                 self.pos = self.input.seek(SeekFrom::End(offset))?;
                 Ok(self.pos)
             }

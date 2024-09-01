@@ -280,12 +280,12 @@ pub(super) fn read_value_pos<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
 ) -> Result<(u64, u64, BufEvent<'buf>), SfXmlError> {
-    let start_pos = reader.buffer_position() as u64;
+    let start_pos = reader.buffer_position();
     let mut end_pos = start_pos;
     let next = loop {
         let event = match reader.read_event_into(buf)? {
             Event::Text(_) => {
-                end_pos = reader.buffer_position() as u64;
+                end_pos = reader.buffer_position();
                 None
             }
             Event::Comment(_) => None,
@@ -473,7 +473,8 @@ fn read_attributes<'buf, R>(
             let attr = a.unwrap();
             (
                 attr.key,
-                attr.decode_and_unescape_value(reader).unwrap_or_default(),
+                attr.decode_and_unescape_value(reader.decoder())
+                    .unwrap_or_default(),
             )
         })
         .collect::<HashMap<_, _>>()

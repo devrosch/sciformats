@@ -47,7 +47,7 @@ pub fn read_index_from_var_f64(
     read_index_from_var(var, slice, index)
 }
 
-pub fn check_var_is_2d(var_name: &str, dims: &Vec<usize>) -> Result<(), AndiError> {
+pub fn check_var_is_2d(var_name: &str, dims: &[usize]) -> Result<(), AndiError> {
     if dims.len() != 2 {
         return Err(AndiError::new(&format!(
             "Unexpected number of dimensions for {}: {}",

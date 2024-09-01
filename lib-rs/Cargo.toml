@@ -21,3 +21,14 @@ lazy_static = "1.5"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+
+# Uncomment the below lines to retain debug information in release build
+# ---------------------------------
+# [profile.release]
+# debug = true
+
+# Retain debug information in wasm-pack release build
+# [package.metadata.wasm-pack.profile.release]
+# # otherwise just ['-O4'], see: https://github.com/rustwasm/wasm-pack/issues/797
+# wasm-opt = ['-O4', '-g']
+# ---------------------------------

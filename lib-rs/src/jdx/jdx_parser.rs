@@ -353,7 +353,7 @@ impl<T: SeekBufRead> XyData<T> {
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
-        let parameters = parse_xydata_parameters(ldrs)?;
+        let parameters = parse_xydata_parameters(ldrs, Self::LABEL)?;
         let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
         drop(reader);
 
@@ -399,7 +399,7 @@ impl<T: SeekBufRead> XyData<T> {
     }
 }
 
-fn parse_xydata_parameters(ldrs: &[StringLdr]) -> Result<XyParameters, JdxError> {
+fn parse_xydata_parameters(ldrs: &[StringLdr], context: &str) -> Result<XyParameters, JdxError> {
     // required
     // string
     let x_units = find_and_parse_parameter::<String>("XUNITS", ldrs)?;
@@ -445,8 +445,10 @@ fn parse_xydata_parameters(ldrs: &[StringLdr]) -> Result<XyParameters, JdxError>
     }
     if !missing.is_empty() {
         return Err(JdxError::new(&format!(
-            // todo: also for XYPOINTS?
-            "Required LDR(s) missing for XYDATA: {}",
+            // Even though XYPOINTS does not require all non optional spectral parameters for parsing, as per JCAMP-DX standard
+            // there is no distinction between XYPOINTS and XYDATA as to what spectral parameters are required.
+            "Required LDR(s) missing for \"{}\": {}",
+            context,
             missing.join(", ")
         )));
     }
@@ -690,7 +692,6 @@ pub struct XyPoints<T: SeekBufRead> {
 
     label: String,
     variable_list: String,
-    // todo: really all XYDATA parameters required?
     parameters: XyParameters,
 }
 
@@ -713,8 +714,9 @@ impl<T: SeekBufRead> XyPoints<T> {
         )?;
         let mut reader = reader_ref.borrow_mut();
         let address = reader.stream_position()?;
-        // todo: really all XYDATA parameters required?
-        let parameters = parse_xydata_parameters(ldrs)?;
+        // Even though XYPOINTS does not require all non optional spectral parameters for parsing, as per JCAMP-DX standard
+        // there is no distinction between XYPOINTS and XYDATA as to what spectral parameters are required.
+        let parameters = parse_xydata_parameters(ldrs, Self::LABEL)?;
         let next_line = skip_to_next_ldr(next_line, true, &mut *reader, &mut vec![])?;
         drop(reader);
 

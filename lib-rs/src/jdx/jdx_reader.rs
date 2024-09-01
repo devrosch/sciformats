@@ -144,9 +144,16 @@ impl JdxReader {
     }
 
     fn map_bruker_relax_section(section: &BrukerRelaxSection) -> Result<Node, JdxError> {
-        let name = section.name.clone();
-        // todo: use different param type once available
-        let parameters = vec![Parameter::from_str_str("", &section.content)];
+        let name = section
+            .name
+            .as_ref()
+            .map(|s| s.to_owned())
+            .unwrap_or_default();
+        let mut parameters = vec![];
+        if let Some(content) = &section.content {
+            // todo: use different param type once available
+            parameters.push(Parameter::from_str_str("", content));
+        }
 
         Ok(Node {
             name,
@@ -329,7 +336,13 @@ impl JdxReader {
 
         let mut child_node_names = Vec::<String>::new();
         for bruker_relax_section in &block.bruker_relax_sections {
-            child_node_names.push(bruker_relax_section.name.clone());
+            child_node_names.push(
+                bruker_relax_section
+                    .name
+                    .as_ref()
+                    .map(|s| s.to_owned())
+                    .unwrap_or_default(),
+            );
         }
         for bruker_specific_section in &block.bruker_specific_parameters {
             child_node_names.push(bruker_specific_section.name.clone());

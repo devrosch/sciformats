@@ -233,7 +233,11 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     // only add non blank sections
                     // section may be blank if ##$RELAX= line is immediately followed by
                     // $$ Bruker specific parameters
-                    if !relax_section.name.is_empty() || !relax_section.content.is_empty() {
+                    if (relax_section.name.is_some()
+                        && !relax_section.name.as_ref().unwrap().is_empty())
+                        || (relax_section.content.is_some()
+                            && !relax_section.content.as_ref().unwrap().is_empty())
+                    {
                         bruker_relax_sections.push(relax_section);
                     }
                     next_line = next;
@@ -1528,7 +1532,6 @@ impl<T: SeekBufRead> DataTable<T> {
         page_ldrs: &[StringLdr],
     ) -> Result<NTuplesAttributes, JdxError> {
         let mut output_vars = ntuples_vars.clone();
-        // todo: why clear?
         output_vars.application_attributes.clear();
 
         if DATA_TABLE_X_SYMBOLS.contains(&ntuples_vars.symbol.as_str()) {
@@ -1951,9 +1954,9 @@ impl BrukerSpecificParameters {
 #[derive(Debug)]
 pub struct BrukerRelaxSection {
     /// The section name.
-    pub name: String,
+    pub name: Option<String>,
     /// The section content.
-    pub content: String,
+    pub content: Option<String>,
 }
 
 impl BrukerRelaxSection {
@@ -2000,10 +2003,9 @@ impl BrukerRelaxSection {
                     // $$ Bruker specific parameters
                     // => skip further parsing
                     return Ok((
-                        // todo: make properties optional?
                         Self {
-                            name: "".to_owned(),
-                            content: "".to_owned(),
+                            name: None,
+                            content: None,
                         },
                         next_line,
                     ));
@@ -2044,8 +2046,8 @@ impl BrukerRelaxSection {
 
         Ok((
             Self {
-                name: file_name,
-                content,
+                name: Some(file_name),
+                content: Some(content),
             },
             next_line,
         ))
@@ -2624,8 +2626,12 @@ mod tests {
         let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
         assert_eq!(1, block.bruker_relax_sections.len());
         let bruker_relax_section = &block.bruker_relax_sections[0];
-        assert_eq!("file_name_1", bruker_relax_section.name);
-        assert!(bruker_relax_section.content.contains("123"));
+        assert_eq!(Some("file_name_1".to_owned()), bruker_relax_section.name);
+        assert!(bruker_relax_section
+            .content
+            .as_ref()
+            .unwrap()
+            .contains("123"));
     }
 
     #[test]
@@ -5452,10 +5458,10 @@ mod tests {
         let (bruker_relax_section, _next) =
             BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap();
 
-        assert_eq!("file_name_1", bruker_relax_section.name);
+        assert_eq!("file_name_1", bruker_relax_section.name.unwrap());
         assert_eq!(
             "1.0\n0.0 1.0 2.0\n   123   \n",
-            bruker_relax_section.content
+            bruker_relax_section.content.unwrap()
         );
     }
 
@@ -5480,7 +5486,7 @@ mod tests {
         let (bruker_relax_section, _next) =
             BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap();
 
-        assert_eq!("file_name_2", bruker_relax_section.name);
+        assert_eq!("file_name_2", bruker_relax_section.name.unwrap());
         assert_eq!(
             "##TITLE= Parameter file\n\
             ##JCAMPDX= 5.0\n\
@@ -5491,7 +5497,7 @@ mod tests {
             3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 \n\
             ##$DE1= 2\n\
             ##END=\n",
-            bruker_relax_section.content
+            bruker_relax_section.content.unwrap()
         );
     }
 
@@ -5507,8 +5513,8 @@ mod tests {
         let (bruker_relax_section, _next) =
             BrukerRelaxSection::new(label, &value, next_line, &mut reader).unwrap();
 
-        assert!(bruker_relax_section.name.is_empty());
-        assert!(bruker_relax_section.content.is_empty());
+        assert!(bruker_relax_section.name.is_none());
+        assert!(bruker_relax_section.content.is_none());
     }
 
     #[test]

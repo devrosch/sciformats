@@ -4826,9 +4826,8 @@ mod tests {
         assert_eq!(Some(3.0), page_t5_y_attributes.factor);
     }
 
-    // todo: harmonize naming attributes / variables
     #[test]
-    fn ntuples_uses_page_ldrs_to_fill_missing_or_override_ntuples_variables() {
+    fn ntuples_uses_page_ldrs_to_fill_missing_or_override_ntuples_attributes() {
         let label = "NTUPLES";
         let variables = "         MASS SPECTRUM";
         let next_line = Some(format!("##{label}= {variables}"));

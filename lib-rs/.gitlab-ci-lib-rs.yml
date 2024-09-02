@@ -43,6 +43,14 @@ lib-rs:test:
     - cd lib-rs
     - cargo test
 
+lib-rs:outdated:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-rs
+    - ./check_updates.sh
+  allow_failure: true
+
 lib-rs:coverage:
   image: rust:1.74
   stage: test

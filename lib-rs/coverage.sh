@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Run from Rust project root directory
+# Capture test coverage. Run from Rust project root directory.
 
 # Prerequisites required:
 # - Rust Toolchain (https://www.rust-lang.org/tools/install) including cargo.

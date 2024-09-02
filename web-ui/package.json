@@ -50,7 +50,6 @@
     "@babel/preset-env": "^7.22.20",
     "@babel/preset-typescript": "^7.23.0",
     "@stylistic/eslint-plugin": "^2.1.0",
-    "@stylistic/eslint-plugin-ts": "^2.1.0",
     "@types/jest": "^29.5.5",
     "@types/plotly.js-dist-min": "^2.3.2",
     "@typescript-eslint/eslint-plugin": "^8.0.0",

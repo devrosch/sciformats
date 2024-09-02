@@ -283,13 +283,10 @@ pub fn read_enum_from_global_attr_str<T: Default + FromStr>(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::utils::convert_utf8_cstr_to_str;
 
-    use super::*;
-    use wasm_bindgen_test::*;
-
     #[test]
-    #[wasm_bindgen_test]
     fn test_utf8_bytes_to_string_conversion() {
         let expect = "aäAÄ";
         // "aäAÄ" UTF-8 encoded with zero terminator in different encodings
@@ -306,7 +303,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_iso_8859_1_bytes_to_string_conversion() {
         let expect = "aäAÄ";
         // "aäAÄ" ISO-8859-1 encoded

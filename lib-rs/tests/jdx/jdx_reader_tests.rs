@@ -1,14 +1,10 @@
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
 use super::{open_file, COMPOUND_FILE};
 use sf_rs::{
     api::{Parameter, Parser, Reader, SeekBufRead},
     jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},
 };
 use std::io::BufReader;
-use wasm_bindgen_test::wasm_bindgen_test;
 
-#[wasm_bindgen_test]
 #[test]
 fn cosy_read_valid_succeeds() {
     let (path, file) = open_file(COMPOUND_FILE);

@@ -331,13 +331,10 @@ impl AndiMsFlagValue {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use std::str::FromStr;
 
-    use super::*;
-    use wasm_bindgen_test::*;
-
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_experiment_type_from_string_conversion() {
         assert_eq!(
             AndiMsExperimentType::CentroidedMassSpectrum,
@@ -359,7 +356,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_experiment_type_to_string_conversion() {
         assert_eq!(
             "Centroided Mass Spectrum",
@@ -376,7 +372,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_sample_state_from_string_conversion() {
         assert_eq!(
             AndiMsSampleState::Solid,
@@ -407,7 +402,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_sample_state_to_string_conversion() {
         assert_eq!("Solid", AndiMsSampleState::Solid.to_string(),);
         assert_eq!("Liquid", AndiMsSampleState::Liquid.to_string(),);
@@ -421,7 +415,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_separation_method_from_string_conversion() {
         assert_eq!(
             AndiMsSeparationMethod::Glc,
@@ -487,7 +480,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_separation_method_to_string_conversion() {
         assert_eq!(
             "Gas-Liquid Chromatography",
@@ -548,7 +540,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_mass_spectrometer_inlet_from_string_conversion() {
         assert_eq!(
             AndiMsMassSpectrometerInlet::Membrane,
@@ -623,7 +614,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_mass_spectrometer_inlet_to_string_conversion() {
         assert_eq!(
             "Membrane Separator",
@@ -683,7 +673,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_ionization_method_inlet_from_string_conversion() {
         assert_eq!(
             AndiMsIonizationMethod::Ei,
@@ -745,7 +734,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_ionization_method_inlet_to_string_conversion() {
         assert_eq!("Electron Impact", AndiMsIonizationMethod::Ei.to_string(),);
         assert_eq!(
@@ -787,7 +775,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_ionization_polarity_from_string_conversion() {
         assert_eq!(
             AndiMsIonizationPolarity::Plus,
@@ -805,7 +792,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_ionization_polarity_to_string_conversion() {
         assert_eq!(
             "Positive Polarity",
@@ -818,7 +804,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_detector_type_from_string_conversion() {
         assert_eq!(
             AndiMsDetectorType::Em,
@@ -857,7 +842,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_detector_type_to_string_conversion() {
         assert_eq!("Electron Multiplier", AndiMsDetectorType::Em.to_string(),);
         assert_eq!("Photomultplier", AndiMsDetectorType::Pm.to_string(),);
@@ -876,7 +860,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_resolution_type_from_string_conversion() {
         assert_eq!(
             AndiMsResolutionType::Constant,
@@ -894,7 +877,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_resolution_type_to_string_conversion() {
         assert_eq!(
             "Constant Resolution",
@@ -907,7 +889,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_scan_function_from_string_conversion() {
         assert_eq!(
             AndiMsScanFunction::Scan,
@@ -926,7 +907,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_scan_function_to_string_conversion() {
         assert_eq!("Mass Scan", AndiMsScanFunction::Scan.to_string(),);
         assert_eq!(
@@ -937,7 +917,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_scan_direction_from_string_conversion() {
         assert_eq!(
             AndiMsScanDirection::Up,
@@ -956,7 +935,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_scan_direction_to_string_conversion() {
         assert_eq!("Up", AndiMsScanDirection::Up.to_string(),);
         assert_eq!("Down", AndiMsScanDirection::Down.to_string(),);
@@ -964,7 +942,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_scan_law_from_string_conversion() {
         assert_eq!(
             AndiMsScanLaw::Linear,
@@ -987,7 +964,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_scan_law_to_string_conversion() {
         assert_eq!("Linear", AndiMsScanLaw::Linear.to_string(),);
         assert_eq!("Exponential", AndiMsScanLaw::Exponential.to_string(),);
@@ -996,7 +972,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_mass_axis_unit_from_string_conversion() {
         assert_eq!(
             AndiMsMassAxisUnit::Mz,
@@ -1015,7 +990,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_mass_axis_unit_to_string_conversion() {
         assert_eq!("M/Z", AndiMsMassAxisUnit::Mz.to_string(),);
         assert_eq!(
@@ -1026,7 +1000,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_time_axis_unit_from_string_conversion() {
         assert_eq!(
             AndiMsTimeAxisUnit::Seconds,
@@ -1045,7 +1018,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_time_axis_unit_to_string_conversion() {
         assert_eq!("Seconds", AndiMsTimeAxisUnit::Seconds.to_string(),);
         assert_eq!(
@@ -1056,7 +1028,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_intensity_axis_unit_from_string_conversion() {
         assert_eq!(
             AndiMsIntensityAxisUnit::Counts,
@@ -1090,7 +1061,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_intensity_axis_unit_to_string_conversion() {
         assert_eq!("Total Counts", AndiMsIntensityAxisUnit::Counts.to_string(),);
         assert_eq!(
@@ -1110,7 +1080,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_data_fomat_from_string_conversion() {
         assert_eq!(
             AndiMsDataFormat::Short,
@@ -1133,7 +1102,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn test_ms_data_fomat_to_string_conversion() {
         assert_eq!("Short", AndiMsDataFormat::Short.to_string(),);
         assert_eq!("Long", AndiMsDataFormat::Long.to_string(),);

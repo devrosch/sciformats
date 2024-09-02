@@ -1,5 +1,3 @@
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
 use super::{open_file, ANDI_MS_CENTROID, ANDI_MS_CONTINUUM, ANDI_MS_LIBRARY, ANDI_MS_SID};
 use sf_rs::{
     andi::{
@@ -16,14 +14,12 @@ use sf_rs::{
     api::Parser,
 };
 use std::str::FromStr;
-use wasm_bindgen_test::wasm_bindgen_test;
 
 fn assert_blank_len(s: &str, size: usize) {
     assert_eq!(size, s.len());
     assert!(s.chars().all(|c| c == ' '));
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_centroid_file_succeeds() {
     let (path, file) = open_file(ANDI_MS_CENTROID);
@@ -342,7 +338,6 @@ fn andi_ms_parse_centroid_file_succeeds() {
     // // TODO: add tests for non standard variables and attributes once available
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_continuum_file_succeeds() {
     let (path, file) = open_file(ANDI_MS_CONTINUUM);
@@ -624,7 +619,6 @@ fn andi_ms_parse_continuum_file_succeeds() {
     // TODO: add tests for non standard variables and attributes once available
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_library_file_succeeds() {
     let (path, file) = open_file(ANDI_MS_LIBRARY);
@@ -1000,7 +994,6 @@ fn andi_ms_parse_library_file_succeeds() {
     // TODO: add tests for non standard variables and attributes once available
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_ms_parse_sid_file_succeeds() {
     let (path, file) = open_file(ANDI_MS_SID);

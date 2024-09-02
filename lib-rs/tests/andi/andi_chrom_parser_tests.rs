@@ -1,12 +1,9 @@
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
 use super::{open_file, ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID, ANDI_NON_CDF_DUMMY};
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, AndiDatasetCompleteness},
     api::Parser,
 };
 use std::str::FromStr;
-use wasm_bindgen_test::wasm_bindgen_test;
 
 fn assert_eq_f32(left: f32, right: f32) {
     let max = left.max(right);
@@ -14,7 +11,6 @@ fn assert_eq_f32(left: f32, right: f32) {
     assert!(f32::abs(left - right) <= epsilon)
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_valid_succeeds() {
     let (path, file) = open_file(ANDI_CHROM_VALID);
@@ -229,7 +225,6 @@ fn andi_chrom_parse_valid_succeeds() {
     // TODO: add tests for non standard variables and attributes once available
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_invalid_fails() {
     let (path, file) = open_file(ANDI_NON_CDF_DUMMY);
@@ -238,7 +233,6 @@ fn andi_chrom_parse_invalid_fails() {
     assert!(chrom.is_err());
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_parse_quirks() {
     let (path, file) = open_file(ANDI_CHROM_QUIRKS);

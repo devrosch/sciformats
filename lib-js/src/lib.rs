@@ -1,14 +1,16 @@
 pub mod andi;
 pub mod spc;
 
-use crate::api::{Node, Reader, SeekRead};
-use crate::common::{BufSeekRead, ScannerRepository};
 use js_sys::Uint8Array;
-use std::error::Error;
-use std::io::SeekFrom;
-use std::io::{Read, Seek};
-use wasm_bindgen::prelude::wasm_bindgen;
-use wasm_bindgen::{JsError, JsValue};
+use sf_rs::{
+    api::{Node, Reader, SeekRead},
+    common::{BufSeekRead, ScannerRepository},
+};
+use std::{
+    error::Error,
+    io::{Read, Seek, SeekFrom},
+};
+use wasm_bindgen::{prelude::wasm_bindgen, JsError, JsValue};
 use web_sys::{Blob, FileReaderSync};
 
 // -------------------------------------------------
@@ -389,8 +391,8 @@ pub(crate) fn map_to_js_err(error: &dyn Error) -> JsError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::{Column, Parameter, PointXy, Scanner, Table, Value};
     use js_sys::Array;
+    use sf_rs::api::{Column, Parameter, PointXy, Scanner, Table, Value};
     use std::collections::HashMap;
     use wasm_bindgen_test::*;
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340

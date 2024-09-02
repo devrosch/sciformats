@@ -1,0 +1,58 @@
+lib-js:build:
+  image: rust:1.74
+  stage: build
+  script:
+    - cd lib-js
+    - rustup target add wasm32-unknown-unknown
+    - cargo install wasm-pack --quiet
+    - wasm-pack build --dev
+  artifacts:
+    paths:
+      - lib-js/pkg
+
+lib-js:format:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-js
+    - rustup component add rustfmt
+    - cargo fmt --check
+
+lib-js:lint:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-js
+    - rustup component add clippy
+    - cargo clippy
+
+# todo: update image for running tests in
+# see: https://github.com/rustwasm/wasm-pack/issues/1355
+# lib-js:test:
+#   image: rust:1.74
+#   stage: test
+#   script:
+#     - cd lib-js
+#     - rustup target add wasm32-unknown-unknown
+#     - cargo install wasm-pack --quiet
+#     - wasm-pack test --chrome --headless
+
+lib-js:outdated:
+  image: rust:1.74
+  stage: test
+  script:
+    - cd lib-js
+    - ./check_updates.sh
+  allow_failure: true
+
+lib-js:release:
+  image: rust:1.74
+  stage: release
+  script:
+    - cd lib-js
+    - rustup target add wasm32-unknown-unknown
+    - cargo install wasm-pack --quiet
+    - wasm-pack build --release
+  artifacts:
+    paths:
+      - lib-js/pkg

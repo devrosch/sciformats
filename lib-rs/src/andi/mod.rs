@@ -123,17 +123,14 @@ impl fmt::Display for AndiDatasetCompleteness {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasm_bindgen_test::wasm_bindgen_test;
 
     #[test]
-    #[wasm_bindgen_test]
     fn error_to_string_returns_error_message() {
         let error = AndiError::new("Error message");
         assert_eq!("Error message", error.to_string());
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_valid_strings_to_categories_succeeds() {
         assert_eq!(AndiCategory::from_str("C1").unwrap(), AndiCategory::C1);
         assert_eq!(AndiCategory::from_str("C2").unwrap(), AndiCategory::C2);
@@ -143,7 +140,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_invalid_string_to_category_fails() {
         assert_eq!(
             AndiCategory::from_str("X9").unwrap_err().to_string(),
@@ -152,7 +148,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_category_to_string_succeeds() {
         assert_eq!(AndiCategory::C1.to_string(), "C1");
         assert_eq!(AndiCategory::C2.to_string(), "C2");
@@ -162,7 +157,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_valid_strings_to_dataset_completeness_succeeds() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1").unwrap(),
@@ -187,7 +181,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_zero_terminated_string_to_dataset_completeness_succeeds() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+C2\0").unwrap(),
@@ -196,7 +189,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_invalid_strings_to_dataset_completeness_fails() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+X2")
@@ -214,7 +206,6 @@ mod tests {
     }
 
     #[test]
-    #[wasm_bindgen_test]
     fn map_dataset_completeness_to_string_succeeds() {
         assert_eq!(
             AndiDatasetCompleteness::from_str("C1+C3+C2+C5+C4")

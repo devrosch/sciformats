@@ -4,9 +4,7 @@ use sf_rs::{
     gaml::{gaml_parser::GamlParser, gaml_reader::GamlReader},
 };
 use std::collections::HashMap;
-use wasm_bindgen_test::wasm_bindgen_test;
 
-#[wasm_bindgen_test]
 #[test]
 fn gaml_parse_valid_succeeds() {
     let (path, file) = open_file(GAML_SAMPLE_FILE);

@@ -10,9 +10,9 @@ web-ui:test:
     - npm ci
     - CI=true npm test -- --coverage
   # coverage: /All files\s*\|\s*([\d\.]+)/
-  needs: ["lib-rs:build:wasm", "lib-cpp:build:wasm_emcc"]
+  needs: ["lib-js:build", "lib-cpp:build:wasm_emcc"]
   dependencies:
-    - "lib-rs:build:wasm"
+    - "lib-js:build"
     - "lib-cpp:build:wasm_emcc"
 
 web-ui:format:
@@ -57,9 +57,9 @@ web-ui:release:
     - npm ci
     - CI=true npm run build
     - npm run import-wasm
-  needs: ["lib-rs:release:wasm", "lib-cpp:release:wasm_emcc"]
+  needs: ["lib-js:release", "lib-cpp:release:wasm_emcc"]
   dependencies:
-    - "lib-rs:release:wasm"
+    - "lib-js:release"
     - "lib-cpp:release:wasm_emcc"
   artifacts:
     paths:

@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use super::{open_file, GAML_SAMPLE_FILE};
 use chrono::{DateTime, FixedOffset};
 use sf_rs::{
@@ -9,9 +7,8 @@ use sf_rs::{
         Technique, Trace, Units, Valueorder, Version, Xdata,
     },
 };
-use wasm_bindgen_test::wasm_bindgen_test;
+use std::str::FromStr;
 
-#[wasm_bindgen_test]
 #[test]
 fn gaml_parse_valid_succeeds() {
     let (path, file) = open_file(GAML_SAMPLE_FILE);

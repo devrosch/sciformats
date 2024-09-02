@@ -1,11 +1,8 @@
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
 use super::{open_file, ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID};
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
     api::{Column, Parameter, Parser, Reader, Value},
 };
-use wasm_bindgen_test::wasm_bindgen_test;
 
 fn assert_eq_f64(left: f64, right: f64) {
     let max = left.max(right);
@@ -13,7 +10,6 @@ fn assert_eq_f64(left: f64, right: f64) {
     assert!(f64::abs(left - right) <= epsilon)
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_valid_succeeds() {
     let (path, file) = open_file(ANDI_CHROM_VALID);
@@ -403,7 +399,6 @@ fn andi_chrom_read_valid_succeeds() {
     // TODO: add tests for non standard variables and attributes once available
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_quirks() {
     let (path, file) = open_file(ANDI_CHROM_QUIRKS);
@@ -414,7 +409,6 @@ fn andi_chrom_read_quirks() {
     assert!(raw_data.is_ok());
 }
 
-#[wasm_bindgen_test]
 #[test]
 fn andi_chrom_read_illegal_node_path_fails() {
     let (path, file) = open_file(ANDI_CHROM_VALID);

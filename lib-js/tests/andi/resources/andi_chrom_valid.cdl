@@ -1,0 +1,121 @@
+netcdf andi_chrom_valid {
+dimensions:
+	_2_byte_string = 2 ;
+	_4_byte_string = 4 ;
+	_8_byte_string = 8 ;
+	_16_byte_string = 16 ;
+	_32_byte_string = 32 ;
+	_64_byte_string = 64 ;
+	_128_byte_string = 128 ;
+	_255_byte_string = 255 ;
+	point_number = 10 ;
+	peak_number = 3 ;
+	error_number = 2 ;
+variables:
+	char error_log(error_number, _64_byte_string) ;
+	float detector_maximum_value ;
+	float detector_minimum_value ;
+	float actual_run_time_length ;
+	float actual_sampling_interval ;
+	float actual_delay_time ;
+	float ordinate_values(point_number) ;
+		ordinate_values:uniform_sampling_flag = "Y" ;
+		ordinate_values:autosampler_position = "1:2" ;
+	float peak_retention_time(peak_number) ;
+	char peak_name(peak_number, _32_byte_string) ;
+	float peak_amount(peak_number) ;
+	float peak_start_time(peak_number) ;
+	float peak_end_time(peak_number) ;
+	float peak_area(peak_number) ;
+	float peak_height(peak_number) ;
+	float baseline_start_value(peak_number) ;
+	float baseline_stop_value(peak_number) ;
+	char peak_start_detection_code(peak_number, _2_byte_string) ;
+	char peak_stop_detection_code(peak_number, _2_byte_string) ;
+
+// global attributes:
+		:dataset_completeness = "C1+C2" ;
+		:aia_template_revision = "1.0" ;
+		:netcdf_revision = "2.0" ;
+		:languages = "English" ;
+		:administrative_comments = "dummy admin comment" ;
+		:dataset_origin = "sf_rs" ;
+		:dataset_owner = "Robert" ;
+		:dataset_date_time_stamp = "20230908200501+0200" ;
+		:injection_date_time_stamp = "20230908200501+0200" ;
+		:experiment_title = "sf_rs sample file" ;
+		:operator_name = "Rob" ;
+		:separation_experiment_type = "liquid chromatography" ;
+		:company_method_name = "dummy company method 1" ;
+		:company_method_id = "1" ;
+		:pre_experiment_program_name = "dummy pre exp prog name" ;
+		:post_experiment_program_name = "dummy post exp prog name" ;
+		:source_file_reference = "dummy source file reference" ;
+		:sample_id_comments = "dummy sample id comments" ;
+		:sample_id = "12345" ;
+		:sample_name = "dummy sample name" ;
+		:sample_type = "test" ;
+		:sample_injection_volume = 1.f ;
+		:sample_amount = 2.2f ;
+		:detection_method_table_name = "dummy method table name" ;
+		:detector_method_comments = "dummy detector method comments" ;
+		:detection_method_name = "dummy detection method 1" ;
+		:detector_name = "dummy detector name" ;
+		:detector_unit = "au" ;
+		:raw_data_table_name = "dummy raw data table name" ;
+		:retention_unit = "seconds" ;
+		:peak_processing_results_table_name = "dummy pp res table name" ;
+		:peak_processing_results_comments = "dummy pp res comments" ;
+		:peak_processing_method_name = "dummy pp method name" ;
+		:peak_processing_date_time_stamp = "20230908201502+0200" ;
+		:peak_amount_unit = "ppm" ;
+data:
+
+ error_log =
+  "error 1",
+  "error 2" ;
+
+ detector_maximum_value = 999999 ;
+
+ detector_minimum_value = 1 ;
+
+ actual_run_time_length = 100 ;
+
+ actual_sampling_interval = 10 ;
+
+ actual_delay_time = 0 ;
+
+ ordinate_values = 10000, 111111.1, 10000, 122222.2, 10000, 133333.3, 
+    10000, 10000, 10000, 10000 ;
+
+ peak_retention_time = 10.111, 30.222, 50.333 ;
+
+ peak_name =
+  "ref",
+  "peak name 1",
+  "peak name 2" ;
+
+ peak_amount = 110.1111, 220.2222, 330.333 ;
+
+ peak_start_time = 8, 28, 48 ;
+
+ peak_end_time = 12, 32, 52 ;
+
+ peak_area = 111, 222, 333 ;
+
+ peak_height = 111111.1, 122222.2, 133333.3 ;
+
+ baseline_start_value = 5, 6, 7 ;
+
+ baseline_stop_value = 7, 6, 5 ;
+
+ peak_start_detection_code =
+  "A",
+  "B",
+  "C" ;
+
+ peak_stop_detection_code =
+  "X",
+  "Y",
+  "Z" ;
+}

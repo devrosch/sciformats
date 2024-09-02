@@ -69,7 +69,7 @@
   },
   "dependencies": {
     "plotly.js-dist-min": "^2.26.1",
-    "sf_rs": "file:../lib-rs/pkg"
+    "sf_rs": "file:../lib-js/pkg"
   },
   "browser": {
     "crypto": false,

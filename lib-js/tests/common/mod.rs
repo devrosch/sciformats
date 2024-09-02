@@ -3,6 +3,9 @@ use sf_rs::{
     api::SeekRead,
     common::{BufSeekRead, ScannerRepository},
 };
+use wasm_bindgen_test::wasm_bindgen_test;
+
+wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 open_files!(
     "../andi/resources/",
@@ -12,7 +15,7 @@ open_files!(
     )
 );
 
-#[test]
+#[wasm_bindgen_test]
 fn scanner_repository_recognizes_valid_file() {
     let repo = ScannerRepository::init_all();
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
@@ -20,7 +23,7 @@ fn scanner_repository_recognizes_valid_file() {
     assert!(repo.is_recognized(&path, &mut input));
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn scanner_repository_rejects_invalid_file() {
     let repo = ScannerRepository::init_all();
     let (path, file) = open_file(ANDI_INVALID_FILE_PATH);
@@ -28,7 +31,7 @@ fn scanner_repository_rejects_invalid_file() {
     assert!(!repo.is_recognized(&path, &mut input));
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn scanner_repository_returns_reader_for_valid_file() {
     let repo = ScannerRepository::init_all();
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);
@@ -36,7 +39,7 @@ fn scanner_repository_returns_reader_for_valid_file() {
     assert!(repo.get_reader(&path, input).is_ok());
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn scanner_repository_returns_error_for_valid_file() {
     let repo = ScannerRepository::init_all();
     let (path, file) = open_file(ANDI_INVALID_FILE_PATH);
@@ -44,7 +47,7 @@ fn scanner_repository_returns_error_for_valid_file() {
     assert!(repo.get_reader(&path, input).is_err());
 }
 
-#[test]
+#[wasm_bindgen_test]
 fn buf_seek_read_allows_valid_file_reading() {
     let repo = ScannerRepository::init_all();
     let (path, file) = open_file(ANDI_CHROM_VALID_FILE_PATH);

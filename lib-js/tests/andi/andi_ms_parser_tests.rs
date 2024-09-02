@@ -1,0 +1,13 @@
+use super::{open_file, ANDI_MS_CENTROID};
+use sf_rs::{andi::andi_ms_parser::AndiMsParser, api::Parser};
+use wasm_bindgen_test::wasm_bindgen_test;
+
+wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+#[wasm_bindgen_test]
+fn andi_ms_parse_valid_file_succeeds() {
+    let (path, file) = open_file(ANDI_MS_CENTROID);
+    let ms = AndiMsParser::parse(&path, file);
+
+    assert!(ms.is_ok());
+}

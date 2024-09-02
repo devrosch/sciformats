@@ -1,10 +1,9 @@
-use super::{create_js_reader, create_js_scanner, map_to_js_err};
-use crate::{
+use super::{create_js_reader, create_js_scanner, map_to_js_err, BlobSeekRead, JsNode, JsReader};
+use sf_rs::{
     andi::{
         andi_chrom_reader::AndiChromReader, andi_ms_reader::AndiMsReader, andi_scanner::AndiScanner,
     },
     api::{Reader, Scanner},
-    bind::wasm::{BlobSeekRead, JsNode, JsReader},
 };
 use wasm_bindgen::{prelude::wasm_bindgen, JsError};
 use web_sys::Blob;

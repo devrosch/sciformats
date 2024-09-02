@@ -1,4 +1,4 @@
-# sf-ui
+# web-ui
 
 An HTML/CSS/JS UI for visualizing scientific data.
 
@@ -29,6 +29,12 @@ npm test
 ```
 
 Test coverage information can be generated with `npm test -- --coverage`.
+
+To check code formatting, run:
+
+```
+npm run format
+```
 
 To lint the code, run:
 

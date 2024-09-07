@@ -1,7 +1,7 @@
 pub mod andi;
 pub mod spc;
 
-use js_sys::Uint8Array;
+use js_sys::{Array, Uint8Array};
 use sf_rs::{
     api::{Node, Reader, SeekRead},
     common::{BufSeekRead, ScannerRepository},
@@ -10,7 +10,7 @@ use std::{
     error::Error,
     io::{Read, Seek, SeekFrom},
 };
-use wasm_bindgen::{prelude::wasm_bindgen, JsError, JsValue};
+use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsError, JsValue};
 use web_sys::{Blob, FileReaderSync};
 
 // -------------------------------------------------
@@ -183,6 +183,134 @@ impl JsReader {
 // Common
 // -------------------------------------------------
 
+// todo: reduce code duplication
+// todo: add SeekRead for lazy loading from Node.js file descriptors
+// see https://github.com/rustwasm/wasm-bindgen/issues/1993 and https://nodejs.org/api/fs.html
+
+#[derive(Clone)]
+pub struct Uint8ArraySeekRead {
+    array: Uint8Array,
+    pos: u64,
+}
+
+impl Uint8ArraySeekRead {
+    pub fn new(array: Uint8Array) -> Uint8ArraySeekRead {
+        Self { array, pos: 0 }
+    }
+
+    pub fn get_pos(&self) -> u64 {
+        self.pos
+    }
+}
+
+impl Seek for Uint8ArraySeekRead {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error. Seek position out of bounds: {pos}").into());
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Seek position out of bounds: {pos}"),
+            ))
+        }
+
+        let file_size = self.array.length() as u64;
+        match pos {
+            SeekFrom::Start(seek_pos) => {
+                self.pos = seek_pos;
+            }
+            SeekFrom::End(seek_pos) => {
+                let new_pos = file_size as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+            SeekFrom::Current(seek_pos) => {
+                let new_pos = self.pos as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+        }
+        Ok(self.pos)
+    }
+}
+
+impl Read for Uint8ArraySeekRead {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let end_pos = self.pos + buf.len() as u64;
+        let slice = self.array.slice(self.pos as u32, end_pos as u32);
+        self.pos += slice.length() as u64;
+        slice.copy_to(&mut buf[0..slice.length() as usize]);
+        Ok(slice.length() as usize)
+    }
+}
+
+#[derive(Clone)]
+pub struct ArraySeekRead {
+    array: Array,
+    pos: u64,
+}
+
+impl ArraySeekRead {
+    pub fn new(array: Array) -> ArraySeekRead {
+        Self { array, pos: 0 }
+    }
+
+    pub fn get_pos(&self) -> u64 {
+        self.pos
+    }
+}
+
+impl Seek for ArraySeekRead {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error. Seek position out of bounds: {pos}").into());
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Seek position out of bounds: {pos}"),
+            ))
+        }
+
+        let file_size = self.array.length() as u64;
+        match pos {
+            SeekFrom::Start(seek_pos) => {
+                self.pos = seek_pos;
+            }
+            SeekFrom::End(seek_pos) => {
+                let new_pos = file_size as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+            SeekFrom::Current(seek_pos) => {
+                let new_pos = self.pos as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+        }
+        Ok(self.pos)
+    }
+}
+
+impl Read for ArraySeekRead {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let end_pos = self.pos + buf.len() as u64;
+        let slice = self.array.slice(self.pos as u32, end_pos as u32);
+        self.pos += slice.length() as u64;
+        // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
+        let uint8_array = Uint8Array::new(&slice);
+        uint8_array.copy_to(&mut buf[0..slice.length() as usize]);
+        Ok(slice.length() as usize)
+    }
+}
+
 #[derive(Clone)]
 pub struct BlobSeekRead {
     blob: Blob,
@@ -284,26 +412,50 @@ impl JsScannerRepository {
     }
 
     #[wasm_bindgen(js_name = isRecognized)]
-    pub fn js_is_recognized(&self, path: &str, input: &Blob) -> bool {
-        use web_sys::console;
-        let blob = Box::new(BlobSeekRead::new(input.clone()));
-        console::log_2(
-            &"JsScannerRepository.js_is_recognized() path:".into(),
-            &path.into(),
-        );
-        console::log_2(
-            &"JsScannerRepository.js_is_recognized() input pos:".into(),
-            &blob.get_pos().into(),
-        );
-
-        self.repo
-            .is_recognized(path, &mut (blob as Box<dyn SeekRead>))
+    pub fn js_is_recognized(&self, path: &str, input: &JsValue) -> bool {
+        // use web_sys::console;
+        // console::log_1(&"JsScannerRepository.js_is_recognized_generic() entered.".into());
+        if input.has_type::<Blob>() {
+            // console::log_1(&"JsScannerRepository input type recognized as Blob.".into());
+            let typed_input = Blob::from(input.clone());
+            let seek_read = Box::new(BlobSeekRead::new(typed_input));
+            self.repo
+                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
+        } else if input.has_type::<Uint8Array>() {
+            // console::log_1(&"JsScannerRepository input type recognized as Uint8Array.".into());
+            let typed_input = Uint8Array::from(input.clone());
+            let seek_read = Box::new(Uint8ArraySeekRead::new(typed_input));
+            self.repo
+                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
+        } else if input.has_type::<Array>() {
+            // console::log_1(&"JsScannerRepository input type recognized as Array.".into());
+            let typed_input = Array::from(input);
+            let seek_read = Box::new(ArraySeekRead::new(typed_input));
+            self.repo
+                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
+        } else {
+            // console::log_1(&"JsScannerRepository input type not recognized.".into());
+            false
+        }
     }
 
     #[wasm_bindgen(js_name = getReader)]
-    pub fn js_get_reader(&self, path: &str, input: &Blob) -> Result<JsReader, JsError> {
-        let blob = BlobSeekRead::new(input.clone());
-        let input = BufSeekRead::new(blob);
+    pub fn js_get_reader(&self, path: &str, input: &JsValue) -> Result<JsReader, JsError> {
+        let seek_read: Box<dyn SeekRead> = if input.has_type::<Blob>() {
+            Box::new(BlobSeekRead::new(Blob::from(input.clone())))
+        } else if input.has_type::<Uint8Array>() {
+            Box::new(Uint8ArraySeekRead::new(Uint8Array::from(input.clone())))
+        } else if input.has_type::<Array>() {
+            Box::new(ArraySeekRead::new(Array::from(input)))
+        } else {
+            let input_type = input.js_typeof().as_string().unwrap_or_default();
+            return Err(JsError::new(&format!(
+                "Illegal input type for ScannerRepository::getReader(): {}",
+                input_type
+            )));
+        };
+
+        let input = BufSeekRead::new(seek_read);
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
             Ok(reader) => Ok(JsReader::from(reader)),

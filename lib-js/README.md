@@ -10,6 +10,12 @@ You can build this library with:
 wasm-pack build
 ```
 
+By default the build will generate a package suitable for use with a bundler (e.g., webpack) to be run in a browser. For building a package for use in Node.js, run:
+
+```
+wasm-pack build --target nodejs
+```
+
 The resulting npm package is then available in the `/pkg` directory.
 
 ### Test

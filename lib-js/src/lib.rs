@@ -1,7 +1,10 @@
 pub mod andi;
 pub mod spc;
 
-use js_sys::{Array, Uint8Array};
+#[cfg(feature = "nodejs")]
+use js_sys::{Array, Number, Object, Uint8Array};
+#[cfg(not(feature = "nodejs"))]
+use js_sys::{Array, Number, Uint8Array};
 use sf_rs::{
     api::{Node, Reader, SeekRead},
     common::{BufSeekRead, ScannerRepository},
@@ -398,6 +401,123 @@ impl Read for BlobSeekRead {
     }
 }
 
+#[cfg(feature = "nodejs")]
+#[wasm_bindgen(module = "fs")]
+extern "C" {
+    // #[wasm_bindgen(js_name = readFileSync)]
+    // fn read_file_sync(path: &str, options: &Object) -> JsValue;
+
+    #[wasm_bindgen(js_name = fstatSync)]
+    fn fstat_sync(fd: i32, options: &Object) -> JsValue;
+
+    #[wasm_bindgen(js_name = readSync)]
+    fn read_sync(fd: i32, buffer: &Uint8Array, offset: u32, length: u32, position: i64) -> Number;
+
+    #[wasm_bindgen(js_name = closeSync)]
+    fn close_sync(fd: i32);
+}
+
+#[derive(Clone)]
+#[allow(dead_code)]
+pub struct FdSeekRead {
+    /// File descriptor
+    fd: i32,
+    /// Position in file
+    pos: u64,
+}
+
+impl FdSeekRead {
+    pub fn new(fd: i32) -> FdSeekRead {
+        Self { fd, pos: 0 }
+    }
+
+    pub fn get_pos(&self) -> u64 {
+        self.pos
+    }
+}
+
+// todo: really drop?
+#[cfg(feature = "nodejs")]
+impl Drop for FdSeekRead {
+    fn drop(&mut self) {
+        close_sync(self.fd);
+    }
+}
+
+#[cfg(feature = "nodejs")]
+impl Seek for FdSeekRead {
+    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+        fn to_oob_error<T>(pos: i64) -> std::io::Result<T> {
+            // use web_sys::console;
+            // console::error_1(&format!("I/O error. Seek position out of bounds: {pos}").into());
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!("Seek position out of bounds: {pos}"),
+            ))
+        }
+
+        // use web_sys::console;
+        // console::info_1(&"FdSeekRead::seek() entered".into());
+        let stats = fstat_sync(self.fd, &Object::new());
+        let file_size = js_sys::Reflect::get(&stats, &JsValue::from("size"))
+            .unwrap()
+            .as_f64()
+            .unwrap() as u64;
+        match pos {
+            SeekFrom::Start(seek_pos) => {
+                self.pos = seek_pos;
+            }
+            SeekFrom::End(seek_pos) => {
+                let new_pos = file_size as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+            SeekFrom::Current(seek_pos) => {
+                let new_pos = self.pos as i64 + seek_pos;
+                if new_pos < 0 {
+                    return to_oob_error(new_pos);
+                }
+                self.pos = new_pos as u64;
+            }
+        }
+        Ok(self.pos)
+    }
+}
+
+#[cfg(not(feature = "nodejs"))]
+impl Seek for FdSeekRead {
+    fn seek(&mut self, _pos: SeekFrom) -> std::io::Result<u64> {
+        unimplemented!()
+    }
+}
+
+#[cfg(feature = "nodejs")]
+impl Read for FdSeekRead {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        use web_sys::console;
+        console::info_1(&"FdSeekRead::read() entered".into());
+
+        let uint8_array = Uint8Array::new_with_length(buf.len() as u32);
+        let js_num_bytes_read =
+            read_sync(self.fd, &uint8_array, 0, buf.len() as u32, self.pos as i64);
+        let num_bytes_read = js_num_bytes_read.as_f64().unwrap() as usize;
+        self.pos += num_bytes_read as u64;
+        uint8_array
+            .slice(0, num_bytes_read as u32)
+            .copy_to(&mut buf[0..num_bytes_read]);
+        Ok(num_bytes_read)
+    }
+}
+
+#[cfg(not(feature = "nodejs"))]
+impl Read for FdSeekRead {
+    fn read(&mut self, _buf: &mut [u8]) -> std::io::Result<usize> {
+        unimplemented!()
+    }
+}
+
 #[wasm_bindgen(js_name = ScannerRepository)]
 pub struct JsScannerRepository {
     repo: ScannerRepository,
@@ -433,6 +553,12 @@ impl JsScannerRepository {
             let seek_read = Box::new(ArraySeekRead::new(typed_input));
             self.repo
                 .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
+        } else if input.has_type::<Number>() {
+            // console::log_1(&"JsScannerRepository input type recognized as Number.".into());
+            let typed_input = Number::from(input.clone()).as_f64().unwrap() as i32;
+            let seek_read = Box::new(FdSeekRead::new(typed_input));
+            self.repo
+                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
         } else {
             // console::log_1(&"JsScannerRepository input type not recognized.".into());
             false
@@ -447,6 +573,10 @@ impl JsScannerRepository {
             Box::new(Uint8ArraySeekRead::new(Uint8Array::from(input.clone())))
         } else if input.has_type::<Array>() {
             Box::new(ArraySeekRead::new(Array::from(input)))
+        } else if input.has_type::<Number>() {
+            Box::new(FdSeekRead::new(
+                Number::from(input.clone()).as_f64().unwrap() as i32,
+            ))
         } else {
             let input_type = input.js_typeof().as_string().unwrap_or_default();
             return Err(JsError::new(&format!(

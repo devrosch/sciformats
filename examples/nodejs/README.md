@@ -12,7 +12,7 @@ Build the sf_js library. In the `lib-js` directory run:
 
 ```
 cargo install
-wasm-pack build --target nodejs
+wasm-pack build --target nodejs -- --features nodejs
 ```
 
 The resulting npm package is then available in the `lib-js/pkg` directory.

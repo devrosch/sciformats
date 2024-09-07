@@ -10,6 +10,7 @@ You can try the application at [GitLab Pages](https://devrosch.gitlab.io/sf/inde
 - lib-rs: Native Rust library that supports reading multiple formats. Core library used by other lib-xxx libraries except lib-cpp.
 - lib-js: JavaScript/TypeScript bindings for lib-rs. This requires the JS runtime to support WebAssembly (WASM). All current browsers and major runtimes do.
 - web-ui: An HTML/CSS/JS UI for data viewing that leverages lib-js.
+- examples: Code examples code for using the library and its bindings.
 
 ## Documentation
 

@@ -2,8 +2,8 @@
 import { openSync, readFileSync } from 'node:fs';
 import { ScannerRepository } from 'sf_js';
 
-const fileNameAndi = 'resources/andi_chrom_valid.cdf';
-const fileNameJdx = 'resources/CompoundFile.jdx';
+const fileNameAndi = '../_resources/andi_chrom_valid.cdf';
+const fileNameJdx = '../_resources/CompoundFile.jdx';
 
 // Load file into memory and then parse and print contents.
 // This is efficient and suitable for files if they are of moderate size in relation to the available memory.

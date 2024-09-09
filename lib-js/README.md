@@ -16,7 +16,12 @@ By default the build will generate a package suitable for use with a bundler (e.
 wasm-pack build --target nodejs -- --features nodejs
 ```
 
-The resulting npm package is then available in the `/pkg` directory.
+For direct import into a browser, run:
+```
+wasm-pack build --target web
+```
+
+The resulting npm package in each case is available in the `/pkg` directory after the build completes.
 
 ### Test
 

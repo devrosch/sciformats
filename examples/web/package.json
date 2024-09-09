@@ -1,14 +1,15 @@
 {
-  "name": "nodejs_example",
+  "name": "web_example",
   "version": "0.1.0",
+  "description": "A sample application demonstrating the use uf sf_js in the browser.",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "author": "Robert Schiwon",
   "license": "MIT",
-  "description": "A Node.js sample application demonstrating the use uf sf_js.",
   "dependencies": {
-    "sf_js": "file:../../lib-js/pkg"
+    "express": "^4.19.2"
   }
 }

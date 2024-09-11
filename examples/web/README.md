@@ -37,7 +37,9 @@ To start the application, in the `examples/node-js` directory run:
 npm start
 ```
 
-This will start a web application that can be opened at https://localhost:3000. Tha application allows selecting files and if the format is recognized shows their content.
+This will start a web application that can be opened at https://localhost:3000. The application allows selecting files and if the format is recognized shows their content.
+
+The application demonstrates two ways to read data, eagerly and lazily. In eager reading the file contents are read fully into memory for parsing. This is suitable for running in the main thread but files must be small enough to fit into memory. Alternatively, files may be read lazily. However, this requires a Web Worker and thus is more complicated.
 
 ## Author
 

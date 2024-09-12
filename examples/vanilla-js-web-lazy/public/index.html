@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SciFormats Web Example</title>
+</head>
+
+<!-- ES6 module -->
+<script type="module" src="index.js"></script>
+
+<body>
+    <h1>SciFormats Web Example</h1>
+    <p>Chose a file to read. Some valid input files are available in the "examples/_resources" directory.</p>
+    <p>
+        <label for="fileInput">Load into memory:</label>
+        <input type="file" id="fileInput" name="fileInput" onchange="onFileSelected(this)" />
+    </p>
+    <p>
+        <label for="fileName">Name:</label>
+        <span id="fileName"></span>
+    </p>
+    <p>
+        <label for="fileContent">Contents:</label>
+        <textarea readonly style="width: 100%; box-sizing: border-box;" rows="30" id="fileContent"></textarea>
+    </p>
+</body>
+
+</html>

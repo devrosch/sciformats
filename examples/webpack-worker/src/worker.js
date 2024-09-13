@@ -2,10 +2,7 @@
 // Initialize library and worker.
 // ------------------------------
 
-import init, { ScannerRepository } from './pkg/sf_js.js';
-
-// Load and initialize package.
-await init({ url: './pkg/sf_js_bg.wasm' });
+import { ScannerRepository } from 'sf_js';
 console.log('Worker: initialized sf_js');
 
 const scannerRepository = new ScannerRepository();

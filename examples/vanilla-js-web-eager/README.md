@@ -2,7 +2,7 @@
 
 An vanilla JavaScript example application that reads scientific files and prints the contents in the browser. Uses sf_js for reading scientific data formats. The application allows selecting files and if the format is recognized shows their content.
 
-this example demonstrates how to read data eagerly, loading file contents fully into memory for parsing. This is suitable for running in the main thread but files must be small enough to fit into memory.
+This example demonstrates how to read data eagerly, loading file contents fully into memory for parsing. This is suitable for running in the main thread but files must be small enough to fit into memory.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ The resulting npm package is then available in the `lib-js/pkg` directory.
 
 Download and install [Node.js](https://nodejs.org/en/download/package-manager).
 
-To install the dependencies for serving the application, in the `examples/web` directory run:
+To install the dependencies for serving the application, in the `examples/vanilla-js-eager` directory run:
 
 ```
 npm install
@@ -33,7 +33,7 @@ Note that this is merely required for serving HTML and JavaScript to the browser
 
 ## Run example
 
-To start the application, in the `examples/node-js` directory run:
+To start the application, in the `examples/vanilla-js-eager` directory run:
 
 ```
 npm start
@@ -47,10 +47,10 @@ This will start a web application that can be opened at https://localhost:3000.
 
 ## License
 
-Copyright (C) 2024 Robert Schiwon
+Copyright (c) 2024 Robert Schiwon
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

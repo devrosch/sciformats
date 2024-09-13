@@ -1,8 +1,8 @@
-# Examples - Vanilla JS Web Lazy
+# Examples - Webpack
 
-An vanilla JavaScript example application that reads scientific files and prints the contents in the browser. Uses sf_js for reading scientific data formats. The application allows selecting files and if the format is recognized shows their content.
+An JavaScript example application that reads scientific files and prints the contents in the browser. Uses sf_js for reading scientific data formats and Webpack for bundling. The application allows selecting files and if the format is recognized shows their content.
 
-This example demonstrates how to read data lazily, loading only the file contents into memory that are required for parsing a given section of a file. This suitable for reading large files but requires a web worker and cannot run in the main thread.
+This example demonstrates how to read data eagerly, loading file contents fully into memory for parsing. This is suitable for running in the main thread but files must be small enough to fit into memory.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Build the sf_js library. In the `lib-js` directory run:
 
 ```
 cargo install
-wasm-pack build --target web
+wasm-pack build
 ```
 
 The resulting npm package is then available in the `lib-js/pkg` directory.
@@ -23,23 +23,31 @@ The resulting npm package is then available in the `lib-js/pkg` directory.
 
 Download and install [Node.js](https://nodejs.org/en/download/package-manager).
 
-To install the dependencies for serving the application, in the `examples/vanilla-js-lazy` directory run:
+To install the dependencies for serving the application, in the `examples/webpack` directory run:
 
 ```
 npm install
 ```
 
-Note that this is merely required for serving HTML and JavaScript to the browser. All application logic runs in the browser.
+Note that this is merely required for the bundler. All application logic runs in the browser.
 
 ## Run example
 
-To start the application, in the `examples/vanilla-js-lazy` directory run:
+To start the application, in the `examples/webpack` directory run:
 
 ```
 npm start
 ```
 
-This will start a web application that can be opened at https://localhost:3000.
+This will start the dev server and the application that can be opened at https://localhost:8080.
+
+For building the application for production run:
+
+```
+npm build
+```
+
+This will place the build output in the `dist` directory.
 
 ## Author
 

@@ -1,17 +1,15 @@
-import init, { ScannerRepository } from './pkg/sf_js.js';
-
 // -----------------------------
 // Initialize UI and web worker.
 // -----------------------------
 
+// Initialize display.
+clearDisplay('fileInput');
 // 'module' type option is required so that the worker can import libraries.
 const worker = new Worker(new URL("worker.js", import.meta.url), { type: 'module' });
 
-clearDisplay('fileInput');
-
-// --------------------------------------------
-// Lazily load file in worker display contents.
-// --------------------------------------------
+// ------------------------------------------------
+// Lazily load file in worker and display contents.
+// ------------------------------------------------
 
 window.onFileSelected = async function (input) {
   const selectedFiles = input.files;
@@ -20,24 +18,21 @@ window.onFileSelected = async function (input) {
   }
   clearDisplay();
   const file = selectedFiles[0];
-  worker.postMessage({ command: 'isRecognized', data: { fileName: file.name, blob: file } });
+  // Send file to worker for processing.
+  worker.postMessage(file);
 };
 
+// Process data sent by worker.
 worker.onmessage = (e) => {
   console.log(`Message received from worker: ${JSON.stringify(e.data)}`);
 
   const { command, data } = e.data;
 
   switch (command) {
-    case 'isRecognized':
-      if (data.isRecognized === true) {
-        showName(data.fileName);
-        worker.postMessage({ command: 'read', data: { fileName: data.fileName, blob: data.blob } });
-      } else {
-        console.log(`Unrecognized file format: : ${fileName}`);
-      }
+    case 'showName':
+      showName(data);
       break;
-    case 'read':
+    case 'showNodeContent':
       const { path, node } = data;
       showNodeContent(path, node);
       break;

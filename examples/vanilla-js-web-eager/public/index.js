@@ -1,17 +1,16 @@
-import init, { ScannerRepository } from './pkg/sf_js.js';
-
 // -------------------
 // Initialize library.
 // -------------------
 
-async function run() {
-  clearDisplay('fileInput');
-  // Load and initialize package.
-  await init({ url: './pkg/sf_js_bg.wasm' });
-  console.log('Main thread: initialized sf_rs');
-}
+import init, { ScannerRepository } from './pkg/sf_js.js';
 
-run();
+// Initialize display.
+clearDisplay('fileInput');
+// Load and initialize package.
+await init({ url: './pkg/sf_js_bg.wasm' });
+console.log('Main thread: initialized sf_rs');
+
+const scannerRepository = new ScannerRepository();
 
 // ---------------------------------------
 // Eagerly load file and display contents.
@@ -34,7 +33,6 @@ async function read(file) {
   console.log(`file name: ${fileName}`);
   console.log(`"${fileName}" content size: ${buffer.byteLength}`);
 
-  const scannerRepository = new ScannerRepository();
   // As a Uint8Array is expected, an ArrayBuffer cannot be used directly.
   var uint8Array = new Uint8Array(buffer);
   const isRecognized = scannerRepository.isRecognized(fileName, uint8Array);
@@ -46,6 +44,7 @@ async function read(file) {
 
   // Get the suitable reader for reading file contents.
   const reader = scannerRepository.getReader(fileName, uint8Array);
+
   showName(fileName);
   // Read contents starting with the root node ''.
   readNodes(reader, '');
@@ -55,6 +54,7 @@ async function read(file) {
 function readNodes(reader, searchPath) {
   const path = searchPath || '';
   const node = reader.read(path);
+
   showNodeContent(path, node);
 
   // Read child nodes.

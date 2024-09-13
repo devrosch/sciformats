@@ -1,5 +1,5 @@
 {
-  "name": "web_example",
+  "name": "vanilla_js_example",
   "version": "0.1.0",
   "description": "A sample application demonstrating the use uf sf_js in the browser.",
   "main": "index.js",

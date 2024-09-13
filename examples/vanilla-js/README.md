@@ -1,4 +1,4 @@
-# Examples - Vanilla JS Web Eager
+# Examples - Vanilla JS
 
 An vanilla JavaScript example application that reads scientific files and prints the contents in the browser. Uses sf_js for reading scientific data formats. The application allows selecting files and if the format is recognized shows their content.
 
@@ -23,7 +23,7 @@ The resulting npm package is then available in the `lib-js/pkg` directory.
 
 Download and install [Node.js](https://nodejs.org/en/download/package-manager).
 
-To install the dependencies for serving the application, in the `examples/vanilla-js-eager` directory run:
+To install the dependencies for serving the application, in the `examples/vanilla-js` directory run:
 
 ```
 npm install
@@ -33,7 +33,7 @@ Note that this is merely required for serving HTML and JavaScript to the browser
 
 ## Run example
 
-To start the application, in the `examples/vanilla-js-eager` directory run:
+To start the application, in the `examples/vanilla-js` directory run:
 
 ```
 npm start

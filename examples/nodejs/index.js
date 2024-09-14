@@ -1,5 +1,4 @@
-// import { openSync, closeSync, readSync, readFileSync } from 'node:fs';
-import { openSync, readFileSync } from 'node:fs';
+import { openSync, closeSync, readFileSync } from 'node:fs';
 import { ScannerRepository } from 'sf_js';
 
 const fileNameAndi = '../_resources/andi_chrom_valid.cdf';
@@ -10,24 +9,10 @@ const fileNameJdx = '../_resources/CompoundFile.jdx';
 loadIntoMemoryAndPrintContents(fileNameAndi);
 loadIntoMemoryAndPrintContents(fileNameJdx);
 
-// readOnDemand(fileNameAndi);
-// readOnDemand(fileNameJdx);
-
 // Load file data lazily, parse and print contents.
 // This suitable for large files to conserve memory.
 loadLazilyAndPrintContents(fileNameAndi);
 loadLazilyAndPrintContents(fileNameJdx);
-
-function printContent(reader, searchPath) {
-  const path = searchPath || '';
-  const node = reader.read(path);
-  printNodeContent(path, node);
-
-  for (let i = 0; i < node.childNodeNames.length; i += 1) {
-    const childPath = path + `/${i}`;
-    printContent(reader, childPath);
-  }
-}
 
 function loadIntoMemoryAndPrintContents(fileName) {
   try {
@@ -42,19 +27,26 @@ function loadIntoMemoryAndPrintContents(fileName) {
     }
     const reader = scannerRepository.getReader(fileName, buffer);
     // Iterate through all nodes depth first starting with the root node '' and print contents
-    printContent(reader, '');
+    readNodes(reader, '');
   } catch (err) {
     console.error(err);
   }
 }
 
 function loadLazilyAndPrintContents(fileName) {
+  // file descriptor
+  let fd = null;
+
   try {
     const scannerRepository = new ScannerRepository();
     // Open file desecriptor.
-    let fd = openSync(fileName);
-    console.log(`successfully opened "${fileName}"`);
-    console.log(`file descriptor: ${fd}`);
+    fd = openSync(fileName);
+    if (fd < 0) {
+      console.log(`Error opening file: ${fileName}`);
+      return;
+    }
+    console.log(`Successfully opened file: ${fileName}`);
+    console.log(`File descriptor: ${fd}`);
 
     // A file descriptor is an integer and can be used directly.
     const isRecognized = scannerRepository.isRecognized(fileName, fd);
@@ -62,14 +54,32 @@ function loadLazilyAndPrintContents(fileName) {
       console.log(`Unrecognized file format: : ${fileName}`);
       return;
     }
+    console.log(`Recognized file format: ${fileName}\n`);
 
-    // fd gets closed by isRecognized() method, so create a new fd
-    fd = openSync(fileName);
     const reader = scannerRepository.getReader(fileName, fd);
-    // Iterate through all nodes depth first starting with the root node '' and print contents
-    printContent(reader, '');
+    // Read and print contents starting with the root node ''.
+    readNodes(reader, '');
   } catch (err) {
     console.error(err);
+  }
+
+  // Close file descriptor to avoid leaking resources.
+  if (fd !== null && fd >= 0) {
+    closeSync(fd)
+  }
+}
+
+// Iterate through all nodes depth first.
+function readNodes(reader, searchPath) {
+  const path = searchPath || '';
+  const node = reader.read(path);
+
+  printNodeContent(path, node);
+
+  // Read child nodes.
+  for (let i = 0; i < node.childNodeNames.length; i += 1) {
+    const childPath = path + `/${i}`;
+    readNodes(reader, childPath);
   }
 }
 
@@ -83,21 +93,3 @@ function printNodeContent(path, node) {
   console.log(`childNodeNames: ${JSON.stringify(node.childNodeNames)}`);
   console.log();
 }
-
-// function readOnDemand(fileName) {
-//   const fd = openSync(fileName);
-//   console.log(`successfully opened "${fileName}"`);
-//   console.log(`file descriptor: ${fd}`);
-
-//   let buffer = new Uint8Array(5);
-//   let numRead = readSync(fd, buffer);
-//   console.log(`num bytes read: ${numRead}`);
-//   console.log(`bytes read: ${buffer}`);
-
-//   buffer.fill(0);
-//   numRead = readSync(fd, buffer);
-//   console.log(`num bytes read: ${numRead}`);
-//   console.log(`bytes read: ${buffer}`);
-
-//   closeSync(fd)
-// }

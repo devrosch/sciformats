@@ -413,8 +413,8 @@ extern "C" {
     #[wasm_bindgen(js_name = readSync)]
     fn read_sync(fd: i32, buffer: &Uint8Array, offset: u32, length: u32, position: i64) -> Number;
 
-    #[wasm_bindgen(js_name = closeSync)]
-    fn close_sync(fd: i32);
+    // #[wasm_bindgen(js_name = closeSync)]
+    // fn close_sync(fd: i32);
 }
 
 #[derive(Clone)]
@@ -433,14 +433,6 @@ impl FdSeekRead {
 
     pub fn get_pos(&self) -> u64 {
         self.pos
-    }
-}
-
-// todo: really drop?
-#[cfg(feature = "nodejs")]
-impl Drop for FdSeekRead {
-    fn drop(&mut self) {
-        close_sync(self.fd);
     }
 }
 
@@ -496,9 +488,8 @@ impl Seek for FdSeekRead {
 #[cfg(feature = "nodejs")]
 impl Read for FdSeekRead {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        use web_sys::console;
-        console::info_1(&"FdSeekRead::read() entered".into());
-
+        // use web_sys::console;
+        // console::info_1(&"FdSeekRead::read() entered".into());
         let uint8_array = Uint8Array::new_with_length(buf.len() as u32);
         let js_num_bytes_read =
             read_sync(self.fd, &uint8_array, 0, buf.len() as u32, self.pos as i64);

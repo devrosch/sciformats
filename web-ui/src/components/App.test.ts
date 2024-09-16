@@ -37,11 +37,12 @@ test('sf-app renders', async () => {
   const app = document.body.querySelector('sf-app') as App;
   expect(app).toBeTruthy();
 
-  expect(app.children).toHaveLength(4);
+  expect(app.children).toHaveLength(5);
   expect(app.children.item(0)?.nodeName).toBe('SF-SPLASH');
-  expect(app.children.item(1)?.nodeName).toBe('DIV');
+  expect(app.children.item(1)?.nodeName).toBe('SF-DIALOG');
   expect(app.children.item(2)?.nodeName).toBe('DIV');
   expect(app.children.item(3)?.nodeName).toBe('DIV');
+  expect(app.children.item(4)?.nodeName).toBe('DIV');
 });
 
 test('sf-app supresses dragging UI elements', async () => {

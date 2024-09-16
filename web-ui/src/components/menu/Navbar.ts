@@ -50,7 +50,7 @@ const template = `
       <sf-menu-item key="sf-about" title="About..."></sf-menu-item>
     </sf-menu>
   </nav>
-  <sf-about-dialog/>
+  <sf-about-dialog></sf-about-dialog>
 `;
 
 const events = {

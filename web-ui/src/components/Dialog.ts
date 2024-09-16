@@ -15,10 +15,12 @@ export default class Dialog extends HTMLElement {
     if (!this.#initialized) {
       this.innerHTML = `
         <dialog>
-          <p></p>
-          <form method="dialog">
-            <button autofocus>OK</button>
-          </form>
+          <div class="dialog-content">
+            <p></p>
+            <form method="dialog">
+              <button autofocus>OK</button>
+            </form>
+          </div>
         </dialog>
         `;
       this.#initialized = true;

@@ -57,14 +57,6 @@ export default class Dialog extends HTMLElement {
     this.showModal(true);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  onCancel = (e: Event) => {
-    console.log('Cancel dialog clicked.');
-    // prevent default action of close dialog
-    e.stopPropagation();
-    e.preventDefault();
-  };
-
   handleOutsideSelection = (e: MouseEvent) => {
     console.log('handleOutsideSelection() called');
     const node = e.target as Node;
@@ -79,16 +71,12 @@ export default class Dialog extends HTMLElement {
     console.log('Splash connectedCallback() called');
     this.init();
     this.#open = this.hasAttribute('open');
-    const dialog = this.querySelector('dialog') as HTMLDialogElement;
-    dialog.addEventListener('cancel', this.onCancel);
     document.addEventListener('click', this.handleOutsideSelection);
     this.render();
   }
 
   disconnectedCallback() {
     console.log('Dialog disconnectedCallback() called');
-    const dialog = this.querySelector('dialog') as HTMLDialogElement;
-    dialog.removeEventListener('cancel', this.onCancel);
     document.removeEventListener('click', this.handleOutsideSelection);
   }
 

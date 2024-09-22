@@ -167,6 +167,7 @@ export default class Navbar extends HTMLElement {
     if (!this.#shortcutsActive) {
       return;
     }
+
     const fileModifiersPressed = isMacOs
       ? e.shiftKey && e.ctrlKey && !e.altKey && !e.metaKey
       : e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
@@ -176,8 +177,6 @@ export default class Navbar extends HTMLElement {
     // cannot use same mechanism for fileOpen() due to browser security limitations
     // => use "accessKey" property instead
     if (fileModifiersPressed && e.key.toLowerCase() === 'j') {
-      // TODO: add export feature
-      console.log('JSON export currently not supported.');
       this.#channel.dispatch(events.fileExportRequested, 'json');
       this.#showMenu = false;
       this.render();
@@ -189,7 +188,11 @@ export default class Navbar extends HTMLElement {
       this.#channel.dispatch(events.fileCloseAllRequested, null);
       this.#showMenu = false;
       this.render();
+    } else if (e.key === "Escape") {
+      this.#showMenu = false;
+      this.render();
     }
+
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

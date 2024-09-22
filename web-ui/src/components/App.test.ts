@@ -2,11 +2,45 @@
 import 'components/menu/NavbarMatchMediaMock'; // mock window.matchMedia()
 import './App'; // for side effects
 import App from './App';
+import Message from 'model/Message';
+import ErrorParser from 'model/ErrorParser';
+import MockParser from 'model/__mocks__/MockParser';
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
+import Splash from './Splash';
+import Tree from 'components/tree/Tree';
+import LocalParserRepository from 'model/LocalParserRepository';
+
+const element = 'sf-app';
+const fileOpenRequestEvent = 'sf-file-open-requested';
+const fileOpenedEvent = 'sf-file-opened';
+const fileCloseRequestEvent = 'sf-file-close-requested';
+const fileClosedEvent = 'sf-file-closed';
+const fileCloseAllRequestEvent = 'sf-file-close-all-requested';
+const fileExportRequestEvent = 'sf-file-export-requested';
+const errorEvent = 'sf-error';
+const warningEvent = 'sf-warning';
+const fileContent = 'abc';
+const blob = new Blob([fileContent]);
+const fileName = 'dummy.txt';
+const errorFileName = 'ErrorFile.txt';
+const errorMessage = 'Error message.';
 
 jest.mock('util/WorkerUtils', () => ({
   initWorkerCpp: jest.fn(),
   initWorkerRs: jest.fn(),
 }));
+
+const mockAddRootNode = jest.fn(() => {});
+const mockRemoveSelectedNode = jest.fn(() => new URL('file:///some.url'));
+const mockRemoveAllNodes = jest.fn(() => [
+  new URL('file:///some.url'),
+  new URL('file:///some.other.url'),
+]);
+const mockErrorParser = new ErrorParser(
+  new URL(`file:///${errorFileName}`),
+  errorMessage,
+);
+jest.mock('model/LocalParserRepository');
 
 // TODO: put elsewhere (duplicate in AboutDialog)
 const showModal = jest.fn();
@@ -22,15 +56,67 @@ beforeEach(() => {
   // see: https://github.com/jsdom/jsdom/issues/3294
   showModal.mockClear();
   close.mockClear();
-});
+  // required?
+  mockAddRootNode.mockClear();
+  mockRemoveSelectedNode.mockClear();
+  mockRemoveAllNodes.mockClear();
 
-const element = 'sf-app';
+  // default mock, set up in beforeEach() to be overridable per test without side effects
+  // @ts-ignore: mockImplementation() not declared in type but mock
+  LocalParserRepository.mockImplementation(() => ({
+    findParser: async (file: File) =>
+      file.name === errorFileName ? mockErrorParser : new MockParser(file),
+  }));
+});
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
   document.body.innerHTML = '';
   jest.restoreAllMocks();
 });
+
+const waitForInit = async (): Promise<App> => {
+  document.body.innerHTML = `<${element}/>`;
+  const app = document.body.querySelector(element) as App;
+  const splash = app.querySelector('sf-splash') as Splash;
+  // wait for initialization to complete
+  while (splash.hasAttribute('open')) {
+    /* eslint-disable-next-line no-await-in-loop */
+    await new Promise((r) => setTimeout(r, 1));
+  }
+
+  const tree = app.querySelector('sf-tree') as Tree;
+  tree.addRootNode = mockAddRootNode;
+  tree.removeSelectedNode = mockRemoveSelectedNode;
+  tree.removeAllNodes = mockRemoveAllNodes;
+
+  return app;
+};
+
+const prepareListener = (
+  expectedEventType: string,
+  expectedNumCalls: number = 1,
+): [any, Promise<unknown>] => {
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  // workaround for using "done" in async method
+  // see: https://github.com/facebook/jest/issues/11404
+  let done: (value: unknown) => void = () => {};
+  const callbackResolved = new Promise((resolve) => {
+    done = resolve;
+  });
+  let numCalls = 0;
+  const listener = (message: Message) => {
+    numCalls += 1;
+    // the test assertions
+    expect(message.name).toBe(expectedEventType);
+    if (numCalls == expectedNumCalls) {
+      done(null);
+    }
+  };
+  const handle = channel.addListener(expectedEventType, listener);
+
+  return [handle, callbackResolved];
+};
 
 test('sf-app renders', async () => {
   document.body.innerHTML = `<${element}/>`;
@@ -64,4 +150,96 @@ test('sf-app supresses dragging UI elements', async () => {
   app.dispatchEvent(dragStartEvent);
 
   expect(preventDefaultMock).toHaveBeenCalled();
+});
+
+test('sf-app listenes to file open events', async () => {
+  await waitForInit();
+  const [handle, callbackResolved] = prepareListener(fileOpenedEvent);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  const file = new File([blob], fileName);
+  channel.dispatch(fileOpenRequestEvent, { files: [file] });
+
+  await callbackResolved;
+  expect(mockAddRootNode).toHaveBeenCalledTimes(1);
+
+  channel.removeListener(handle);
+});
+
+test('sf-app dispatches warning event when finding a parser fails', async () => {
+  // override default mock
+  // @ts-ignore: mockImplementation() not declared in type but mock, override default mock
+  LocalParserRepository.mockImplementation(() => ({
+    findParser: async () => {
+      throw new Error('findParser() error');
+    },
+  }));
+
+  await waitForInit();
+  const [handle, callbackResolved] = prepareListener(warningEvent);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  const file = new File([blob], errorFileName);
+  channel.dispatch(fileOpenRequestEvent, { files: [file] });
+
+  await callbackResolved;
+  expect(mockAddRootNode).toHaveBeenCalledTimes(0);
+
+  channel.removeListener(handle);
+});
+
+test('sf-app shows error and dispatches error event when file open fails', async () => {
+  await waitForInit();
+  const [handle, callbackResolved] = prepareListener(errorEvent);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  const file = new File([blob], errorFileName);
+  channel.dispatch(fileOpenRequestEvent, { files: [file] });
+
+  await callbackResolved;
+  expect(mockAddRootNode).toHaveBeenCalledTimes(1);
+  expect(mockAddRootNode).toHaveBeenCalledWith(mockErrorParser);
+
+  channel.removeListener(handle);
+});
+
+test('sf-app listenes to file close events', async () => {
+  await waitForInit();
+  const [handle, callbackResolved] = prepareListener(fileClosedEvent);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch(fileCloseRequestEvent, null);
+
+  await callbackResolved;
+  expect(mockRemoveSelectedNode).toHaveBeenCalledTimes(1);
+
+  channel.removeListener(handle);
+});
+
+test('sf-app listenes to file close all events', async () => {
+  await waitForInit();
+  const [handle, callbackResolved] = prepareListener(fileClosedEvent, 2);
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch(fileCloseAllRequestEvent, null);
+
+  await callbackResolved;
+  expect(mockRemoveAllNodes).toHaveBeenCalledTimes(1);
+
+  channel.removeListener(handle);
+});
+
+test('sf-app listenes to file export events', async () => {
+  const spy = jest.spyOn(App.prototype, 'handleFileExportRequested');
+  await waitForInit();
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch(fileExportRequestEvent, null);
+  await new Promise(process.nextTick);
+
+  // just check if the handler has been called for now
+  // when exporting is implemented, test that
+  expect(spy).toHaveBeenCalledTimes(1);
+
+  spy.mockClear();
 });

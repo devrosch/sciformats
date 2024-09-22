@@ -244,6 +244,8 @@ export default class TreeNode extends HTMLElement {
 
   disconnectedCallback() {
     console.log('TreeNode disconnectedCallback() called');
+    // do not call close() as this may not be a root node
+    // close() is handled by Tree
     if (this.#selected) {
       this.setSelected(false);
     }

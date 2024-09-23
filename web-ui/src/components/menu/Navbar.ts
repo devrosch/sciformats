@@ -188,11 +188,10 @@ export default class Navbar extends HTMLElement {
       this.#channel.dispatch(events.fileCloseAllRequested, null);
       this.#showMenu = false;
       this.render();
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       this.#showMenu = false;
       this.render();
     }
-
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

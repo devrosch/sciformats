@@ -45,7 +45,7 @@ export default class DataPanel extends HTMLElement {
     xyData: false,
     table: false,
     parameters: false,
-  }
+  };
 
   #active = 'chart';
 
@@ -130,14 +130,20 @@ export default class DataPanel extends HTMLElement {
     console.log('DataPanel handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
-    if ((!sameUrl && message.name === nodeSelectedEvent) || (sameUrl && message.name === nodeDataUpdatedEvent)) {
+    if (
+      (!sameUrl && message.name === nodeSelectedEvent) ||
+      (sameUrl && message.name === nodeDataUpdatedEvent)
+    ) {
       this.#url = url;
       const data = message.detail as NodeData;
       this.#populated = {
         xyData: data.data && data.data.length > 0,
-        table: data.table && data.table.columnNames && data.table.columnNames.length > 0,
+        table:
+          data.table &&
+          data.table.columnNames &&
+          data.table.columnNames.length > 0,
         parameters: data.parameters && data.parameters.length > 0,
-      }
+      };
       this.render();
     } else if (sameUrl && message.name === nodeDeselectedEvent) {
       this.#url = null;
@@ -145,7 +151,7 @@ export default class DataPanel extends HTMLElement {
         xyData: false,
         table: false,
         parameters: false,
-      }
+      };
       this.render();
     }
   }

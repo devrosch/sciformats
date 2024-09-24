@@ -169,7 +169,7 @@ export default class TreeNode extends HTMLElement {
     return prefixedName.substring(hyphenIndex + 1);
   }
 
-  async setSelected(selected: boolean) {
+  setSelected(selected: boolean) {
     this.#selected = selected;
     if (selected) {
       this.classList.add('selected');
@@ -184,6 +184,9 @@ export default class TreeNode extends HTMLElement {
           childNodeNames: [],
         };
       }
+      const nameElement = this.querySelector('.node-name') as HTMLElement;
+      // focus on node name, but do not show outline
+      nameElement.focus({ focusVisible: false } as FocusOptions);
       this.#channel.dispatch(nodeSelectedEvent, nodeData);
     } else {
       this.classList.remove('selected');

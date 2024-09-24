@@ -4,6 +4,7 @@ import Channel from 'model/Channel';
 import TreeNode from './TreeNode';
 import './Tree.css';
 import Parser from 'model/Parser';
+import { isSameUrl } from 'util/UrlUtils';
 
 const template = '';
 
@@ -184,63 +185,78 @@ export default class Tree extends HTMLElement {
     return next as TreeNode | null;
   }
 
-  static #selectNode(element: TreeNode | null) {
-    if (element !== null) {
-      // TODO: refactor to avoid code duplication and knowledge of TreeNode implementation
-      const nameElement = element.querySelector('.node-name') as HTMLElement;
-      // focus on node name, but do not show outline
-      nameElement.focus({ focusVisible: false } as FocusOptions);
-      element.setSelected(true);
-    }
+  #findSelectedNode(): TreeNode | null {
+    const node = this.querySelector(
+      `sf-tree-node[url="${this.#selectedNodeUrl}"]`,
+    );
+    return node === null ? null : (node as TreeNode);
   }
 
-  static onKeyDown(e: KeyboardEvent) {
+  static #findEventNode(e: KeyboardEvent): TreeNode | null {
+    let node = e.target;
+    while (node !== null && node !== undefined && !(node instanceof TreeNode)) {
+      node = (node as Element | null)?.parentElement as TreeNode | null;
+    }
+    return node == null || node == undefined ? null : node;
+  }
+
+  onKeyDown(e: KeyboardEvent) {
     console.log('onKeyDown()');
     const key = e.key;
     console.log(key);
 
-    // event originates from span within TreeNode => parentElement
-    const treeNode =
-      e.target instanceof TreeNode
-        ? e.target
-        : ((e?.target as Element | null)?.parentElement as TreeNode | null);
-    if (treeNode === null) {
+    if (key === 'Enter') {
+      // event may originate from element within TreeNode => find TreeNode parentElement
+      const treeNode = Tree.#findEventNode(e);
+      if (treeNode === null) {
+        return;
+      }
+
+      let isSelectedNode = false;
+      if (isSameUrl(treeNode.getAttribute('url'), this.#selectedNodeUrl)) {
+        isSelectedNode = true;
+      }
+
+      // only toggle expanded state if already selected
+      if (isSelectedNode && treeNode.hasAttribute('expand')) {
+        const expanded = treeNode.getAttribute('expand') === 'true';
+        treeNode.setExpand(!expanded);
+      }
+
+      treeNode.setSelected(true);
       return;
     }
 
+    const selectedNode = this.#findSelectedNode();
+    if (selectedNode === null) {
+      return;
+    }
     switch (key) {
       case 'ArrowUp': {
-        const prev = Tree.#findPreviousTreeNode(treeNode);
-        Tree.#selectNode(prev);
+        const prev = Tree.#findPreviousTreeNode(selectedNode);
+        prev?.setSelected(true);
         // don't scroll
         e.preventDefault();
         break;
       }
       case 'ArrowDown': {
-        const next = Tree.#findNextTreeNode(treeNode);
-        Tree.#selectNode(next);
+        const next = Tree.#findNextTreeNode(selectedNode);
+        next?.setSelected(true);
         // don't scroll
         e.preventDefault();
         break;
       }
       case 'ArrowLeft':
-        treeNode.setExpand(false);
-        treeNode.setSelected(true);
+        selectedNode.setExpand(false);
+        selectedNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
         break;
       case 'ArrowRight':
-        treeNode.setExpand(true);
-        treeNode.setSelected(true);
+        selectedNode.setExpand(true);
+        selectedNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
-        break;
-      case 'Enter':
-        if (treeNode.hasAttribute('expand')) {
-          const expanded = treeNode.getAttribute('expand') === 'true';
-          treeNode.setExpand(!expanded);
-        }
-        treeNode.setSelected(true);
         break;
       default:
         break;
@@ -264,7 +280,7 @@ export default class Tree extends HTMLElement {
   connectedCallback() {
     console.log('Tree connectedCallback() called');
     this.init();
-    this.addEventListener('keydown', Tree.onKeyDown);
+    this.addEventListener('keydown', this.onKeyDown);
     this.addEventListener('click', this.onClick);
     const selectedHandle = this.#channel.addListener(
       'sf-tree-node-selected',
@@ -281,7 +297,7 @@ export default class Tree extends HTMLElement {
 
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
-    this.removeEventListener('keydown', Tree.onKeyDown);
+    this.removeEventListener('keydown', this.onKeyDown);
     this.removeEventListener('click', this.onClick);
     for (const handle of this.#eventListeners) {
       this.#channel.removeListener(handle);

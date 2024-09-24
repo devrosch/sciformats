@@ -1,69 +1,17 @@
 /* eslint-disable no-duplicate-imports */
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-// import ParserRepository from 'model/ParserRepository';
-// import Parser from 'model/Parser';
-// import ErrorParser from 'model/ErrorParser';
-// import Message from 'model/Message';
 import MockParser from 'model/__mocks__/MockParser';
-// import MockParserRepository from 'model/__mocks__/MockParserRepository';
 import './Tree'; // for side effects
 import Tree from './Tree';
 import TreeNode from './TreeNode';
 
 const element = 'sf-tree';
 const nodeElement = 'sf-tree-node';
-// const fileOpenedEvent = 'sf-file-open-requested';
-// const errorEvent = 'sf-error';
-// const warningEvent = 'sf-warning';
 const fileContent = 'abc';
 const fileName = 'dummy.txt';
 const fileName2 = 'dummy2.txt';
-// const fileName3 = 'dummy3.txt';
-// const errorFileName = 'ErrorFile.txt';
-// const errorMessage = 'Error message.';
-// const urlAttr = 'url';
-// const urlRegex = new RegExp(`file:///.*/${fileName}#/`);
 const blob = new Blob([fileContent]);
 const nodeInitText = 'Loading...';
-
-// const prepareSimpleTree = () => {
-//   document.body.innerHTML = `<${element}/>`;
-//   const parserRepository = new MockParserRepository();
-//   const tree = document.body.querySelector(element) as Tree;
-//   tree.setParserRepository(parserRepository);
-// };
-
-// const mockErrorParser = new ErrorParser(
-//   new URL(`file:///${errorFileName}`),
-//   errorMessage,
-// );
-// jest.mock('model/LocalParserRepository', () =>
-//   jest.fn().mockImplementation(() => ({
-//     findParser: async (file: File) =>
-//       file.name === errorFileName ? mockErrorParser : new MockParser(file),
-//   })),
-// );
-
-// const prepareFileOpenMessage = (fileNames: string[]) => {
-//   const blob = new Blob([fileContent]);
-//   const files = [];
-//   for (const name of fileNames) {
-//     const file = new File([blob], name);
-//     files.push(file);
-//   }
-//   const message = new Message(fileOpenedEvent, { files });
-//   return message;
-// };
-
-// const waitForChildrenCount = async (el: HTMLElement, childrenCount: number) => {
-//   // wait for DOM change
-//   while (el.children.length !== childrenCount) {
-//     /* eslint-disable-next-line no-await-in-loop */
-//     await new Promise((resolve) => {
-//       setTimeout(resolve, 1);
-//     });
-//   }
-// };
 
 const waitForNodeExpansion = async (el: HTMLElement, childrenCount: number) => {
   // wait for DOM change
@@ -173,145 +121,6 @@ test('sf-tree renders', async () => {
   expect(document.body.innerHTML).toContain(element);
 });
 
-// test('sf-tree listenes to file open events', async () => {
-//   prepareSimpleTree();
-//   const tree = document.body.querySelector(element) as Tree;
-//   expect(tree.children.length).toBe(0);
-
-//   const blob = new Blob([fileContent]);
-//   const file = new File([blob], fileName);
-
-//   const channel = CustomEventsMessageBus.getDefaultChannel();
-//   channel.dispatch(fileOpenedEvent, { files: [file] });
-//   await waitForChildrenCount(tree, 1);
-
-//   expect(tree.children).toHaveLength(1);
-//   const treeNode = tree.querySelector(nodeElement) as TreeNode;
-//   expect(treeNode).toBeTruthy();
-//   expect(treeNode.hasAttribute(urlAttr)).toBeTruthy();
-//   expect(treeNode.getAttribute(urlAttr)).toMatch(urlRegex);
-
-//   channel.dispatch(fileOpenedEvent, { files: [file] });
-//   await waitForChildrenCount(tree, 2);
-
-//   expect(tree.children).toHaveLength(2);
-// });
-
-// test('sf-tree dispatches warning event when finding a parser throws', (done) => {
-//   prepareSimpleTree();
-//   const tree = document.body.querySelector(element) as Tree;
-//   expect(tree.children.length).toBe(0);
-
-//   const stubParserRepository: ParserRepository = {
-//     findParser(): Promise<Parser> {
-//       throw new Error('findParser() error');
-//     },
-//   };
-//   tree.setParserRepository(stubParserRepository);
-
-//   const blob = new Blob([fileContent]);
-//   const file = new File([blob], errorFileName);
-
-//   const channel = CustomEventsMessageBus.getDefaultChannel();
-//   let handle: any;
-//   const listener = (message: Message) => {
-//     channel.removeListener(handle);
-//     expect(message.name).toBe(warningEvent);
-//     expect(tree.children).toHaveLength(0);
-//     done();
-//   };
-//   handle = channel.addListener(warningEvent, listener);
-
-//   channel.dispatch(fileOpenedEvent, { files: [file] });
-// });
-
-// test('sf-tree shows error and dispatches error event when file open fails', async () => {
-//   prepareSimpleTree();
-//   const tree = document.body.querySelector(element) as Tree;
-//   expect(tree.children.length).toBe(0);
-
-//   const stubParserRepository: ParserRepository = {
-//     findParser(): Promise<Parser> {
-//       return new Promise((resolve) => {
-//         resolve(mockErrorParser);
-//       });
-//     },
-//   };
-//   tree.setParserRepository(stubParserRepository);
-
-//   const blob = new Blob([fileContent]);
-//   const file = new File([blob], errorFileName);
-
-//   const channel = CustomEventsMessageBus.getDefaultChannel();
-//   let handle: any;
-//   let errorMessageReceived = false;
-//   const listener = (message: Message) => {
-//     channel.removeListener(handle);
-//     expect(message.name).toBe(errorEvent);
-//     errorMessageReceived = true;
-//   };
-//   handle = channel.addListener(errorEvent, listener);
-
-//   channel.dispatch(fileOpenedEvent, { files: [file] });
-//   await waitForChildrenCount(tree, 1);
-
-//   expect(tree.children).toHaveLength(1);
-//   const treeNode = tree.querySelector(nodeElement) as TreeNode;
-//   expect(treeNode).toBeTruthy();
-//   expect(treeNode.hasAttribute(urlAttr)).toBeTruthy();
-//   const errorUrlRegex = new RegExp(`file:///.*${errorFileName}.*`);
-//   expect(treeNode.getAttribute(urlAttr)).toMatch(errorUrlRegex);
-//   expect(errorMessageReceived).toBe(true);
-// });
-
-// test('sf-tree listenes to file close events', async () => {
-//   prepareSimpleTree();
-
-//   const tree = document.body.querySelector(element) as Tree;
-//   expect(tree.children.length).toBe(0);
-
-//   const message = prepareFileOpenMessage([fileName, fileName2, fileName3]);
-//   tree.handleFilesOpenRequested(message);
-//   await waitForChildrenCount(tree, 3);
-
-//   expect(tree.children).toHaveLength(3);
-//   // no node selected => noop
-//   tree.handleFileCloseRequested();
-//   // allow for potential changes to take place
-//   await new Promise((resolve) => {
-//     setTimeout(resolve, 10);
-//   });
-
-//   expect(tree.children).toHaveLength(3);
-
-//   const child0 = tree.children.item(0) as TreeNode;
-//   const child1 = tree.children.item(1) as TreeNode;
-//   const child2 = tree.children.item(2) as TreeNode;
-//   child1.setSelected(true);
-//   tree.handleFileCloseRequested();
-//   await waitForChildrenCount(tree, 2);
-
-//   expect(tree.children).toHaveLength(2);
-//   expect(tree.children.item(0)).toBe(child0);
-//   // child2 moved to position 1
-//   expect(tree.children.item(1)).toBe(child2);
-// });
-
-// test('sf-tree listenes to file close all events', async () => {
-//   prepareSimpleTree();
-
-//   const tree = document.body.querySelector(element) as Tree;
-//   expect(tree.children.length).toBe(0);
-
-//   const message = prepareFileOpenMessage([fileName, fileName2, fileName3]);
-//   tree.handleFilesOpenRequested(message);
-//   await waitForChildrenCount(tree, 3);
-
-//   expect(tree.children).toHaveLength(3);
-//   tree.handleFileCloseAllRequested();
-//   expect(tree.children).toHaveLength(0);
-// });
-
 test('sf-tree observes key down events', async () => {
   // workaround for using "done" in async method
   // see: https://github.com/facebook/jest/issues/11404
@@ -336,19 +145,19 @@ test('sf-tree ArrowUp keyboard navigation moves to previous node above', async (
   await nodes.root2.setSelected(true);
   expect(nodes.root2.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.root2));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.root2));
   expect(nodes.root2.classList).not.toContain('selected');
   expect(nodes.child2.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.child2));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.child2));
   expect(nodes.child2.classList).not.toContain('selected');
   expect(nodes.child1.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.child1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.child1));
   expect(nodes.child1.classList).not.toContain('selected');
   expect(nodes.root1.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.root1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowUp', nodes.root1));
   expect(nodes.root1.classList).toContain('selected');
 });
 
@@ -356,19 +165,19 @@ test('sf-tree ArrowDown keyboard navigation moves to next node below', async () 
   const nodes = await prepareTreeStructure();
   expect(nodes.root1.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.root1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.root1));
   expect(nodes.root1.classList).not.toContain('selected');
   expect(nodes.child1.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.child1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.child1));
   expect(nodes.child1.classList).not.toContain('selected');
   expect(nodes.child2.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.child2));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.child2));
   expect(nodes.child2.classList).not.toContain('selected');
   expect(nodes.root2.classList).toContain('selected');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.root2));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowDown', nodes.root2));
   expect(nodes.root2.classList).toContain('selected');
 });
 
@@ -378,7 +187,7 @@ test('sf-tree ArrowRight keyboard navigation expands node', async () => {
   expect(nodes.root2.classList).toContain('selected');
   expect(nodes.root2.getAttribute('expand')).toBe('false');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowRight', nodes.root2));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowRight', nodes.root2));
   expect(nodes.root2.getAttribute('expand')).toBe('true');
 });
 
@@ -387,7 +196,7 @@ test('sf-tree ArrowLeft keyboard navigation collapses node', async () => {
   expect(nodes.root1.classList).toContain('selected');
   expect(nodes.root1.getAttribute('expand')).toBe('true');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('ArrowLeft', nodes.root1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('ArrowLeft', nodes.root1));
   expect(nodes.root1.getAttribute('expand')).toBe('false');
 });
 
@@ -396,9 +205,9 @@ test('sf-tree Enter keyboard navigation toggles node collapse', async () => {
   expect(nodes.root1.classList).toContain('selected');
   expect(nodes.root1.getAttribute('expand')).toBe('true');
 
-  Tree.onKeyDown(prepareStubKeyDownEvent('Enter', nodes.root1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('Enter', nodes.root1));
   expect(nodes.root1.getAttribute('expand')).toBe('false');
-  Tree.onKeyDown(prepareStubKeyDownEvent('Enter', nodes.root1));
+  nodes.tree.onKeyDown(prepareStubKeyDownEvent('Enter', nodes.root1));
   expect(nodes.root1.getAttribute('expand')).toBe('true');
 });
 

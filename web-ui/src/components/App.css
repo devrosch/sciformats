@@ -57,3 +57,18 @@ sf-app > .content > .node-content > .params {
   /* TODO: avoid overflow hidden, find out why overflow occurs */
   overflow: hidden;
 }
+
+/* mobile */
+
+@media screen and (max-width: 576px) {
+  sf-app > .content {
+    flex-direction: column;
+  }
+  sf-app > .content > .tree {
+    flex: 0 0 30%;
+  }
+
+  sf-app > .content > .node-content {
+    flex: 0 0 70%;
+  }
+}

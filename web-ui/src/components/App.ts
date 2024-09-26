@@ -1,7 +1,7 @@
 /* eslint-disable no-duplicate-imports */
 import { initWorkerCpp, initWorkerRs } from 'util/WorkerUtils';
-import 'components/Splash';
-import Splash from 'components/Splash';
+import 'components/dialogs/Splash';
+import Splash from 'components/dialogs/Splash';
 import 'components/menu/Navbar';
 import Navbar from 'components/menu/Navbar';
 import 'components/tree/Tree';
@@ -9,8 +9,8 @@ import Tree from 'components/tree/Tree';
 import 'components/data/DataPanel';
 import 'components/parameters/ParametersPanel';
 import 'components/footer/Footer';
-import 'components/Dialog';
-import Dialog from 'components/Dialog';
+import 'components/dialogs/Dialog';
+import Dialog from 'components/dialogs/Dialog';
 import LocalParserRepository from 'model/LocalParserRepository';
 import './App.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
@@ -18,8 +18,8 @@ import Channel from 'model/Channel';
 import Message from 'model/Message';
 import ParserRepository from 'model/ParserRepository';
 import ErrorParser from 'model/ErrorParser';
-import './menu/AboutDialog'; // for side effects
-import AboutDialog from './menu/AboutDialog';
+import 'components/dialogs/AboutDialog'; // for side effects
+import AboutDialog from 'components/dialogs/AboutDialog';
 
 const template = `
   <sf-splash open></sf-splash>

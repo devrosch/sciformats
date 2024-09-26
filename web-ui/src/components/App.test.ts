@@ -6,10 +6,10 @@ import Message from 'model/Message';
 import ErrorParser from 'model/ErrorParser';
 import MockParser from 'model/__mocks__/MockParser';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
-import Splash from './Splash';
+import AboutDialog from 'components/dialogs/AboutDialog';
+import Splash from 'components/dialogs/Splash';
 import Tree from 'components/tree/Tree';
 import LocalParserRepository from 'model/LocalParserRepository';
-import AboutDialog from './menu/AboutDialog';
 
 const element = 'sf-app';
 const fileOpenRequestEvent = 'sf-file-open-requested';

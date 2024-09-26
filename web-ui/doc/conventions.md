@@ -64,6 +64,7 @@ The following custom events are dispatched or listened to by components.
 | sf-file-export-requested    | json                  | NavBar      | App                                                           |
 | sf-file-closed              | { url: `URL` }        | App         |                                                               |
 | sf-file-close-all-requested | null                  | NavBar      | App                                                           |
+| sf-show-about-requested     | null                  | NavBar      | App                                                           |
 | sf-warning                  | { message: `string` } | App         |                                                               |
 | sf-error                    | { message: `string` } | App         |                                                               |
 

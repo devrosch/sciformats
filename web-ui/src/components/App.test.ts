@@ -9,6 +9,7 @@ import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Splash from './Splash';
 import Tree from 'components/tree/Tree';
 import LocalParserRepository from 'model/LocalParserRepository';
+import AboutDialog from './menu/AboutDialog';
 
 const element = 'sf-app';
 const fileOpenRequestEvent = 'sf-file-open-requested';
@@ -17,6 +18,7 @@ const fileCloseRequestEvent = 'sf-file-close-requested';
 const fileClosedEvent = 'sf-file-closed';
 const fileCloseAllRequestEvent = 'sf-file-close-all-requested';
 const fileExportRequestEvent = 'sf-file-export-requested';
+const showAboutRequestEvent = 'sf-show-about-requested';
 const errorEvent = 'sf-error';
 const warningEvent = 'sf-warning';
 const fileContent = 'abc';
@@ -123,12 +125,13 @@ test('sf-app renders', async () => {
   const app = document.body.querySelector('sf-app') as App;
   expect(app).toBeTruthy();
 
-  expect(app.children).toHaveLength(5);
+  expect(app.children).toHaveLength(6);
   expect(app.children.item(0)?.nodeName).toBe('SF-SPLASH');
   expect(app.children.item(1)?.nodeName).toBe('SF-DIALOG');
-  expect(app.children.item(2)?.nodeName).toBe('DIV');
+  expect(app.children.item(2)?.nodeName).toBe('SF-ABOUT-DIALOG');
   expect(app.children.item(3)?.nodeName).toBe('DIV');
   expect(app.children.item(4)?.nodeName).toBe('DIV');
+  expect(app.children.item(5)?.nodeName).toBe('DIV');
 });
 
 test('sf-app supresses dragging UI elements', async () => {
@@ -240,6 +243,28 @@ test('sf-app listenes to file export events', async () => {
   // just check if the handler has been called for now
   // when exporting is implemented, test that
   expect(spy).toHaveBeenCalledTimes(1);
+
+  spy.mockClear();
+});
+
+test('sf-app listenes to show about events', async () => {
+  const spy = jest.spyOn(App.prototype, 'handleShowAboutDialog');
+  await waitForInit();
+  const aboutDialog = document.body.querySelector(
+    'sf-about-dialog',
+  ) as AboutDialog;
+  expect(aboutDialog).toBeTruthy();
+  const showModalMock = jest.fn((show) => show);
+  aboutDialog.showModal = showModalMock;
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch(showAboutRequestEvent, null);
+  await new Promise(process.nextTick);
+
+  // just check if the handler has been called for now
+  // when exporting is implemented, test that
+  expect(spy).toHaveBeenCalledTimes(1);
+  expect(showModalMock).toHaveBeenCalledTimes(1);
 
   spy.mockClear();
 });

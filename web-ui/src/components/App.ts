@@ -18,10 +18,13 @@ import Channel from 'model/Channel';
 import Message from 'model/Message';
 import ParserRepository from 'model/ParserRepository';
 import ErrorParser from 'model/ErrorParser';
+import './menu/AboutDialog'; // for side effects
+import AboutDialog from './menu/AboutDialog';
 
 const template = `
   <sf-splash open></sf-splash>
   <sf-dialog></sf-dialog>
+  <sf-about-dialog></sf-about-dialog>
   <div class="header">
     <sf-navbar></sf-navbar>
   </div>
@@ -166,6 +169,11 @@ export default class App extends HTMLElement {
     dialog.showMessage('File export currently not supported.');
   }
 
+  handleShowAboutDialog() {
+    const aboutDialog = this.querySelector('sf-about-dialog') as AboutDialog;
+    aboutDialog.showModal(true);
+  }
+
   connectedCallback() {
     console.log('App connectedCallback() called');
     this.init();
@@ -186,10 +194,15 @@ export default class App extends HTMLElement {
       'sf-file-export-requested',
       this.handleFileExportRequested.bind(this),
     );
+    const showAboutHandle = this.#channel.addListener(
+      'sf-show-about-requested',
+      this.handleShowAboutDialog.bind(this),
+    );
     this.#eventListeners.push(fileOpenHandle);
     this.#eventListeners.push(fileCloseHandle);
     this.#eventListeners.push(fileCloseAllHandle);
     this.#eventListeners.push(fileExportHandle);
+    this.#eventListeners.push(showAboutHandle);
 
     this.render();
   }

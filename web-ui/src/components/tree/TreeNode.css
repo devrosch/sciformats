@@ -16,7 +16,9 @@ sf-tree-node > .plusminus {
 }
 
 sf-tree-node.selected > .node-name {
-  background-color: darkorange;
+  outline: solid;
+  border-radius: 1px;
+  outline-width: 1px;
 }
 
 sf-tree-node > .node-error {

@@ -66,6 +66,7 @@ sf-app > .content > .node-content > .params {
   }
   sf-app > .content > .tree {
     flex: 0 0 30%;
+    flex-direction: column;
   }
 
   sf-app > .content > .node-content {

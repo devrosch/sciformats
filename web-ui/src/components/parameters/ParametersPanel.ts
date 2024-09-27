@@ -64,6 +64,12 @@ export default class ParametersPanel extends HTMLElement {
     const heading = this.querySelector('h1');
     heading!.textContent = this._title === null ? '' : this._title;
 
+    if (this.#data !== null && this.#data.length > 0) {
+      heading?.classList.add('populated');
+    } else {
+      heading?.classList.remove('populated');
+    }
+
     const ulOld = this.querySelector('ul')!;
     const ulNew = document.createElement('ul');
     const div = ulOld!.parentElement;

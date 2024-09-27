@@ -1,4 +1,7 @@
 sf-tree {
   flex: 0 1 100%;
   margin: 0.25em;
+  /* leave enough space for outline */
+  padding: 0.25em 0 0.25em 0;
+  overflow: auto;
 }

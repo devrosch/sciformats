@@ -1,8 +1,9 @@
 sf-parameters-panel {
   font-family: sans-serif;
-  display: inline-block;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  flex: 0 1 100%;
+  flex-direction: column;
+  margin: 0.25em;
 }
 
 sf-parameters-panel > h1 {
@@ -19,7 +20,7 @@ sf-parameters-panel > h1.populated {
 }
 
 sf-parameters-panel div {
-  height: calc(100% - 2em);
+  display: flex;
   overflow: auto;
 }
 

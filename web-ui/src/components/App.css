@@ -53,9 +53,8 @@ sf-app > .content > .node-content > .data {
 sf-app > .content > .node-content > .params {
   background-color: azure;
   flex: 0 0 40%;
+  display: flex;
   height: 40%;
-  /* TODO: avoid overflow hidden, find out why overflow occurs */
-  overflow: hidden;
 }
 
 /* mobile */

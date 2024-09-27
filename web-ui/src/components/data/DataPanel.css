@@ -4,6 +4,7 @@ sf-data-panel {
   flex-grow: 1;
   flex-direction: column;
   height: 100%;
+  margin: 0.25em;
 }
 
 .tabs {

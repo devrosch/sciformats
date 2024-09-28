@@ -3,7 +3,10 @@ sf-parameters-panel {
   display: flex;
   flex: 0 1 100%;
   flex-direction: column;
-  margin: 0.25em;
+  border: solid black 1px;
+  border-radius: 5px;
+  /* do not allow child elements to overlap rounded corners */
+  overflow: hidden;
 }
 
 sf-parameters-panel > h1 {
@@ -21,6 +24,8 @@ sf-parameters-panel > h1.populated {
 
 sf-parameters-panel div {
   display: flex;
+  flex: 0 1 100%;
+  flex-direction: column;
   overflow: auto;
 }
 

@@ -4,7 +4,10 @@ sf-data-panel {
   flex-grow: 1;
   flex-direction: column;
   height: 100%;
-  margin: 0.25em;
+  border: solid black 1px;
+  border-radius: 5px;
+  /* do not allow child elements to overlap rounded corners */
+  overflow: hidden;
 }
 
 .tabs {
@@ -24,6 +27,7 @@ sf-data-panel {
   padding: 0 0.5em 0 0.5em;
   outline-offset: -0.2em;
   min-width: 5em;
+  border-radius: 5px 5px 0 0;
 }
 
 .tab-link:hover {

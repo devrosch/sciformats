@@ -3,9 +3,9 @@ sf-data-data {
 }
 
 sf-data-data textarea {
-  margin: 0.5em;
-  width: calc(100% - 1em);
-  height: calc(100% - 1em);
+  margin: 0.25em;
+  width: calc(100% - 0.5em);
+  height: calc(100% - 0.5em);
   box-sizing: border-box;
   resize: none;
 }

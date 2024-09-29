@@ -1,5 +1,6 @@
 sf-data-table {
   flex: 0 0 100%;
+  background-color: #fff;
 }
 
 sf-data-table > table {

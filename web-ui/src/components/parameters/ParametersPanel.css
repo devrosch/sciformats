@@ -7,6 +7,7 @@ sf-parameters-panel {
   border-radius: 5px;
   /* do not allow child elements to overlap rounded corners */
   overflow: hidden;
+  background-color: #fff;
 }
 
 sf-parameters-panel > h1 {
@@ -15,7 +16,7 @@ sf-parameters-panel > h1 {
   line-height: 2em;
   margin: 0;
   padding: 0 0.5em 0 0.5em;
-  background-color: blanchedalmond;
+  background-color: #eee;
 }
 
 sf-parameters-panel > h1.populated {

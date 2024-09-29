@@ -1,5 +1,5 @@
 sf-data-panel {
-  background-color: darkcyan;
+  background-color: #eee;
   display: flex;
   flex-grow: 1;
   flex-direction: column;
@@ -11,7 +11,7 @@ sf-data-panel {
 }
 
 .tabs {
-  background-color: crimson;
+  background-color: #eee;
   flex: 0 0 2em;
   display: flex;
 }
@@ -21,7 +21,7 @@ sf-data-panel {
   border: none;
   cursor: pointer;
   line-height: 2em;
-  background-color: #ccc;
+  background-color: #eee;
   font-size: 1em;
   font-family: sans-serif;
   padding: 0 0.5em 0 0.5em;
@@ -35,7 +35,7 @@ sf-data-panel {
 }
 
 .tab-link.active {
-  background-color: #eee;
+  background-color: #fff;
 }
 
 .tab-link.populated {

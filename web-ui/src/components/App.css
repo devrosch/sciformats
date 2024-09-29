@@ -3,17 +3,18 @@ sf-app {
   display: flex;
   flex-direction: column;
   height: 100%;
+  margin: 0.25em;
 }
 
 /* header - content - footer */
 
 sf-app > .header {
-  background-color: lightblue;
+  background-color: #eee;
   height: 2em;
 }
 
 sf-app > .content {
-  background-color: lightgoldenrodyellow;
+  background-color: #eee;
   flex-grow: 1; /* fill 100% height */
   display: flex;
   height: calc(100% - 2em - 2em);
@@ -21,14 +22,14 @@ sf-app > .content {
 }
 
 sf-app > .footer {
-  background-color: lightcoral;
+  background-color: #eee;
   height: 2em;
 }
 
 /* content */
 
 sf-app > .content > .tree {
-  background-color: aqua;
+  background-color: #eee;
   display: flex;
   flex: 0 0 20%;
   white-space: nowrap;
@@ -36,7 +37,7 @@ sf-app > .content > .tree {
 }
 
 sf-app > .content > .node-content {
-  background-color: aliceblue;
+  background-color: #eee;
   flex: 0 1 80%;
   display: flex;
   flex-direction: column;
@@ -45,7 +46,7 @@ sf-app > .content > .node-content {
 }
 
 sf-app > .content > .node-content > .data {
-  background-color: aquamarine;
+  background-color: #eee;
   flex: 0 0 60%;
   display: flex;
   flex-direction: column;
@@ -53,7 +54,7 @@ sf-app > .content > .node-content > .data {
 }
 
 sf-app > .content > .node-content > .params {
-  background-color: azure;
+  background-color: #eee;
   flex: 0 1 40%;
   display: flex;
   flex-direction: column;

@@ -31,7 +31,7 @@ sf-menu a {
 }
 
 sf-menu a:hover {
-  background-color: blanchedalmond;
+  background-color: #ddd;
 }
 
 /* mobile */
@@ -40,16 +40,16 @@ sf-menu a:hover {
   sf-menu {
     position: absolute;
     display: none;
-    background-color: #f9f9f9;
   }
+
   sf-menu.sf-show-menu {
     display: block;
   }
+
   sf-menu-item,
   sf-menu-item-file-open,
   sf-submenu {
     display: block;
-    background-color: #f9f9f9;
     box-sizing: border-box;
   }
 }

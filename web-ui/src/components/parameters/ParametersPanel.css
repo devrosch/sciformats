@@ -28,6 +28,7 @@ sf-parameters-panel div {
   flex: 0 1 100%;
   flex-direction: column;
   overflow: auto;
+  padding: 0.25em;
 }
 
 sf-parameters-panel div ul {

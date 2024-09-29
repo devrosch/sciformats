@@ -51,5 +51,6 @@ sf-menu a:hover {
   sf-submenu {
     display: block;
     box-sizing: border-box;
+    background-color: #eee;
   }
 }

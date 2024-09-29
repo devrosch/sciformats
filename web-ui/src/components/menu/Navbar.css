@@ -42,7 +42,7 @@ sf-navbar > a.sf-hamburger {
 }
 
 sf-navbar > a.sf-hamburger:hover {
-  background-color: chartreuse;
+  background-color: #ddd;
 }
 
 /* mobile */

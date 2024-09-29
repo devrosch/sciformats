@@ -15,9 +15,9 @@ sf-app > .header {
 
 sf-app > .content {
   background-color: #eee;
-  flex-grow: 1; /* fill 100% height */
+  /* fill 100% height */
+  flex: 1 1 100%;
   display: flex;
-  height: calc(100% - 2em - 2em);
   gap: 0.25em;
 }
 

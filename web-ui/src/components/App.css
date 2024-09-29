@@ -1,8 +1,8 @@
 sf-app {
-  flex-grow: 1; /* fill 100% height */
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* fill 100% height */
+  height: calc(100% - 0.5em);
   margin: 0.25em;
 }
 
@@ -15,9 +15,9 @@ sf-app > .header {
 
 sf-app > .content {
   background-color: #eee;
-  /* fill 100% height */
-  flex: 1 1 100%;
   display: flex;
+  /* fill 100% height */
+  height: calc(100% - 2em - 2em - 0.25em);
   gap: 0.25em;
 }
 

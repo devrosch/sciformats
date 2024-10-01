@@ -17,7 +17,7 @@ sf-app > .content {
   background-color: #eee;
   display: flex;
   /* fill 100% height */
-  height: calc(100% - 2em - 2em - 0.25em);
+  height: calc(100% - 2em - 2em);
   gap: 0.25em;
 }
 

@@ -15,9 +15,12 @@ sf-tree-node > .plusminus {
   text-align: left;
 }
 
+sf-tree-node > .node-name {
+  border-radius: 2px;
+}
+
 sf-tree-node.selected > .node-name {
   outline: solid;
-  border-radius: 1px;
   outline-width: 1px;
 }
 

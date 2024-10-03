@@ -19,6 +19,8 @@ sf-dialog > dialog img.sf-logo {
 
 sf-dialog > dialog button {
   float: right;
+  border: 1px solid;
+  border-radius: 2px;
 }
 
 sf-dialog > dialog::backdrop {

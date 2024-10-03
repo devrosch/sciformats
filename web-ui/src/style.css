@@ -15,5 +15,4 @@ body {
 
 :focus {
   outline: 1px dotted grey;
-  border-radius: 1px;
 }

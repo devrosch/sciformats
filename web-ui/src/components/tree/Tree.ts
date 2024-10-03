@@ -1,10 +1,10 @@
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Message from 'model/Message';
 import Channel from 'model/Channel';
-import ParserRepository from 'model/ParserRepository';
-import ErrorParser from 'model/ErrorParser';
 import TreeNode from './TreeNode';
 import './Tree.css';
+import Parser from 'model/Parser';
+import { isSameUrl } from 'util/UrlUtils';
 
 const template = '';
 
@@ -12,8 +12,6 @@ export default class Tree extends HTMLElement {
   #initialized = false;
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
-
-  #parserRepository: ParserRepository | null = null;
 
   #eventListeners: any[] = [];
 
@@ -67,58 +65,17 @@ export default class Tree extends HTMLElement {
     }
   }
 
-  setParserRepository(parserRepository: ParserRepository) {
-    this.#parserRepository = parserRepository;
+  addRootNode(parser: Parser) {
+    const rootNode = new TreeNode(parser, parser.rootUrl);
+    this.#children.push(rootNode);
+    this.render();
   }
 
   // #region user events
 
-  async handleFilesOpenRequested(message: Message) {
-    const files = message.detail.files as File[];
-    // find parsers
-    for (const file of files) {
-      console.log(`Tree -> sf-file-open-requested received for: ${file.name}`);
-
-      // find parser
-      let parser = null;
-      try {
-        /* eslint-disable-next-line no-await-in-loop */
-        parser = await this.#parserRepository!.findParser(file);
-      } catch (error: any) {
-        const detail = error.detail ? error.detail : error;
-        const warningMessage = `Error while trying to find parser for file: "${file.name}". ${detail}`;
-        this.#channel.dispatch('sf-warning', warningMessage);
-        console.warn(warningMessage);
-      }
-
-      if (parser !== null) {
-        // open file
-        try {
-          /* eslint-disable-next-line no-await-in-loop */
-          await parser.open();
-          const rootNode = new TreeNode(parser, parser.rootUrl);
-          this.#children.push(rootNode);
-          this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
-          this.render();
-        } catch (error: any) {
-          const detail = error.detail ? error.detail : error;
-          const errorMessage = `Error opening file: "${file.name}". ${detail}`;
-          this.#channel.dispatch('sf-error', errorMessage);
-          console.error(errorMessage);
-          // show node with error in tree
-          const errorParser = new ErrorParser(parser.rootUrl, errorMessage);
-          const rootNode = new TreeNode(errorParser, errorParser.rootUrl);
-          this.#children.push(rootNode);
-          this.render();
-        }
-      }
-    }
-  }
-
-  handleFileCloseRequested() {
-    console.log('handleFileCloseRequested()');
+  removeSelectedNode(): URL | null {
     if (!this.#selectedNodeUrl) {
-      return;
+      return null;
     }
     const selectedUrl = this.#selectedNodeUrl.toString();
     for (const child of this.#children) {
@@ -126,23 +83,35 @@ export default class Tree extends HTMLElement {
       if (childUrl !== null && selectedUrl.startsWith(childUrl)) {
         const index = this.#children.indexOf(child);
         this.#children.splice(index, 1);
+        // todo: return Parser and close in App?
         child.close().then(() => {
           console.log(`File closed: ${child.name}`);
-          this.#channel.dispatch('sf-file-closed', { url: new URL(childUrl) });
         });
         this.render();
-        return;
+        return new URL(childUrl);
       }
     }
+
+    throw new Error(
+      `Illegal state. No node found for selectedNodeUrl: ${this.#selectedNodeUrl}`,
+    );
   }
 
-  handleFileCloseAllRequested() {
-    console.log('handleFileCloseAllRequested()');
+  removeAllNodes(): URL[] {
+    let urls = [];
+    for (const child of this.#children) {
+      const childUrl = child.getAttribute('url');
+      urls.push(new URL(childUrl!));
+      child.close().then(() => {
+        console.log(`File closed: ${child.name}`);
+      });
+    }
     this.#children = [];
     this.render();
+    return urls;
   }
 
-  handleTreeNodeSelection(message: Message) {
+  #handleTreeNodeSelection(message: Message) {
     console.log(
       `handleTreeNodeSelection() -> ${message.name}: ${message.detail.url}`,
     );
@@ -216,63 +185,78 @@ export default class Tree extends HTMLElement {
     return next as TreeNode | null;
   }
 
-  static selectNode(element: TreeNode | null) {
-    if (element !== null) {
-      // TODO: refactor to avoid code duplication and knowledge of TreeNode implementation
-      const nameElement = element.querySelector('.node-name') as HTMLElement;
-      // focus on node name, but do not show outline
-      nameElement.focus({ focusVisible: false } as FocusOptions);
-      element.setSelected(true);
-    }
+  #findSelectedNode(): TreeNode | null {
+    const node = this.querySelector(
+      `sf-tree-node[url="${this.#selectedNodeUrl}"]`,
+    );
+    return node === null ? null : (node as TreeNode);
   }
 
-  static onKeyDown(e: KeyboardEvent) {
+  static #findEventNode(e: KeyboardEvent): TreeNode | null {
+    let node = e.target;
+    while (node !== null && node !== undefined && !(node instanceof TreeNode)) {
+      node = (node as Element | null)?.parentElement as TreeNode | null;
+    }
+    return node == null || node == undefined ? null : node;
+  }
+
+  onKeyDown(e: KeyboardEvent) {
     console.log('onKeyDown()');
     const key = e.key;
     console.log(key);
 
-    // event originates from span within TreeNode => parentElement
-    const treeNode =
-      e.target instanceof TreeNode
-        ? e.target
-        : ((e?.target as Element | null)?.parentElement as TreeNode | null);
-    if (treeNode === null) {
+    if (key === 'Enter') {
+      // event may originate from element within TreeNode => find TreeNode parentElement
+      const treeNode = Tree.#findEventNode(e);
+      if (treeNode === null) {
+        return;
+      }
+
+      let isSelectedNode = false;
+      if (isSameUrl(treeNode.getAttribute('url'), this.#selectedNodeUrl)) {
+        isSelectedNode = true;
+      }
+
+      // only toggle expanded state if already selected
+      if (isSelectedNode && treeNode.hasAttribute('expand')) {
+        const expanded = treeNode.getAttribute('expand') === 'true';
+        treeNode.setExpand(!expanded);
+      }
+
+      treeNode.setSelected(true);
       return;
     }
 
+    const selectedNode = this.#findSelectedNode();
+    if (selectedNode === null) {
+      return;
+    }
     switch (key) {
       case 'ArrowUp': {
-        const prev = Tree.#findPreviousTreeNode(treeNode);
-        Tree.selectNode(prev);
+        const prev = Tree.#findPreviousTreeNode(selectedNode);
+        prev?.setSelected(true);
         // don't scroll
         e.preventDefault();
         break;
       }
       case 'ArrowDown': {
-        const next = Tree.#findNextTreeNode(treeNode);
-        Tree.selectNode(next);
+        const next = Tree.#findNextTreeNode(selectedNode);
+        next?.setSelected(true);
         // don't scroll
         e.preventDefault();
         break;
       }
       case 'ArrowLeft':
-        treeNode.setExpand(false);
-        treeNode.setSelected(true);
+        selectedNode.setExpand(false);
+        selectedNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
         break;
       case 'ArrowRight':
-        treeNode.setExpand(true);
-        treeNode.setSelected(true);
+        selectedNode.setExpand(true);
+        selectedNode.setSelected(true);
         // do not scroll view
         e.preventDefault();
-        break;
-      case 'Enter':
-        if (treeNode.hasAttribute('expand')) {
-          const expanded = treeNode.getAttribute('expand') === 'true';
-          treeNode.setExpand(!expanded);
-        }
-        treeNode.setSelected(true);
         break;
       default:
         break;
@@ -296,31 +280,16 @@ export default class Tree extends HTMLElement {
   connectedCallback() {
     console.log('Tree connectedCallback() called');
     this.init();
-    this.addEventListener('keydown', Tree.onKeyDown);
+    this.addEventListener('keydown', this.onKeyDown);
     this.addEventListener('click', this.onClick);
-    const fileOpenHandle = this.#channel.addListener(
-      'sf-file-open-requested',
-      this.handleFilesOpenRequested.bind(this),
-    );
-    const fileCloseHandle = this.#channel.addListener(
-      'sf-file-close-requested',
-      this.handleFileCloseRequested.bind(this),
-    );
-    const fileCloseAllHandle = this.#channel.addListener(
-      'sf-file-close-all-requested',
-      this.handleFileCloseAllRequested.bind(this),
-    );
     const selectedHandle = this.#channel.addListener(
       'sf-tree-node-selected',
-      this.handleTreeNodeSelection.bind(this),
+      this.#handleTreeNodeSelection.bind(this),
     );
     const deselectedHandle = this.#channel.addListener(
       'sf-tree-node-deselected',
-      this.handleTreeNodeSelection.bind(this),
+      this.#handleTreeNodeSelection.bind(this),
     );
-    this.#eventListeners.push(fileOpenHandle);
-    this.#eventListeners.push(fileCloseHandle);
-    this.#eventListeners.push(fileCloseAllHandle);
     this.#eventListeners.push(selectedHandle);
     this.#eventListeners.push(deselectedHandle);
     this.render();
@@ -328,7 +297,7 @@ export default class Tree extends HTMLElement {
 
   disconnectedCallback() {
     console.log('Tree disconnectedCallback() called');
-    this.removeEventListener('keydown', Tree.onKeyDown);
+    this.removeEventListener('keydown', this.onKeyDown);
     this.removeEventListener('click', this.onClick);
     for (const handle of this.#eventListeners) {
       this.#channel.removeListener(handle);

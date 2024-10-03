@@ -1,8 +1,13 @@
 sf-parameters-panel {
   font-family: sans-serif;
-  display: inline-block;
-  width: 100%;
-  height: 100%;
+  display: flex;
+  flex: 0 1 100%;
+  flex-direction: column;
+  border: solid black 1px;
+  border-radius: 5px;
+  /* do not allow child elements to overlap rounded corners */
+  overflow: hidden;
+  background-color: #fff;
 }
 
 sf-parameters-panel > h1 {
@@ -11,12 +16,19 @@ sf-parameters-panel > h1 {
   line-height: 2em;
   margin: 0;
   padding: 0 0.5em 0 0.5em;
-  background-color: blanchedalmond;
+  background-color: #eee;
+}
+
+sf-parameters-panel > h1.populated {
+  font-weight: bold;
 }
 
 sf-parameters-panel div {
-  height: calc(100% - 2em);
+  display: flex;
+  flex: 0 1 100%;
+  flex-direction: column;
   overflow: auto;
+  padding: 0.25em;
 }
 
 sf-parameters-panel div ul {

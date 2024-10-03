@@ -5,8 +5,6 @@ import Channel from 'model/Channel';
 import Logo from 'assets/sf-ui.svg';
 import './Menu'; // for side effects
 import Menu from './Menu';
-import './AboutDialog'; // for side effects
-import AboutDialog from './AboutDialog';
 import './Navbar.css';
 import MenuItemFileOpen from './MenuItemFileOpen';
 
@@ -50,13 +48,13 @@ const template = `
       <sf-menu-item key="sf-about" title="About..."></sf-menu-item>
     </sf-menu>
   </nav>
-  <sf-about-dialog/>
 `;
 
 const events = {
   fileExportRequested: 'sf-file-export-requested',
   fileCloseRequested: 'sf-file-close-requested',
   fileCloseAllRequested: 'sf-file-close-all-requested',
+  showAboutRequested: 'sf-show-about-requested',
 };
 
 const mediaQuery = window.matchMedia('screen and (max-width: 576px)');
@@ -88,11 +86,6 @@ export default class Navbar extends HTMLElement {
   render() {
     const menu = this.querySelector('sf-menu') as Menu;
     menu.showMenu(this.#showMenu);
-  }
-
-  showAboutDialog() {
-    const aboutDialog = this.querySelector('sf-about-dialog') as AboutDialog;
-    aboutDialog.showModal(true);
   }
 
   #removeDragAndDropListeners() {
@@ -135,8 +128,6 @@ export default class Navbar extends HTMLElement {
         this.render();
         break;
       case 'sf-export-json':
-        // TODO: add export feature
-        console.log('JSON export currently not supported.');
         this.#channel.dispatch(events.fileExportRequested, 'json');
         this.#showMenu = false;
         this.render();
@@ -152,7 +143,7 @@ export default class Navbar extends HTMLElement {
         this.render();
         break;
       case 'sf-about':
-        this.showAboutDialog();
+        this.#channel.dispatch(events.showAboutRequested, null);
         this.#showMenu = false;
         this.render();
         break;
@@ -167,6 +158,7 @@ export default class Navbar extends HTMLElement {
     if (!this.#shortcutsActive) {
       return;
     }
+
     const fileModifiersPressed = isMacOs
       ? e.shiftKey && e.ctrlKey && !e.altKey && !e.metaKey
       : e.shiftKey && e.altKey && !e.ctrlKey && !e.metaKey;
@@ -176,8 +168,6 @@ export default class Navbar extends HTMLElement {
     // cannot use same mechanism for fileOpen() due to browser security limitations
     // => use "accessKey" property instead
     if (fileModifiersPressed && e.key.toLowerCase() === 'j') {
-      // TODO: add export feature
-      console.log('JSON export currently not supported.');
       this.#channel.dispatch(events.fileExportRequested, 'json');
       this.#showMenu = false;
       this.render();
@@ -187,6 +177,9 @@ export default class Navbar extends HTMLElement {
       this.render();
     } else if (fileModifiersPressed && e.key.toLowerCase() === 'q') {
       this.#channel.dispatch(events.fileCloseAllRequested, null);
+      this.#showMenu = false;
+      this.render();
+    } else if (e.key === 'Escape') {
       this.#showMenu = false;
       this.render();
     }

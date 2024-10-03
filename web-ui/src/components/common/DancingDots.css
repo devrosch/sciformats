@@ -1,0 +1,29 @@
+/* animation */
+
+sf-dancing-dots {
+  display: inline-block;
+  white-space: no-wrap;
+}
+
+sf-dancing-dots .sf-dots .sf-dot {
+  display: inline-block;
+  animation: wave 0.2s linear infinite;
+}
+
+sf-dancing-dots .sf-dots > .sf-dot:nth-child(2) {
+  animation-delay: -0.0666s;
+}
+
+sf-dancing-dots .sf-dots > .sf-dot:nth-child(3) {
+  animation-delay: -0.1333s;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: initial;
+  }
+  50% {
+    transform: translateY(-0.4em);
+  }
+}

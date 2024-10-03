@@ -15,8 +15,13 @@ sf-tree-node > .plusminus {
   text-align: left;
 }
 
+sf-tree-node > .node-name {
+  border-radius: 2px;
+}
+
 sf-tree-node.selected > .node-name {
-  background-color: darkorange;
+  outline: solid;
+  outline-width: 1px;
 }
 
 sf-tree-node > .node-error {

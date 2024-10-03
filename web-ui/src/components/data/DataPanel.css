@@ -1,13 +1,17 @@
 sf-data-panel {
-  background-color: darkcyan;
+  background-color: #eee;
   display: flex;
   flex-grow: 1;
   flex-direction: column;
   height: 100%;
+  border: solid black 1px;
+  border-radius: 5px;
+  /* do not allow child elements to overlap rounded corners */
+  overflow: hidden;
 }
 
 .tabs {
-  background-color: crimson;
+  background-color: #eee;
   flex: 0 0 2em;
   display: flex;
 }
@@ -17,11 +21,13 @@ sf-data-panel {
   border: none;
   cursor: pointer;
   line-height: 2em;
-  background-color: #ccc;
+  background-color: #eee;
   font-size: 1em;
   font-family: sans-serif;
   padding: 0 0.5em 0 0.5em;
   outline-offset: -0.2em;
+  min-width: 5em;
+  border-radius: 5px 5px 0 0;
 }
 
 .tab-link:hover {
@@ -29,7 +35,11 @@ sf-data-panel {
 }
 
 .tab-link.active {
-  background-color: #eee;
+  background-color: #fff;
+}
+
+.tab-link.populated {
+  font-weight: bold;
 }
 
 .tab-content {

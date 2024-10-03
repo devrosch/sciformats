@@ -39,8 +39,8 @@ export default class DataChart extends HTMLElement {
       // smaller margins
       margin: {
         l: 80,
-        r: 20,
-        b: 50,
+        r: 30,
+        b: 80,
         t: 30,
         pad: 10,
       },

@@ -5,7 +5,6 @@ import Menu from './Menu';
 import './NavbarMatchMediaMock'; // mock window.matchMedia()
 import './Navbar'; // for side effects
 import Navbar from './Navbar';
-import AboutDialog from './AboutDialog';
 
 // make sure modifier keys for Linux are expected
 jest.mock('util/SysInfoProvider', () => ({
@@ -115,11 +114,10 @@ test('sf-navbar renders', async () => {
   const navbar = document.body.querySelector('sf-navbar') as Navbar;
   expect(navbar).toBeTruthy();
 
-  expect(navbar.children).toHaveLength(4);
+  expect(navbar.children).toHaveLength(3);
   expect(navbar.children.item(0)?.nodeName).toBe('IMG');
   expect(navbar.children.item(1)?.nodeName).toBe('A');
   expect(navbar.children.item(2)?.nodeName).toBe('NAV');
-  expect(navbar.children.item(3)?.nodeName).toBe('SF-ABOUT-DIALOG');
 });
 
 test('sf-navbar hamburger menu toggles menu visibility', async () => {
@@ -216,29 +214,6 @@ test('sf-navbar selction outside menu closes menu', async () => {
   expect(mockShowMenu.mock.results[0].value).toBe(false);
 });
 
-test('sf-navbar - about click opens AboutDialog', async () => {
-  document.body.innerHTML = `<${element}/>`;
-  const navbar = document.body.querySelector('sf-navbar') as Navbar;
-  expect(navbar).toBeTruthy();
-  const aboutDialog = navbar.querySelector('sf-about-dialog') as AboutDialog;
-  expect(aboutDialog).toBeTruthy();
-
-  const showModalMock = jest.fn((show) => show);
-  aboutDialog.showModal = showModalMock;
-
-  const mockElement = document.createElement('a');
-  mockElement.setAttribute('key', 'sf-about');
-  const mouseEvent = {
-    target: mockElement,
-    stopPropagation: jest.fn(),
-    preventDefault: jest.fn(),
-  } as unknown as MouseEvent;
-
-  expect(showModalMock).toHaveBeenCalledTimes(0);
-  navbar.onClick(mouseEvent);
-  expect(showModalMock).toHaveBeenCalledTimes(1);
-});
-
 test('sf-navbar - file export event dispatched when "export - json" is clicked', (done) => {
   testEventDispatchedForClickedKey(
     'sf-export-json',
@@ -261,6 +236,10 @@ test('sf-navbar - close event dispatched when "file - close all" is clicked', (d
     'sf-file-close-all-requested',
     done,
   );
+});
+
+test('sf-navbar - show about event dispatched when "about" is clicked', (done) => {
+  testEventDispatchedForClickedKey('sf-about', 'sf-show-about-requested', done);
 });
 
 test('sf-navbar dispatches custom event on file drop', () => {

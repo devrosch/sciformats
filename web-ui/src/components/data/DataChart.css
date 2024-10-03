@@ -1,5 +1,5 @@
 sf-data-chart {
-  background-color: darkolivegreen;
+  background-color: #eee;
   flex: 1 1 100%;
   overflow: hidden;
 }
@@ -15,7 +15,7 @@ sf-data-chart > div {
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: darkorange;
+  background-color: #eee;
 }
 
 sf-data-chart > div > div {

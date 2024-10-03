@@ -61,6 +61,8 @@ lib-rs:release:
   artifacts:
     paths:
       - lib-rs/target/release
+  only:
+    - main
 
 # pages:
 #   stage: publish

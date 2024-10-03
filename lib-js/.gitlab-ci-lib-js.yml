@@ -56,3 +56,5 @@ lib-js:release:
   artifacts:
     paths:
       - lib-js/pkg
+  only:
+    - main

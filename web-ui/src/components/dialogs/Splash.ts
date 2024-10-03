@@ -1,4 +1,5 @@
 import { setElementAttribute } from 'util/RenderUtils';
+import 'components/common/DancingDots';
 import './Splash.css';
 import Logo from 'assets/sf-ui.svg';
 
@@ -13,11 +14,7 @@ const template = `
   </div>
   <p class="sf-initializing">
     <span>Initializing</span>
-    <span class="sf-dots">
-      <span class="sf-dot">.</span>
-      <span class="sf-dot">.</span>
-      <span class="sf-dot">.</span>
-    </span>
+    <sf-dancing-dots></sf-dancing-dots>
   </p>
 </dialog>
 `;
@@ -61,7 +58,7 @@ export default class Splash extends HTMLElement {
     this.render();
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  /* eslint-disable-next-line class-methods-use-this */
   onCancel = (e: Event) => {
     console.log('Cancel dialog clicked.');
     // prevent default action of close dialog

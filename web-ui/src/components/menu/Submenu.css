@@ -24,7 +24,9 @@ sf-submenu div {
   opacity: 0;
   visibility: hidden;
   /* transition opacity and make invisible after transition period on submenu close */
-  transition: opacity 0.1s ease-in, visibility linear 0.1s;
+  transition:
+    opacity 0.1s ease-in,
+    visibility linear 0.1s;
 }
 
 sf-submenu.sf-submenu-expand > div {

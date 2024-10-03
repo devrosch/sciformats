@@ -11,7 +11,7 @@ const fileContent = 'abc';
 const fileName = 'dummy.txt';
 const fileName2 = 'dummy2.txt';
 const blob = new Blob([fileContent]);
-const nodeInitText = 'Loading...';
+const nodeInitText = 'Loading';
 
 const waitForNodeExpansion = async (el: HTMLElement, childrenCount: number) => {
   // wait for DOM change

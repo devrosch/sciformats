@@ -1,5 +1,6 @@
 import { isSameUrl } from 'util/UrlUtils';
 import { setElementAttribute, setElementTextContent } from 'util/RenderUtils';
+import 'components/common/DancingDots';
 import './TreeNode.css';
 import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import Parser from 'model/Parser';
@@ -63,7 +64,7 @@ export default class TreeNode extends HTMLElement {
       // while loading data ...
       plusMinusSpan.style.display = 'none';
       errorSpan.style.display = 'none';
-      nameSpan.textContent = 'Loading...';
+      nameSpan.innerHTML = 'Loading<sf-dancing-dots></sf-dancing-dots>';
       return;
     }
 

@@ -59,6 +59,8 @@ test('sf-parameters-panel reacts to sf-tree-node-(de)selected events', async () 
   expect(document.body.innerHTML).not.toContain(parameters[0].value);
   expect(document.body.innerHTML).not.toContain(parameters[1].key);
   expect(document.body.innerHTML).not.toContain(parameters[1].value);
+  let h1 = panel.querySelector('h1');
+  expect(h1?.classList).not.toContain('populated');
 
   channel.dispatch('sf-tree-node-selected', {
     url: urlChild2,
@@ -71,6 +73,8 @@ test('sf-parameters-panel reacts to sf-tree-node-(de)selected events', async () 
   expect(document.body.innerHTML).toContain(parameters[0].value);
   expect(document.body.innerHTML).toContain(parameters[1].key);
   expect(document.body.innerHTML).toContain(parameters[1].value);
+  h1 = panel.querySelector('h1');
+  expect(h1?.classList).toContain('populated');
 
   channel.dispatch('sf-tree-node-deselected', { url: urlChild2 });
   ul = panel.querySelector('ul');
@@ -79,4 +83,6 @@ test('sf-parameters-panel reacts to sf-tree-node-(de)selected events', async () 
   expect(document.body.innerHTML).not.toContain(parameters[0].value);
   expect(document.body.innerHTML).not.toContain(parameters[1].key);
   expect(document.body.innerHTML).not.toContain(parameters[1].value);
+  h1 = panel.querySelector('h1');
+  expect(h1?.classList).not.toContain('populated');
 });

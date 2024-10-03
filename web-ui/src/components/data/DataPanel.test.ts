@@ -1,6 +1,8 @@
 /* eslint-disable no-duplicate-imports */
+import CustomEventsMessageBus from 'util/CustomEventsMessageBus';
 import './DataPanel'; // for side effects
 import DataPanel from './DataPanel';
+import Table from 'model/Table';
 
 const element = 'sf-data-panel';
 
@@ -48,42 +50,90 @@ test('sf-data-panel reacts to tab click events', async () => {
 
   const chartTab = tabs[0] as HTMLButtonElement;
   const chart = panel.children[1];
-  const tableTab = tabs[1] as HTMLButtonElement;
-  const table = panel.children[2];
-  const peaksTab = tabs[2] as HTMLButtonElement;
-  const peaks = panel.children[3];
+  const dataTab = tabs[1] as HTMLButtonElement;
+  const data = panel.children[2];
+  const tableTab = tabs[2] as HTMLButtonElement;
+  const table = panel.children[3];
 
   expect(chartTab.classList).toContain('active');
   expect(chart.classList).toContain('active');
+  expect(dataTab.classList).not.toContain('active');
+  expect(data.classList).not.toContain('active');
   expect(tableTab.classList).not.toContain('active');
   expect(table.classList).not.toContain('active');
-  expect(peaksTab.classList).not.toContain('active');
-  expect(peaks.classList).not.toContain('active');
+
+  dataTab.click();
+
+  expect(chartTab.classList).not.toContain('active');
+  expect(chart.classList).not.toContain('active');
+  expect(dataTab.classList).toContain('active');
+  expect(data.classList).toContain('active');
+  expect(tableTab.classList).not.toContain('active');
+  expect(table.classList).not.toContain('active');
 
   tableTab.click();
 
   expect(chartTab.classList).not.toContain('active');
   expect(chart.classList).not.toContain('active');
+  expect(dataTab.classList).not.toContain('active');
+  expect(data.classList).not.toContain('active');
   expect(tableTab.classList).toContain('active');
   expect(table.classList).toContain('active');
-  expect(peaksTab.classList).not.toContain('active');
-  expect(peaks.classList).not.toContain('active');
-
-  peaksTab.click();
-
-  expect(chartTab.classList).not.toContain('active');
-  expect(chart.classList).not.toContain('active');
-  expect(tableTab.classList).not.toContain('active');
-  expect(table.classList).not.toContain('active');
-  expect(peaksTab.classList).toContain('active');
-  expect(peaks.classList).toContain('active');
 
   chartTab.click();
 
   expect(chartTab.classList).toContain('active');
   expect(chart.classList).toContain('active');
+  expect(dataTab.classList).not.toContain('active');
+  expect(data.classList).not.toContain('active');
   expect(tableTab.classList).not.toContain('active');
   expect(table.classList).not.toContain('active');
-  expect(peaksTab.classList).not.toContain('active');
-  expect(peaks.classList).not.toContain('active');
+});
+
+const url = new URL('file:///test/path/root.txt#/');
+const data = [
+  { x: 1.1, y: 1.2 },
+  { x: 2.1, y: 2.2 },
+];
+const table: Table = {
+  columnNames: [{ key: 'col0', value: 'Column 0' }],
+  rows: [
+    {
+      col0: 'Cell 00',
+    },
+  ],
+};
+
+test('sf-data-panel highlights data present', async () => {
+  document.body.innerHTML = `<${element}/>`;
+  const panel = document.body.querySelector(element) as DataPanel;
+  const tabs = panel.children[0].children;
+  expect(tabs).toHaveLength(3);
+  const chartTab = tabs[0] as HTMLButtonElement;
+  const dataTab = tabs[1] as HTMLButtonElement;
+  const tableTab = tabs[2] as HTMLButtonElement;
+
+  expect(chartTab?.classList).not.toContain('populated');
+  expect(dataTab?.classList).not.toContain('populated');
+  expect(tableTab?.classList).not.toContain('populated');
+
+  const channel = CustomEventsMessageBus.getDefaultChannel();
+  channel.dispatch('sf-tree-node-selected', {
+    url,
+    data,
+    table,
+    parameters: null,
+  });
+
+  expect(chartTab?.classList).toContain('populated');
+  expect(dataTab?.classList).toContain('populated');
+  expect(tableTab?.classList).toContain('populated');
+
+  channel.dispatch('sf-tree-node-deselected', {
+    url,
+  });
+
+  expect(chartTab?.classList).not.toContain('populated');
+  expect(dataTab?.classList).not.toContain('populated');
+  expect(tableTab?.classList).not.toContain('populated');
 });

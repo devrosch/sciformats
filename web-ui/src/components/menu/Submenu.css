@@ -1,13 +1,18 @@
 /* submenus */
 
 sf-submenu .sf-expand-collapse-indicator {
-  padding-bottom: 0.1em;
   display: inline-block;
   width: 0.5em;
+  transition: all 0.1s ease-in;
+}
+
+sf-submenu.sf-submenu-expand > a > span.sf-expand-collapse-indicator {
+  transform: rotate(90deg);
+  transition: all 0.1s ease-in;
 }
 
 sf-submenu div {
-  display: none;
+  display: block;
   position: absolute;
   padding-left: 0;
   background-color: #f9f9f9;
@@ -16,10 +21,16 @@ sf-submenu div {
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
   background-color: #eee;
+  opacity: 0;
+  visibility: hidden;
+  /* transition opacity and make invisible after transition period on submenu close */
+  transition: opacity 0.1s ease-in, visibility linear 0.1s;
 }
 
 sf-submenu.sf-submenu-expand > div {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.1s ease-in;
 }
 
 /* first level submenus */
@@ -40,10 +51,11 @@ sf-submenu > div sf-submenu div {
 @media screen and (max-width: 576px) {
   sf-submenu div {
     box-shadow: none;
+    /* position cannot be transitioned, so rather make submenu immediately invisible on close */
+    transition: none;
   }
   sf-submenu.sf-submenu-expand > div {
     padding-left: 1em;
-    display: block;
     position: inherit;
   }
   sf-submenu > div {

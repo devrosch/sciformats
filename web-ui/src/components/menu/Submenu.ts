@@ -40,7 +40,7 @@ export default class Submenu extends HTMLElement {
       const innerHtml = this.innerHTML;
       this.innerHTML = `
         <a href="#" key="${this._key}">
-          <span class="sf-expand-collapse-indicator">▸</span>&nbsp;<span id="sf-submenu-title">${this._title}</span>
+          <span class="sf-expand-collapse-indicator">›</span>&nbsp;<span>${this._title}</span>
         </a>
         <div role="none">
           ${innerHtml}
@@ -53,16 +53,13 @@ export default class Submenu extends HTMLElement {
 
   render() {
     const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aExpandCollapseSpan = a.querySelector(
-      '.sf-expand-collapse-indicator',
-    ) as HTMLSpanElement;
-    const aTitleSpan = a.querySelector('#sf-submenu-title') as HTMLSpanElement;
-    const expandendChar = this._expand ? '▾' : '▸';
+    const aIndicatorSpan = a.querySelector(':nth-child(1)') as HTMLSpanElement;
+    const aTitleSpan = a.querySelector(':nth-child(2)') as HTMLSpanElement;
 
     setElementAttribute(this, 'role', 'menu');
     setElementAttribute(a, 'key', this._key);
     setElementAttribute(a, 'title', this._title);
-    setElementTextContent(aExpandCollapseSpan, expandendChar);
+    setElementAttribute(aIndicatorSpan, 'key', this._key);
     setElementAttribute(aTitleSpan, 'key', this._key);
     setElementTextContent(aTitleSpan, this._title);
     if (this._expand) {

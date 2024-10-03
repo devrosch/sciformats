@@ -39,11 +39,15 @@ sf-menu a:hover {
 @media screen and (max-width: 576px) {
   sf-menu {
     position: absolute;
-    display: none;
+    display: block;
+    opacity: 0;
+    visibility: hidden;
   }
 
   sf-menu.sf-show-menu {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.1s ease-in;
   }
 
   sf-menu-item,

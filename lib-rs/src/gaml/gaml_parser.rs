@@ -7,7 +7,7 @@ use crate::xml_utils::{
     BufEvent, XmlTagStart,
 };
 use base64::prelude::*;
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, SecondsFormat};
 use quick_xml::reader::Reader;
 use std::cell::RefCell;
 use std::fmt::Debug;
@@ -187,7 +187,7 @@ pub struct Experiment {
     // Attributes
     pub name: Option<String>,
     // Elements
-    pub collectdate: Option<DateTime<FixedOffset>>,
+    pub collectdate: Option<String>,
     pub parameters: Vec<Parameter>,
     pub traces: Vec<Trace>,
 }
@@ -213,7 +213,8 @@ impl Experiment {
                 DateTime::parse_from_rfc3339(&dt.value)
                     .map_err(|e| GamlError::from_source(e, "Error parsing date/time."))
             })
-            .transpose()?;
+            .transpose()?
+            .map(|d| d.to_rfc3339_opts(SecondsFormat::AutoSi, true));
         let (parameters, next) = read_sequence(b"parameter", next, &mut reader, &Parameter::new)?;
         drop(reader);
         // In GAML 1.00 traces had to contain at least one item but here zero items are allowed for all versions.
@@ -1262,7 +1263,7 @@ fn read_data_elements(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+    use chrono::{FixedOffset, NaiveDate, NaiveDateTime, NaiveTime};
     use std::{error::Error, io::Cursor};
 
     #[test]
@@ -1373,11 +1374,12 @@ mod tests {
         let date = NaiveDate::from_ymd_opt(2024, 03, 27).unwrap();
         let time = NaiveTime::from_hms_opt(06, 46, 0).unwrap();
         assert_eq!(
-            DateTime::<FixedOffset>::from_naive_utc_and_offset(
+            &DateTime::<FixedOffset>::from_naive_utc_and_offset(
                 NaiveDateTime::new(date, time),
                 FixedOffset::east_opt(0).unwrap()
-            ),
-            experiments[0].collectdate.unwrap()
+            )
+            .to_rfc3339_opts(SecondsFormat::AutoSi, true),
+            experiments[0].collectdate.as_ref().unwrap()
         );
         let experiment_parameters = &experiments[0].parameters;
         assert_eq!(1, experiment_parameters.len());

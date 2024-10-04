@@ -65,7 +65,7 @@ fn parse_experiments_succeeds(reader: &GamlReader) {
         experiment0_parameters[0]
     );
     assert_eq!(
-        Parameter::from_str_str("Collectdate", "2024-05-31T09:17:00+00:00"),
+        Parameter::from_str_str("Collectdate", "2024-05-31T09:17:00Z"),
         experiment0_parameters[1]
     );
     assert_eq!(
@@ -95,7 +95,7 @@ fn parse_experiments_succeeds(reader: &GamlReader) {
         experiment1_parameters[0]
     );
     assert_eq!(
-        Parameter::from_str_str("Collectdate", "2024-05-31T09:18:00+00:00"),
+        Parameter::from_str_str("Collectdate", "2024-05-31T09:18:00Z"),
         experiment1_parameters[1]
     );
     assert_eq!(

@@ -1,5 +1,4 @@
 use super::{open_file, GAML_SAMPLE_FILE};
-use chrono::{DateTime, FixedOffset};
 use sf_rs::{
     api::Parser,
     gaml::gaml_parser::{
@@ -7,7 +6,6 @@ use sf_rs::{
         Technique, Trace, Units, Valueorder, Version, Xdata,
     },
 };
-use std::str::FromStr;
 
 #[test]
 fn gaml_parse_valid_succeeds() {
@@ -65,7 +63,7 @@ fn parse_experiments_succeeds(experiments: &[Experiment]) {
     let experiment0 = &experiments[0];
     assert_eq!(Some("Experiment 0 name".to_owned()), experiment0.name);
     assert_eq!(
-        Some(DateTime::<FixedOffset>::from_str("2024-05-31T09:17:00Z").unwrap()),
+        Some("2024-05-31T09:17:00Z".to_owned()),
         experiment0.collectdate
     );
     assert_eq!(3, experiment0.parameters.len());
@@ -105,7 +103,7 @@ fn parse_experiments_succeeds(experiments: &[Experiment]) {
     let experiment1 = &experiments[1];
     assert_eq!(Some("Experiment 1 name".to_owned()), experiment1.name);
     assert_eq!(
-        Some(DateTime::<FixedOffset>::from_str("2024-05-31T09:18:00Z").unwrap()),
+        Some("2024-05-31T09:18:00Z".to_owned()),
         experiment1.collectdate
     );
     assert_eq!(3, experiment1.parameters.len());

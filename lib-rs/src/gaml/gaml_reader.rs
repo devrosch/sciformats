@@ -226,7 +226,7 @@ impl GamlReader {
             parameters.push(Parameter::from_str_str("Name", name));
         }
         if let Some(date) = &experiment.collectdate {
-            parameters.push(Parameter::from_str_str("Collectdate", date.to_rfc3339()));
+            parameters.push(Parameter::from_str_str("Collectdate", date));
         }
         parameters.extend(map_gaml_parameters(&experiment.parameters));
 
@@ -822,7 +822,6 @@ mod tests {
         AltXdata, Baseline, Byteorder, Format, Integrity, Parameter as RawParameter, Technique,
         Valueorder, Values, Version, Ydata,
     };
-    use chrono::DateTime;
 
     fn create_values_f32(data: &[f32]) -> Values {
         let bytes: Vec<u8> = data.iter().map(|v| v.to_le_bytes()).flatten().collect();
@@ -916,7 +915,7 @@ mod tests {
             parameters: vec![],
             experiments: vec![Experiment {
                 name: Some("experiment 0 name".into()),
-                collectdate: Some(DateTime::parse_from_rfc3339("2024-03-27T06:46:00Z").unwrap()),
+                collectdate: Some("2024-03-27T06:46:00Z".into()),
                 parameters: vec![RawParameter {
                     group: None,
                     name: "param 0 name".into(),
@@ -942,7 +941,7 @@ mod tests {
                 name: "Experiment 0, experiment 0 name".into(),
                 parameters: vec![
                     Parameter::from_str_str("Name", "experiment 0 name"),
-                    Parameter::from_str_str("Collectdate", "2024-03-27T06:46:00+00:00"),
+                    Parameter::from_str_str("Collectdate", "2024-03-27T06:46:00Z"),
                     Parameter::from_str_str("param 0 name", "param 0 value"),
                 ],
                 data: vec![],

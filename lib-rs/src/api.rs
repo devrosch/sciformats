@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     error::Error,
     fmt::Display,
-    io::{BufRead, Read, Seek},
+    io::{BufRead, Read, Seek, Write},
 };
 
 /// Abstraction for any kind of random access input.
@@ -221,6 +221,19 @@ pub struct Node {
     pub metadata: Vec<(String, String)>,
     pub table: Option<Table>,
     pub child_node_names: Vec<String>,
+}
+
+/// A parameter value.
+#[derive(Debug, PartialEq)]
+pub enum Exports {
+    /// Exporter to canonical JSON.
+    Json,
+}
+
+/// Exports data.
+pub trait Exporter {
+    fn get_name() -> &'static str;
+    fn write(&mut self, writer: &mut impl Write) -> Result<(), Box<dyn Error>>;
 }
 
 #[cfg(test)]

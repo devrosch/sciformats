@@ -1,6 +1,7 @@
 use crate::xml_utils::SfXmlError;
 use std::{error::Error, fmt};
 
+pub mod gaml_json_exporter;
 pub mod gaml_parser;
 pub mod gaml_reader;
 pub mod gaml_scanner;

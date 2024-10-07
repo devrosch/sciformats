@@ -10,7 +10,6 @@ use std::{error::Error, io::Write};
 
 pub struct GamlJsonExporter<'a, R: Reader> {
     reader: &'a R,
-    // buffer: VecDeque<u8>,
 }
 
 impl<R: Reader> Exporter for GamlJsonExporter<'_, R> {
@@ -156,8 +155,12 @@ impl Serialize for Column {
     where
         S: Serializer,
     {
-        let mut serializer = serializer.serialize_struct("column", 1)?;
         // todo: serialize as map?
+        // let mut serializer = serializer.serialize_map(Some(1))?;
+        // serializer.serialize_key(&self.key)?;
+        // serializer.serialize_value(&self.name)?;
+        // serializer.end()
+        let mut serializer = serializer.serialize_struct("column", 1)?;
         serializer.serialize_field("key", &self.key)?;
         serializer.serialize_field("name", &self.name)?;
         serializer.end()
@@ -284,6 +287,7 @@ mod tests {
                     ["mk1", "mv1"],
                 ],
                 "table": {
+                    // "columnNames": [{"col key": "col name"}],
                     "columnNames": [{"key": "col key", "name": "col name"}],
                     "rows": [
                         {"col key": "String value"},

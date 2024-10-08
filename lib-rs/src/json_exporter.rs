@@ -8,16 +8,22 @@ use std::{error::Error, io::Write};
 // https://serde.rs/impl-serializer.html
 // https://github.com/serde-rs/serde/issues/1665#issuecomment-549097541
 
-pub struct GamlJsonExporter<'a, R: Reader> {
+pub struct JsonExporter<'a, R: Reader> {
     reader: &'a R,
 }
 
-impl<R: Reader> Exporter for GamlJsonExporter<'_, R> {
-    fn get_name() -> &'static str {
-        "GAML JSON Exporter"
+impl<'a, R: Reader> JsonExporter<'a, R> {
+    pub fn new(reader: &'a R) -> Self {
+        Self { reader }
+    }
+}
+
+impl<R: Reader> Exporter for JsonExporter<'_, R> {
+    fn get_name(&self) -> &'static str {
+        "Canonical JSON Exporter"
     }
 
-    fn write(&mut self, writer: &mut impl Write) -> Result<(), Box<dyn Error>> {
+    fn write(&mut self, writer: &mut dyn Write) -> Result<(), Box<dyn Error>> {
         let mut serializer = serde_json::Serializer::new(writer);
         let wrapper = NodeWrapper {
             path: "",
@@ -171,7 +177,7 @@ impl Serialize for Column {
 mod tests {
     use super::*;
     use crate::{
-        api::{self, Column, Node, Parameter, Table},
+        api::{self, Column, ExportFormat, Node, Parameter, Table},
         gaml::GamlError,
     };
     use core::str;
@@ -253,7 +259,7 @@ mod tests {
     #[test]
     fn serializes_node_tree_to_json() {
         let reader = StubReader {};
-        let mut exporter = GamlJsonExporter { reader: &reader };
+        let mut exporter = reader.get_exporter(ExportFormat::Json).unwrap();
         let mut export = vec![];
 
         assert_eq!(0, export.len());
@@ -263,50 +269,62 @@ mod tests {
         // https://docs.rs/serde_json/latest/serde_json/fn.to_value.html#example
         let output_str = String::from_utf8(export).unwrap();
         let output_json: Value = serde_json::from_str(&output_str).unwrap();
-        assert_eq!(
-            json!({
-                "name": "root node name",
-                "parameters": [
-                    { "key": "param String", "value": "abc"},
-                    { "key": "param bool", "value": true},
-                    { "key": "param i32", "value": -1},
-                    { "key": "param u32", "value": 1},
-                    { "key": "param i64", "value": -2},
-                    { "key": "param u64", "value": 2},
-                    { "key": "param f32", "value": -1.0},
-                    { "key": "param f64", "value": 1.0},
+
+        let expected = json!({
+            "name": "root node name",
+            "parameters": [
+                {"key": "param String", "value": "abc"},
+                {"key": "param bool", "value": true},
+                {"key": "param i32", "value": -1},
+                {"key": "param u32", "value": 1},
+                {"key": "param i64", "value": -2},
+                {"key": "param u64", "value": 2},
+                {"key": "param f32", "value": -1.0},
+                {"key": "param f64", "value": 1.0},
+            ],
+            "data": [
+                // { "x": 1.0, "y": 2.0},
+                // { "x": 3.0, "y": 4.0},
+                [1.0, 2.0],
+                [3.0, 4.0],
+            ],
+            "metadata": [
+                ["mk0", "mv0"],
+                ["mk1", "mv1"],
+            ],
+            "table": {
+                // "columnNames": [{"col key": "col name"}],
+                "columnNames": [{"key": "col key", "name": "col name"}],
+                "rows": [
+                    {"col key": "String value"},
+                    {"col key": true},
+                    {"col key": -1},
+                    {"col key": 1},
+                    {"col key": -2},
+                    {"col key": 2},
+                    {"col key": -1.0},
+                    {"col key": 1.0}
                 ],
-                "data": [
-                    // { "x": 1.0, "y": 2.0},
-                    // { "x": 3.0, "y": 4.0},
-                    [1.0, 2.0],
-                    [3.0, 4.0],
-                ],
-                "metadata": [
-                    ["mk0", "mv0"],
-                    ["mk1", "mv1"],
-                ],
-                "table": {
-                    // "columnNames": [{"col key": "col name"}],
-                    "columnNames": [{"key": "col key", "name": "col name"}],
-                    "rows": [
-                        {"col key": "String value"},
-                        {"col key": true},
-                        {"col key": -1},
-                        {"col key": 1},
-                        {"col key": -2},
-                        {"col key": 2},
-                        {"col key": -1.0},
-                        {"col key": 1.0}
-                    ],
+            },
+            // "children": [],
+            "children": [
+                {
+                    "name": "child node name 0",
+                    "parameters": [], "data": [],
+                    "metadata": [],
+                    "table": {"columnNames": [], "rows": []},
+                    "children": [],
                 },
-                // "children": [],
-                "children": [
-                    { "name": "child node name 0", "parameters": [], "data": [], "metadata": [], "table": { "columnNames": [], "rows": [] }, "children": [], },
-                    { "name": "child node name 1", "parameters": [], "data": [], "metadata": [], "table": { "columnNames": [], "rows": [] }, "children": [], },
-                ]
-            }),
-            output_json,
-        );
+                {
+                    "name": "child node name 1",
+                    "parameters": [], "data": [],
+                    "metadata": [],
+                    "table": {"columnNames": [], "rows": []},
+                    "children": [],
+                },
+            ]
+        });
+
+        assert_eq!(expected, output_json);
     }
 }

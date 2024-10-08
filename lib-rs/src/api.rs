@@ -1,3 +1,4 @@
+use crate::json_exporter::JsonExporter;
 use std::{
     collections::HashMap,
     error::Error,
@@ -62,6 +63,30 @@ pub trait Reader {
     ///
     /// * `path` - The path inside the data set identifying the Node.
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
+
+    /// Provides a list of the supported export formats for the reader.
+    ///
+    /// The canonical JSON format is provided for all readers. Specific readers
+    /// may override this method and provide additional export formats.
+    fn get_export_formats(&self) -> &'static [ExportFormat] {
+        &[ExportFormat::Json]
+    }
+
+    /// Provides an exporter for an export format.
+    ///
+    /// # Arguments
+    ///
+    /// * `format` - The export format.
+    ///
+    /// Returns an exporter for the requested format if available, otherwise `None`.
+    fn get_exporter(&self, format: ExportFormat) -> Option<Box<dyn Exporter + '_>>
+    where
+        Self: Sized,
+    {
+        match format {
+            ExportFormat::Json => Some(Box::new(JsonExporter::new(self))),
+        }
+    }
 }
 
 /// A parameter value.
@@ -225,15 +250,15 @@ pub struct Node {
 
 /// A parameter value.
 #[derive(Debug, PartialEq)]
-pub enum Exports {
+pub enum ExportFormat {
     /// Exporter to canonical JSON.
     Json,
 }
 
 /// Exports data.
 pub trait Exporter {
-    fn get_name() -> &'static str;
-    fn write(&mut self, writer: &mut impl Write) -> Result<(), Box<dyn Error>>;
+    fn get_name(&self) -> &'static str;
+    fn write(&mut self, writer: &mut dyn Write) -> Result<(), Box<dyn Error>>;
 }
 
 #[cfg(test)]

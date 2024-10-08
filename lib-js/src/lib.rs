@@ -1,4 +1,6 @@
 pub mod andi;
+pub mod gaml;
+pub mod jdx;
 pub mod spc;
 
 #[cfg(feature = "nodejs")]

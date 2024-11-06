@@ -8,17 +8,17 @@ use std::{error::Error, io::Write};
 // https://serde.rs/impl-serializer.html
 // https://github.com/serde-rs/serde/issues/1665#issuecomment-549097541
 
-pub struct JsonExporter<'a, R: Reader> {
+pub struct JsonExporter<'a, R: Reader + ?Sized> {
     reader: &'a R,
 }
 
-impl<'a, R: Reader> JsonExporter<'a, R> {
+impl<'a, R: Reader + ?Sized> JsonExporter<'a, R> {
     pub fn new(reader: &'a R) -> Self {
         Self { reader }
     }
 }
 
-impl<R: Reader> Exporter for JsonExporter<'_, R> {
+impl<R: Reader + ?Sized> Exporter for JsonExporter<'_, R> {
     fn get_name(&self) -> &'static str {
         "Canonical JSON Exporter"
     }
@@ -33,16 +33,16 @@ impl<R: Reader> Exporter for JsonExporter<'_, R> {
     }
 }
 
-struct NodeWrapper<'a, R: Reader> {
+struct NodeWrapper<'a, R: Reader + ?Sized> {
     path: &'a str,
     reader: &'a R,
 }
-struct ChildrenWrapper<'a, R: Reader> {
+struct ChildrenWrapper<'a, R: Reader + ?Sized> {
     paths: &'a [String],
     reader: &'a R,
 }
 
-impl<R: Reader> Serialize for NodeWrapper<'_, R> {
+impl<R: Reader + ?Sized> Serialize for NodeWrapper<'_, R> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -82,7 +82,7 @@ impl<R: Reader> Serialize for NodeWrapper<'_, R> {
     }
 }
 
-impl<R: Reader> Serialize for ChildrenWrapper<'_, R> {
+impl<R: Reader + ?Sized> Serialize for ChildrenWrapper<'_, R> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -259,11 +259,10 @@ mod tests {
     #[test]
     fn serializes_node_tree_to_json() {
         let reader = StubReader {};
-        let mut exporter = reader.get_exporter(ExportFormat::Json).unwrap();
         let mut export = vec![];
-
         assert_eq!(0, export.len());
-        exporter.write(&mut export).unwrap();
+
+        reader.export(ExportFormat::Json, &mut export).unwrap();
         assert!(export.len() > 0);
 
         // https://docs.rs/serde_json/latest/serde_json/fn.to_value.html#example

@@ -72,19 +72,21 @@ pub trait Reader {
         &[ExportFormat::Json]
     }
 
-    /// Provides an exporter for an export format.
+    /// Exports data.
     ///
     /// # Arguments
     ///
     /// * `format` - The export format.
+    /// * `writer` - A writer to write the export to.
     ///
-    /// Returns an exporter for the requested format if available, otherwise `None`.
-    fn get_exporter(&self, format: ExportFormat) -> Option<Box<dyn Exporter + '_>>
-    where
-        Self: Sized,
+    /// Writes data in the export format to the writer. Returns an error in case of any issue.
+    fn export(&self, format: ExportFormat, writer: &mut dyn Write) -> Result<(), Box<dyn Error>>
     {
         match format {
-            ExportFormat::Json => Some(Box::new(JsonExporter::new(self))),
+            ExportFormat::Json => {
+                let mut exporter = JsonExporter::new(self);
+                exporter.write(writer)
+            },
         }
     }
 }

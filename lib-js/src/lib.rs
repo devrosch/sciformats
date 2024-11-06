@@ -8,12 +8,12 @@ use js_sys::{Array, Number, Object, Uint8Array};
 #[cfg(not(feature = "nodejs"))]
 use js_sys::{Array, Number, Uint8Array};
 use sf_rs::{
-    api::{Node, Reader, SeekRead},
+    api::{ExportFormat, Node, Reader, SeekRead},
     common::{BufSeekRead, ScannerRepository},
 };
 use std::{
     error::Error,
-    io::{Read, Seek, SeekFrom},
+    io::{Read, Seek, SeekFrom, Write},
 };
 use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsError, JsValue};
 use web_sys::{Blob, FileReaderSync};
@@ -182,15 +182,51 @@ impl JsReader {
             Err(error) => Err(map_to_js_err(&*error)),
         }
     }
+
+    #[wasm_bindgen(js_name = getExportFormats)]
+    pub fn get_export_formats(&self) -> Vec<String> {
+        let mut str_formats = vec![];
+        let formats = self.reader.get_export_formats();
+        for format in formats {
+            match format {
+                ExportFormat::Json => str_formats.push("Json".to_owned()),
+            }
+        }
+        str_formats
+    }
+
+    #[wasm_bindgen(js_name = export)]
+    pub fn export(&self, format: &str, writer: &mut JsBlobWriter) -> Result<(), JsError> {
+        match format {
+            "Json" => self
+                .reader
+                .export(ExportFormat::Json, writer)
+                .map_err(|e| JsError::new(&e.to_string())),
+            _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
+        }
+        // let mut exporter = match format {
+        //     "Json" => self
+        //         .reader
+        //         .get_exporter(ExportFormat::Json)
+        //         .ok_or(JsError::new(&format!(
+        //             "Unsupported export format: {}",
+        //             format
+        //         ))),
+        //     _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
+        // }?;
+
+        // exporter
+        //     .write(writer)
+        //     .map_err(|e| JsError::new(&e.to_string()))?;
+        // Ok(())
+    }
 }
 
 // -------------------------------------------------
-// Common
+// Read
 // -------------------------------------------------
 
 // todo: reduce code duplication
-// todo: add SeekRead for lazy loading from Node.js file descriptors
-// see https://github.com/rustwasm/wasm-bindgen/issues/1993 and https://nodejs.org/api/fs.html
 
 #[derive(Clone)]
 pub struct Uint8ArraySeekRead {
@@ -403,6 +439,7 @@ impl Read for BlobSeekRead {
     }
 }
 
+// see https://github.com/rustwasm/wasm-bindgen/issues/1993 and https://nodejs.org/api/fs.html
 #[cfg(feature = "nodejs")]
 #[wasm_bindgen(module = "fs")]
 extern "C" {
@@ -584,6 +621,43 @@ impl JsScannerRepository {
             Ok(reader) => Ok(JsReader::from(reader)),
             Err(error) => Err(map_to_js_err(&*error)),
         }
+    }
+}
+
+// -------------------------------------------------
+// Export
+// -------------------------------------------------
+
+#[wasm_bindgen(js_name = BlobWriter)]
+pub struct JsBlobWriter {
+    data: Vec<Uint8Array>,
+}
+
+#[wasm_bindgen(js_class = BlobWriter)]
+impl JsBlobWriter {
+    #[wasm_bindgen(js_name = intoBlob)]
+    pub fn into_blob(self) -> Result<Blob, JsError> {
+        let js_value = JsValue::from(self.data);
+        Blob::new_with_u8_array_sequence(&js_value).map_err(|e| {
+            JsError::new(
+                &e.as_string()
+                    .unwrap_or("Error turning BlobWriter into Blob.".into()),
+            )
+        })
+    }
+}
+
+impl Write for JsBlobWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let uint8_array = Uint8Array::new_with_length(buf.len() as u32);
+        uint8_array.copy_from(buf);
+        self.data.push(uint8_array);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        // noop
+        Ok(())
     }
 }
 

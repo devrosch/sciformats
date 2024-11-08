@@ -400,6 +400,8 @@ name = "sf_js"
 version = "0.1.0"
 dependencies = [
  "js-sys",
+ "serde",
+ "serde_json",
  "sf_rs",
  "wasm-bindgen",
  "wasm-bindgen-test",

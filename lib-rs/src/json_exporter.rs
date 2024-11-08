@@ -90,7 +90,7 @@ impl<R: Reader + ?Sized> Serialize for ChildrenWrapper<'_, R> {
         let mut serializer = serializer.serialize_seq(Some(self.paths.len()))?;
         for path in self.paths {
             let child_wrapper = NodeWrapper {
-                path: &path,
+                path,
                 reader: self.reader,
             };
             serializer.serialize_element(&child_wrapper)?;
@@ -178,7 +178,7 @@ mod tests {
     use super::*;
     use crate::{
         api::{self, Column, ExportFormat, Node, Parameter, Table},
-        gaml::GamlError,
+        common::SfError,
     };
     use core::str;
     use serde_json::{json, Value};
@@ -251,7 +251,7 @@ mod tests {
                 "" | "/" => Ok(root),
                 "/0" => Ok(child0),
                 "/1" => Ok(child1),
-                _ => Err(GamlError::new(&format!("Illegal path: {}", path)).into()),
+                _ => Err(SfError::new(&format!("Illegal path: {}", path)).into()),
             }
         }
     }

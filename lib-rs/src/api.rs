@@ -80,13 +80,12 @@ pub trait Reader {
     /// * `writer` - A writer to write the export to.
     ///
     /// Writes data in the export format to the writer. Returns an error in case of any issue.
-    fn export(&self, format: ExportFormat, writer: &mut dyn Write) -> Result<(), Box<dyn Error>>
-    {
+    fn export(&self, format: ExportFormat, writer: &mut dyn Write) -> Result<(), Box<dyn Error>> {
         match format {
             ExportFormat::Json => {
                 let mut exporter = JsonExporter::new(self);
                 exporter.write(writer)
-            },
+            }
         }
     }
 }

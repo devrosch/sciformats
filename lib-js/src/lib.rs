@@ -58,6 +58,7 @@ impl JsNode {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.node.parameters {
             let key = JsValue::from(&param.key);
+            // todo: map to most appropriate JS type, not only string
             let value = JsValue::from(&param.value.to_string());
             let js_param = js_sys::Object::new();
             let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
@@ -130,6 +131,7 @@ impl JsNode {
                 let js_row = js_sys::Object::new();
                 for cell in row {
                     let key = JsValue::from(cell.0);
+                    // todo: map to most appropriate JS type, not only string
                     let val = JsValue::from(cell.1.to_string());
                     let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
                     if !set_cell_ret {
@@ -201,24 +203,9 @@ impl JsReader {
             "Json" => self
                 .reader
                 .export(ExportFormat::Json, writer)
-                .map_err(|e| JsError::new(&e.to_string())),
+                .map_err(|e| map_to_js_err(&*e)),
             _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
         }
-        // let mut exporter = match format {
-        //     "Json" => self
-        //         .reader
-        //         .get_exporter(ExportFormat::Json)
-        //         .ok_or(JsError::new(&format!(
-        //             "Unsupported export format: {}",
-        //             format
-        //         ))),
-        //     _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
-        // }?;
-
-        // exporter
-        //     .write(writer)
-        //     .map_err(|e| JsError::new(&e.to_string()))?;
-        // Ok(())
     }
 }
 
@@ -635,6 +622,11 @@ pub struct JsBlobWriter {
 
 #[wasm_bindgen(js_class = BlobWriter)]
 impl JsBlobWriter {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> JsBlobWriter {
+        JsBlobWriter { data: vec![] }
+    }
+
     #[wasm_bindgen(js_name = intoBlob)]
     pub fn into_blob(self) -> Result<Blob, JsError> {
         let js_value = JsValue::from(self.data);
@@ -644,6 +636,12 @@ impl JsBlobWriter {
                     .unwrap_or("Error turning BlobWriter into Blob.".into()),
             )
         })
+    }
+}
+
+impl Default for JsBlobWriter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -702,6 +700,7 @@ macro_rules! create_js_scanner {
 }
 pub(crate) use create_js_scanner;
 
+// todo: Macro required? Just return Reader? Missing export functions.
 /// Create JS wrapper for Reader
 macro_rules! create_js_reader {
     ($reader_name:ident, $js_reader_name:ident) => {
@@ -741,42 +740,17 @@ pub(crate) fn map_to_js_err(error: &dyn Error) -> JsError {
 mod tests {
     use super::*;
     use js_sys::Array;
-    use sf_rs::api::{Column, Parameter, PointXy, Scanner, Table, Value};
+    use serde_json::json;
+    use sf_rs::{
+        api::{self, Column, Parameter, PointXy, Scanner, Table, Value},
+        common::SfError,
+    };
     use std::collections::HashMap;
     use wasm_bindgen_test::*;
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340
     // some need to run in a worker and fail if this one is not set to run in a worker
     wasm_bindgen_test_configure!(run_in_worker);
     // wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
-    struct StubReader {}
-    impl Reader for StubReader {
-        fn read(&self, _path: &str) -> Result<Node, Box<dyn Error>> {
-            Ok(Node {
-                name: "Node name".into(),
-                parameters: vec![
-                    Parameter {
-                        key: "Key 0".into(),
-                        value: Value::String("Value 0".into()),
-                    },
-                    Parameter {
-                        key: "Key 1".into(),
-                        value: Value::String("Value 1".into()),
-                    },
-                ],
-                data: vec![PointXy::new(1.0, 100.0), PointXy::new(2.0, 200.0)],
-                metadata: vec![("x.unit".into(), "X unit".into())],
-                table: Some(Table {
-                    column_names: vec![Column::new("Col key 0", "Col name 0")],
-                    rows: vec![HashMap::from([(
-                        "Col key 0".into(),
-                        Value::String("Cell value 0".into()),
-                    )])],
-                }),
-                child_node_names: vec!["Child node name 0".into(), "Child node name 1".into()],
-            })
-        }
-    }
 
     #[derive(Default)]
     struct StubScanner {}
@@ -787,6 +761,78 @@ mod tests {
 
         fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
             Ok(Box::new(StubReader {}))
+        }
+    }
+
+    struct StubReader {}
+
+    impl Reader for StubReader {
+        fn read(&self, path: &str) -> Result<Node, Box<dyn std::error::Error>> {
+            let root = Node {
+                name: "root node name".to_owned(),
+                parameters: vec![
+                    Parameter::from_str_str("param String", "abc"),
+                    Parameter::from_str_bool("param bool", true),
+                    Parameter::from_str_i32("param i32", -1),
+                    Parameter::from_str_u32("param u32", 1),
+                    Parameter::from_str_i64("param i64", -2),
+                    Parameter::from_str_u64("param u64", 2),
+                    Parameter::from_str_f32("param f32", -1.0),
+                    Parameter::from_str_f64("param f64", 1.0),
+                ],
+                data: vec![PointXy { x: 1.0, y: 2.0 }, PointXy { x: 3.0, y: 4.0 }],
+                metadata: vec![
+                    ("mk0".to_owned(), "mv0".to_owned()),
+                    ("mk1".to_owned(), "mv1".to_owned()),
+                ],
+                table: Some(Table {
+                    column_names: vec![Column {
+                        key: "col key".to_owned(),
+                        name: "col name".to_owned(),
+                    }],
+                    rows: vec![
+                        HashMap::from([(
+                            "col key".to_owned(),
+                            api::Value::String("String value".to_owned()),
+                        )]),
+                        HashMap::from([("col key".to_owned(), api::Value::Bool(true))]),
+                        HashMap::from([("col key".to_owned(), api::Value::I32(-1))]),
+                        HashMap::from([("col key".to_owned(), api::Value::U32(1))]),
+                        HashMap::from([("col key".to_owned(), api::Value::I64(-2))]),
+                        HashMap::from([("col key".to_owned(), api::Value::U64(2))]),
+                        HashMap::from([("col key".to_owned(), api::Value::F32(-1.0))]),
+                        HashMap::from([("col key".to_owned(), api::Value::F64(1.0))]),
+                    ],
+                }),
+                // child_node_names: vec![],
+                child_node_names: vec![
+                    "child node name 0".to_owned(),
+                    "child node name 1".to_owned(),
+                ],
+            };
+            let child0 = Node {
+                name: "child node name 0".to_owned(),
+                parameters: vec![],
+                data: vec![],
+                metadata: vec![],
+                table: None,
+                child_node_names: vec![],
+            };
+            let child1 = Node {
+                name: "child node name 1".to_owned(),
+                parameters: vec![],
+                data: vec![],
+                metadata: vec![],
+                table: None,
+                child_node_names: vec![],
+            };
+
+            match path {
+                "" | "/" => Ok(root),
+                "/0" => Ok(child0),
+                "/1" => Ok(child1),
+                _ => Err(SfError::new(&format!("Illegal path: {}", path)).into()),
+            }
         }
     }
 
@@ -887,34 +933,94 @@ mod tests {
         };
 
         let node = reader
-            .js_read("some_path.xyz")
+            .js_read("/")
             .map_err(|_e| "Stub read failed.")
             .unwrap();
 
-        assert_eq!("Node name", node.name());
+        assert_eq!("root node name", node.name());
 
         let params = &node.parameters();
-        assert_eq!(2, params.len());
+        assert_eq!(8, params.len());
         let key_0 = js_sys::Reflect::get(&params[0], &JsValue::from("key"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Key 0", key_0);
+        assert_eq!("param String", key_0);
         let value_0 = js_sys::Reflect::get(&params[0], &JsValue::from("value"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Value 0", value_0);
+        assert_eq!("abc", value_0);
         let key_1 = js_sys::Reflect::get(&params[1], &JsValue::from("key"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Key 1", key_1);
+        assert_eq!("param bool", key_1);
         let value_1 = js_sys::Reflect::get(&params[1], &JsValue::from("value"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Value 1", value_1);
+        assert_eq!("true", value_1);
+        let key_2 = js_sys::Reflect::get(&params[2], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("param i32", key_2);
+        let value_2 = js_sys::Reflect::get(&params[2], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("-1", value_2);
+        let key_3 = js_sys::Reflect::get(&params[3], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("param u32", key_3);
+        let value_3 = js_sys::Reflect::get(&params[3], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("1", value_3);
+        let key_4 = js_sys::Reflect::get(&params[4], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("param i64", key_4);
+        let value_4 = js_sys::Reflect::get(&params[4], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("-2", value_4);
+        let key_5 = js_sys::Reflect::get(&params[5], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("param u64", key_5);
+        let value_5 = js_sys::Reflect::get(&params[5], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("2", value_5);
+        let key_6 = js_sys::Reflect::get(&params[6], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("param f32", key_6);
+        let value_6 = js_sys::Reflect::get(&params[6], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("-1", value_6);
+        let key_7 = js_sys::Reflect::get(&params[7], &JsValue::from("key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("param f64", key_7);
+        let value_7 = js_sys::Reflect::get(&params[7], &JsValue::from("value"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("1", value_7);
 
         let data = &node.data();
         assert_eq!(2, data.len());
@@ -927,24 +1033,29 @@ mod tests {
             .unwrap()
             .as_f64()
             .unwrap();
-        assert_eq!(100.0, y_0);
+        assert_eq!(2.0, y_0);
         let x_1 = js_sys::Reflect::get(&data[1], &JsValue::from("x"))
             .unwrap()
             .as_f64()
             .unwrap();
-        assert_eq!(2.0, x_1);
+        assert_eq!(3.0, x_1);
         let y_1 = js_sys::Reflect::get(&data[1], &JsValue::from("y"))
             .unwrap()
             .as_f64()
             .unwrap();
-        assert_eq!(200.0, y_1);
+        assert_eq!(4.0, y_1);
 
         let metadata = &node.metadata();
-        let metadata_value = js_sys::Reflect::get(&metadata, &JsValue::from("x.unit"))
+        let metadata_value0 = js_sys::Reflect::get(&metadata, &JsValue::from("mk0"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("X unit", metadata_value);
+        assert_eq!("mv0", metadata_value0);
+        let metadata_value1 = js_sys::Reflect::get(&metadata, &JsValue::from("mk1"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("mv1", metadata_value1);
 
         let table = &node.table();
         let column_names = js_sys::Reflect::get(&table, &JsValue::from("columnNames")).unwrap();
@@ -955,31 +1066,159 @@ mod tests {
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Col key 0", column_key_0);
+        assert_eq!("col key", column_key_0);
         let column_name_0 = js_sys::Reflect::get(&column_0, &JsValue::from("value"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Col name 0", column_name_0);
+        assert_eq!("col name", column_name_0);
         let table_rows = js_sys::Reflect::get(&table, &JsValue::from("rows")).unwrap();
         let rows = js_sys::Array::from(&table_rows);
-        assert_eq!(1, rows.length());
+        assert_eq!(8, rows.length());
         let row_0 = rows.get(0);
-        let cell_value_0 = js_sys::Reflect::get(&row_0, &JsValue::from("Col key 0"))
+        let cell_value_0 = js_sys::Reflect::get(&row_0, &JsValue::from("col key"))
             .unwrap()
             .as_string()
             .unwrap();
-        assert_eq!("Cell value 0", cell_value_0);
+        assert_eq!("String value", cell_value_0);
+        let row_1 = rows.get(1);
+        let cell_value_1 = js_sys::Reflect::get(&row_1, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("true", cell_value_1);
+        let row_2 = rows.get(2);
+        let cell_value_2 = js_sys::Reflect::get(&row_2, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("-1", cell_value_2);
+        let row_3 = rows.get(3);
+        let cell_value_3 = js_sys::Reflect::get(&row_3, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("1", cell_value_3);
+        let row_4 = rows.get(4);
+        let cell_value_4 = js_sys::Reflect::get(&row_4, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("-2", cell_value_4);
+        let row_5 = rows.get(5);
+        let cell_value_5 = js_sys::Reflect::get(&row_5, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("2", cell_value_5);
+        let row_6 = rows.get(6);
+        let cell_value_6 = js_sys::Reflect::get(&row_6, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("-1", cell_value_6);
+        let row_7 = rows.get(7);
+        let cell_value_7 = js_sys::Reflect::get(&row_7, &JsValue::from("col key"))
+            .unwrap()
+            .as_string()
+            .unwrap();
+        assert_eq!("1", cell_value_7);
 
         let child_node_names = &node.child_node_names();
         assert_eq!(2, data.len());
         assert_eq!(
-            "Child node name 0",
+            "child node name 0",
             &child_node_names[0].as_string().unwrap()
         );
         assert_eq!(
-            "Child node name 1",
+            "child node name 1",
             &child_node_names[1].as_string().unwrap()
         );
+    }
+
+    // no #[test] as this test cannot run outside a browser engine
+    #[wasm_bindgen_test]
+    fn js_reader_exports_to_blob() {
+        let stub_reader: Box<dyn Reader> = Box::new(StubReader {});
+        let reader = JsReader::from(stub_reader);
+        let mut blob_writer = JsBlobWriter::new();
+
+        reader
+            .export("Json", &mut blob_writer)
+            .map_err(|_e| "Export failed.")
+            .unwrap();
+        let blob = blob_writer
+            .into_blob()
+            .map_err(|_e| "Blob creation failed.")
+            .unwrap();
+        let reader = FileReaderSync::new().unwrap();
+        let array_buffer = reader.read_as_array_buffer(&blob).unwrap();
+        // see: https://stackoverflow.com/questions/67464060/converting-jsvalue-to-vecu8
+        let uint8_array = Uint8Array::new(&array_buffer);
+        let mut buf = vec![0u8; blob.size() as usize]; // Vec::<u8>::with_capacity(blob.size() as usize);
+        uint8_array.copy_to(&mut buf[0..blob.size() as usize]);
+
+        assert!(blob.size() as usize > 0);
+
+        // https://docs.rs/serde_json/latest/serde_json/fn.to_value.html#example
+        let output_str = String::from_utf8(buf).unwrap();
+        let output_json: serde_json::Value = serde_json::from_str(&output_str).unwrap();
+
+        let expected = json!({
+            "name": "root node name",
+            "parameters": [
+                {"key": "param String", "value": "abc"},
+                {"key": "param bool", "value": true},
+                {"key": "param i32", "value": -1},
+                {"key": "param u32", "value": 1},
+                {"key": "param i64", "value": -2},
+                {"key": "param u64", "value": 2},
+                {"key": "param f32", "value": -1.0},
+                {"key": "param f64", "value": 1.0},
+            ],
+            "data": [
+                // { "x": 1.0, "y": 2.0},
+                // { "x": 3.0, "y": 4.0},
+                [1.0, 2.0],
+                [3.0, 4.0],
+            ],
+            "metadata": [
+                ["mk0", "mv0"],
+                ["mk1", "mv1"],
+            ],
+            "table": {
+                // "columnNames": [{"col key": "col name"}],
+                "columnNames": [{"key": "col key", "name": "col name"}],
+                "rows": [
+                    {"col key": "String value"},
+                    {"col key": true},
+                    {"col key": -1},
+                    {"col key": 1},
+                    {"col key": -2},
+                    {"col key": 2},
+                    {"col key": -1.0},
+                    {"col key": 1.0}
+                ],
+            },
+            // "children": [],
+            "children": [
+                {
+                    "name": "child node name 0",
+                    "parameters": [], "data": [],
+                    "metadata": [],
+                    "table": {"columnNames": [], "rows": []},
+                    "children": [],
+                },
+                {
+                    "name": "child node name 1",
+                    "parameters": [], "data": [],
+                    "metadata": [],
+                    "table": {"columnNames": [], "rows": []},
+                    "children": [],
+                },
+            ]
+        });
+
+        assert_eq!(expected, output_json);
     }
 }

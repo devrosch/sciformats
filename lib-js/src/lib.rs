@@ -6,7 +6,7 @@ pub mod spc;
 #[cfg(feature = "nodejs")]
 use js_sys::{Array, Number, Object, Uint8Array};
 #[cfg(not(feature = "nodejs"))]
-use js_sys::{Array, Number, Uint8Array};
+use js_sys::{Array, Uint8Array};
 use sf_rs::{
     api::{ExportFormat, Node, Reader, SeekRead},
     common::{BufSeekRead, ScannerRepository},
@@ -197,7 +197,6 @@ impl JsReader {
         str_formats
     }
 
-    #[wasm_bindgen(js_name = export)]
     pub fn export(&self, format: &str, writer: &mut JsBlobWriter) -> Result<(), JsError> {
         match format {
             "Json" => self
@@ -504,13 +503,6 @@ impl Seek for FdSeekRead {
     }
 }
 
-#[cfg(not(feature = "nodejs"))]
-impl Seek for FdSeekRead {
-    fn seek(&mut self, _pos: SeekFrom) -> std::io::Result<u64> {
-        unimplemented!()
-    }
-}
-
 #[cfg(feature = "nodejs")]
 impl Read for FdSeekRead {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
@@ -525,13 +517,6 @@ impl Read for FdSeekRead {
             .slice(0, num_bytes_read as u32)
             .copy_to(&mut buf[0..num_bytes_read]);
         Ok(num_bytes_read)
-    }
-}
-
-#[cfg(not(feature = "nodejs"))]
-impl Read for FdSeekRead {
-    fn read(&mut self, _buf: &mut [u8]) -> std::io::Result<usize> {
-        unimplemented!()
     }
 }
 
@@ -552,56 +537,16 @@ impl JsScannerRepository {
     pub fn js_is_recognized(&self, path: &str, input: &JsValue) -> bool {
         // use web_sys::console;
         // console::log_1(&"JsScannerRepository.js_is_recognized_generic() entered.".into());
-        if input.has_type::<Blob>() {
-            // console::log_1(&"JsScannerRepository input type recognized as Blob.".into());
-            let typed_input = Blob::from(input.clone());
-            let seek_read = Box::new(BlobSeekRead::new(typed_input));
-            self.repo
-                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
-        } else if input.has_type::<Uint8Array>() {
-            // console::log_1(&"JsScannerRepository input type recognized as Uint8Array.".into());
-            let typed_input = Uint8Array::from(input.clone());
-            let seek_read = Box::new(Uint8ArraySeekRead::new(typed_input));
-            self.repo
-                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
-        } else if input.has_type::<Array>() {
-            // console::log_1(&"JsScannerRepository input type recognized as Array.".into());
-            let typed_input = Array::from(input);
-            let seek_read = Box::new(ArraySeekRead::new(typed_input));
-            self.repo
-                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
-        } else if input.has_type::<Number>() {
-            // console::log_1(&"JsScannerRepository input type recognized as Number.".into());
-            let typed_input = Number::from(input.clone()).as_f64().unwrap() as i32;
-            let seek_read = Box::new(FdSeekRead::new(typed_input));
-            self.repo
-                .is_recognized(path, &mut (seek_read as Box<dyn SeekRead>))
-        } else {
-            // console::log_1(&"JsScannerRepository input type not recognized.".into());
-            false
+        let seek_read_res = map_js_input_to_seekread(input);
+        match seek_read_res {
+            Err(_err) => false,
+            Ok(mut seek_read) => self.repo.is_recognized(path, &mut seek_read),
         }
     }
 
     #[wasm_bindgen(js_name = getReader)]
     pub fn js_get_reader(&self, path: &str, input: &JsValue) -> Result<JsReader, JsError> {
-        let seek_read: Box<dyn SeekRead> = if input.has_type::<Blob>() {
-            Box::new(BlobSeekRead::new(Blob::from(input.clone())))
-        } else if input.has_type::<Uint8Array>() {
-            Box::new(Uint8ArraySeekRead::new(Uint8Array::from(input.clone())))
-        } else if input.has_type::<Array>() {
-            Box::new(ArraySeekRead::new(Array::from(input)))
-        } else if input.has_type::<Number>() {
-            Box::new(FdSeekRead::new(
-                Number::from(input.clone()).as_f64().unwrap() as i32,
-            ))
-        } else {
-            let input_type = input.js_typeof().as_string().unwrap_or_default();
-            return Err(JsError::new(&format!(
-                "Illegal input type for ScannerRepository::getReader(): {}",
-                input_type
-            )));
-        };
-
+        let seek_read = map_js_input_to_seekread(input)?;
         let input = BufSeekRead::new(seek_read);
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
@@ -700,25 +645,36 @@ macro_rules! create_js_scanner {
 }
 pub(crate) use create_js_scanner;
 
-// todo: Macro required? Just return Reader? Missing export functions.
 /// Create JS wrapper for Reader
 macro_rules! create_js_reader {
-    ($reader_name:ident, $js_reader_name:ident) => {
+    ($scanner_name:ident, $reader_name:ident, $js_reader_name:ident) => {
         // concat!("Js", $reader_name) does not seem to work for identifiers
         #[wasm_bindgen(js_name = $reader_name)]
         pub struct $js_reader_name {
-            reader: $reader_name,
+            reader: JsReader,
         }
 
         #[wasm_bindgen(js_class = $reader_name)]
         impl $js_reader_name {
+            #[wasm_bindgen(constructor)]
+            pub fn js_new(path: &str, input: &Blob) -> Result<$js_reader_name, JsError> {
+                let scanner = $scanner_name::js_new();
+                let reader = scanner.js_get_reader(path, input)?;
+                Ok(Self { reader })
+            }
+
             #[wasm_bindgen(js_name = read)]
             pub fn js_read(&self, path: &str) -> Result<JsNode, JsError> {
-                let read_result = self.reader.read(path);
-                match read_result {
-                    Ok(node) => Ok(node.into()),
-                    Err(error) => Err(map_to_js_err(&*error)),
-                }
+                self.reader.read(path)
+            }
+
+            #[wasm_bindgen(js_name = getExportFormats)]
+            pub fn get_export_formats(&self) -> Vec<String> {
+                self.reader.get_export_formats()
+            }
+
+            pub fn export(&self, format: &str, writer: &mut JsBlobWriter) -> Result<(), JsError> {
+                self.reader.export(format, writer)
             }
         }
     };
@@ -734,6 +690,49 @@ pub(crate) fn map_to_js_err(error: &dyn Error) -> JsError {
         source = nested_err.source();
     }
     JsError::new(&err_str)
+}
+
+#[cfg(feature = "nodejs")]
+pub(crate) fn map_js_input_to_seekread(input: &JsValue) -> Result<Box<dyn SeekRead>, JsError> {
+    let seek_read: Box<dyn SeekRead> = if input.has_type::<Blob>() {
+        Box::new(BlobSeekRead::new(Blob::from(input.clone())))
+    } else if input.has_type::<Uint8Array>() {
+        Box::new(Uint8ArraySeekRead::new(Uint8Array::from(input.clone())))
+    } else if input.has_type::<Array>() {
+        Box::new(ArraySeekRead::new(Array::from(input)))
+    // only available in Node.js environment
+    } else if input.has_type::<Number>() {
+        Box::new(FdSeekRead::new(
+            Number::from(input.clone()).as_f64().unwrap() as i32,
+        ))
+    } else {
+        let input_type = input.js_typeof().as_string().unwrap_or_default();
+        return Err(JsError::new(&format!(
+            "Illegal input type for data: {}",
+            input_type
+        )));
+    };
+
+    Ok(seek_read)
+}
+
+#[cfg(not(feature = "nodejs"))]
+pub(crate) fn map_js_input_to_seekread(input: &JsValue) -> Result<Box<dyn SeekRead>, JsError> {
+    let seek_read: Box<dyn SeekRead> = if input.has_type::<Blob>() {
+        Box::new(BlobSeekRead::new(Blob::from(input.clone())))
+    } else if input.has_type::<Uint8Array>() {
+        Box::new(Uint8ArraySeekRead::new(Uint8Array::from(input.clone())))
+    } else if input.has_type::<Array>() {
+        Box::new(ArraySeekRead::new(Array::from(input)))
+    } else {
+        let input_type = input.js_typeof().as_string().unwrap_or_default();
+        return Err(JsError::new(&format!(
+            "Illegal input type for data: {}",
+            input_type
+        )));
+    };
+
+    Ok(seek_read)
 }
 
 #[cfg(test)]
@@ -763,9 +762,9 @@ mod tests {
             Ok(Box::new(StubReader {}))
         }
     }
+    create_js_scanner!(StubScanner, JsStubScanner);
 
     struct StubReader {}
-
     impl Reader for StubReader {
         fn read(&self, path: &str) -> Result<Node, Box<dyn std::error::Error>> {
             let root = Node {
@@ -835,6 +834,7 @@ mod tests {
             }
         }
     }
+    create_js_reader!(JsStubScanner, StubReader, JsStubReader);
 
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
@@ -918,7 +918,6 @@ mod tests {
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
     fn js_scanner_calls_wrapped_scanner() {
-        create_js_scanner!(StubScanner, JsStubScanner);
         let scanner = JsStubScanner::js_new();
         let blob = Blob::new().unwrap();
         assert!(scanner.js_is_recognized("some_path.xyz", &blob));
@@ -927,11 +926,9 @@ mod tests {
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
     fn js_reader_calls_wrapped_reader() {
-        create_js_reader!(StubReader, JsStubReader);
-        let reader = JsStubReader {
-            reader: StubReader {},
-        };
-
+        let reader = JsStubReader::js_new("", &Blob::new().unwrap())
+            .map_err(|_e| "Error instantiating StubReader.")
+            .unwrap();
         let node = reader
             .js_read("/")
             .map_err(|_e| "Stub read failed.")
@@ -1139,8 +1136,9 @@ mod tests {
     // no #[test] as this test cannot run outside a browser engine
     #[wasm_bindgen_test]
     fn js_reader_exports_to_blob() {
-        let stub_reader: Box<dyn Reader> = Box::new(StubReader {});
-        let reader = JsReader::from(stub_reader);
+        let reader = JsStubReader::js_new("", &Blob::new().unwrap())
+            .map_err(|_e| "Error instantiating StubReader.")
+            .unwrap();
         let mut blob_writer = JsBlobWriter::new();
 
         reader

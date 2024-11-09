@@ -21,6 +21,8 @@ const mockReader: Reader = {
     childNodeNames: [],
     free: jest.fn(),
   })),
+  getExportFormats: jest.fn(() => []),
+  export: jest.fn(() => { throw new Error('Unsupported') }),
   free: jest.fn(),
 };
 

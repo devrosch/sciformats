@@ -11,7 +11,7 @@ netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
 strum = { version = "0.26", features = ["derive"] }
 binrw = "0.14"
 chrono = "0.4"
-quick-xml = { version = "0.36", features = ['encoding'] }
+quick-xml = { version = "0.37", features = ['encoding'] }
 base64 = "0.22"
 regex = "1.11"
 lazy_static = "1.5"

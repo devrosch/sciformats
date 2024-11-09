@@ -8,6 +8,7 @@ use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn jdx_read_valid_succeeds() {
     let (path, file) = open_file(COMPOUND_FILE);

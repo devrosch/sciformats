@@ -4,6 +4,7 @@ use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn gaml_parse_valid_file_succeeds() {
     let (path, file) = open_file(GAML_SAMPLE_FILE);

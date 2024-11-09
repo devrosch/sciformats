@@ -15,6 +15,7 @@ open_files!(
     )
 );
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn scanner_repository_recognizes_valid_file() {
     let repo = ScannerRepository::init_all();
@@ -23,6 +24,7 @@ fn scanner_repository_recognizes_valid_file() {
     assert!(repo.is_recognized(&path, &mut input));
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn scanner_repository_rejects_invalid_file() {
     let repo = ScannerRepository::init_all();
@@ -31,6 +33,7 @@ fn scanner_repository_rejects_invalid_file() {
     assert!(!repo.is_recognized(&path, &mut input));
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn scanner_repository_returns_reader_for_valid_file() {
     let repo = ScannerRepository::init_all();
@@ -39,6 +42,7 @@ fn scanner_repository_returns_reader_for_valid_file() {
     assert!(repo.get_reader(&path, input).is_ok());
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn scanner_repository_returns_error_for_valid_file() {
     let repo = ScannerRepository::init_all();
@@ -47,6 +51,7 @@ fn scanner_repository_returns_error_for_valid_file() {
     assert!(repo.get_reader(&path, input).is_err());
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn buf_seek_read_allows_valid_file_reading() {
     let repo = ScannerRepository::init_all();

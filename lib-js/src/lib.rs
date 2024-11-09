@@ -837,6 +837,7 @@ mod tests {
     create_js_reader!(JsStubScanner, StubReader, JsStubReader);
 
     // no #[test] as this test cannot run outside a browser engine
+    #[allow(dead_code)]
     #[wasm_bindgen_test]
     fn map_node_to_js() {
         let node = Node {
@@ -869,6 +870,7 @@ mod tests {
     }
 
     // no #[test] as this test cannot run outside a browser engine
+    #[allow(dead_code)]
     #[wasm_bindgen_test]
     async fn blob_wrapper_mimicks_std_seek_read_behavior() {
         let arr: [u8; 3] = [1, 2, 3];
@@ -916,6 +918,7 @@ mod tests {
     }
 
     // no #[test] as this test cannot run outside a browser engine
+    #[allow(dead_code)]
     #[wasm_bindgen_test]
     fn js_scanner_calls_wrapped_scanner() {
         let scanner = JsStubScanner::js_new();
@@ -924,6 +927,7 @@ mod tests {
     }
 
     // no #[test] as this test cannot run outside a browser engine
+    #[allow(dead_code)]
     #[wasm_bindgen_test]
     fn js_reader_calls_wrapped_reader() {
         let reader = JsStubReader::js_new("", &Blob::new().unwrap())
@@ -1134,6 +1138,7 @@ mod tests {
     }
 
     // no #[test] as this test cannot run outside a browser engine
+    #[allow(dead_code)]
     #[wasm_bindgen_test]
     fn js_reader_exports_to_blob() {
         let reader = JsStubReader::js_new("", &Blob::new().unwrap())

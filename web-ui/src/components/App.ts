@@ -20,6 +20,7 @@ import ParserRepository from 'model/ParserRepository';
 import ErrorParser from 'model/ErrorParser';
 import 'components/dialogs/AboutDialog'; // for side effects
 import AboutDialog from 'components/dialogs/AboutDialog';
+import { extractFilename } from 'util/UrlUtils';
 
 const template = `
   <sf-splash open></sf-splash>
@@ -160,13 +161,43 @@ export default class App extends HTMLElement {
     }
   }
 
-  handleFileExportRequested(message: Message) {
+  async handleFileExportRequested(message: Message) {
     console.log(
       `App::handleFileExportRequested() -> ${message.name}: ${message.detail}`,
     );
-    console.log('File export currently not supported.');
-    const dialog = this.querySelector('sf-dialog') as Dialog;
-    dialog.showMessage('File export currently not supported.');
+
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const parser = tree.getSelectedNodeParser();
+    if (parser === null) {
+      const dialog = this.querySelector('sf-dialog') as Dialog;
+      dialog.showMessage('No node selected.');
+      return;
+    }
+
+    const blob = await parser.export('Json');
+    console.log(`Blob size: ${blob.size}`);
+
+    const originalFileName = extractFilename(parser.rootUrl);
+    let pos = originalFileName.lastIndexOf('.');
+    const exportFileName =
+      originalFileName.substring(0, pos < 0 ? originalFileName.length : pos) +
+      '.json';
+    this.#saveFile(exportFileName, blob);
+  }
+
+  #saveFile(fileName: string, blob: Blob) {
+    console.log('File save');
+    // save blob via anchor element with download attribute and object URL
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    // remove element
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(a.href);
+    }, 100);
   }
 
   handleShowAboutDialog() {

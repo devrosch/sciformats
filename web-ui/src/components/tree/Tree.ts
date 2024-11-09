@@ -192,6 +192,14 @@ export default class Tree extends HTMLElement {
     return node === null ? null : (node as TreeNode);
   }
 
+  getSelectedNodeParser(): Parser | null {
+    const node = this.#findSelectedNode();
+    if (node instanceof TreeNode) {
+      return node.parser;
+    }
+    return null;
+  }
+
   static #findEventNode(e: KeyboardEvent): TreeNode | null {
     let node = e.target;
     while (node !== null && node !== undefined && !(node instanceof TreeNode)) {

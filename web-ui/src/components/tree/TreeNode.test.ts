@@ -85,6 +85,11 @@ class StubParser implements Parser {
     };
   }
 
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  async export(format: string): Promise<Blob> {
+    throw new Error('Export not implemented.');
+  }
+
   async close() {
     // noop
   }
@@ -185,6 +190,10 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
     read: () => {
       throw new Error('Test Error.');
     },
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    export: (format: string): Promise<Blob> => {
+      throw new Error('Export not implemented.');
+    },
     close: () => new Promise<void>(() => {}),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
@@ -211,6 +220,10 @@ test('sf-tree-node displays error in case of data loading error', (done) => {
     open: () => new Promise<void>(() => {}),
     read: () => {
       throw new Error('Test Error.');
+    },
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    export: (format: string): Promise<Blob> => {
+      throw new Error('Export not implemented.');
     },
     close: () => new Promise<void>(() => {}),
   } as Parser;

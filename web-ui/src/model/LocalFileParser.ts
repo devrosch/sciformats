@@ -4,6 +4,8 @@ import WorkerResponse from 'worker/WorkerResponse';
 import WorkerFileInfo from 'worker/WorkerFileInfo';
 import WorkerFileUrl from 'worker/WorkerFileUrl';
 import Parser from './Parser';
+import WorkerExportInfo from 'worker/WorkerExportInfo';
+import WorkerExport from 'worker/WorkerExport';
 
 export default class LocalFileParser implements Parser {
   #worker: Worker;
@@ -60,6 +62,18 @@ export default class LocalFileParser implements Parser {
       table: json.table,
       childNodeNames: json.childNodeNames,
     };
+  }
+
+  async export(format: string) {
+    const payload: WorkerExportInfo = { url: this.#rootUrl.toString(), format };
+    const response = (await postMessage(
+      this.#worker,
+      'export',
+      payload,
+    )) as WorkerResponse;
+    const data = response.detail as WorkerExport;
+    const blob = data.blob;
+    return blob;
   }
 
   async close() {

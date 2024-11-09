@@ -1,3 +1,4 @@
+import WorkerExport from './WorkerExport';
 import WorkerFileUrl from './WorkerFileUrl';
 import WorkerNodeData from './WorkerNodeData';
 import WorkerStatus from './WorkerStatus';
@@ -12,6 +13,7 @@ export default class WorkerResponse {
     | { recognized: boolean }
     | WorkerFileUrl
     | WorkerNodeData
+    | WorkerExport
     | string;
 
   constructor(
@@ -22,6 +24,7 @@ export default class WorkerResponse {
       | { recognized: boolean }
       | WorkerFileUrl
       | WorkerNodeData
+      | WorkerExport
       | string,
   ) {
     this.name = name;

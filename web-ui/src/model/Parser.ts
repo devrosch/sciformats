@@ -28,6 +28,14 @@ export default interface Parser {
   read(url: URL): Promise<NodeData>;
 
   /**
+   * Exports the contents of the file in the format provided.
+   * @param {string} format The format to export the data to.
+   * Currently "Json" is the only supported export format.
+   * @returns {Blob} A blob containing the export.
+   */
+  export(format: string): Promise<Blob>;
+
+  /**
    * Closes the data set.
    * After closing it cannot be re-opened and no more reads are possible.
    * @returns {void}

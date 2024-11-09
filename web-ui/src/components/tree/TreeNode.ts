@@ -170,6 +170,10 @@ export default class TreeNode extends HTMLElement {
     return prefixedName.substring(hyphenIndex + 1);
   }
 
+  get parser() {
+    return this.#parser;
+  }
+
   setSelected(selected: boolean) {
     this.#selected = selected;
     if (selected) {

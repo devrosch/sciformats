@@ -5,6 +5,8 @@ import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
+import WorkerExportInfo from './WorkerExportInfo';
+import WorkerExport from './WorkerExport';
 
 const errorHandlingWrapper = (
   request: WorkerRequest,
@@ -78,6 +80,31 @@ export const onRead = (
     rawNode.free();
 
     return new WorkerResponse('read', request.correlationId, node);
+  });
+
+export const onExport = (
+  request: WorkerRequest,
+  openFiles: Map<string, sf_rs.Reader>,
+) =>
+  errorHandlingWrapper(request, () => {
+    const fileUrl = request.detail as WorkerExportInfo;
+    const url = fileUrl.url;
+    const format = fileUrl.format;
+    const rootUrl = new URL(url.toString().split('#')[0]);
+    const reader = openFiles.get(rootUrl.toString());
+    if (typeof reader === 'undefined') {
+      throw new Error(`No open file found for ${url}`);
+    }
+
+    const writer = new sf_rs.BlobWriter();
+    reader.export(format, writer);
+    const blob = writer.intoBlob();
+    // Do no call writer.free() as writer.intoBlob() consumes the writer.
+    const data: WorkerExport = {
+      blob,
+    };
+
+    return new WorkerResponse('export', request.correlationId, data);
   });
 
 export const onClose = (

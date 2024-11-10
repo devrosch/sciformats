@@ -62,6 +62,7 @@ The following custom events are dispatched or listened to by components.
 | sf-file-opened              | { url: `URL` }        | App         |                                                               |
 | sf-file-close-requested     | `null`                | NavBar      | App                                                           |
 | sf-file-export-requested    | json                  | NavBar      | App                                                           |
+| sf-file-exported            | { url: `URL` }        | App         |                                                               |
 | sf-file-closed              | { url: `URL` }        | App         |                                                               |
 | sf-file-close-all-requested | null                  | NavBar      | App                                                           |
 | sf-show-about-requested     | null                  | NavBar      | App                                                           |
@@ -89,13 +90,14 @@ The communication is asynchronous. The worker expects a `WorkerRequest`object an
 
 The correlationId can be used to match requests to responses. The worker sends exactly one response for each request. The event names and details vary as outlined in the table below. Note: URLs are passed as strings as they cannot be default serialized.
 
-| Request Name | Request Details  | Response Name | Response Details          | Main Thread Object |
-| ------------ | ---------------- | ------------- | ------------------------- | ------------------ |
-| status       | null             | status        | `WorkerStatus`            | WorkerUtils        |
-| scan         | `WorkerFileInfo` | scanned       | { recognized: `boolean` } | ParserRepository   |
-| open         | `WorkerFileInfo` | opened        | `WorkerFileUrl`           | ParserRepository   |
-| close        | `WorkerFileUrl`  | closed        | `WorkerFileUrl`           | LocalFileParser    |
-| read         | `WorkerFileUrl`  | read          | `WorkerNodeData`          | LocalFileParser    |
+| Request Name | Request Details    | Response Name | Response Details          | Main Thread Object |
+| ------------ | ------------------ | ------------- | ------------------------- | ------------------ |
+| status       | null               | status        | `WorkerStatus`            | WorkerUtils        |
+| scan         | `WorkerFileInfo`   | scanned       | { recognized: `boolean` } | ParserRepository   |
+| open         | `WorkerFileInfo`   | opened        | `WorkerFileUrl`           | ParserRepository   |
+| export       | `WorkerExportInfo` | exported      | `WorkerExport`            | LocalFileParser    |
+| close        | `WorkerFileUrl`    | closed        | `WorkerFileUrl`           | LocalFileParser    |
+| read         | `WorkerFileUrl`    | read          | `WorkerNodeData`          | LocalFileParser    |
 
 For any request, in case of error, an error message is sent instead of the response from above table.
 

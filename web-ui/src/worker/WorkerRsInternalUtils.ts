@@ -104,7 +104,7 @@ export const onExport = (
       blob,
     };
 
-    return new WorkerResponse('export', request.correlationId, data);
+    return new WorkerResponse('exported', request.correlationId, data);
   });
 
 export const onClose = (

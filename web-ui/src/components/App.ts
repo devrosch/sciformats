@@ -160,6 +160,7 @@ export default class App extends HTMLElement {
         '.json';
       // save/download export
       this.#saveFile(exportFileName, blob);
+      this.#channel.dispatch('sf-file-exported', { url: rootUrl });
     } catch (error: any) {
       const detail = error.detail ? error.detail : error;
       const errorMessage = `Error exporting file "${fileName}": ${detail}`;

@@ -120,27 +120,68 @@ export default class App extends HTMLElement {
         try {
           /* eslint-disable-next-line no-await-in-loop */
           await parser.open();
-          // let tree = this.querySelector('.content .tree sf-tree') as Tree;
           tree.addRootNode(parser);
-          // const rootNode = new TreeNode(parser, parser.rootUrl);
-          // this.#children.push(rootNode);
           this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
-          // this.render();
         } catch (error: any) {
           const detail = error.detail ? error.detail : error;
-          const errorMessage = `Error opening file: "${file.name}". ${detail}`;
+          const errorMessage = `Error opening file "${file.name}": ${detail}`;
           this.#channel.dispatch('sf-error', errorMessage);
           console.error(errorMessage);
           // show node with error in tree
           const errorParser = new ErrorParser(parser.rootUrl, errorMessage);
-          // let tree = this.querySelector('.content .tree sf-tree') as Tree;
           tree.addRootNode(errorParser);
-          // const rootNode = new TreeNode(errorParser, errorParser.rootUrl);
-          // this.#children.push(rootNode);
-          // this.render();
         }
       }
     }
+  }
+
+  async handleFileExportRequested(message: Message) {
+    console.log(
+      `App::handleFileExportRequested() -> ${message.name}: ${message.detail}`,
+    );
+
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const parser = tree.getSelectedNodeParser();
+    const rootUrl = parser?.rootUrl;
+    const fileName = rootUrl ? extractFilename(rootUrl) : '';
+    if (parser === null) {
+      const dialog = this.querySelector('sf-dialog') as Dialog;
+      dialog.showMessage('No node selected.');
+      return;
+    }
+
+    try {
+      const blob = await parser.export('Json');
+      // for export file replace extension with ".json" or add ".json" if no extension
+      const originalFileName = extractFilename(parser.rootUrl);
+      let pos = originalFileName.lastIndexOf('.');
+      const exportFileName =
+        originalFileName.substring(0, pos < 0 ? originalFileName.length : pos) +
+        '.json';
+      // save/download export
+      this.#saveFile(exportFileName, blob);
+    } catch (error: any) {
+      const detail = error.detail ? error.detail : error;
+      const errorMessage = `Error exporting file "${fileName}": ${detail}`;
+      this.#channel.dispatch('sf-error', errorMessage);
+      const dialog = this.querySelector('sf-dialog') as Dialog;
+      dialog.showMessage(errorMessage);
+    }
+  }
+
+  #saveFile(fileName: string, blob: Blob) {
+    console.log('File save');
+    // save blob via anchor element with download attribute and object URL
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    // remove element
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(a.href);
+    }, 100);
   }
 
   handleFileCloseRequested() {
@@ -159,45 +200,6 @@ export default class App extends HTMLElement {
     for (const url of urls) {
       this.#channel.dispatch('sf-file-closed', { url });
     }
-  }
-
-  async handleFileExportRequested(message: Message) {
-    console.log(
-      `App::handleFileExportRequested() -> ${message.name}: ${message.detail}`,
-    );
-
-    const tree = this.querySelector('.content .tree sf-tree') as Tree;
-    const parser = tree.getSelectedNodeParser();
-    if (parser === null) {
-      const dialog = this.querySelector('sf-dialog') as Dialog;
-      dialog.showMessage('No node selected.');
-      return;
-    }
-
-    const blob = await parser.export('Json');
-    console.log(`Blob size: ${blob.size}`);
-
-    const originalFileName = extractFilename(parser.rootUrl);
-    let pos = originalFileName.lastIndexOf('.');
-    const exportFileName =
-      originalFileName.substring(0, pos < 0 ? originalFileName.length : pos) +
-      '.json';
-    this.#saveFile(exportFileName, blob);
-  }
-
-  #saveFile(fileName: string, blob: Blob) {
-    console.log('File save');
-    // save blob via anchor element with download attribute and object URL
-    let a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    // remove element
-    setTimeout(() => {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(a.href);
-    }, 100);
   }
 
   handleShowAboutDialog() {

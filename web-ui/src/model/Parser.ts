@@ -33,7 +33,7 @@ export default interface Parser {
    * Currently "Json" is the only supported export format.
    * @returns {Blob} A blob containing the export.
    */
-  export(format: string): Promise<Blob>;
+  export(format: 'Json'): Promise<Blob>;
 
   /**
    * Closes the data set.

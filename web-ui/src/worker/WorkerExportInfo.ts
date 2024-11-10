@@ -10,9 +10,9 @@ type WorkerExportInfo = {
   url: string;
 
   /**
-   * The format to export into.
+   * The format to export into. Currently "Json" is the only supported export format.
    */
-  format: string;
+  format: 'Json';
 };
 
 export default WorkerExportInfo;

@@ -64,7 +64,7 @@ export default class LocalFileParser implements Parser {
     };
   }
 
-  async export(format: string) {
+  async export(format: 'Json') {
     const payload: WorkerExportInfo = { url: this.#rootUrl.toString(), format };
     const response = (await postMessage(
       this.#worker,

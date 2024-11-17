@@ -37,6 +37,7 @@
       "!src/model/LocalParserRepository.ts",
       "!src/worker/Worker.ts",
       "!src/worker/WorkerRs.ts",
+      "!src/util/FileUtils.ts",
       "!src/util/WorkerUtils.ts"
     ],
     "setupFiles": [

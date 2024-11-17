@@ -20,6 +20,7 @@ import ParserRepository from 'model/ParserRepository';
 import ErrorParser from 'model/ErrorParser';
 import 'components/dialogs/AboutDialog'; // for side effects
 import AboutDialog from 'components/dialogs/AboutDialog';
+import { saveFile } from 'util/FileUtils';
 import { extractFilename } from 'util/UrlUtils';
 
 const template = `
@@ -159,7 +160,7 @@ export default class App extends HTMLElement {
         originalFileName.substring(0, pos < 0 ? originalFileName.length : pos) +
         '.json';
       // save/download export
-      this.#saveFile(exportFileName, blob);
+      saveFile(exportFileName, blob);
       this.#channel.dispatch('sf-file-exported', { url: rootUrl });
     } catch (error: any) {
       const detail = error.detail ? error.detail : error;
@@ -168,21 +169,6 @@ export default class App extends HTMLElement {
       const dialog = this.querySelector('sf-dialog') as Dialog;
       dialog.showMessage(errorMessage);
     }
-  }
-
-  #saveFile(fileName: string, blob: Blob) {
-    console.log('File save');
-    // save blob via anchor element with download attribute and object URL
-    let a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    // remove element
-    setTimeout(() => {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(a.href);
-    }, 100);
   }
 
   handleFileCloseRequested() {

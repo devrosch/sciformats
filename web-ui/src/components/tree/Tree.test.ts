@@ -264,3 +264,11 @@ test('sf-tree removeAllNodes() removes all root nodes', async () => {
 
   expect(nodes.tree.children.length).toEqual(0);
 });
+
+test('sf-tree getSelectedNodeParser() returns the parser for the selected node', async () => {
+  const nodes = await prepareTreeStructure();
+
+  const parser = nodes.tree.getSelectedNodeParser();
+
+  expect(parser).not.toBeFalsy();
+});

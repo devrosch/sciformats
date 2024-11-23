@@ -197,16 +197,57 @@ impl JsReader {
         str_formats
     }
 
-    pub fn export(&self, format: &str, writer: &mut JsBlobWriter) -> Result<(), JsError> {
+    // pub fn export(&self, format: &str, writer: &mut JsBlobWriter) -> Result<(), JsError> {
+    //     match format {
+    //         "Json" => self
+    //             .reader
+    //             .export(ExportFormat::Json, writer)
+    //             .map_err(|e| map_to_js_err(&*e)),
+    //         _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
+    //     }
+    // }
+
+    #[wasm_bindgen(js_name = exportToBlob)]
+    pub fn export_to_blob(&self, format: &str) -> Result<Blob, JsError> {
+        let mut writer = JsBlobWriter::new();
+        self.export(format, &mut writer)?;
+        Ok(writer.into_blob()?)
+    }
+
+    #[cfg(feature = "nodejs")]
+    #[wasm_bindgen(js_name = exportToFile)]
+    pub fn export_to_file(&self, format: &str, fd: i32) -> Result<(), JsError> {
+        let mut writer = JsFdWriter::new(fd);
+        self.export(format, &mut writer)?;
+        Ok(())
+    }
+
+    fn export(&self, format: &str, mut writer: &mut impl Write) -> Result<(), JsError> {
         match format {
             "Json" => self
                 .reader
-                .export(ExportFormat::Json, writer)
+                .export(ExportFormat::Json, &mut writer)
                 .map_err(|e| map_to_js_err(&*e)),
             _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
-        }
+        }?;
+        Ok(())
     }
 }
+
+// pub(crate) fn map_js_input_to_write(input: &JsValue) -> Result<Box<dyn Write>, JsError> {
+//     let input_type = input.js_typeof().as_string().unwrap_or_default();
+//     let writer: Box<dyn Write> = if let Ok(w) = JsFdWriter::try_from_js_value(input.clone()) {
+//         Box::new(w)
+//     } else if let Ok(w) = JsBlobWriter::try_from_js_value(input.clone()) {
+//         Box::new(w)
+//     } else {
+//         return Err(JsError::new(&format!(
+//             "Illegal input type for writer: {}",
+//             input_type
+//         )));
+//     };
+//     Ok(writer)
+// }
 
 // -------------------------------------------------
 // Read
@@ -438,6 +479,12 @@ extern "C" {
     #[wasm_bindgen(js_name = readSync)]
     fn read_sync(fd: i32, buffer: &Uint8Array, offset: u32, length: u32, position: i64) -> Number;
 
+    #[wasm_bindgen(js_name = writeSync)]
+    fn write_sync(fd: i32, buffer: &Uint8Array, offset: u32, length: u32, position: i64) -> Number;
+
+    #[wasm_bindgen(js_name = fsyncSync)]
+    fn fsync_sync(fd: i32);
+
     // #[wasm_bindgen(js_name = closeSync)]
     // fn close_sync(fd: i32);
 }
@@ -530,7 +577,7 @@ impl JsScannerRepository {
     #[wasm_bindgen(constructor)]
     pub fn init_all() -> JsScannerRepository {
         let repo = ScannerRepository::init_all();
-        JsScannerRepository { repo }
+        Self { repo }
     }
 
     #[wasm_bindgen(js_name = isRecognized)]
@@ -568,8 +615,8 @@ pub struct JsBlobWriter {
 #[wasm_bindgen(js_class = BlobWriter)]
 impl JsBlobWriter {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> JsBlobWriter {
-        JsBlobWriter { data: vec![] }
+    pub fn new() -> Self {
+        Self { data: vec![] }
     }
 
     #[wasm_bindgen(js_name = intoBlob)]
@@ -600,6 +647,44 @@ impl Write for JsBlobWriter {
 
     fn flush(&mut self) -> std::io::Result<()> {
         // noop
+        Ok(())
+    }
+}
+
+#[cfg(feature = "nodejs")]
+#[wasm_bindgen(js_name = FdWriter)]
+pub struct JsFdWriter {
+    /// File descriptor
+    fd: i32,
+    /// Position in file
+    pos: u64,
+}
+
+#[cfg(feature = "nodejs")]
+#[wasm_bindgen(js_class = FdWriter)]
+impl JsFdWriter {
+    #[wasm_bindgen(constructor)]
+    pub fn new(fd: i32) -> JsFdWriter {
+        Self { fd, pos: 0 }
+    }
+}
+
+#[cfg(feature = "nodejs")]
+impl Write for JsFdWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let uint8_array = Uint8Array::new_with_length(buf.len() as u32);
+        uint8_array.copy_from(buf);
+        let num_bytes = write_sync(self.fd, &uint8_array, 0, buf.len() as u32, self.pos as i64);
+        let bytes_written = num_bytes.as_f64().ok_or(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "write_sync() did not return a number.",
+        ))? as u64;
+        self.pos += bytes_written;
+        Ok(bytes_written as usize)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        fsync_sync(self.fd);
         Ok(())
     }
 }
@@ -673,8 +758,15 @@ macro_rules! create_js_reader {
                 self.reader.get_export_formats()
             }
 
-            pub fn export(&self, format: &str, writer: &mut JsBlobWriter) -> Result<(), JsError> {
-                self.reader.export(format, writer)
+            #[wasm_bindgen(js_name = exportToBlob)]
+            pub fn export_to_blob(&self, format: &str) -> Result<Blob, JsError> {
+                self.reader.export_to_blob(format)
+            }
+
+            #[cfg(feature = "nodejs")]
+            #[wasm_bindgen(js_name = exportToFile)]
+            pub fn export_to_file(&self, format: &str, fd: i32) -> Result<(), JsError> {
+                self.reader.export_to_file(format, fd)
             }
         }
     };
@@ -1144,15 +1236,9 @@ mod tests {
         let reader = JsStubReader::js_new("", &Blob::new().unwrap())
             .map_err(|_e| "Error instantiating StubReader.")
             .unwrap();
-        let mut blob_writer = JsBlobWriter::new();
-
-        reader
-            .export("Json", &mut blob_writer)
+        let blob = reader
+            .export_to_blob("Json")
             .map_err(|_e| "Export failed.")
-            .unwrap();
-        let blob = blob_writer
-            .into_blob()
-            .map_err(|_e| "Blob creation failed.")
             .unwrap();
         let reader = FileReaderSync::new().unwrap();
         let array_buffer = reader.read_as_array_buffer(&blob).unwrap();

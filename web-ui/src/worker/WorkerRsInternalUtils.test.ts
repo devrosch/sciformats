@@ -1,4 +1,4 @@
-import { ScannerRepository, Reader, BlobWriter } from 'sf_rs';
+import { ScannerRepository, Reader } from 'sf_rs';
 import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerRsInternalUtils from './WorkerRsInternalUtils';
 import WorkerRequest from './WorkerRequest';
@@ -17,13 +17,6 @@ jest.mock('sf_rs', () => ({
   ScannerRepository: jest.fn(() => ({
     isRecognized: jest.fn(() => true),
     getReader: jest.fn(() => mockReader),
-    free: jest.fn(),
-  })),
-  BlobWriter: jest.fn(() => ({
-    intoBlob: jest.fn(() => {
-      const blob = new Blob([JSON.stringify(exportStub)]);
-      return blob;
-    }),
     free: jest.fn(),
   })),
 }));
@@ -48,8 +41,9 @@ const mockReader: Reader = {
   })),
   getExportFormats: jest.fn(() => ['Json']),
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  export: jest.fn((format: 'Json', writer: BlobWriter) => {
-    // noop
+  exportToBlob: jest.fn((format: 'Json') => {
+    const blob = new Blob([JSON.stringify(exportStub)]);
+    return blob;
   }),
   free: jest.fn(),
 };
@@ -132,12 +126,12 @@ test('onExport() uses Reader to generate export', async () => {
   openFiles.set(rootUrl.toString(), mockReader);
 
   expect(openFiles.size).toBe(1);
-  expect(mockReader.export).toHaveBeenCalledTimes(0);
+  expect(mockReader.exportToBlob).toHaveBeenCalledTimes(0);
   expect(mockReader.free).toHaveBeenCalledTimes(0);
 
   const response = WorkerRsInternalUtils.onExport(requestStub, openFiles);
 
-  expect(mockReader.export).toHaveBeenCalledTimes(1);
+  expect(mockReader.exportToBlob).toHaveBeenCalledTimes(1);
   expect(mockReader.free).toHaveBeenCalledTimes(0);
 
   expect(response.name).toBe('exported');

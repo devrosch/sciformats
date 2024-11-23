@@ -96,10 +96,7 @@ export const onExport = (
       throw new Error(`No open file found for ${url}`);
     }
 
-    const writer = new sf_rs.BlobWriter();
-    reader.export(format, writer);
-    const blob = writer.intoBlob();
-    // Do no call writer.free() as writer.intoBlob() consumes the writer.
+    const blob = reader.exportToBlob(format);
     const data: WorkerExport = {
       blob,
     };

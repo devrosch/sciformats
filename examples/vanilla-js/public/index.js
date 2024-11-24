@@ -31,19 +31,10 @@ async function read(file) {
   const fileName = file.name;
   const buffer = await file.arrayBuffer();
   console.log(`file name: ${fileName}`);
-  console.log(`"${fileName}" content size: ${buffer.byteLength}`);
-
-  // As a Uint8Array is expected, an ArrayBuffer cannot be used directly.
-  var uint8Array = new Uint8Array(buffer);
-  const isRecognized = scannerRepository.isRecognized(fileName, uint8Array);
-  if (!isRecognized) {
-    console.log(`Unrecognized file format: : ${fileName}`);
+  const reader = getReader(fileName, buffer);
+  if (!reader) {
     return;
   }
-  console.log(`Recognized file format: ${fileName}`);
-
-  // Get the suitable reader for reading file contents.
-  const reader = scannerRepository.getReader(fileName, uint8Array);
 
   showName(fileName);
   // Read contents starting with the root node ''.
@@ -63,6 +54,32 @@ function readNodes(reader, searchPath) {
     readNodes(reader, childPath);
   }
 }
+
+// ------------------
+// Export.
+// ------------------
+
+window.onFileExport = async function (fileInputElementId) {
+  const fileInput = document.getElementById(fileInputElementId);
+  if (fileInput === null || typeof fileInput === 'undefined') {
+    return;
+  }
+  const selectedFiles = fileInput.files;
+  if (selectedFiles === null || typeof selectedFiles === 'undefined' || selectedFiles.length === 0) {
+    return;
+  }
+  const file = selectedFiles[0];
+
+  const buffer = await file.arrayBuffer();
+  const reader = getReader(file.name, buffer);
+  if (!reader) {
+    return;
+  }
+
+  const exportFileName = file.name + '.json';
+  const blob = reader.exportToBlob('Json');
+  saveFile(exportFileName, blob);
+};
 
 // ------------------
 // Utility functions.
@@ -97,3 +114,32 @@ function showNodeContent(path, node) {
   fileNameEl.value += `table: ${JSON.stringify(node.table)}\n`;
   fileNameEl.value += `childNodeNames: ${JSON.stringify(node.childNodeNames)}\n\n`;
 }
+
+function getReader(fileName, buffer) {
+  // As a Uint8Array is expected, an ArrayBuffer cannot be used directly.
+  var uint8Array = new Uint8Array(buffer);
+  const isRecognized = scannerRepository.isRecognized(fileName, uint8Array);
+  if (!isRecognized) {
+    console.log(`Unrecognized file format: : ${fileName}`);
+    return;
+  }
+  console.log(`Recognized file format: ${fileName}`);
+
+  // Get the suitable reader for reading file contents.
+  const reader = scannerRepository.getReader(fileName, uint8Array);
+  return reader;
+}
+
+function saveFile(fileName, blob) {
+  // save blob via anchor element with download attribute and object URL
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  // remove element
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(a.href);
+  }, 100);
+};

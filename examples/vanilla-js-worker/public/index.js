@@ -19,10 +19,31 @@ window.onFileSelected = async function (input) {
   clearDisplay();
   const file = selectedFiles[0];
   // Send file to worker for processing.
-  worker.postMessage(file);
+  worker.postMessage({ command: 'read', file });
 };
 
+// ------------
+// Export data.
+// ------------
+
+window.onFileExport = async function (fileInputElementId) {
+  const fileInput = document.getElementById(fileInputElementId);
+  if (fileInput === null || typeof fileInput === 'undefined') {
+    return;
+  }
+  const selectedFiles = fileInput.files;
+  if (selectedFiles === null || typeof selectedFiles === 'undefined' || selectedFiles.length === 0) {
+    return;
+  }
+  const file = selectedFiles[0];
+
+  worker.postMessage({ command: 'export', file });
+};
+
+// ----------------------------
 // Process data sent by worker.
+// ----------------------------
+
 worker.onmessage = (e) => {
   console.log(`Message received from worker: ${JSON.stringify(e.data)}`);
 
@@ -35,6 +56,10 @@ worker.onmessage = (e) => {
     case 'showNodeContent':
       const { path, node } = data;
       showNodeContent(path, node);
+      break;
+    case 'saveBlob':
+      const { name, blob } = data;
+      saveFile(name, blob);
       break;
     default:
       console.log(`Error, command not recognized: ${JSON.stringify(command)}. Data: ${JSON.stringify(data)}.`);
@@ -74,3 +99,17 @@ function showNodeContent(path, node) {
   fileNameEl.value += `table: ${JSON.stringify(node.table)}\n`;
   fileNameEl.value += `childNodeNames: ${JSON.stringify(node.childNodeNames)}\n\n`;
 }
+
+function saveFile(fileName, blob) {
+  // save blob via anchor element with download attribute and object URL
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  // remove element
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(a.href);
+  }, 100);
+};

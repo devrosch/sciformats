@@ -16,33 +16,48 @@ const scannerRepository = new ScannerRepository();
 
 // Process data sent by main thread.
 onmessage = (e) => {
+  const { command, file } = e.data;
   console.log(`Worker: received from main script: ${JSON.stringify(e.data)}`);
-  const file = e.data;
-  read(file)
+
+  switch (command) {
+    case 'read':
+      read(file)
+      break;
+    case 'export':
+      exportFile(file);
+      break;
+    default:
+      console.log(`Error, command not recognized: ${JSON.stringify(command)}. Data: ${JSON.stringify(data)}.`);
+  }
 };
 
 const read = async (file) => {
-  // Read contents fully into memory.
   const fileName = file.name;
   console.log(`file name: ${fileName}`);
-  console.log(`"${fileName}" content size: ${file.size}`);
-
-  // A File is a Blob and can be used directly.
-  // Processing a Blob is only possible in a worker, not in the main thread.
-  const isRecognized = scannerRepository.isRecognized(fileName, file);
-  if (!isRecognized) {
-    console.log(`Unrecognized file format: : ${fileName}`);
+  const reader = getReader(fileName, file);
+  if (!reader) {
     return;
   }
-  console.log(`Recognized file format: ${fileName}`);
-
-  // Get the suitable reader for reading file contents.
-  const reader = scannerRepository.getReader(fileName, file);
 
   // Send file name to main thread for displaying.
   postMessage({ command: 'showName', data: fileName });
   // Read contents starting with the root node ''.
   readNodes(reader, '');
+}
+
+const exportFile = async (file) => {
+  const fileName = file.name;
+  console.log(`file name: ${fileName}`);
+  const reader = getReader(fileName, file);
+  if (!reader) {
+    return;
+  }
+
+  const exportFileName = fileName + '.json';
+  const blob = reader.exportToBlob('Json');
+
+  // Send file name to main thread for displaying.
+  postMessage({ command: 'saveBlob', data: { name: exportFileName, blob } });
 }
 
 // Iterate through all nodes depth first.
@@ -68,4 +83,19 @@ function readNodes(reader, searchPath) {
     const childPath = path + `/${i}`;
     readNodes(reader, childPath);
   }
+}
+
+function getReader(fileName, file) {
+  // A File is a Blob and can be used directly.
+  // Processing a Blob is only possible in a worker, not in the main thread.
+  const isRecognized = scannerRepository.isRecognized(fileName, file);
+  if (!isRecognized) {
+    console.log(`Unrecognized file format: : ${fileName}`);
+    return;
+  }
+  console.log(`Recognized file format: ${fileName}`);
+
+  // Get the suitable reader for reading file contents.
+  const reader = scannerRepository.getReader(fileName, file);
+  return reader;
 }

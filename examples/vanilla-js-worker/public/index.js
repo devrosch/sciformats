@@ -1,3 +1,6 @@
+// Note: For clarity the below examples use simplified error handling.
+// In a production application you should ensure that file descriptors get closed and readers get freed in all potential error cases.
+
 // -----------------------------
 // Initialize UI and web worker.
 // -----------------------------

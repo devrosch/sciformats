@@ -1,3 +1,6 @@
+// Note: For clarity the below examples use simplified error handling.
+// In a production application you should ensure that file descriptors get closed and readers get freed in all potential error cases.
+
 // -------------------
 // Initialize library.
 // -------------------
@@ -36,6 +39,7 @@ async function read(file) {
   showName(fileName);
   // Read contents starting with the root node ''.
   readNodes(reader, '');
+  reader.free();
 }
 
 // Iterate through all nodes depth first.
@@ -76,6 +80,7 @@ window.onFileExport = async function (fileInputElementId) {
   const exportFileName = file.name + '.json';
   const blob = reader.exportToBlob('Json');
   saveFile(exportFileName, blob);
+  reader.free();
 };
 
 // ------------------

@@ -1,3 +1,6 @@
+// Note: For clarity the below examples use simplified error handling.
+// In a production application you should ensure that file descriptors get closed and readers get freed in all potential error cases.
+
 // ------------------------------
 // Initialize library and worker.
 // ------------------------------
@@ -43,6 +46,7 @@ const read = async (file) => {
   postMessage({ command: 'showName', data: fileName });
   // Read contents starting with the root node ''.
   readNodes(reader, '');
+  reader.free();
 }
 
 const exportFile = async (file) => {
@@ -58,6 +62,7 @@ const exportFile = async (file) => {
 
   // Send file name to main thread for displaying.
   postMessage({ command: 'saveBlob', data: { name: exportFileName, blob } });
+  reader.free();
 }
 
 // Iterate through all nodes depth first.

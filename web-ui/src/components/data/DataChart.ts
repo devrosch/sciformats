@@ -45,14 +45,18 @@ export default class DataChart extends HTMLElement {
         pad: 10,
       },
       xaxis: {
-        title: '',
+        title: {
+          text: '',
+        },
         showgrid: true,
         zeroline: false,
         showline: true,
         autorange: true,
       },
       yaxis: {
-        title: '',
+        title: {
+          text: '',
+        },
         showgrid: true,
         zeroline: false,
         showline: true,
@@ -101,10 +105,10 @@ export default class DataChart extends HTMLElement {
     const xyData = DataChart.toXyArrays(data.xyData);
     this.#chartState.data.x = xyData.x;
     this.#chartState.data.y = xyData.y;
-    this.#chartState.layout.xaxis.title = DataChart.#extractXAxisTitle(
+    this.#chartState.layout.xaxis.title.text = DataChart.#extractXAxisTitle(
       data.metadata,
     );
-    this.#chartState.layout.yaxis.title = DataChart.#extractYAxisTitle(
+    this.#chartState.layout.yaxis.title.text = DataChart.#extractYAxisTitle(
       data.metadata,
     );
 

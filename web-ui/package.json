@@ -52,7 +52,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.22.20",
     "@babel/preset-typescript": "^7.23.0",
-    "@stylistic/eslint-plugin": "^3.0.1",
+    "@stylistic/eslint-plugin": "^4.0.0",
     "@types/jest": "^29.5.5",
     "@types/plotly.js-dist-min": "^2.3.2",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
@@ -71,7 +71,7 @@
     "webpack-dev-server": "^5.0.2"
   },
   "dependencies": {
-    "plotly.js-dist-min": "^2.35.3",
+    "plotly.js-dist-min": "^3.0.1",
     "sf_js": "file:../lib-js/pkg"
   },
   "browser": {

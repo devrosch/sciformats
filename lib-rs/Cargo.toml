@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }
 binrw = "0.14"
 chrono = "0.4"
 quick-xml = { version = "0.37", features = ['encoding'] }

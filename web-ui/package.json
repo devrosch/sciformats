@@ -20,7 +20,7 @@
       "^.+\\.[t|j]sx?$": "babel-jest"
     },
     "modulePaths": [
-      "<rootDir>/../lib-rs/pkg/"
+      "<rootDir>/../lib-js/pkg/"
     ],
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/src/assetMock.ts",
@@ -72,7 +72,7 @@
   },
   "dependencies": {
     "plotly.js-dist-min": "^2.35.3",
-    "sf_rs": "file:../lib-js/pkg"
+    "sf_js": "file:../lib-js/pkg"
   },
   "browser": {
     "crypto": false,

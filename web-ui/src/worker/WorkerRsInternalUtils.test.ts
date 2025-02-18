@@ -1,4 +1,4 @@
-import { ScannerRepository, Reader } from 'sf_rs';
+import { ScannerRepository, Reader } from 'sf_js';
 import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerRsInternalUtils from './WorkerRsInternalUtils';
 import WorkerRequest from './WorkerRequest';
@@ -13,7 +13,7 @@ const rootUrl = new URL(`file:///${uuid}/${filename}`);
 const nodeName = 'x';
 const url = new URL(`file:///${uuid}/${filename}#/${nodeName}`);
 
-jest.mock('sf_rs', () => ({
+jest.mock('sf_js', () => ({
   ScannerRepository: jest.fn(() => ({
     isRecognized: jest.fn(() => true),
     getReader: jest.fn(() => mockReader),

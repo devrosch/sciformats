@@ -9,7 +9,7 @@ const template = `
     <img src="${Logo}" class="sf-logo" alt="Logo">
     <div>
       <p>SciFormats</p>
-      <p>Copyright © 2022-2024 Robert Schiwon</p>
+      <p>Copyright © 2022-2025 Robert Schiwon</p>
     </div>
   </div>
   <p class="sf-initializing">

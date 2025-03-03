@@ -1,8 +1,9 @@
+use crate::json_exporter::JsonExporter;
 use std::{
     collections::HashMap,
     error::Error,
     fmt::Display,
-    io::{BufRead, Read, Seek},
+    io::{BufRead, Read, Seek, Write},
 };
 
 /// Abstraction for any kind of random access input.
@@ -62,6 +63,31 @@ pub trait Reader {
     ///
     /// * `path` - The path inside the data set identifying the Node.
     fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
+
+    /// Provides a list of the supported export formats for the reader.
+    ///
+    /// The canonical JSON format is provided for all readers. Specific readers
+    /// may override this method and provide additional export formats.
+    fn get_export_formats(&self) -> &'static [ExportFormat] {
+        &[ExportFormat::Json]
+    }
+
+    /// Exports data.
+    ///
+    /// # Arguments
+    ///
+    /// * `format` - The export format.
+    /// * `writer` - A writer to write the export to.
+    ///
+    /// Writes data in the export format to the writer. Returns an error in case of any issue.
+    fn export(&self, format: ExportFormat, writer: &mut dyn Write) -> Result<(), Box<dyn Error>> {
+        match format {
+            ExportFormat::Json => {
+                let mut exporter = JsonExporter::new(self);
+                exporter.write(writer)
+            }
+        }
+    }
 }
 
 /// A parameter value.
@@ -221,6 +247,19 @@ pub struct Node {
     pub metadata: Vec<(String, String)>,
     pub table: Option<Table>,
     pub child_node_names: Vec<String>,
+}
+
+/// A parameter value.
+#[derive(Debug, PartialEq)]
+pub enum ExportFormat {
+    /// Exporter to canonical JSON.
+    Json,
+}
+
+/// Exports data.
+pub trait Exporter {
+    fn get_name(&self) -> &'static str;
+    fn write(&mut self, writer: &mut dyn Write) -> Result<(), Box<dyn Error>>;
 }
 
 #[cfg(test)]

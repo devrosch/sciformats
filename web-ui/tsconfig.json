@@ -12,6 +12,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+    // https://stackoverflow.com/questions/70576818/angular-migrate-from-v12-to-v13-module-typescript-can-only-be-default-importe
+    "allowSyntheticDefaultImports": true,
     // https://stackoverflow.com/questions/40443806/webpack-resolve-alias-does-not-work-with-typescript
     // https://medium.com/@martin_hotell/type-safe-es2015-module-import-path-aliasing-with-webpack-typescript-and-jest-fe461347e010
     "baseUrl": "./",

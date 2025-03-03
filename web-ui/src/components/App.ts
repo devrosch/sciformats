@@ -20,6 +20,8 @@ import ParserRepository from 'model/ParserRepository';
 import ErrorParser from 'model/ErrorParser';
 import 'components/dialogs/AboutDialog'; // for side effects
 import AboutDialog from 'components/dialogs/AboutDialog';
+import { saveFile } from 'util/FileUtils';
+import { extractFilename } from 'util/UrlUtils';
 
 const template = `
   <sf-splash open></sf-splash>
@@ -119,33 +121,60 @@ export default class App extends HTMLElement {
         try {
           /* eslint-disable-next-line no-await-in-loop */
           await parser.open();
-          // let tree = this.querySelector('.content .tree sf-tree') as Tree;
           tree.addRootNode(parser);
-          // const rootNode = new TreeNode(parser, parser.rootUrl);
-          // this.#children.push(rootNode);
           this.#channel.dispatch('sf-file-opened', { url: parser.rootUrl });
-          // this.render();
         } catch (error: any) {
           const detail = error.detail ? error.detail : error;
-          const errorMessage = `Error opening file: "${file.name}". ${detail}`;
+          const errorMessage = `Error opening file "${file.name}": ${detail}`;
           this.#channel.dispatch('sf-error', errorMessage);
           console.error(errorMessage);
           // show node with error in tree
           const errorParser = new ErrorParser(parser.rootUrl, errorMessage);
-          // let tree = this.querySelector('.content .tree sf-tree') as Tree;
           tree.addRootNode(errorParser);
-          // const rootNode = new TreeNode(errorParser, errorParser.rootUrl);
-          // this.#children.push(rootNode);
-          // this.render();
         }
       }
     }
   }
 
+  async handleFileExportRequested(message: Message) {
+    console.log(
+      `App::handleFileExportRequested() -> ${message.name}: ${message.detail}`,
+    );
+
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const parser = tree.getSelectedNodeParser();
+    const rootUrl = parser?.rootUrl;
+    const fileName = rootUrl ? extractFilename(rootUrl) : '';
+    if (parser === null) {
+      const dialog = this.querySelector('sf-dialog') as Dialog;
+      dialog.showMessage('No node selected.');
+      return;
+    }
+
+    try {
+      const blob = await parser.export('Json');
+      // for export file replace extension with ".json" or add ".json" if no extension
+      const originalFileName = extractFilename(parser.rootUrl);
+      const pos = originalFileName.lastIndexOf('.');
+      const exportFileName =
+        originalFileName.substring(0, pos < 0 ? originalFileName.length : pos) +
+        '.json';
+      // save/download export
+      saveFile(exportFileName, blob);
+      this.#channel.dispatch('sf-file-exported', { url: rootUrl });
+    } catch (error: any) {
+      const detail = error.detail ? error.detail : error;
+      const errorMessage = `Error exporting file "${fileName}": ${detail}`;
+      this.#channel.dispatch('sf-error', errorMessage);
+      const dialog = this.querySelector('sf-dialog') as Dialog;
+      dialog.showMessage(errorMessage);
+    }
+  }
+
   handleFileCloseRequested() {
     console.log('App::handleFileCloseRequested()');
-    let tree = this.querySelector('.content .tree sf-tree') as Tree;
-    let url = tree.removeSelectedNode();
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const url = tree.removeSelectedNode();
     if (url !== null) {
       this.#channel.dispatch('sf-file-closed', { url });
     }
@@ -153,20 +182,11 @@ export default class App extends HTMLElement {
 
   handleFileCloseAllRequested() {
     console.log('handleFileCloseAllRequested()');
-    let tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
     const urls = tree.removeAllNodes();
     for (const url of urls) {
       this.#channel.dispatch('sf-file-closed', { url });
     }
-  }
-
-  handleFileExportRequested(message: Message) {
-    console.log(
-      `App::handleFileExportRequested() -> ${message.name}: ${message.detail}`,
-    );
-    console.log('File export currently not supported.');
-    const dialog = this.querySelector('sf-dialog') as Dialog;
-    dialog.showMessage('File export currently not supported.');
   }
 
   handleShowAboutDialog() {

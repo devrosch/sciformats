@@ -1,1 +1,4 @@
 /node_modules
+# ignore files in "exports" dir but keep dir
+/exports/*
+!/exports/.gitkeep

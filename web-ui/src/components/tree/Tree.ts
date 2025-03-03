@@ -98,7 +98,7 @@ export default class Tree extends HTMLElement {
   }
 
   removeAllNodes(): URL[] {
-    let urls = [];
+    const urls = [];
     for (const child of this.#children) {
       const childUrl = child.getAttribute('url');
       urls.push(new URL(childUrl!));
@@ -190,6 +190,14 @@ export default class Tree extends HTMLElement {
       `sf-tree-node[url="${this.#selectedNodeUrl}"]`,
     );
     return node === null ? null : (node as TreeNode);
+  }
+
+  getSelectedNodeParser(): Parser | null {
+    const node = this.#findSelectedNode();
+    if (node instanceof TreeNode) {
+      return node.parser;
+    }
+    return null;
   }
 
   static #findEventNode(e: KeyboardEvent): TreeNode | null {

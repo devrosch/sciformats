@@ -45,14 +45,18 @@ export default class DataChart extends HTMLElement {
         pad: 10,
       },
       xaxis: {
-        title: '',
+        title: {
+          text: '',
+        },
         showgrid: true,
         zeroline: false,
         showline: true,
         autorange: true,
       },
       yaxis: {
-        title: '',
+        title: {
+          text: '',
+        },
         showgrid: true,
         zeroline: false,
         showline: true,
@@ -96,15 +100,15 @@ export default class DataChart extends HTMLElement {
 
   set data(data: {
     xyData: { x: number; y: number }[];
-    metadata: { [key: string]: string };
+    metadata: Record<string, string>;
   }) {
     const xyData = DataChart.toXyArrays(data.xyData);
     this.#chartState.data.x = xyData.x;
     this.#chartState.data.y = xyData.y;
-    this.#chartState.layout.xaxis.title = DataChart.#extractXAxisTitle(
+    this.#chartState.layout.xaxis.title.text = DataChart.#extractXAxisTitle(
       data.metadata,
     );
-    this.#chartState.layout.yaxis.title = DataChart.#extractYAxisTitle(
+    this.#chartState.layout.yaxis.title.text = DataChart.#extractYAxisTitle(
       data.metadata,
     );
 
@@ -149,7 +153,7 @@ export default class DataChart extends HTMLElement {
     this.render();
   }
 
-  static #extractXAxisTitle(metadata: { [key: string]: string }) {
+  static #extractXAxisTitle(metadata: Record<string, string>) {
     if (metadata === null || typeof metadata === 'undefined') {
       return '';
     }
@@ -173,7 +177,7 @@ export default class DataChart extends HTMLElement {
     return xTitle;
   }
 
-  static #extractYAxisTitle(metadata: { [key: string]: string }) {
+  static #extractYAxisTitle(metadata: Record<string, string>) {
     if (metadata === null || typeof metadata === 'undefined') {
       return '';
     }

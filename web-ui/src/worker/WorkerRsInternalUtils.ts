@@ -1,10 +1,12 @@
-import * as sf_rs from 'sf_rs';
+import * as sf_js from 'sf_js';
 import { extractFilename, extractHashPath } from 'util/UrlUtils';
 import WorkerFileInfo from './WorkerFileInfo';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
+import WorkerExportInfo from './WorkerExportInfo';
+import WorkerExport from './WorkerExport';
 
 const errorHandlingWrapper = (
   request: WorkerRequest,
@@ -33,7 +35,7 @@ const extractFromRequest = (request: WorkerRequest) => {
 
 export const onScan = (
   request: WorkerRequest,
-  scanner: sf_rs.ScannerRepository,
+  scanner: sf_js.ScannerRepository,
 ) =>
   errorHandlingWrapper(request, () => {
     const { fileInfo, fileName } = extractFromRequest(request);
@@ -43,8 +45,8 @@ export const onScan = (
 
 export const onOpen = (
   request: WorkerRequest,
-  scanner: sf_rs.ScannerRepository,
-  openFiles: Map<string, sf_rs.Reader>,
+  scanner: sf_js.ScannerRepository,
+  openFiles: Map<string, sf_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
@@ -57,7 +59,7 @@ export const onOpen = (
 
 export const onRead = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_rs.Reader>,
+  openFiles: Map<string, sf_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const { url, rootUrl } = extractFromRequest(request);
@@ -71,7 +73,7 @@ export const onRead = (
       url: url.toString(),
       parameters: rawNode.parameters,
       data: rawNode.data,
-      metadata: rawNode.metadata as { [key: string]: string },
+      metadata: rawNode.metadata as Record<string, string>,
       table: rawNode.table as { columnNames: []; rows: [] },
       childNodeNames: rawNode.childNodeNames,
     };
@@ -80,9 +82,31 @@ export const onRead = (
     return new WorkerResponse('read', request.correlationId, node);
   });
 
+export const onExport = (
+  request: WorkerRequest,
+  openFiles: Map<string, sf_js.Reader>,
+) =>
+  errorHandlingWrapper(request, () => {
+    const fileUrl = request.detail as WorkerExportInfo;
+    const url = fileUrl.url;
+    const format = fileUrl.format;
+    const rootUrl = new URL(url.toString().split('#')[0]);
+    const reader = openFiles.get(rootUrl.toString());
+    if (typeof reader === 'undefined') {
+      throw new Error(`No open file found for ${url}`);
+    }
+
+    const blob = reader.exportToBlob(format);
+    const data: WorkerExport = {
+      blob,
+    };
+
+    return new WorkerResponse('exported', request.correlationId, data);
+  });
+
 export const onClose = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_rs.Reader>,
+  openFiles: Map<string, sf_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const fileUrl = request.detail as WorkerFileUrl;

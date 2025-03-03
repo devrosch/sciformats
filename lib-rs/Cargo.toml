@@ -8,13 +8,15 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 netcdf3 = { git = "https://github.com/devrosch/netcdf3.git", branch = "main" }
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }
 binrw = "0.14"
 chrono = "0.4"
-quick-xml = { version = "0.36", features = ['encoding'] }
+quick-xml = { version = "0.37", features = ['encoding'] }
 base64 = "0.22"
 regex = "1.11"
 lazy_static = "1.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 # Uncomment the below lines to retain debug information in release build
 # ---------------------------------

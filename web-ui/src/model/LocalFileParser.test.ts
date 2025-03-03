@@ -2,6 +2,7 @@ import WorkerFileInfo from 'worker/WorkerFileInfo';
 import WorkerNodeData from 'worker/WorkerNodeData';
 import WorkerResponse from 'worker/WorkerResponse';
 import LocalFileParser from './LocalFileParser';
+import WorkerExport from 'worker/WorkerExport';
 
 const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
 const wrongUuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ff';
@@ -25,6 +26,9 @@ const workerNodeData: WorkerNodeData = {
   },
   childNodeNames: ['child 1', 'child 2'],
 };
+const workerExportData: WorkerExport = {
+  blob: new Blob(['{ name: "export" }']),
+};
 
 const mockOpenedResponse = new WorkerResponse('opened', '123', {
   url: rootUrl.toString(),
@@ -33,6 +37,7 @@ const mockClosedResponse = new WorkerResponse('closed', '123', {
   url: rootUrl.toString(),
 });
 const mockReadResponse = new WorkerResponse('read', '123', workerNodeData);
+const mockExportResponse = new WorkerResponse('read', '123', workerExportData);
 const mockErrorResponse = new WorkerResponse('error', '123', 'error message');
 
 jest.mock('util/WorkerUtils', () => ({
@@ -50,6 +55,9 @@ jest.mock('util/WorkerUtils', () => ({
         break;
       case 'read':
         response = mockReadResponse;
+        break;
+      case 'export':
+        response = mockExportResponse;
         break;
       default:
         break;
@@ -98,6 +106,13 @@ test('reading a local file succeeds', async () => {
   expect(node.data).toBe(workerNodeData.data);
   expect(node.parameters).toBe(workerNodeData.parameters);
   expect(node.childNodeNames).toBe(workerNodeData.childNodeNames);
+});
+
+test('exporting succeeds', async () => {
+  const parser = new LocalFileParser(worker, rootUrl, file);
+  const blob = await parser.export('Json');
+
+  expect(blob.size).toBeGreaterThan(0);
 });
 
 test('reading an illegal URL throws', async () => {

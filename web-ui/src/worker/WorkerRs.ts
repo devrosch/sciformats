@@ -1,11 +1,17 @@
-import * as sf_rs from 'sf_rs';
+import * as sf_js from 'sf_js';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerStatus from './WorkerStatus';
-import { onClose, onOpen, onRead, onScan } from './WorkerRsInternalUtils';
+import {
+  onClose,
+  onExport,
+  onOpen,
+  onRead,
+  onScan,
+} from './WorkerRsInternalUtils';
 
-const openFiles = new Map<string, sf_rs.Reader>();
-const scanner = new sf_rs.ScannerRepository();
+const openFiles = new Map<string, sf_js.Reader>();
+const scanner = new sf_js.ScannerRepository();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;
@@ -31,6 +37,10 @@ self.onmessage = (event) => {
     }
     case 'read': {
       self.postMessage(onRead(request, openFiles));
+      break;
+    }
+    case 'export': {
+      self.postMessage(onExport(request, openFiles));
       break;
     }
     case 'close': {

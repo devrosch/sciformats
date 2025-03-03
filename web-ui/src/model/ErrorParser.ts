@@ -22,10 +22,12 @@ export default class ErrorParser implements Parser {
     throw new Error(this.#error);
   }
 
-  async read() {
+  async read(): Promise<NodeData> {
     throw new Error(this.#error);
-    // somehow required so TS is satisfied
-    return {} as NodeData;
+  }
+
+  async export(): Promise<Blob> {
+    throw new Error(this.#error);
   }
 
   /* eslint-disable-next-line class-methods-use-this */

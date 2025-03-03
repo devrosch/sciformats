@@ -47,6 +47,8 @@ test('fails when tyring to remove a listener for a different channel', async () 
   const channel0 = CustomEventsMessageBus.getChannel(channelName0);
   const channel1 = CustomEventsMessageBus.getChannel(channelName1);
 
-  const handle0 = channel0.addListener(eventType, () => {});
+  const handle0 = channel0.addListener(eventType, () => {
+    /* noop */
+  });
   expect(() => channel1.removeListener(handle0)).toThrow();
 });

@@ -3,7 +3,7 @@ import Table from './Table';
 /**
  * Data representing a node/fragment in the data hierarchy.
  */
-type NodeData = {
+interface NodeData {
   /**
    * The URL identifying this data.
    */
@@ -22,7 +22,7 @@ type NodeData = {
   /**
    * Metadata key/value pairs.
    */
-  metadata: { [key: string]: string };
+  metadata: Record<string, string>;
 
   /**
    * A peak table.
@@ -33,6 +33,6 @@ type NodeData = {
    * Child nodes/fragments.
    */
   childNodeNames: string[];
-};
+}
 
 export default NodeData;

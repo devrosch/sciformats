@@ -23,6 +23,8 @@ sf_rs = { path = "../lib-rs" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 # Uncomment the below lines to retain debug information in release build
 # ---------------------------------

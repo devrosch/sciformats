@@ -1,15 +1,33 @@
-import { AndiScanner, Reader } from 'sf_rs';
+import { ScannerRepository, Reader } from 'sf_js';
 import WorkerFileInfo from './WorkerFileInfo';
 import * as WorkerRsInternalUtils from './WorkerRsInternalUtils';
 import WorkerRequest from './WorkerRequest';
 import WorkerFileUrl from './WorkerFileUrl';
 import WorkerNodeData from './WorkerNodeData';
+import WorkerExportInfo from './WorkerExportInfo';
+import WorkerExport from './WorkerExport';
 
 const uuid = 'aaaaaaaa-bbbb-cccc-dddd-1234567890ee';
 const filename = 'test.cdf';
 const rootUrl = new URL(`file:///${uuid}/${filename}`);
 const nodeName = 'x';
 const url = new URL(`file:///${uuid}/${filename}#/${nodeName}`);
+
+jest.mock('sf_js', () => ({
+  ScannerRepository: jest.fn(() => ({
+    isRecognized: jest.fn(() => true),
+    getReader: jest.fn(() => mockReader),
+    free: jest.fn(),
+  })),
+}));
+
+const exportStub = {
+  name: 'export name',
+  data: [],
+  metadata: [],
+  table: null,
+  childNodeNames: [],
+};
 
 const mockReader: Reader = {
   read: jest.fn(() => ({
@@ -21,16 +39,14 @@ const mockReader: Reader = {
     childNodeNames: [],
     free: jest.fn(),
   })),
+  getExportFormats: jest.fn(() => ['Json']),
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  exportToBlob: jest.fn((format: 'Json') => {
+    const blob = new Blob([JSON.stringify(exportStub)]);
+    return blob;
+  }),
   free: jest.fn(),
 };
-
-jest.mock('sf_rs', () => ({
-  AndiScanner: jest.fn(() => ({
-    isRecognized: jest.fn(() => true),
-    getReader: jest.fn(() => mockReader),
-    free: jest.fn(),
-  })),
-}));
 
 const fileInfoStub: WorkerFileInfo = {
   url: rootUrl.toString(),
@@ -47,7 +63,7 @@ afterEach(() => {
 
 test('onScan() uses Scanner to scan if a file could be parsed', async () => {
   const requestStub = new WorkerRequest('scan', '123', fileInfoStub);
-  const mockScanner = new AndiScanner();
+  const mockScanner = new ScannerRepository();
 
   const response = WorkerRsInternalUtils.onScan(requestStub, mockScanner);
 
@@ -68,7 +84,7 @@ test('onScan() returns error for illegal input', async () => {
     blob: new Blob(),
   };
   const requestStub = new WorkerRequest('scan', '123', illegalFileInfoStub);
-  const mockScanner = new AndiScanner();
+  const mockScanner = new ScannerRepository();
 
   const response = WorkerRsInternalUtils.onScan(requestStub, mockScanner);
 
@@ -78,7 +94,7 @@ test('onScan() returns error for illegal input', async () => {
 
 test('onOpen() uses Scanner to populate openFiles map', async () => {
   const requestStub = new WorkerRequest('open', '123', fileInfoStub);
-  const mockScanner = new AndiScanner();
+  const mockScanner = new ScannerRepository();
   const openFiles = new Map<string, Reader>();
 
   const response = WorkerRsInternalUtils.onOpen(
@@ -98,6 +114,33 @@ test('onOpen() uses Scanner to populate openFiles map', async () => {
   expect(responseDetail.url).toEqual(rootUrl.toString());
   expect(openFiles.size).toBe(1);
   expect(openFiles.keys().next().value).toEqual(rootUrl.toString());
+});
+
+test('onExport() uses Reader to generate export', async () => {
+  const exportInfo: WorkerExportInfo = {
+    url: rootUrl.toString(),
+    format: 'Json',
+  };
+  const requestStub = new WorkerRequest('export', '123', exportInfo);
+  const openFiles = new Map<string, Reader>();
+  openFiles.set(rootUrl.toString(), mockReader);
+
+  expect(openFiles.size).toBe(1);
+  expect(mockReader.exportToBlob).toHaveBeenCalledTimes(0);
+  expect(mockReader.free).toHaveBeenCalledTimes(0);
+
+  const response = WorkerRsInternalUtils.onExport(requestStub, openFiles);
+
+  expect(mockReader.exportToBlob).toHaveBeenCalledTimes(1);
+  expect(mockReader.free).toHaveBeenCalledTimes(0);
+
+  expect(response.name).toBe('exported');
+  expect(response.correlationId).toBe(requestStub.correlationId);
+  expect(response.detail).toHaveProperty('blob');
+  const responseDetail = response.detail as WorkerExport;
+  expect(responseDetail.blob.size).toBeGreaterThan(0);
+  // blob.text() is not supported by jest, so checking the blob length has to suffice
+  expect(responseDetail.blob.size).toBe(JSON.stringify(exportStub).length);
 });
 
 test('onOpen() returns error if exception occurs', async () => {

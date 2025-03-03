@@ -1,5 +1,5 @@
 lib-rs:build:
-  image: rust:1.74
+  image: rust:1.84
   stage: build
   script:
     - cd lib-rs
@@ -9,7 +9,7 @@ lib-rs:build:
       - lib-rs/target/debug
 
 lib-rs:format:
-  image: rust:1.74
+  image: rust:1.84
   stage: test
   script:
     - cd lib-rs
@@ -17,7 +17,7 @@ lib-rs:format:
     - cargo fmt --check
 
 lib-rs:lint:
-  image: rust:1.74
+  image: rust:1.84
   stage: test
   script:
     - cd lib-rs
@@ -25,14 +25,14 @@ lib-rs:lint:
     - cargo clippy
 
 lib-rs:test:
-  image: rust:1.74
+  image: rust:1.84
   stage: test
   script:
     - cd lib-rs
     - cargo test
 
 lib-rs:outdated:
-  image: rust:1.74
+  image: rust:1.84
   stage: test
   script:
     - cd lib-rs
@@ -40,7 +40,7 @@ lib-rs:outdated:
   allow_failure: true
 
 lib-rs:coverage:
-  image: rust:1.74
+  image: rust:1.84
   stage: test
   script:
     - cd lib-rs
@@ -53,7 +53,7 @@ lib-rs:coverage:
       - lib-rs/target/debug/coverage
 
 lib-rs:release:
-  image: rust:1.74
+  image: rust:1.84
   stage: release
   script:
     - cd lib-rs

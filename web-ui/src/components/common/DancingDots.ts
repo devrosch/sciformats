@@ -11,10 +11,6 @@ const template = `
 export default class DancingDots extends HTMLElement {
   #initialized = false;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

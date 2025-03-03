@@ -3,8 +3,8 @@ import './Dialog.css';
 
 export default class Dialog extends HTMLElement {
   #initialized = false;
-  #open: boolean = false;
-  #message: string = '';
+  #open = false;
+  #message = '';
 
   constructor() {
     super();

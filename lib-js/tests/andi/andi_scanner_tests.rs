@@ -4,6 +4,7 @@ use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn andi_scanner_recognizes_valid_chrom_file() {
     let scanner = AndiScanner::new();
@@ -11,6 +12,7 @@ fn andi_scanner_recognizes_valid_chrom_file() {
     assert!(scanner.is_recognized(&path, &mut file));
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn andi_scanner_recognizes_valid_ms_file() {
     let scanner = AndiScanner::new();

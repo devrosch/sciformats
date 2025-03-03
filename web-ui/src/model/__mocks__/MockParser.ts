@@ -43,7 +43,12 @@ export default class MockParser implements Parser {
     });
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars, class-methods-use-this */
+  async export(format: string): Promise<Blob> {
+    throw new Error('Export not implemented.');
+  }
+
+  /* eslint-disable-next-line class-methods-use-this */
   async close() {
     // noop
   }

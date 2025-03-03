@@ -7,6 +7,7 @@ use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn andi_ms_read_valid_file_succeeds() {
     let (path, file) = open_file(ANDI_MS_CENTROID);

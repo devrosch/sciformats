@@ -85,6 +85,11 @@ class StubParser implements Parser {
     };
   }
 
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  async export(format: string): Promise<Blob> {
+    throw new Error('Export not implemented.');
+  }
+
   async close() {
     // noop
   }
@@ -161,7 +166,7 @@ test('sf-tree-node generates sf-tree-node-data-updated events', (done) => {
   const dataReadEvent = 'sf-tree-node-data-updated';
 
   const channel = CustomEventsMessageBus.getDefaultChannel();
-  let handle: any;
+  let handle: any = null;
   const listener = (message: Message) => {
     try {
       channel.removeListener(handle);
@@ -181,16 +186,26 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
   const errorEvent = 'sf-error';
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
-    open: () => new Promise<void>(() => {}),
+    open: () =>
+      new Promise<void>(() => {
+        /* noop */
+      }),
     read: () => {
       throw new Error('Test Error.');
     },
-    close: () => new Promise<void>(() => {}),
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    export: (format: string): Promise<Blob> => {
+      throw new Error('Export not implemented.');
+    },
+    close: () =>
+      new Promise<void>(() => {
+        /* noop */
+      }),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
 
   const channel = CustomEventsMessageBus.getDefaultChannel();
-  let handle: any;
+  let handle: any = null;
   const listener = (message: Message) => {
     try {
       channel.removeListener(handle);
@@ -208,11 +223,21 @@ test('sf-tree-node generates sf-error events in case of data loading error', (do
 test('sf-tree-node displays error in case of data loading error', (done) => {
   const mockParser = {
     rootUrl: new URL('https://dummy#/'),
-    open: () => new Promise<void>(() => {}),
+    open: () =>
+      new Promise<void>(() => {
+        /* noop */
+      }),
     read: () => {
       throw new Error('Test Error.');
     },
-    close: () => new Promise<void>(() => {}),
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    export: (format: string): Promise<Blob> => {
+      throw new Error('Export not implemented.');
+    },
+    close: () =>
+      new Promise<void>(() => {
+        /* noop */
+      }),
   } as Parser;
   treeNode = new TreeNode(mockParser, mockParser.rootUrl);
   document.body.append(treeNode);

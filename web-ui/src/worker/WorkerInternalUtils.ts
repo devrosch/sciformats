@@ -221,7 +221,7 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   // metadata
   const metadata = node.metadata;
   const metadataKeys = metadata.keys();
-  const jsonMetadata: { [key: string]: string } = {};
+  const jsonMetadata: Record<string, string> = {};
   for (let i = 0; i < metadataKeys.size(); i += 1) {
     const key = metadataKeys.get(i);
     const value = metadata.get(key);
@@ -249,7 +249,7 @@ export const nodeToJson = (url: URL, node: Module.Node): WorkerNodeData => {
   const rows = table.rows;
   const rowCount = rows.size();
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
-    const jsonRow: { [key: string]: string } = {};
+    const jsonRow: Record<string, string> = {};
     const row = rows.get(rowIndex);
     for (const column of jsonTable.columnNames) {
       const columnKey = column.key;

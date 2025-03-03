@@ -1,3 +1,4 @@
+/* eslint-disable-next-line @typescript-eslint/no-extraneous-class */
 class SysInfoProvider {
   /**
    * Detects the current Operating System.

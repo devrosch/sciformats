@@ -73,7 +73,7 @@ export const onRead = (
       url: url.toString(),
       parameters: rawNode.parameters,
       data: rawNode.data,
-      metadata: rawNode.metadata as { [key: string]: string },
+      metadata: rawNode.metadata as Record<string, string>,
       table: rawNode.table as { columnNames: []; rows: [] },
       childNodeNames: rawNode.childNodeNames,
     };

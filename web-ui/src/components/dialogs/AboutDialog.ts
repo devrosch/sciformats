@@ -39,7 +39,7 @@ const template = `
 export default class AboutDialog extends HTMLElement {
   #initialized = false;
 
-  #open: boolean = false;
+  #open = false;
 
   constructor() {
     super();

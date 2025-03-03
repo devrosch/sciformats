@@ -1,7 +1,7 @@
 /**
  * URL representing a file.
  */
-type WorkerExportInfo = {
+interface WorkerExportInfo {
   /**
    * The URL identifying this file.
    * The @type { string } type is used here as @type { URL }
@@ -13,6 +13,6 @@ type WorkerExportInfo = {
    * The format to export into. Currently "Json" is the only supported export format.
    */
   format: 'Json';
-};
+}
 
 export default WorkerExportInfo;

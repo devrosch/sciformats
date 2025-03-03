@@ -4,4 +4,6 @@ export const postMessage = (worker: Worker, name: string, payload: any) =>
     resolve(null);
   });
 
-export const initWorker = async () => {};
+export const initWorker = async () => {
+  /* noop */
+};

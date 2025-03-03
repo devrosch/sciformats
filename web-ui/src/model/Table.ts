@@ -1,7 +1,7 @@
 /**
  * Data representing a table, e.g., a peak table.
  */
-type Table = {
+interface Table {
   /**
    * The column names.
    * Each column has a technical name (key) and a display name (value).
@@ -15,7 +15,7 @@ type Table = {
    * also present as column name keys. May miss some column name key which the represents blank
    * cells.
    */
-  rows: { [key: string]: any }[];
-};
+  rows: Record<string, any>[];
+}
 
 export default Table;

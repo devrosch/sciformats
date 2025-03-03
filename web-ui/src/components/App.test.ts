@@ -32,7 +32,9 @@ jest.mock('util/WorkerUtils', () => ({
   initWorkerCpp: jest.fn(),
   initWorkerRs: jest.fn(),
 }));
-const mockAddRootNode = jest.fn(() => {});
+const mockAddRootNode = jest.fn(() => {
+  /* noop */
+});
 const mockRemoveSelectedNode = jest.fn(
   () => new URL('file:///aaaaaaaa-bbbb-cccc-dddd-1234567890ee/test.jdx#'),
 );
@@ -118,12 +120,14 @@ const waitForInit = async (): Promise<App> => {
 
 const prepareListener = (
   expectedEventType: string,
-  expectedNumCalls: number = 1,
+  expectedNumCalls = 1,
 ): [any, Promise<unknown>] => {
   const channel = CustomEventsMessageBus.getDefaultChannel();
   // workaround for using "done" in async method
   // see: https://github.com/facebook/jest/issues/11404
-  let done: (value: unknown) => void = () => {};
+  let done: (value: unknown) => void = () => {
+    /* noop */
+  };
   const callbackResolved = new Promise((resolve) => {
     done = resolve;
   });

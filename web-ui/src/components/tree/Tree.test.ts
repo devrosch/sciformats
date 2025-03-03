@@ -92,7 +92,9 @@ const prepareStubKeyDownEvent = (key: string, target: Element) => {
   const event = {
     key,
     target,
-    preventDefault: () => {},
+    preventDefault: () => {
+      /* noop */
+    },
   };
   return event as unknown as KeyboardEvent;
 };
@@ -124,7 +126,9 @@ test('sf-tree renders', async () => {
 test('sf-tree observes key down events', async () => {
   // workaround for using "done" in async method
   // see: https://github.com/facebook/jest/issues/11404
-  let done: (value: unknown) => void = () => {};
+  let done: (value: unknown) => void = () => {
+    /* noop */
+  };
 
   const nodes = await prepareTreeStructure();
   const arrowDownEvent = prepareActualKeyDownEvent('ArrowDown');

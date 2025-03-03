@@ -66,7 +66,7 @@ export default class Navbar extends HTMLElement {
 
   #app: HTMLElement | null = null;
 
-  #showMenu: boolean = false;
+  #showMenu = false;
 
   #shortcutsActive = false;
 
@@ -233,7 +233,7 @@ export default class Navbar extends HTMLElement {
     const items = e.dataTransfer.items;
     let files: File[] = [];
     for (let i = 0; i < items.length; i += 1) {
-      if (!!items[i].webkitGetAsEntry) {
+      if (items[i].webkitGetAsEntry !== undefined) {
         const entry = items[i].webkitGetAsEntry(); // non-standard
         if (entry && entry.isFile) {
           files.push(selectedFiles[i]);

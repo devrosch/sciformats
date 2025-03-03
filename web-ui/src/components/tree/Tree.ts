@@ -98,7 +98,7 @@ export default class Tree extends HTMLElement {
   }
 
   removeAllNodes(): URL[] {
-    let urls = [];
+    const urls = [];
     for (const child of this.#children) {
       const childUrl = child.getAttribute('url');
       urls.push(new URL(childUrl!));

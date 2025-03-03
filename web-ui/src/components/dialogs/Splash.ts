@@ -22,7 +22,7 @@ const template = `
 export default class Splash extends HTMLElement {
   #initialized = false;
 
-  #open: boolean = false;
+  #open = false;
 
   constructor() {
     super();

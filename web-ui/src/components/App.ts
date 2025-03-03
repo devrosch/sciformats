@@ -155,7 +155,7 @@ export default class App extends HTMLElement {
       const blob = await parser.export('Json');
       // for export file replace extension with ".json" or add ".json" if no extension
       const originalFileName = extractFilename(parser.rootUrl);
-      let pos = originalFileName.lastIndexOf('.');
+      const pos = originalFileName.lastIndexOf('.');
       const exportFileName =
         originalFileName.substring(0, pos < 0 ? originalFileName.length : pos) +
         '.json';
@@ -173,8 +173,8 @@ export default class App extends HTMLElement {
 
   handleFileCloseRequested() {
     console.log('App::handleFileCloseRequested()');
-    let tree = this.querySelector('.content .tree sf-tree') as Tree;
-    let url = tree.removeSelectedNode();
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const url = tree.removeSelectedNode();
     if (url !== null) {
       this.#channel.dispatch('sf-file-closed', { url });
     }
@@ -182,7 +182,7 @@ export default class App extends HTMLElement {
 
   handleFileCloseAllRequested() {
     console.log('handleFileCloseAllRequested()');
-    let tree = this.querySelector('.content .tree sf-tree') as Tree;
+    const tree = this.querySelector('.content .tree sf-tree') as Tree;
     const urls = tree.removeAllNodes();
     for (const url of urls) {
       this.#channel.dispatch('sf-file-closed', { url });

@@ -1,11 +1,11 @@
 /**
  * Exported data.
  */
-type WorkerExport = {
+interface WorkerExport {
   /**
    * The @type { Blob } containing the exported data.
    */
   blob: Blob;
-};
+}
 
 export default WorkerExport;

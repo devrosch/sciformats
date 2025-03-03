@@ -21,7 +21,7 @@ export default class Submenu extends HTMLElement {
 
   private _key: string | null = null;
 
-  private _expand: boolean = false;
+  private _expand = false;
 
   constructor() {
     super();

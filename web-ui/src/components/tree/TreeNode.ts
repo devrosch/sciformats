@@ -31,9 +31,9 @@ export default class TreeNode extends HTMLElement {
 
   #nodeData: NodeData | null = null;
 
-  #expand: boolean = false;
+  #expand = false;
 
-  #selected: boolean = false;
+  #selected = false;
 
   #error: string | null = null;
 
@@ -153,7 +153,7 @@ export default class TreeNode extends HTMLElement {
       return '';
     }
     let name = segments.pop()!.trim();
-    if (name === '' || typeof name === undefined) {
+    if (name === '' || name === undefined) {
       name = segments.length > 0 ? segments.pop()!.trim() : '';
     }
     return decodeURIComponent(name);

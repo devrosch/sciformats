@@ -100,7 +100,7 @@ export default class DataChart extends HTMLElement {
 
   set data(data: {
     xyData: { x: number; y: number }[];
-    metadata: { [key: string]: string };
+    metadata: Record<string, string>;
   }) {
     const xyData = DataChart.toXyArrays(data.xyData);
     this.#chartState.data.x = xyData.x;
@@ -153,7 +153,7 @@ export default class DataChart extends HTMLElement {
     this.render();
   }
 
-  static #extractXAxisTitle(metadata: { [key: string]: string }) {
+  static #extractXAxisTitle(metadata: Record<string, string>) {
     if (metadata === null || typeof metadata === 'undefined') {
       return '';
     }
@@ -177,7 +177,7 @@ export default class DataChart extends HTMLElement {
     return xTitle;
   }
 
-  static #extractYAxisTitle(metadata: { [key: string]: string }) {
+  static #extractYAxisTitle(metadata: Record<string, string>) {
     if (metadata === null || typeof metadata === 'undefined') {
       return '';
     }

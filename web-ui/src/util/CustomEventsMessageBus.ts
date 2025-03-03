@@ -4,8 +4,9 @@ import CustomEventsChannel from 'util/CustomEventsChannel';
  * A message bus for sending/receiving application messages.
  * Based on custom events.
  */
+/* eslint-disable-next-line @typescript-eslint/no-extraneous-class */
 export default class CustomEventsMessageBus {
-  static #defaultChannelName: string = 'sf-default-channel';
+  static #defaultChannelName = 'sf-default-channel';
 
   /**
    * Returns the default channel.

@@ -806,7 +806,7 @@ impl AndiMsReader {
                 return Err(AndiError::new(&format!(
                     "Could not find m/z or time values for scan at index: {}",
                     index
-                )))?
+                )))?;
             }
         };
         let y_values = scan

@@ -1,5 +1,5 @@
 lib-js:build:
-  image: rust:1.84
+  image: rust:1.85
   stage: build
   script:
     - cd lib-js
@@ -11,7 +11,7 @@ lib-js:build:
       - lib-js/pkg
 
 lib-js:format:
-  image: rust:1.84
+  image: rust:1.85
   stage: test
   script:
     - cd lib-js
@@ -19,7 +19,7 @@ lib-js:format:
     - cargo fmt --check
 
 lib-js:lint:
-  image: rust:1.84
+  image: rust:1.85
   stage: test
   script:
     - cd lib-js
@@ -29,7 +29,7 @@ lib-js:lint:
 # todo: update image for running tests in
 # see: https://github.com/rustwasm/wasm-pack/issues/1355
 # lib-js:test:
-#   image: rust:1.84
+#   image: rust:1.85
 #   stage: test
 #   script:
 #     - cd lib-js
@@ -38,7 +38,7 @@ lib-js:lint:
 #     - wasm-pack test --chrome --headless
 
 lib-js:outdated:
-  image: rust:1.84
+  image: rust:1.85
   stage: test
   script:
     - cd lib-js
@@ -46,7 +46,7 @@ lib-js:outdated:
   allow_failure: true
 
 lib-js:release:
-  image: rust:1.84
+  image: rust:1.85
   stage: release
   script:
     - cd lib-js

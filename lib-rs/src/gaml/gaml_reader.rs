@@ -1,9 +1,9 @@
 use super::{
+    GamlError,
     gaml_parser::{
         AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
         Xdata, Ydata,
     },
-    GamlError,
 };
 use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
@@ -114,14 +114,14 @@ impl Reader for GamlReader {
                                 x_data,
                                 (x_data_idx, y_data_idx),
                                 coordinates,
-                            )?)
+                            )?);
                         }
                         Some(alt_x_idx) => {
                             return Ok(Self::map_alt_xy_data(
                                 x_data,
                                 (x_data_idx, alt_x_idx, y_data_idx),
                                 coordinates,
-                            )?)
+                            )?);
                         }
                     }
                 }

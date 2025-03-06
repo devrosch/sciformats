@@ -1,4 +1,4 @@
-use super::{open_file, ANDI_CHROM_VALID, ANDI_MS_CENTROID, ANDI_NON_ANDI_CDF, ANDI_NON_CDF_DUMMY};
+use super::{ANDI_CHROM_VALID, ANDI_MS_CENTROID, ANDI_NON_ANDI_CDF, ANDI_NON_CDF_DUMMY, open_file};
 use sf_rs::{andi::andi_scanner::AndiScanner, api::Scanner};
 use std::io::{Cursor, Seek};
 

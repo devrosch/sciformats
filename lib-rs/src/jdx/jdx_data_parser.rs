@@ -1,6 +1,6 @@
 use std::io::SeekFrom;
 
-use super::{jdx_utils::BinBufRead, JdxError};
+use super::{JdxError, jdx_utils::BinBufRead};
 use crate::{
     api::SeekBufRead,
     jdx::jdx_utils::{is_ldr_start, strip_line_comment},
@@ -177,7 +177,8 @@ impl DataParser {
             if line_values.len() % 2 != 0 {
                 return Err(JdxError::new(&format!(
                     "Uneven number of values for xy data encountered in line {}. No y value for x value: {}",
-                    &line, line_values.last().unwrap()
+                    &line,
+                    line_values.last().unwrap()
                 )));
             }
 
@@ -359,7 +360,7 @@ impl DataParser {
                 return Err(JdxError::new(&format!(
                     "Illegal token encountered while converting to AFFN: {}",
                     token
-                )))
+                )));
             }
             Some('?') => (None, TokenType::Missing),
             Some(ch) if Self::is_sqz_digit(ch) => (Self::get_sqz_digit_value(ch), TokenType::Sqz),
@@ -586,10 +587,12 @@ mod tests {
 
         let actual = DataParser::read_values(input, true);
         assert!(DataParser::read_values(input, true).is_err());
-        assert!(actual
-            .unwrap_err()
-            .to_string()
-            .contains("DIF token without preceding token"));
+        assert!(
+            actual
+                .unwrap_err()
+                .to_string()
+                .contains("DIF token without preceding token")
+        );
     }
 
     #[test]
@@ -613,10 +616,12 @@ mod tests {
 
         let actual = DataParser::read_values(input, true);
         assert!(DataParser::read_values(input, true).is_err());
-        assert!(actual
-            .unwrap_err()
-            .to_string()
-            .contains("DUP token with preceding DUP token"));
+        assert!(
+            actual
+                .unwrap_err()
+                .to_string()
+                .contains("DUP token with preceding DUP token")
+        );
     }
 
     #[test]
@@ -662,10 +667,12 @@ mod tests {
         let actual = DataParser::read_xppyy_data(&mut reader, 0);
 
         assert!(actual.is_err());
-        assert!(actual
-            .unwrap_err()
-            .to_string()
-            .contains("Y value check failed"));
+        assert!(
+            actual
+                .unwrap_err()
+                .to_string()
+                .contains("Y value check failed")
+        );
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use super::{open_file, COMPOUND_FILE};
+use super::{COMPOUND_FILE, open_file};
 use sf_rs::{
     api::{Parser, Reader, SeekBufRead},
     jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},

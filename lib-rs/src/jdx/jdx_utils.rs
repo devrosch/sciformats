@@ -1,4 +1,4 @@
-use super::{jdx_parser::StringLdr, JdxError, JdxSequenceParser};
+use super::{JdxError, JdxSequenceParser, jdx_parser::StringLdr};
 use crate::{api::SeekBufRead, utils::from_iso_8859_1_cstr};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -26,7 +26,7 @@ pub trait BinBufRead: BufRead {
     /// Trailing LF or CRLF will be removed from the `Vec` buffer and returned
     /// string.
     fn read_line_iso_8859_1(&mut self, buf: &mut Vec<u8>)
-        -> Result<Option<String>, std::io::Error>;
+    -> Result<Option<String>, std::io::Error>;
 }
 
 impl<T: BufRead> BinBufRead for T {

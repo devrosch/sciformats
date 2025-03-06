@@ -1,9 +1,9 @@
 use super::{
+    JdxError,
     jdx_parser::{
         AuditTrail, BrukerRelaxSection, BrukerSpecificParameters, JdxBlock, NTuples, Page,
         PeakAssignments, PeakTable,
     },
-    JdxError,
 };
 use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, SeekBufRead, Table, Value},
@@ -812,9 +812,11 @@ mod tests {
         let root_node = &reader.read("/").unwrap();
         assert_eq!("CompoundFile.jdx", root_node.name);
         assert_eq!(4, root_node.parameters.len());
-        assert!(root_node
-            .parameters
-            .contains(&Parameter::from_str_str("TITLE", "Root LINK BLOCK")));
+        assert!(
+            root_node
+                .parameters
+                .contains(&Parameter::from_str_str("TITLE", "Root LINK BLOCK"))
+        );
         assert_eq!(4, root_node.parameters.len());
         assert!(root_node.data.is_empty());
         assert_eq!(9, root_node.child_node_names.len());
@@ -886,18 +888,26 @@ mod tests {
         assert!(n_tuples_node_page1.child_node_names.is_empty());
         let n_tuples_node_page1_metadata = &n_tuples_node_page1.metadata;
         assert_eq!(4, n_tuples_node_page1_metadata.len());
-        assert!(n_tuples_node_page1_metadata
-            .iter()
-            .any(|meta| meta == &("x.unit".to_owned(), "HZ".to_owned())));
-        assert!(n_tuples_node_page1_metadata
-            .iter()
-            .any(|meta| meta == &("y.unit".to_owned(), "ARBITRARY UNITS".to_owned())));
-        assert!(n_tuples_node_page1_metadata
-            .iter()
-            .any(|meta| meta == &("x.label".to_owned(), "X".to_owned())));
-        assert!(n_tuples_node_page1_metadata
-            .iter()
-            .any(|meta| meta == &("y.label".to_owned(), "R".to_owned())));
+        assert!(
+            n_tuples_node_page1_metadata
+                .iter()
+                .any(|meta| meta == &("x.unit".to_owned(), "HZ".to_owned()))
+        );
+        assert!(
+            n_tuples_node_page1_metadata
+                .iter()
+                .any(|meta| meta == &("y.unit".to_owned(), "ARBITRARY UNITS".to_owned()))
+        );
+        assert!(
+            n_tuples_node_page1_metadata
+                .iter()
+                .any(|meta| meta == &("x.label".to_owned(), "X".to_owned()))
+        );
+        assert!(
+            n_tuples_node_page1_metadata
+                .iter()
+                .any(|meta| meta == &("y.label".to_owned(), "R".to_owned()))
+        );
         let n_tuples_node_page1_data = &n_tuples_node_page1.data;
         assert_eq!(PointXy::new(0.1, 50.0), n_tuples_node_page1_data[0]);
         assert_eq!(PointXy::new(0.25, 105.0), n_tuples_node_page1_data[3]);
@@ -912,18 +922,26 @@ mod tests {
         assert!(n_tuples_node_page2.child_node_names.is_empty());
         let n_tuples_node_page2_metadata = &n_tuples_node_page2.metadata;
         assert_eq!(4, n_tuples_node_page2_metadata.len());
-        assert!(n_tuples_node_page2_metadata
-            .iter()
-            .any(|meta| meta == &("x.unit".to_owned(), "HZ".to_owned())));
-        assert!(n_tuples_node_page2_metadata
-            .iter()
-            .any(|meta| meta == &("y.unit".to_owned(), "ARBITRARY UNITS".to_owned())));
-        assert!(n_tuples_node_page2_metadata
-            .iter()
-            .any(|meta| meta == &("x.label".to_owned(), "X".to_owned())));
-        assert!(n_tuples_node_page2_metadata
-            .iter()
-            .any(|meta| meta == &("y.label".to_owned(), "I".to_owned())));
+        assert!(
+            n_tuples_node_page2_metadata
+                .iter()
+                .any(|meta| meta == &("x.unit".to_owned(), "HZ".to_owned()))
+        );
+        assert!(
+            n_tuples_node_page2_metadata
+                .iter()
+                .any(|meta| meta == &("y.unit".to_owned(), "ARBITRARY UNITS".to_owned()))
+        );
+        assert!(
+            n_tuples_node_page2_metadata
+                .iter()
+                .any(|meta| meta == &("x.label".to_owned(), "X".to_owned()))
+        );
+        assert!(
+            n_tuples_node_page2_metadata
+                .iter()
+                .any(|meta| meta == &("y.label".to_owned(), "I".to_owned()))
+        );
         let n_tuples_node_page2_data = &n_tuples_node_page2.data;
         assert_eq!(PointXy::new(0.1, 300.0), n_tuples_node_page2_data[0]);
         assert_eq!(PointXy::new(0.25, 410.0), n_tuples_node_page2_data[3]);
@@ -1058,15 +1076,21 @@ mod tests {
         );
         let ms_peak_table_node_metadata = &ms_peak_table_node.metadata;
         assert_eq!(3, ms_peak_table_node_metadata.len());
-        assert!(ms_peak_table_node_metadata
-            .iter()
-            .any(|meta| meta == &("x.unit".to_owned(), "M/Z".to_owned())));
-        assert!(ms_peak_table_node_metadata
-            .iter()
-            .any(|meta| meta == &("y.unit".to_owned(), "RELATIVE ABUNDANCE".to_owned())));
-        assert!(ms_peak_table_node_metadata
-            .iter()
-            .any(|meta| meta == &("plot.style".to_owned(), "sticks".to_owned())));
+        assert!(
+            ms_peak_table_node_metadata
+                .iter()
+                .any(|meta| meta == &("x.unit".to_owned(), "M/Z".to_owned()))
+        );
+        assert!(
+            ms_peak_table_node_metadata
+                .iter()
+                .any(|meta| meta == &("y.unit".to_owned(), "RELATIVE ABUNDANCE".to_owned()))
+        );
+        assert!(
+            ms_peak_table_node_metadata
+                .iter()
+                .any(|meta| meta == &("plot.style".to_owned(), "sticks".to_owned()))
+        );
 
         let ms_n_tuples_page_node = &reader.read("/7/0/0").unwrap();
         assert_eq!("T=10 - INTENSITY", ms_n_tuples_page_node.name);
@@ -1116,15 +1140,21 @@ mod tests {
         );
         let ms_n_tuples_page_node_metadata = &ms_n_tuples_page_node.metadata;
         assert_eq!(3, ms_n_tuples_page_node_metadata.len());
-        assert!(ms_n_tuples_page_node_metadata
-            .iter()
-            .any(|meta| meta == &("x.unit".to_owned(), "M/Z".to_owned())));
-        assert!(ms_n_tuples_page_node_metadata
-            .iter()
-            .any(|meta| meta == &("y.unit".to_owned(), "RELATIVE ABUNDANCE".to_owned())));
-        assert!(ms_n_tuples_page_node_metadata
-            .iter()
-            .any(|meta| meta == &("plot.style".to_owned(), "sticks".to_owned())));
+        assert!(
+            ms_n_tuples_page_node_metadata
+                .iter()
+                .any(|meta| meta == &("x.unit".to_owned(), "M/Z".to_owned()))
+        );
+        assert!(
+            ms_n_tuples_page_node_metadata
+                .iter()
+                .any(|meta| meta == &("y.unit".to_owned(), "RELATIVE ABUNDANCE".to_owned()))
+        );
+        assert!(
+            ms_n_tuples_page_node_metadata
+                .iter()
+                .any(|meta| meta == &("plot.style".to_owned(), "sticks".to_owned()))
+        );
 
         let audit_trail_node = &reader.read("/8/0").unwrap();
         assert_eq!("AUDITTRAIL", audit_trail_node.name);

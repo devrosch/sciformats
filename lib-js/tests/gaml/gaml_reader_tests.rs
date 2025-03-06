@@ -1,4 +1,4 @@
-use super::{open_file, GAML_SAMPLE_FILE};
+use super::{GAML_SAMPLE_FILE, open_file};
 use sf_rs::{
     api::{Parser, Reader},
     gaml::{gaml_parser::GamlParser, gaml_reader::GamlReader},

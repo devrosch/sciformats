@@ -15,7 +15,7 @@ use std::{
     error::Error,
     io::{Read, Seek, SeekFrom, Write},
 };
-use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsError, JsValue};
+use wasm_bindgen::{JsCast, JsError, JsValue, prelude::wasm_bindgen};
 use web_sys::{Blob, FileReaderSync};
 
 // -------------------------------------------------
@@ -211,7 +211,7 @@ impl JsReader {
     pub fn export_to_blob(&self, format: &str) -> Result<Blob, JsError> {
         let mut writer = JsBlobWriter::new();
         self.export(format, &mut writer)?;
-        Ok(writer.into_blob()?)
+        writer.into_blob()
     }
 
     #[cfg(feature = "nodejs")]

@@ -1,8 +1,8 @@
 use crate::api::SeekBufRead;
 use quick_xml::{
+    Reader,
     events::{BytesStart, Event},
     name::QName,
-    Reader,
 };
 use std::{cell::RefCell, collections::HashMap, error::Error, fmt, io::BufRead, rc::Rc, str, vec};
 
@@ -70,10 +70,12 @@ impl<'buf> BufEvent<'buf> {
 type ElemConstructor<'f, 'buf, R, T, E> =
     &'f (dyn Fn(BufEvent<'buf>, &mut Reader<R>) -> Result<(T, BufEvent<'buf>), E>);
 
-type ElemConstructorRc<'f, 'buf, T, E> = &'f (dyn Fn(
+type ElemConstructorRc<'f, 'buf, T, E> = &'f (
+        dyn Fn(
     BufEvent<'buf>,
     Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-) -> Result<(T, BufEvent<'buf>), E>);
+) -> Result<(T, BufEvent<'buf>), E>
+    );
 
 type ElemConstructorCore<'f, 'buf, Reader, T, E> =
     &'f mut (dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<(T, BufEvent<'buf>), E>);
@@ -83,7 +85,7 @@ pub(super) enum XmlTagStart<'buf> {
     Empty(HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>),
 }
 
-impl<'buf> XmlTagStart<'buf> {
+impl XmlTagStart<'_> {
     pub fn get_req_attr(&self, name: &str) -> Result<String, SfXmlError> {
         match self {
             Self::Start(attributes) | Self::Empty(attributes) => Ok(attributes

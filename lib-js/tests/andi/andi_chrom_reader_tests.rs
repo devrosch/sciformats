@@ -1,4 +1,4 @@
-use super::{open_file, ANDI_CHROM_VALID};
+use super::{ANDI_CHROM_VALID, open_file};
 use sf_rs::{
     andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
     api::{Parser, Reader},

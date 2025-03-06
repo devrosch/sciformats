@@ -1,4 +1,4 @@
-use super::{open_file, GAML_SAMPLE_FILE};
+use super::{GAML_SAMPLE_FILE, open_file};
 use sf_rs::{
     api::{Column, Parameter, Parser, PointXy, Reader, Table, Value},
     gaml::{gaml_parser::GamlParser, gaml_reader::GamlReader},
@@ -33,15 +33,24 @@ fn gaml_parse_valid_succeeds() {
         root_parameters[2]
     );
     assert_eq!(
-        Parameter::from_str_str("GAML parameter name 0 (group=GAML parameter group 0, label=GAML parameter label 0, alias=GAML parameter alias 0)", "GAML parameter value 0"),
+        Parameter::from_str_str(
+            "GAML parameter name 0 (group=GAML parameter group 0, label=GAML parameter label 0, alias=GAML parameter alias 0)",
+            "GAML parameter value 0"
+        ),
         root_parameters[3]
     );
     assert_eq!(
-        Parameter::from_str_str("GAML parameter name 1 (group=GAML parameter group 0, label=GAML parameter label 1, alias=GAML parameter alias 1)", "GAML parameter value 1"),
+        Parameter::from_str_str(
+            "GAML parameter name 1 (group=GAML parameter group 0, label=GAML parameter label 1, alias=GAML parameter alias 1)",
+            "GAML parameter value 1"
+        ),
         root_parameters[4]
     );
     assert_eq!(
-        Parameter::from_str_str("GAML parameter name 2 (group=GAML parameter group 1, label=GAML parameter label 2, alias=GAML parameter alias 2)", "GAML parameter value 2"),
+        Parameter::from_str_str(
+            "GAML parameter name 2 (group=GAML parameter group 1, label=GAML parameter label 2, alias=GAML parameter alias 2)",
+            "GAML parameter value 2"
+        ),
         root_parameters[5]
     );
 
@@ -69,15 +78,24 @@ fn parse_experiments_succeeds(reader: &GamlReader) {
         experiment0_parameters[1]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment 0 parameter name 0 (group=Experiment 0 parameter group 0, label=Experiment 0 parameter label 0, alias=Experiment 0 parameter alias 0)", "Experiment 0 parameter value 0"),
+        Parameter::from_str_str(
+            "Experiment 0 parameter name 0 (group=Experiment 0 parameter group 0, label=Experiment 0 parameter label 0, alias=Experiment 0 parameter alias 0)",
+            "Experiment 0 parameter value 0"
+        ),
         experiment0_parameters[2]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment 0 parameter name 1 (group=Experiment 0 parameter group 1, label=Experiment 0 parameter label 1, alias=Experiment 0 parameter alias 1)", "Experiment 0 parameter value 1"),
+        Parameter::from_str_str(
+            "Experiment 0 parameter name 1 (group=Experiment 0 parameter group 1, label=Experiment 0 parameter label 1, alias=Experiment 0 parameter alias 1)",
+            "Experiment 0 parameter value 1"
+        ),
         experiment0_parameters[3]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment 0 parameter name 2 (group=Experiment 0 parameter group 1, label=Experiment 0 parameter label 2, alias=Experiment 0 parameter alias 2)", "Experiment 0 parameter value 2"),
+        Parameter::from_str_str(
+            "Experiment 0 parameter name 2 (group=Experiment 0 parameter group 1, label=Experiment 0 parameter label 2, alias=Experiment 0 parameter alias 2)",
+            "Experiment 0 parameter value 2"
+        ),
         experiment0_parameters[4]
     );
     assert_eq!(Vec::<PointXy>::new(), experiment0.data);
@@ -99,15 +117,24 @@ fn parse_experiments_succeeds(reader: &GamlReader) {
         experiment1_parameters[1]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment 1 parameter name 0 (group=Experiment 1 parameter group 0, label=Experiment 1 parameter label 0, alias=Experiment 1 parameter alias 0)", "Experiment 1 parameter value 0"),
+        Parameter::from_str_str(
+            "Experiment 1 parameter name 0 (group=Experiment 1 parameter group 0, label=Experiment 1 parameter label 0, alias=Experiment 1 parameter alias 0)",
+            "Experiment 1 parameter value 0"
+        ),
         experiment1_parameters[2]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment 1 parameter name 1 (group=Experiment 1 parameter group 1, label=Experiment 1 parameter label 1, alias=Experiment 1 parameter alias 1)", "Experiment 1 parameter value 1"),
+        Parameter::from_str_str(
+            "Experiment 1 parameter name 1 (group=Experiment 1 parameter group 1, label=Experiment 1 parameter label 1, alias=Experiment 1 parameter alias 1)",
+            "Experiment 1 parameter value 1"
+        ),
         experiment1_parameters[3]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment 1 parameter name 2 (group=Experiment 1 parameter group 1, label=Experiment 1 parameter label 2, alias=Experiment 1 parameter alias 2)", "Experiment 1 parameter value 2"),
+        Parameter::from_str_str(
+            "Experiment 1 parameter name 2 (group=Experiment 1 parameter group 1, label=Experiment 1 parameter label 2, alias=Experiment 1 parameter alias 2)",
+            "Experiment 1 parameter value 2"
+        ),
         experiment1_parameters[4]
     );
     assert_eq!(Vec::<PointXy>::new(), experiment1.data);
@@ -132,7 +159,10 @@ fn parse_trace00_succeeds(reader: &GamlReader) {
         parameters[1]
     );
     assert_eq!(
-        Parameter::from_str_str("Trace 0/0 parameter name 0 (group=Trace 0/0 parameter group 0, label=Trace 0/0 parameter label 0, alias=Trace 0/0 parameter alias 0)", "Trace 0/0 parameter value 0"),
+        Parameter::from_str_str(
+            "Trace 0/0 parameter name 0 (group=Trace 0/0 parameter group 0, label=Trace 0/0 parameter label 0, alias=Trace 0/0 parameter alias 0)",
+            "Trace 0/0 parameter value 0"
+        ),
         parameters[2]
     );
     assert_eq!(Vec::<PointXy>::new(), trace.data);
@@ -165,7 +195,10 @@ fn parse_trace10_succeeds(reader: &GamlReader) {
         parameters[1]
     );
     assert_eq!(
-        Parameter::from_str_str("Trace 1/0 parameter name 0 (group=Trace 1/0 parameter group 0, label=Trace 1/0 parameter label 0, alias=Trace 1/0 parameter alias 0)", "Trace 1/0 parameter value 0"),
+        Parameter::from_str_str(
+            "Trace 1/0 parameter name 0 (group=Trace 1/0 parameter group 0, label=Trace 1/0 parameter label 0, alias=Trace 1/0 parameter alias 0)",
+            "Trace 1/0 parameter value 0"
+        ),
         parameters[2]
     );
     assert_eq!(Vec::<PointXy>::new(), trace.data);
@@ -198,7 +231,10 @@ fn parse_trace11_succeeds(reader: &GamlReader) {
         parameters[1]
     );
     assert_eq!(
-        Parameter::from_str_str("Trace 1/1 parameter name 0 (group=Trace 1/1 parameter group 0, label=Trace 1/1 parameter label 0, alias=Trace 1/1 parameter alias 0)", "Trace 1/1 parameter value 0"),
+        Parameter::from_str_str(
+            "Trace 1/1 parameter name 0 (group=Trace 1/1 parameter group 0, label=Trace 1/1 parameter label 0, alias=Trace 1/1 parameter alias 0)",
+            "Trace 1/1 parameter value 0"
+        ),
         parameters[2]
     );
     assert_eq!(Vec::<PointXy>::new(), trace.data);
@@ -269,9 +305,27 @@ fn parse_xydata000_succeeds(reader: &GamlReader) {
         Parameter::from_str_str("Coordinate 0 link linkref", "altxdata0000-linkid"),
         parameters[12]
     );
-    assert_eq!(Parameter::from_str_str("Xdata Xdata 0/0/0 parameter name 0 (group=Xdata 0/0/0 parameter group 0, label=Xdata 0/0/0 parameter label 0, alias=Xdata 0/0/0 parameter alias 0)", "Xdata 0/0/0 parameter value 0"), parameters[13]);
-    assert_eq!(Parameter::from_str_str("Ydata Ydata 0/0/0/0 parameter name 0 (group=Ydata 0/0/0/0 parameter group 0, label=Ydata 0/0/0/0 parameter label 0, alias=Ydata 0/0/0/0 parameter alias 0)", "Ydata 0/0/0/0 parameter value 0"), parameters[14]);
-    assert_eq!(Parameter::from_str_str("Coordinate 0 Coordinates 0/0/0 parameter name 0 (group=Coordinates 0/0/0 parameter group 0, label=Coordinates 0/0/0 parameter label 0, alias=Coordinates 0/0/0 parameter alias 0)", "Coordinates 0/0/0 parameter value 0"), parameters[15]);
+    assert_eq!(
+        Parameter::from_str_str(
+            "Xdata Xdata 0/0/0 parameter name 0 (group=Xdata 0/0/0 parameter group 0, label=Xdata 0/0/0 parameter label 0, alias=Xdata 0/0/0 parameter alias 0)",
+            "Xdata 0/0/0 parameter value 0"
+        ),
+        parameters[13]
+    );
+    assert_eq!(
+        Parameter::from_str_str(
+            "Ydata Ydata 0/0/0/0 parameter name 0 (group=Ydata 0/0/0/0 parameter group 0, label=Ydata 0/0/0/0 parameter label 0, alias=Ydata 0/0/0/0 parameter alias 0)",
+            "Ydata 0/0/0/0 parameter value 0"
+        ),
+        parameters[14]
+    );
+    assert_eq!(
+        Parameter::from_str_str(
+            "Coordinate 0 Coordinates 0/0/0 parameter name 0 (group=Coordinates 0/0/0 parameter group 0, label=Coordinates 0/0/0 parameter label 0, alias=Coordinates 0/0/0 parameter alias 0)",
+            "Coordinates 0/0/0 parameter value 0"
+        ),
+        parameters[15]
+    );
     assert_eq!(
         Parameter::from_str_str("Xdata values format", "FLOAT32"),
         parameters[16]
@@ -387,9 +441,27 @@ fn parse_xydata001_succeeds(reader: &GamlReader) {
         Parameter::from_str_str("Coordinate 0 link linkref", "altxdata0000-linkid"),
         parameters[12]
     );
-    assert_eq!(Parameter::from_str_str("AltXdata altXdata 0/0/0/0 parameter name 0 (group=altXdata 0/0/0/0 parameter group 0, label=altXdata 0/0/0/0 parameter label 0, alias=altXdata 0/0/0/0 parameter alias 0)", "altXdata 0/0/0/0 parameter value 0"), parameters[13]);
-    assert_eq!(Parameter::from_str_str("Ydata Ydata 0/0/0/0 parameter name 0 (group=Ydata 0/0/0/0 parameter group 0, label=Ydata 0/0/0/0 parameter label 0, alias=Ydata 0/0/0/0 parameter alias 0)", "Ydata 0/0/0/0 parameter value 0"), parameters[14]);
-    assert_eq!(Parameter::from_str_str("Coordinate 0 Coordinates 0/0/0 parameter name 0 (group=Coordinates 0/0/0 parameter group 0, label=Coordinates 0/0/0 parameter label 0, alias=Coordinates 0/0/0 parameter alias 0)", "Coordinates 0/0/0 parameter value 0"), parameters[15]);
+    assert_eq!(
+        Parameter::from_str_str(
+            "AltXdata altXdata 0/0/0/0 parameter name 0 (group=altXdata 0/0/0/0 parameter group 0, label=altXdata 0/0/0/0 parameter label 0, alias=altXdata 0/0/0/0 parameter alias 0)",
+            "altXdata 0/0/0/0 parameter value 0"
+        ),
+        parameters[13]
+    );
+    assert_eq!(
+        Parameter::from_str_str(
+            "Ydata Ydata 0/0/0/0 parameter name 0 (group=Ydata 0/0/0/0 parameter group 0, label=Ydata 0/0/0/0 parameter label 0, alias=Ydata 0/0/0/0 parameter alias 0)",
+            "Ydata 0/0/0/0 parameter value 0"
+        ),
+        parameters[14]
+    );
+    assert_eq!(
+        Parameter::from_str_str(
+            "Coordinate 0 Coordinates 0/0/0 parameter name 0 (group=Coordinates 0/0/0 parameter group 0, label=Coordinates 0/0/0 parameter label 0, alias=Coordinates 0/0/0 parameter alias 0)",
+            "Coordinates 0/0/0 parameter value 0"
+        ),
+        parameters[15]
+    );
     assert_eq!(
         Parameter::from_str_str("AltXdata values format", "FLOAT32"),
         parameters[16]
@@ -743,8 +815,20 @@ fn parse_peaktables0000_succeeds(reader: &GamlReader) {
         Parameter::from_str_str("Peaktable name", "Peaktable 0/0/0/0/0 name"),
         parameters[0]
     );
-    assert_eq!(Parameter::from_str_str("Peaktable Peaktable 0/0/0/0/0 parameter name 0 (group=Peaktable 0/0/0/0/0 parameter group 0, label=Peaktable 0/0/0/0/0 parameter label 0, alias=Peaktable 0/0/0/0/0 parameter alias 0)", "Peaktable 0/0/0/0/0 parameter value 0"), parameters[1]);
-    assert_eq!(Parameter::from_str_str("Peak 0 number 1 Peak 0/0/0/0/0/0 parameter name 0 (group=Peak 0/0/0/0/0/0 parameter group 0, label=Peak 0/0/0/0/0/0 parameter label 0, alias=Peak 0/0/0/0/0/0 parameter alias 0)", "Peak 0/0/0/0/0/0 parameter value 0"), parameters[2]);
+    assert_eq!(
+        Parameter::from_str_str(
+            "Peaktable Peaktable 0/0/0/0/0 parameter name 0 (group=Peaktable 0/0/0/0/0 parameter group 0, label=Peaktable 0/0/0/0/0 parameter label 0, alias=Peaktable 0/0/0/0/0 parameter alias 0)",
+            "Peaktable 0/0/0/0/0 parameter value 0"
+        ),
+        parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_str(
+            "Peak 0 number 1 Peak 0/0/0/0/0/0 parameter name 0 (group=Peak 0/0/0/0/0/0 parameter group 0, label=Peak 0/0/0/0/0/0 parameter label 0, alias=Peak 0/0/0/0/0/0 parameter alias 0)",
+            "Peak 0/0/0/0/0/0 parameter value 0"
+        ),
+        parameters[2]
+    );
     assert!(peaktable.metadata.is_empty());
     assert_eq!(
         Some(Table {

@@ -1,12 +1,12 @@
+use super::JdxError;
 use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
 use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
 use super::jdx_utils::{
-    find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_element, parse_ldr_start,
-    parse_parameter, read_width_function, seek_and_read_sequence_data, strip_line_comment,
-    validate_input, BinBufRead,
+    BinBufRead, find_and_parse_parameter, is_ldr_start, is_pure_comment, parse_element,
+    parse_ldr_start, parse_parameter, read_width_function, seek_and_read_sequence_data,
+    strip_line_comment, validate_input,
 };
-use super::JdxError;
 use crate::api::{Parser, SeekBufRead};
 use crate::jdx::jdx_audit_trail_parser::AuditTrailParser;
 use crate::jdx::jdx_utils::{
@@ -1995,7 +1995,7 @@ impl BrukerRelaxSection {
                 return Err(JdxError::new(&format!(
                     "Premature end of Bruker {} section.",
                     label
-                )))
+                )));
             }
             Some(line) => {
                 if is_bruker_specific_section_start(line) {
@@ -2512,9 +2512,11 @@ mod tests {
         let mut reader = Cursor::new(input);
 
         let error = JdxBlock::new("test.jdx", &mut reader).unwrap_err();
-        assert!(error
-            .to_string()
-            .contains("Multiple \"PEAKASSIGNMENTS\" LDRs"));
+        assert!(
+            error
+                .to_string()
+                .contains("Multiple \"PEAKASSIGNMENTS\" LDRs")
+        );
     }
 
     #[test]
@@ -2627,11 +2629,13 @@ mod tests {
         assert_eq!(1, block.bruker_relax_sections.len());
         let bruker_relax_section = &block.bruker_relax_sections[0];
         assert_eq!(Some("file_name_1".to_owned()), bruker_relax_section.name);
-        assert!(bruker_relax_section
-            .content
-            .as_ref()
-            .unwrap()
-            .contains("123"));
+        assert!(
+            bruker_relax_section
+                .content
+                .as_ref()
+                .unwrap()
+                .contains("123")
+        );
     }
 
     #[test]
@@ -5043,10 +5047,12 @@ mod tests {
         let ntuples_res = NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref);
 
         assert!(ntuples_res.is_err());
-        assert!(ntuples_res
-            .unwrap_err()
-            .to_string()
-            .contains("Unexpected end"));
+        assert!(
+            ntuples_res
+                .unwrap_err()
+                .to_string()
+                .contains("Unexpected end")
+        );
     }
 
     #[test]
@@ -5296,9 +5302,11 @@ mod tests {
             AuditTrail::new(label, &variables, next_line, reader_ref).unwrap();
         let error = audit_trail.get_data().unwrap_err();
 
-        assert!(error
-            .to_string()
-            .contains("No closing parenthesis found for"));
+        assert!(
+            error
+                .to_string()
+                .contains("No closing parenthesis found for")
+        );
     }
 
     #[test]

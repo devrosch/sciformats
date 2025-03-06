@@ -1,6 +1,6 @@
-use super::{open_file, ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID, ANDI_NON_CDF_DUMMY};
+use super::{ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID, ANDI_NON_CDF_DUMMY, open_file};
 use sf_rs::{
-    andi::{andi_chrom_parser::AndiChromParser, AndiDatasetCompleteness},
+    andi::{AndiDatasetCompleteness, andi_chrom_parser::AndiChromParser},
     api::Parser,
 };
 use std::str::FromStr;

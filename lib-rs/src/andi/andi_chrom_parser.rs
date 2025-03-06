@@ -3,8 +3,8 @@ use super::andi_utils::{
     read_index_from_var_f32, read_multi_string_var, read_optional_var, trim_zeros_in_place,
 };
 use super::{
-    andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
     AndiDatasetCompleteness, AndiError,
+    andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
 };
 use crate::api::Parser;
 use std::{

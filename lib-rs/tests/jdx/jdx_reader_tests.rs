@@ -1,4 +1,4 @@
-use super::{open_file, COMPOUND_FILE};
+use super::{COMPOUND_FILE, open_file};
 use sf_rs::{
     api::{Parameter, Parser, Reader, SeekBufRead},
     jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},
@@ -15,9 +15,11 @@ fn cosy_read_valid_succeeds() {
 
     let root_node = &reader.read("/").unwrap();
     assert_eq!(COMPOUND_FILE, root_node.name);
-    assert!(root_node
-        .parameters
-        .contains(&Parameter::from_str_str("TITLE", "Root LINK BLOCK")));
+    assert!(
+        root_node
+            .parameters
+            .contains(&Parameter::from_str_str("TITLE", "Root LINK BLOCK"))
+    );
 
     let audit_trail_node = &reader.read("/8").unwrap();
     assert_eq!("", audit_trail_node.name);

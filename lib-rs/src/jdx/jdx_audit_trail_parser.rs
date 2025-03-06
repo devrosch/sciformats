@@ -1,6 +1,6 @@
-use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str};
 use super::JdxSequenceParser;
-use super::{jdx_parser::AuditTrailEntry, JdxError};
+use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str};
+use super::{JdxError, jdx_parser::AuditTrailEntry};
 use crate::api::SeekBufRead;
 use lazy_static::lazy_static;
 
@@ -30,7 +30,7 @@ pub struct AuditTrailParser<'r, T: SeekBufRead> {
     buf: Vec<u8>,
 }
 
-impl<'r, T: SeekBufRead> AuditTrailParser<'r, T> {
+impl<T: SeekBufRead> AuditTrailParser<'_, T> {
     const AUDIT_TRAIL_VARIABLE_LISTS: [&'static str; 3] = [
         "(NUMBER, WHEN, WHO, WHERE, WHAT)",
         "(NUMBER, WHEN, WHO, WHERE, VERSION, WHAT)",

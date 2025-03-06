@@ -1,6 +1,7 @@
-use super::{open_file, ANDI_MS_CENTROID, ANDI_MS_CONTINUUM, ANDI_MS_LIBRARY, ANDI_MS_SID};
+use super::{ANDI_MS_CENTROID, ANDI_MS_CONTINUUM, ANDI_MS_LIBRARY, ANDI_MS_SID, open_file};
 use sf_rs::{
     andi::{
+        AndiDatasetCompleteness,
         andi_enums::{
             AndiMsDataFormat, AndiMsDetectorType, AndiMsExperimentType, AndiMsFlagValue,
             AndiMsIntensityAxisUnit, AndiMsIonizationMethod, AndiMsIonizationPolarity,
@@ -9,7 +10,6 @@ use sf_rs::{
             AndiMsSeparationMethod, AndiMsTimeAxisUnit,
         },
         andi_ms_parser::AndiMsParser,
-        AndiDatasetCompleteness,
     },
     api::Parser,
 };
@@ -802,10 +802,12 @@ fn andi_ms_parse_library_file_succeeds() {
             .unwrap()
     );
     assert_eq!(0, raw_data_scan_0.number_of_flags);
-    assert!(raw_data_scan_0
-        .get_flagged_peak_indices()
-        .unwrap()
-        .is_empty());
+    assert!(
+        raw_data_scan_0
+            .get_flagged_peak_indices()
+            .unwrap()
+            .is_empty()
+    );
     assert!(raw_data_scan_0.get_flag_values().unwrap().is_empty());
     assert_eq!(None, raw_data_scan_0.total_intensity);
     assert_eq!(None, raw_data_scan_0.a_d_sampling_rate);
@@ -840,10 +842,12 @@ fn andi_ms_parse_library_file_succeeds() {
             .unwrap()
     );
     assert_eq!(0, raw_data_scan_2.number_of_flags);
-    assert!(raw_data_scan_2
-        .get_flagged_peak_indices()
-        .unwrap()
-        .is_empty());
+    assert!(
+        raw_data_scan_2
+            .get_flagged_peak_indices()
+            .unwrap()
+            .is_empty()
+    );
     assert!(raw_data_scan_2.get_flag_values().unwrap().is_empty());
     assert_eq!(None, raw_data_scan_2.total_intensity);
     assert_eq!(None, raw_data_scan_2.a_d_sampling_rate);
@@ -1210,26 +1214,34 @@ fn andi_ms_parse_sid_file_succeeds() {
         vec![20f32 as f64, 21f32 as f64,],
         raw_data_scan_group_0.get_group_masses().unwrap()
     );
-    assert!(raw_data_scan_group_0
-        .get_group_sampling_times()
-        .unwrap()
-        .unwrap()[0]
-        .is_nan());
-    assert!(raw_data_scan_group_0
-        .get_group_sampling_times()
-        .unwrap()
-        .unwrap()[1]
-        .is_infinite());
-    assert!(raw_data_scan_group_0
-        .get_group_delay_times()
-        .unwrap()
-        .unwrap()[0]
-        .is_nan());
-    assert!(raw_data_scan_group_0
-        .get_group_delay_times()
-        .unwrap()
-        .unwrap()[1]
-        .is_infinite());
+    assert!(
+        raw_data_scan_group_0
+            .get_group_sampling_times()
+            .unwrap()
+            .unwrap()[0]
+            .is_nan()
+    );
+    assert!(
+        raw_data_scan_group_0
+            .get_group_sampling_times()
+            .unwrap()
+            .unwrap()[1]
+            .is_infinite()
+    );
+    assert!(
+        raw_data_scan_group_0
+            .get_group_delay_times()
+            .unwrap()
+            .unwrap()[0]
+            .is_nan()
+    );
+    assert!(
+        raw_data_scan_group_0
+            .get_group_delay_times()
+            .unwrap()
+            .unwrap()[1]
+            .is_infinite()
+    );
 
     // TODO: add tests for non standard variables and attributes once available
 }

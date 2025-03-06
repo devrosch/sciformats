@@ -1,6 +1,6 @@
-use super::jdx_utils::{is_ldr_start, strip_line_comment, BinBufRead};
 use super::JdxSequenceParser;
-use super::{jdx_parser::Peak, JdxError};
+use super::jdx_utils::{BinBufRead, is_ldr_start, strip_line_comment};
+use super::{JdxError, jdx_parser::Peak};
 use crate::api::SeekBufRead;
 use lazy_static::lazy_static;
 use std::collections::VecDeque;
@@ -27,7 +27,7 @@ pub struct PeakTableParser<'r, T: SeekBufRead> {
     tuple_queue: VecDeque<String>,
 }
 
-impl<'r, T: SeekBufRead> PeakTableParser<'r, T> {
+impl<T: SeekBufRead> PeakTableParser<'_, T> {
     const PEAK_TABLE_VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XYW..XYW)", "(XYM..XYM)"];
 
     fn next_tuple(&mut self) -> Result<Option<String>, JdxError> {

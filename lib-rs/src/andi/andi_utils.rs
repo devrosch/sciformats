@@ -196,7 +196,7 @@ pub fn read_optional_var_or_attr_f32(
                         return Err(Box::new(AndiError::new(&format!(
                             "Unexpected content for {}.",
                             var_name
-                        ))))
+                        ))));
                     }
                 }
             } else if let Some(mut val) = attr.get_as_string() {

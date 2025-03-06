@@ -1,4 +1,4 @@
-use super::{open_file, GAML_SAMPLE_FILE};
+use super::{GAML_SAMPLE_FILE, open_file};
 use sf_rs::{api::Parser, gaml::gaml_parser::GamlParser};
 use wasm_bindgen_test::wasm_bindgen_test;
 

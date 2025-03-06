@@ -1,4 +1,4 @@
-use super::{open_file, ANDI_CHROM_VALID, ANDI_MS_CENTROID};
+use super::{ANDI_CHROM_VALID, ANDI_MS_CENTROID, open_file};
 use sf_rs::{andi::andi_scanner::AndiScanner, api::Scanner};
 use wasm_bindgen_test::wasm_bindgen_test;
 

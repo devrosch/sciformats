@@ -681,8 +681,8 @@ impl AndiMsRawDataGlobal {
         let calibrated_mass_range_max = read_global_attr_f64(reader, "calibrated_mass_max")?;
         let actual_run_time = read_global_attr_f64(reader, "actual_run_time_length")?;
         let actual_delay_time = read_global_attr_f64(reader, "actual_delay_time")?;
-        let uniform_sampling_flag = read_global_attr_i16(reader, "raw_data_uniform_sampling_flag")?
-            .map_or(true, |v| v != 0);
+        let uniform_sampling_flag =
+            read_global_attr_i16(reader, "raw_data_uniform_sampling_flag")? != Some(0);
         let comments = read_global_attr_str(reader, "raw_data_comments");
 
         Ok(Self {

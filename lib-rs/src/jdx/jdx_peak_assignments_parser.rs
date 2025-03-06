@@ -26,7 +26,7 @@ pub struct PeakAssignmentsParser<'r, T: SeekBufRead> {
     buf: Vec<u8>,
 }
 
-impl<'r, T: SeekBufRead> PeakAssignmentsParser<'r, T> {
+impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
     const PEAK_ASSIGNMENTS_VARIABLE_LISTS: [&'static str; 4] =
         ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];
 

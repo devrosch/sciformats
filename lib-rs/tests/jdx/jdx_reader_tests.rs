@@ -6,7 +6,7 @@ use sf_rs::{
 use std::io::BufReader;
 
 #[test]
-fn cosy_read_valid_succeeds() {
+fn jdx_read_valid_succeeds() {
     let (path, file) = open_file(COMPOUND_FILE);
     let buf_reader = BufReader::new(file);
     let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);

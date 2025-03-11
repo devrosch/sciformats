@@ -105,7 +105,8 @@ pub fn strip_line_comment(
     trim_content: bool,
     trim_comment: bool,
 ) -> (&str, Option<&str>) {
-    const COMMENT_REGEX_PATTERN: &str = "^(.*?)\\$\\$(.*)$";
+    // (?s) includes newlines in dot matching syntax
+    const COMMENT_REGEX_PATTERN: &str = "(?s)^(.*?)\\$\\$(.*)$";
     lazy_static! {
         static ref COMMENT_REGEX: regex::Regex = regex::Regex::new(COMMENT_REGEX_PATTERN).unwrap();
     }
@@ -709,6 +710,14 @@ mod tests {
             ("content", Some("comment")),
             strip_line_comment(s, true, true)
         );
+    }
+
+    #[test]
+    fn strip_line_comment_strips_comments_after_newline() {
+        let line = " content \n$$ comment \n$$comment2 ";
+        let (content, comment) = strip_line_comment(line, true, false);
+        assert_eq!("content", content);
+        assert_eq!(Some(" comment \n$$comment2 "), comment);
     }
 
     #[test]

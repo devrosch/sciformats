@@ -2,6 +2,7 @@ sf-data-data {
   padding: 0.25em;
   flex: 0 0 calc(100% - 0.5em);
   background-color: #fff;
+  font-size: 14px;
 }
 
 sf-data-data textarea {
@@ -10,4 +11,5 @@ sf-data-data textarea {
   padding: 0.25em;
   box-sizing: border-box;
   resize: none;
+  font-size: inherit;
 }

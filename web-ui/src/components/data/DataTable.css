@@ -2,6 +2,7 @@ sf-data-table {
   padding: 0.25em;
   flex: 0 0 calc(100% - 0.5em);
   background-color: #fff;
+  font-size: 14px;
 }
 
 sf-data-table > table,

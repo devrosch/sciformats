@@ -35,7 +35,7 @@ export default class LocalFileParser implements Parser {
       payload,
     )) as any;
     if (openReply.name !== 'opened') {
-      throw new Error(`Could not open file: "${this.#file.name}."`);
+      throw new Error(`Could not open file: "${this.#file.name}".`);
     }
   }
 

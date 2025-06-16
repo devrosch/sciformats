@@ -147,7 +147,7 @@ test('initConverterService() cleans up resources if init fails', async () => {
 
   await expect(async () => {
     await WorkerInternalUtils.initConverterService(workerSelfMock);
-  }).rejects.toThrowError();
+  }).rejects.toThrow();
 
   expect(jdxScannerDeleteMock).toHaveBeenCalledTimes(1);
   expect(vectorDeleteMock).toHaveBeenCalledTimes(1);
@@ -188,11 +188,11 @@ test('unmountFile() unmounts WORKERFS and deletes UUID directory', async () => {
   WorkerInternalUtils.unmountFile(url, workingDir, filesystemFileExistsMock);
 
   expect(filesystemFileExistsMock.analyzePath).toHaveBeenCalledTimes(3);
-  expect(filesystemFileExistsMock.unmount).toBeCalledTimes(1);
+  expect(filesystemFileExistsMock.unmount).toHaveBeenCalledTimes(1);
   expect(filesystemFileExistsMock.unmount).toHaveBeenCalledWith(
     `${workingDir}/${uuid}`,
   );
-  expect(filesystemFileExistsMock.rmdir).toBeCalledTimes(1);
+  expect(filesystemFileExistsMock.rmdir).toHaveBeenCalledTimes(1);
   expect(filesystemFileExistsMock.rmdir).toHaveBeenCalledWith(
     `${workingDir}/${uuid}`,
   );
@@ -206,8 +206,8 @@ test('unmountFile() unmounts WORKERFS and deletes UUID directory', async () => {
   WorkerInternalUtils.unmountFile(url, workingDir, filesystemNoDirMock);
 
   expect(filesystemNoDirMock.analyzePath).toHaveBeenCalledTimes(1);
-  expect(filesystemNoDirMock.unmount).toBeCalledTimes(0);
-  expect(filesystemNoDirMock.rmdir).toBeCalledTimes(0);
+  expect(filesystemNoDirMock.unmount).toHaveBeenCalledTimes(0);
+  expect(filesystemNoDirMock.rmdir).toHaveBeenCalledTimes(0);
 
   const filesystemNoUuidDirMock = {
     analyzePath: jest
@@ -221,8 +221,8 @@ test('unmountFile() unmounts WORKERFS and deletes UUID directory', async () => {
   WorkerInternalUtils.unmountFile(url, workingDir, filesystemNoUuidDirMock);
 
   expect(filesystemNoUuidDirMock.analyzePath).toHaveBeenCalledTimes(2);
-  expect(filesystemNoUuidDirMock.unmount).toBeCalledTimes(0);
-  expect(filesystemNoUuidDirMock.rmdir).toBeCalledTimes(0);
+  expect(filesystemNoUuidDirMock.unmount).toHaveBeenCalledTimes(0);
+  expect(filesystemNoUuidDirMock.rmdir).toHaveBeenCalledTimes(0);
 });
 
 test('isRecognized() scans file', async () => {

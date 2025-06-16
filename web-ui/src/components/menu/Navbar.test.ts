@@ -286,8 +286,8 @@ test('sf-navbar prevents default and stops propagation on dragenter', () => {
   event.stopPropagation = jest.fn();
   app.dispatchEvent(event as DragEvent);
 
-  expect(event.preventDefault).toBeCalledTimes(1);
-  expect(event.stopPropagation).toBeCalledTimes(1);
+  expect(event.preventDefault).toHaveBeenCalledTimes(1);
+  expect(event.stopPropagation).toHaveBeenCalledTimes(1);
 });
 
 test('sf-navbar shows copy symbol on dragover', () => {
@@ -306,8 +306,8 @@ test('sf-navbar shows copy symbol on dragover', () => {
   event.stopPropagation = jest.fn();
   app.dispatchEvent(event as DragEvent);
 
-  expect(event.preventDefault).toBeCalledTimes(1);
-  expect(event.stopPropagation).toBeCalledTimes(1);
+  expect(event.preventDefault).toHaveBeenCalledTimes(1);
+  expect(event.stopPropagation).toHaveBeenCalledTimes(1);
   expect(event.dataTransfer.dropEffect).toBe('copy');
 });
 

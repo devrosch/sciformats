@@ -82,7 +82,7 @@ test('throw when error occurs while opening a local file', async () => {
   const parser = new LocalFileParser(worker, new URL(mockErrorUrl), file);
 
   // see: https://stackoverflow.com/a/47887098 for how to test throw of async function
-  await expect(parser.open()).rejects.toThrowError(/open file/);
+  await expect(parser.open()).rejects.toThrow(/open file/);
 });
 
 test('closing a local file succeeds', async () => {
@@ -95,7 +95,7 @@ test('throw when error occurs while closing a local file', async () => {
   const parser = new LocalFileParser(worker, new URL(mockErrorUrl), file);
 
   // see: https://stackoverflow.com/a/47887098 for how to test throw of async function
-  await expect(parser.close()).rejects.toThrowError(/close file/);
+  await expect(parser.close()).rejects.toThrow(/close file/);
 });
 
 test('reading a local file succeeds', async () => {
@@ -121,5 +121,5 @@ test('reading an illegal URL throws', async () => {
   // see: https://stackoverflow.com/a/47887098 for how to test throw of async function
   await expect(
     parser.read(new URL(`file:///${wrongUuid}/error.txt#/`)),
-  ).rejects.toThrowError(/URL/);
+  ).rejects.toThrow(/URL/);
 });

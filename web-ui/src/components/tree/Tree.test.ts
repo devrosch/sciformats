@@ -256,7 +256,7 @@ test('sf-tree removeSelectedNode() removes root node', async () => {
   expect(url?.toString().includes(fileName)).toBeTruthy();
   const remainingNode = nodes.tree.children[0];
   expect(remainingNode).toBe(nodes.root2);
-  expect(remainingNode).not.toContain('selected');
+  expect(remainingNode.classList).not.toContain('selected');
 });
 
 test('sf-tree removeAllNodes() removes all root nodes', async () => {

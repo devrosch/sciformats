@@ -4,7 +4,7 @@ let windowSpy: jest.SpyInstance | null = null;
 
 // for details, see: https://stackoverflow.com/questions/41885841/how-can-i-mock-the-javascript-window-object-using-jest
 beforeEach(() => {
-  windowSpy = jest.spyOn(window, 'window', 'get');
+  windowSpy = jest.spyOn(global, 'window', 'get');
 });
 
 afterEach(() => {

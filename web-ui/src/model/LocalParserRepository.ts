@@ -22,11 +22,11 @@ export default class LocalParserRepository implements ParserRepository {
     for (const worker of this.#workers) {
       // TODO: this could be turned into a promise all
       /* eslint-disable-next-line no-await-in-loop */
-      const scanReply: WorkerResponse = (await postMessage(
+      const scanReply: WorkerResponse = await postMessage(
         worker,
         'scan',
         payload,
-      )) as any;
+      );
       if (
         scanReply.name === 'scanned' &&
         (scanReply.detail as { recognized: boolean }).recognized === true

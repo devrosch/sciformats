@@ -9,10 +9,14 @@ import WorkerStatus from 'worker/WorkerStatus';
  * @param payload Payload to send to web worker.
  * @returns A promise for the web worker response.
  */
-export const postMessage = (worker: Worker, name: string, payload: any) => {
+export const postMessage = (
+  worker: Worker,
+  name: string,
+  payload: any,
+): Promise<WorkerResponse> => {
   const correlationId = crypto.randomUUID();
 
-  const promise = new Promise((resolve, reject) => {
+  const promise: Promise<WorkerResponse> = new Promise((resolve, reject) => {
     const listener = (event: MessageEvent<any>) => {
       const result = event.data as WorkerResponse;
       // console.log(`Promise received message from worker: ${JSON.stringify(result)}`);

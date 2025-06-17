@@ -4,16 +4,6 @@ let navigatorSpy: jest.SpyInstance | null = null;
 
 // for details, see: https://stackoverflow.com/questions/41885841/how-can-i-mock-the-javascript-window-object-using-jest
 beforeEach(() => {
-  // work around issue introduced with jest@30.
-  // Related: https://github.com/jestjs/jest/issues/15674
-  // https://jestjs.io/blog#known-issues
-  // https://stackoverflow.com/a/56769293
-  Object.defineProperty(window, 'navigator', {
-    configurable: true,
-    get() {
-      return {};
-    },
-  });
   navigatorSpy = jest.spyOn(window, 'navigator', 'get');
 });
 

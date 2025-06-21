@@ -1,5 +1,5 @@
 /* eslint-disable no-duplicate-imports */
-import { initWorkerCpp, initWorkerRs } from 'util/WorkerUtils';
+import { initWorkerRs } from 'util/WorkerUtils';
 import 'components/dialogs/Splash';
 import Splash from 'components/dialogs/Splash';
 import 'components/menu/Navbar';
@@ -72,12 +72,9 @@ export default class App extends HTMLElement {
   }
 
   async initWorker() {
-    const workerCpp = await initWorkerCpp();
     const workerRs = await initWorkerRs();
-    const parserRepository = new LocalParserRepository([workerCpp, workerRs]);
+    const parserRepository = new LocalParserRepository([workerRs]);
     this.#parserRepository = parserRepository;
-    // const tree = this.querySelector('sf-tree') as Tree;
-    // tree.setParserRepository(parserRepository);
     const splash = this.querySelector('sf-splash') as Splash;
     splash.showModal(false);
     const navbar = this.querySelector('sf-navbar') as Navbar;

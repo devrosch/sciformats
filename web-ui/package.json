@@ -4,7 +4,6 @@
   "description": "An HTML/CSS/JS UI for visualizing scientific data.",
   "private": true,
   "scripts": {
-    "import-wasm": "mkdir -p dist && cp ../lib-cpp/build-wasm/apps/libsf.* dist",
     "import-wasm-rs": "rm -rf ./node_modules/sf_rs/ && cp -R ../lib-rs/pkg/. ./node_modules/sf_rs",
     "test": "APP_VERSION=$npm_package_version jest",
     "test:coverage": "APP_VERSION=$npm_package_version jest --coverage",

@@ -29,7 +29,6 @@ const errorFileName = 'ErrorFile.txt';
 const errorMessage = 'Error message.';
 
 jest.mock('util/WorkerUtils', () => ({
-  initWorkerCpp: jest.fn(),
   initWorkerRs: jest.fn(),
 }));
 const mockAddRootNode = jest.fn(() => {

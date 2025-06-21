@@ -6,15 +6,10 @@ You can find the application published at [GitLab Pages](https://devrosch.gitlab
 
 ## Prerequisites
 
-Minimum Node.js v15 (for @typescript-eslint). Tested with Node.js v20 only.
+- Node.js v20 or later (including npm) needs to be installed.
+- The WASM library needs to have been built as described in `lib-js`.
 
 ## Build
-
-First, build the WASM library as described in `lib-cpp` and then import it with:
-
-```
-npm import-wasm
-```
 
 To install the required packages run:
 
@@ -48,7 +43,7 @@ To start the development server, run:
 npm start
 ```
 
-For builing a release version, run:
+For building a release version, run:
 
 ```
 npm run build

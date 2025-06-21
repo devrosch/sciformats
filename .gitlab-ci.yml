@@ -6,7 +6,6 @@ stages:
   - deploy
 
 include:
-  - 'lib-cpp/.gitlab-ci-lib-cpp.yml'
   - 'lib-rs/.gitlab-ci-lib-rs.yml'
   - 'lib-js/.gitlab-ci-lib-js.yml'
   - 'web-ui/.gitlab-ci-web-ui.yml'

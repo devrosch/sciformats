@@ -16,7 +16,7 @@ export const postMessage = (
 ): Promise<WorkerResponse> => {
   const correlationId = crypto.randomUUID();
 
-  const promise: Promise<WorkerResponse> = new Promise((resolve, reject) => {
+  const promise = new Promise<WorkerResponse>((resolve, reject) => {
     const listener = (event: MessageEvent<any>) => {
       const result = event.data as WorkerResponse;
       // console.log(`Promise received message from worker: ${JSON.stringify(result)}`);

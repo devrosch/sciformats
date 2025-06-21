@@ -8,7 +8,7 @@ use js_sys::{Array, Number, Object, Uint8Array};
 #[cfg(not(feature = "nodejs"))]
 use js_sys::{Array, Uint8Array};
 use sf_rs::{
-    api::{ExportFormat, Node, Reader, SeekRead},
+    api::{ExportFormat, Node, Reader, SeekRead, Value},
     common::{BufSeekRead, ScannerRepository},
 };
 use std::{
@@ -58,8 +58,16 @@ impl JsNode {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.node.parameters {
             let key = JsValue::from(&param.key);
-            // todo: map to most appropriate JS type, not only string
-            let value = JsValue::from(&param.value.to_string());
+            let value = match &param.value {
+                Value::String(s) => JsValue::from(s),
+                Value::Bool(b) => JsValue::from(b.to_owned()),
+                Value::I32(i) => JsValue::from(i.to_owned()),
+                Value::U32(u) => JsValue::from(u.to_owned()),
+                Value::I64(i) => JsValue::from(i.to_owned()),
+                Value::U64(u) => JsValue::from(u.to_owned()),
+                Value::F32(f) => JsValue::from(f.to_owned()),
+                Value::F64(f) => JsValue::from(f.to_owned()),
+            };
             let js_param = js_sys::Object::new();
             let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
             let set_val_ret =
@@ -830,7 +838,7 @@ pub(crate) fn map_js_input_to_seekread(input: &JsValue) -> Result<Box<dyn SeekRe
 #[cfg(test)]
 mod tests {
     use super::*;
-    use js_sys::Array;
+    use js_sys::{Array, BigInt};
     use serde_json::json;
     use sf_rs::{
         api::{self, Column, Parameter, PointXy, Scanner, Table, Value},
@@ -1051,9 +1059,9 @@ mod tests {
         assert_eq!("param bool", key_1);
         let value_1 = js_sys::Reflect::get(&params[1], &JsValue::from("value"))
             .unwrap()
-            .as_string()
+            .as_bool()
             .unwrap();
-        assert_eq!("true", value_1);
+        assert_eq!(true, value_1);
         let key_2 = js_sys::Reflect::get(&params[2], &JsValue::from("key"))
             .unwrap()
             .as_string()
@@ -1061,9 +1069,9 @@ mod tests {
         assert_eq!("param i32", key_2);
         let value_2 = js_sys::Reflect::get(&params[2], &JsValue::from("value"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("-1", value_2);
+        assert_eq!(-1f64, value_2);
         let key_3 = js_sys::Reflect::get(&params[3], &JsValue::from("key"))
             .unwrap()
             .as_string()
@@ -1071,29 +1079,27 @@ mod tests {
         assert_eq!("param u32", key_3);
         let value_3 = js_sys::Reflect::get(&params[3], &JsValue::from("value"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("1", value_3);
+        assert_eq!(1f64, value_3);
         let key_4 = js_sys::Reflect::get(&params[4], &JsValue::from("key"))
             .unwrap()
             .as_string()
             .unwrap();
         assert_eq!("param i64", key_4);
-        let value_4 = js_sys::Reflect::get(&params[4], &JsValue::from("value"))
-            .unwrap()
-            .as_string()
-            .unwrap();
-        assert_eq!("-2", value_4);
+        let js_value_4 = js_sys::Reflect::get(&params[4], &JsValue::from("value")).unwrap();
+        assert!(js_value_4.is_bigint());
+        let value_4: BigInt = js_value_4.into();
+        assert_eq!(BigInt::from(-2), value_4);
         let key_5 = js_sys::Reflect::get(&params[5], &JsValue::from("key"))
             .unwrap()
             .as_string()
             .unwrap();
         assert_eq!("param u64", key_5);
-        let value_5 = js_sys::Reflect::get(&params[5], &JsValue::from("value"))
-            .unwrap()
-            .as_string()
-            .unwrap();
-        assert_eq!("2", value_5);
+        let js_value_5 = js_sys::Reflect::get(&params[5], &JsValue::from("value")).unwrap();
+        assert!(js_value_5.is_bigint());
+        let value_5: BigInt = js_value_5.into();
+        assert_eq!(BigInt::from(2), value_5);
         let key_6 = js_sys::Reflect::get(&params[6], &JsValue::from("key"))
             .unwrap()
             .as_string()
@@ -1101,9 +1107,9 @@ mod tests {
         assert_eq!("param f32", key_6);
         let value_6 = js_sys::Reflect::get(&params[6], &JsValue::from("value"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("-1", value_6);
+        assert_eq!(-1f64, value_6);
         let key_7 = js_sys::Reflect::get(&params[7], &JsValue::from("key"))
             .unwrap()
             .as_string()
@@ -1111,9 +1117,9 @@ mod tests {
         assert_eq!("param f64", key_7);
         let value_7 = js_sys::Reflect::get(&params[7], &JsValue::from("value"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("1", value_7);
+        assert_eq!(1f64, value_7);
 
         let data = &node.data();
         assert_eq!(2, data.len());

@@ -20,7 +20,10 @@ export default class MockParser implements Parser {
 
   // eslint-disable-next-line class-methods-use-this
   read(url: URL): Promise<NodeData> {
-    const parameters: { key: string; value: string }[] = [];
+    const parameters: {
+      key: string;
+      value: string | boolean | number | bigint;
+    }[] = [];
     const data: { x: number; y: number }[] = [];
     const table: Table = {
       columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],

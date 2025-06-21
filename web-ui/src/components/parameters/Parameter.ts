@@ -12,7 +12,7 @@ export default class Parameter extends HTMLElement {
 
   private _key = null as string | null;
 
-  private _value = null as string | null;
+  private _value = null as string | boolean | number | bigint | null;
 
   constructor() {
     super();
@@ -30,14 +30,15 @@ export default class Parameter extends HTMLElement {
     if (this._key === '') {
       this.innerHTML = valueOnlyTemplate;
       const valueSpan = this.querySelector('span');
-      valueSpan!.textContent = this._value;
+      valueSpan!.textContent = this._value?.toString() ?? null;
     } else {
       this.innerHTML = keyValueTemplate;
       const spans = this.querySelectorAll('span');
       const keySpan = spans[0];
       const valueSpan = spans[1];
       keySpan.textContent = this._key === null ? '' : this._key;
-      valueSpan.textContent = this._value === null ? '' : this._value;
+      valueSpan.textContent =
+        this._value === null ? '' : this._value?.toString();
     }
   }
 

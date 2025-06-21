@@ -14,7 +14,12 @@ const file = new File(['dummy'], 'test.txt');
 const worker = {} as Worker;
 const workerNodeData: WorkerNodeData = {
   url: url.toString(),
-  parameters: [{ key: 'param 1', value: 'param value 1' }],
+  parameters: [
+    { key: 'param 1', value: 'param value 1' },
+    { key: 'param 2', value: true },
+    { key: 'param 3', value: 123.456 },
+    { key: 'param 4', value: BigInt(123456789) },
+  ],
   data: [
     { x: 1, y: 2 },
     { x: 3, y: 4 },

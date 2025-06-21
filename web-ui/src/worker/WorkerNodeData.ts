@@ -14,7 +14,7 @@ interface WorkerNodeData {
   /**
    * Meta data represented as key-value pairs.
    */
-  parameters: { key: string; value: string }[];
+  parameters: { key: string; value: string | boolean | number | bigint }[];
 
   /**
    * XY data.

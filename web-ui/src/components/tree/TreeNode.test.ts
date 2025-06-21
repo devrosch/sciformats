@@ -27,7 +27,10 @@ class StubParser implements Parser {
   async read(url: URL): Promise<NodeData> {
     const hash = decodeURIComponent(url.hash);
 
-    const parameters = [{ key: 'key 1', value: 'value 1' }];
+    const parameters: {
+      key: string;
+      value: string | boolean | number | bigint;
+    }[] = [{ key: 'key 1', value: 'value 1' }];
 
     let data: { x: number; y: number }[] = [];
     data = [{ x: 1, y: 2 }];
@@ -36,7 +39,7 @@ class StubParser implements Parser {
         { x: 1, y: 2 },
         { x: 2, y: 4 },
       ];
-      parameters.push({ key: 'key 2', value: 'value 2' });
+      parameters.push({ key: 'key 2', value: true });
     }
     if (hash.endsWith('/child 3')) {
       data = [
@@ -44,8 +47,9 @@ class StubParser implements Parser {
         { x: 2, y: 4 },
         { x: 3, y: 6 },
       ];
-      parameters.push({ key: 'key 2', value: 'value 2' });
-      parameters.push({ key: 'key 3', value: 'value 3' });
+      parameters.push({ key: 'key 2', value: false });
+      parameters.push({ key: 'key 3', value: 123.456 });
+      parameters.push({ key: 'key 4', value: BigInt(123456) });
     }
 
     const table: Table = { columnNames: [], rows: [] };

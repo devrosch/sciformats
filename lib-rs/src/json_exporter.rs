@@ -1,5 +1,5 @@
 use crate::api::{Column, Exporter, Parameter, PointXy, Reader, Table, Value};
-use serde::ser::{Serialize, SerializeSeq, SerializeStruct, SerializeTuple, Serializer};
+use serde::ser::{Serialize, SerializeSeq, SerializeStruct, Serializer};
 use std::{error::Error, io::Write};
 
 // see:
@@ -37,9 +37,18 @@ struct NodeWrapper<'a, R: Reader + ?Sized> {
     path: &'a str,
     reader: &'a R,
 }
+
 struct ChildrenWrapper<'a, R: Reader + ?Sized> {
     paths: &'a [String],
     reader: &'a R,
+}
+
+struct MetadataWrapper<'a> {
+    metadata: &'a Vec<(String, String)>,
+}
+
+struct MetadataItemWrapper<'a> {
+    item: &'a (String, String),
 }
 
 impl<R: Reader + ?Sized> Serialize for NodeWrapper<'_, R> {
@@ -55,7 +64,10 @@ impl<R: Reader + ?Sized> Serialize for NodeWrapper<'_, R> {
         serializer.serialize_field("name", &node.name)?;
         serializer.serialize_field("parameters", &node.parameters)?;
         serializer.serialize_field("data", &node.data)?;
-        serializer.serialize_field("metadata", &node.metadata)?;
+        let metadata_wrapper = MetadataWrapper {
+            metadata: &node.metadata,
+        };
+        serializer.serialize_field("metadata", &metadata_wrapper)?;
         match &node.table {
             Some(table) => serializer.serialize_field("table", table)?,
             // if table is none, serialize as empty table
@@ -99,6 +111,32 @@ impl<R: Reader + ?Sized> Serialize for ChildrenWrapper<'_, R> {
     }
 }
 
+impl Serialize for MetadataWrapper<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut serializer = serializer.serialize_seq(Some(self.metadata.len()))?;
+        for item in self.metadata {
+            let item_wrapper = MetadataItemWrapper { item };
+            serializer.serialize_element(&item_wrapper)?;
+        }
+        serializer.end()
+    }
+}
+
+impl Serialize for MetadataItemWrapper<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut serializer = serializer.serialize_struct("metadataItem", 2)?;
+        serializer.serialize_field("key", &self.item.0)?;
+        serializer.serialize_field("value", &self.item.1)?;
+        serializer.end()
+    }
+}
+
 impl Serialize for Parameter {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -134,13 +172,15 @@ impl Serialize for PointXy {
     where
         S: Serializer,
     {
-        // let mut serializer = serializer.serialize_struct("point", 2)?;
-        // serializer.serialize_field("x", &self.x)?;
-        // serializer.serialize_field("y", &self.y)?;
-        let mut serializer = serializer.serialize_tuple(2)?;
-        serializer.serialize_element(&self.x)?;
-        serializer.serialize_element(&self.y)?;
+        let mut serializer = serializer.serialize_struct("point", 2)?;
+        serializer.serialize_field("x", &self.x)?;
+        serializer.serialize_field("y", &self.y)?;
         serializer.end()
+        // Alternative:
+        // let mut serializer = serializer.serialize_tuple(2)?;
+        // serializer.serialize_element(&self.x)?;
+        // serializer.serialize_element(&self.y)?;
+        // serializer.end()
     }
 }
 
@@ -161,7 +201,7 @@ impl Serialize for Column {
     where
         S: Serializer,
     {
-        // todo: serialize as map?
+        // Alternative: serialize as map.
         // let mut serializer = serializer.serialize_map(Some(1))?;
         // serializer.serialize_key(&self.key)?;
         // serializer.serialize_value(&self.name)?;
@@ -282,14 +322,16 @@ mod tests {
                 {"key": "param f64", "value": 1.0},
             ],
             "data": [
-                // { "x": 1.0, "y": 2.0},
-                // { "x": 3.0, "y": 4.0},
-                [1.0, 2.0],
-                [3.0, 4.0],
+                { "x": 1.0, "y": 2.0},
+                { "x": 3.0, "y": 4.0},
+                // [1.0, 2.0],
+                // [3.0, 4.0],
             ],
             "metadata": [
-                ["mk0", "mv0"],
-                ["mk1", "mv1"],
+                {"key": "mk0", "value": "mv0"},
+                {"key": "mk1", "value": "mv1"},
+                // ["mk0", "mv0"],
+                // ["mk1", "mv1"],
             ],
             "table": {
                 // "columnNames": [{"col key": "col name"}],

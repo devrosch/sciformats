@@ -443,10 +443,7 @@ impl Read for BlobSeekRead {
         fn to_io_error<T>(js_error: JsValue) -> std::io::Result<T> {
             // use web_sys::console;
             // console::error_1(&format!("I/O error: {:?}", js_error).into());
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("{:?}", js_error),
-            ))
+            Err(std::io::Error::other(format!("{:?}", js_error)))
         }
 
         let end_pos = self.pos + buf.len() as u64;
@@ -1272,14 +1269,16 @@ mod tests {
                 {"key": "param f64", "value": 1.0},
             ],
             "data": [
-                // { "x": 1.0, "y": 2.0},
-                // { "x": 3.0, "y": 4.0},
-                [1.0, 2.0],
-                [3.0, 4.0],
+                { "x": 1.0, "y": 2.0},
+                { "x": 3.0, "y": 4.0},
+                // [1.0, 2.0],
+                // [3.0, 4.0],
             ],
             "metadata": [
-                ["mk0", "mv0"],
-                ["mk1", "mv1"],
+                {"key": "mk0", "value": "mv0"},
+                {"key": "mk1", "value": "mv1"},
+                // ["mk0", "mv0"],
+                // ["mk1", "mv1"],
             ],
             "table": {
                 // "columnNames": [{"col key": "col name"}],

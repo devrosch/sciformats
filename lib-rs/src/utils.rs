@@ -13,12 +13,9 @@ pub(crate) fn is_recognized_extension(path: &str, accepted_extensions: &[&str]) 
         .map(|ext| ext.to_lowercase());
     match extension {
         None => false,
-        Some(ext) => {
-            let is_recognized_extension = accepted_extensions
-                .iter()
-                .any(|accept_ext| *accept_ext == ext);
-            is_recognized_extension
-        }
+        Some(ext) => accepted_extensions
+            .iter()
+            .any(|accept_ext| *accept_ext == ext),
     }
 }
 

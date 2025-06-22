@@ -69,7 +69,7 @@ export default class DataTable extends HTMLElement {
     thead.append(headerTr);
     columns.forEach((column) => {
       const th = document.createElement('th');
-      th.textContent = column.value;
+      th.textContent = column.name;
       headerTr.append(th);
     });
 

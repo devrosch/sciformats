@@ -96,7 +96,7 @@ const data = [
   { x: 2.1, y: 2.2 },
 ];
 const table: Table = {
-  columnNames: [{ key: 'col0', value: 'Column 0' }],
+  columnNames: [{ key: 'col0', name: 'Column 0' }],
   rows: [
     {
       col0: 'Cell 00',

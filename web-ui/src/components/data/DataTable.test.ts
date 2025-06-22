@@ -7,9 +7,9 @@ import DataTable from './DataTable';
 const element = 'sf-data-table';
 const table: Table = {
   columnNames: [
-    { key: 'col0', value: 'Column 0' },
-    { key: 'col1', value: 'Column 1' },
-    { key: 'col2', value: 'Column 2' },
+    { key: 'col0', name: 'Column 0' },
+    { key: 'col1', name: 'Column 1' },
+    { key: 'col2', name: 'Column 2' },
   ],
   rows: [
     {
@@ -61,7 +61,7 @@ const checkDataIsRendered = (
     const columnHeaders = header.querySelectorAll('th');
     expect(columnHeaders.length).toBe(peakData.columnNames.length);
     for (let i = 0; i < peakData.columnNames.length; i += 1) {
-      expect(columnHeaders[i].textContent).toBe(peakData.columnNames[i].value);
+      expect(columnHeaders[i].textContent).toBe(peakData.columnNames[i].name);
     }
 
     // table body

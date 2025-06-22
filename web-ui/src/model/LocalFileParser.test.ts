@@ -26,7 +26,7 @@ const workerNodeData: WorkerNodeData = {
   ],
   metadata: {},
   table: {
-    columnNames: [{ key: 'col0', value: 'Cloumn 0 Value' }],
+    columnNames: [{ key: 'col0', name: 'Cloumn 0 Value' }],
     rows: [new Map([['col0', 'Cloumn 0 Value']])],
   },
   childNodeNames: ['child 1', 'child 2'],

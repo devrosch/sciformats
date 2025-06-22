@@ -6,7 +6,7 @@ interface Table {
    * The column names.
    * Each column has a technical name (key) and a display name (value).
    */
-  columnNames: { key: string; value: string }[];
+  columnNames: { key: string; name: string }[];
 
   /**
    * The table rows.

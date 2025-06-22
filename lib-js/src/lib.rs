@@ -121,13 +121,12 @@ impl JsNode {
             let col_names = &table.column_names;
             for col_name in col_names {
                 let key = JsValue::from(&col_name.key);
-                let value = JsValue::from(&col_name.name);
+                let name = JsValue::from(&col_name.name);
                 let column = js_sys::Object::new();
                 let set_col_key_ret =
                     js_sys::Reflect::set(&column, &JsValue::from("key"), &key).unwrap();
-                // TODO: make this "name" not "value"
                 let set_col_val_ret =
-                    js_sys::Reflect::set(&column, &JsValue::from("value"), &value).unwrap();
+                    js_sys::Reflect::set(&column, &JsValue::from("name"), &name).unwrap();
                 if !set_col_key_ret || !set_col_val_ret {
                     panic!("Could not convert table column to JS Object.");
                 }
@@ -1163,7 +1162,7 @@ mod tests {
             .as_string()
             .unwrap();
         assert_eq!("col key", column_key_0);
-        let column_name_0 = js_sys::Reflect::get(&column_0, &JsValue::from("value"))
+        let column_name_0 = js_sys::Reflect::get(&column_0, &JsValue::from("name"))
             .unwrap()
             .as_string()
             .unwrap();

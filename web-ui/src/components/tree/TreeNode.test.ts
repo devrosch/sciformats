@@ -54,8 +54,8 @@ class StubParser implements Parser {
 
     const table: Table = { columnNames: [], rows: [] };
     if (hash.endsWith('/child 2')) {
-      table.columnNames.push({ key: 'col0', value: 'Cloumn 0' });
-      table.columnNames.push({ key: 'col1', value: 'Cloumn 1' });
+      table.columnNames.push({ key: 'col0', name: 'Cloumn 0' });
+      table.columnNames.push({ key: 'col1', name: 'Cloumn 1' });
       const peak0 = new Map<string, string>();
       peak0.set('col0', 'peak0col0value');
       peak0.set('col1', 'peak0col1value');

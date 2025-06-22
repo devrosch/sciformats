@@ -26,8 +26,8 @@ export default class MockParser implements Parser {
     }[] = [];
     const data: { x: number; y: number }[] = [];
     const table: Table = {
-      columnNames: [{ key: 'col0', name: 'Cloumn 0 Value' }],
-      rows: [new Map([['col0', 'Cloumn 0 Value']])],
+      columnNames: [{ key: 'col0', name: 'Column 0 Value' }],
+      rows: [{ col0: 'Column 0 Value' }],
     };
     const childNodeNames: string[] = ['child1', 'child2'];
     const metadata = {};

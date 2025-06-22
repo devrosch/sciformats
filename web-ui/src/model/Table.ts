@@ -15,7 +15,7 @@ interface Table {
    * also present as column name keys. May miss some column name key which the represents blank
    * cells.
    */
-  rows: Record<string, any>[];
+  rows: Record<string, string | boolean | number | bigint>[];
 }
 
 export default Table;

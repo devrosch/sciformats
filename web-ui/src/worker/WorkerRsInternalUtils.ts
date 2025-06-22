@@ -7,6 +7,7 @@ import WorkerNodeData from './WorkerNodeData';
 import WorkerFileUrl from './WorkerFileUrl';
 import WorkerExportInfo from './WorkerExportInfo';
 import WorkerExport from './WorkerExport';
+import Table from 'model/Table';
 
 const errorHandlingWrapper = (
   request: WorkerRequest,
@@ -74,7 +75,7 @@ export const onRead = (
       parameters: rawNode.parameters,
       data: rawNode.data,
       metadata: rawNode.metadata as Record<string, string>,
-      table: rawNode.table as { columnNames: []; rows: [] },
+      table: rawNode.table as Table,
       childNodeNames: rawNode.childNodeNames,
     };
     rawNode.free();

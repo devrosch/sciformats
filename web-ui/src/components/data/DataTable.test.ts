@@ -13,9 +13,9 @@ const table: Table = {
   ],
   rows: [
     {
-      col0: 'Cell 00',
-      col1: 'Cell 01',
-      col2: 'Cell 02',
+      col0: true,
+      col1: 123.456,
+      col2: BigInt(123456),
     },
     {
       // no col0
@@ -77,7 +77,7 @@ const checkDataIsRendered = (
         )
           ? peakData.rows[i][columnKey]
           : '';
-        expect(cells[j].textContent).toBe(expectedCellValue);
+        expect(cells[j].textContent).toBe(expectedCellValue.toString());
       }
     }
   } else {

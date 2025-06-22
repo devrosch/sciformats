@@ -32,6 +32,23 @@ pub fn start() {
 }
 
 // -------------------------------------------------
+// Utils
+// -------------------------------------------------
+
+fn map_to_jsvalue(value: &Value) -> JsValue {
+    match value {
+        Value::String(s) => JsValue::from(s),
+        Value::Bool(b) => JsValue::from(b.to_owned()),
+        Value::I32(i) => JsValue::from(i.to_owned()),
+        Value::U32(u) => JsValue::from(u.to_owned()),
+        Value::I64(i) => JsValue::from(i.to_owned()),
+        Value::U64(u) => JsValue::from(u.to_owned()),
+        Value::F32(f) => JsValue::from(f.to_owned()),
+        Value::F64(f) => JsValue::from(f.to_owned()),
+    }
+}
+
+// -------------------------------------------------
 // API
 // -------------------------------------------------
 
@@ -58,16 +75,7 @@ impl JsNode {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.node.parameters {
             let key = JsValue::from(&param.key);
-            let value = match &param.value {
-                Value::String(s) => JsValue::from(s),
-                Value::Bool(b) => JsValue::from(b.to_owned()),
-                Value::I32(i) => JsValue::from(i.to_owned()),
-                Value::U32(u) => JsValue::from(u.to_owned()),
-                Value::I64(i) => JsValue::from(i.to_owned()),
-                Value::U64(u) => JsValue::from(u.to_owned()),
-                Value::F32(f) => JsValue::from(f.to_owned()),
-                Value::F64(f) => JsValue::from(f.to_owned()),
-            };
+            let value = map_to_jsvalue(&param.value);
             let js_param = js_sys::Object::new();
             let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
             let set_val_ret =
@@ -138,8 +146,7 @@ impl JsNode {
                 let js_row = js_sys::Object::new();
                 for cell in row {
                     let key = JsValue::from(cell.0);
-                    // todo: map to most appropriate JS type, not only string
-                    let val = JsValue::from(cell.1.to_string());
+                    let val = map_to_jsvalue(cell.1);
                     let set_cell_ret = js_sys::Reflect::set(&js_row, &key, &val).unwrap();
                     if !set_cell_ret {
                         panic!("Could not convert table cell to JS Object.");
@@ -1179,45 +1186,43 @@ mod tests {
         let row_1 = rows.get(1);
         let cell_value_1 = js_sys::Reflect::get(&row_1, &JsValue::from("col key"))
             .unwrap()
-            .as_string()
+            .as_bool()
             .unwrap();
-        assert_eq!("true", cell_value_1);
+        assert_eq!(true, cell_value_1);
         let row_2 = rows.get(2);
         let cell_value_2 = js_sys::Reflect::get(&row_2, &JsValue::from("col key"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("-1", cell_value_2);
+        assert_eq!(-1f64, cell_value_2);
         let row_3 = rows.get(3);
         let cell_value_3 = js_sys::Reflect::get(&row_3, &JsValue::from("col key"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("1", cell_value_3);
+        assert_eq!(1f64, cell_value_3);
         let row_4 = rows.get(4);
-        let cell_value_4 = js_sys::Reflect::get(&row_4, &JsValue::from("col key"))
-            .unwrap()
-            .as_string()
-            .unwrap();
-        assert_eq!("-2", cell_value_4);
+        let js_cell_value_4 = js_sys::Reflect::get(&row_4, &JsValue::from("col key")).unwrap();
+        assert!(js_cell_value_4.is_bigint());
+        let cell_value_4: BigInt = js_cell_value_4.into();
+        assert_eq!(BigInt::from(-2), cell_value_4);
         let row_5 = rows.get(5);
-        let cell_value_5 = js_sys::Reflect::get(&row_5, &JsValue::from("col key"))
-            .unwrap()
-            .as_string()
-            .unwrap();
-        assert_eq!("2", cell_value_5);
+        let js_cell_value_5 = js_sys::Reflect::get(&row_5, &JsValue::from("col key")).unwrap();
+        assert!(js_cell_value_5.is_bigint());
+        let cell_value_5: BigInt = js_cell_value_5.into();
+        assert_eq!(BigInt::from(2), cell_value_5);
         let row_6 = rows.get(6);
         let cell_value_6 = js_sys::Reflect::get(&row_6, &JsValue::from("col key"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("-1", cell_value_6);
+        assert_eq!(-1f64, cell_value_6);
         let row_7 = rows.get(7);
         let cell_value_7 = js_sys::Reflect::get(&row_7, &JsValue::from("col key"))
             .unwrap()
-            .as_string()
+            .as_f64()
             .unwrap();
-        assert_eq!("1", cell_value_7);
+        assert_eq!(1f64, cell_value_7);
 
         let child_node_names = &node.child_node_names();
         assert_eq!(2, data.len());

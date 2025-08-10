@@ -1,6 +1,7 @@
 use crate::api::SeekBufRead;
 use quick_xml::{
     Reader,
+    escape::resolve_predefined_entity,
     events::{BytesStart, Event},
     name::QName,
 };
@@ -47,6 +48,12 @@ impl fmt::Display for SfXmlError {
 impl From<quick_xml::Error> for SfXmlError {
     fn from(value: quick_xml::Error) -> Self {
         Self::from_source(value, "Structural error parsing XML.")
+    }
+}
+
+impl From<quick_xml::encoding::EncodingError> for SfXmlError {
+    fn from(value: quick_xml::encoding::EncodingError) -> Self {
+        Self::from_source(value, "Encoding error parsing XML.")
     }
 }
 
@@ -220,7 +227,7 @@ pub(super) fn skip_whitespace<'buf, R: BufRead>(
     let event = loop {
         match reader.read_event_into(buf)? {
             Event::Text(bytes) => {
-                if !bytes.unescape()?.trim().is_empty() {
+                if !bytes.decode()?.trim().is_empty() {
                     break Event::Text(bytes);
                 }
             }
@@ -236,7 +243,7 @@ pub(super) fn next_non_whitespace<'buf, R: BufRead>(
     reader: &mut Reader<R>,
 ) -> Result<BufEvent<'buf>, SfXmlError> {
     let is_ws = match &next.event {
-        Event::Text(bytes) => bytes.unescape()?.trim().is_empty(),
+        Event::Text(bytes) => bytes.decode()?.trim().is_empty(),
         Event::Comment(_) => true,
         _ => false,
     };
@@ -263,9 +270,30 @@ pub(super) fn read_value<'buf, R: BufRead>(
     let next = loop {
         let event = match reader.read_event_into(buf)? {
             Event::Text(bytes) => {
-                value += &bytes.unescape()?;
+                value += &bytes.decode()?;
                 None
             }
+            Event::GeneralRef(bytes) => match bytes.resolve_char_ref()? {
+                Some(ch) => {
+                    value.push(ch);
+                    None
+                }
+                None => {
+                    let entity = resolve_predefined_entity(&bytes.decode()?);
+                    match entity {
+                        Some(s) => {
+                            value += s;
+                            None
+                        }
+                        None => {
+                            return Err(SfXmlError::new(&format!(
+                                "Could not resolve entity as char reference: {}",
+                                bytes.decode()?
+                            )));
+                        }
+                    }
+                }
+            },
             Event::Comment(_) => None,
             any_other => Some(any_other),
         };
@@ -549,4 +577,47 @@ fn read_sequence_core<'buf, T, Reader, E: Error>(
             _ => return Ok((ret, next)),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use quick_xml::Reader;
+
+    use crate::xml_utils::{read_next_event, read_value};
+
+    #[test]
+    fn read_value_with_comment() {
+        let input = "<sometag>some<!--comment-->text</sometag>";
+        let mut reader = Reader::from_str(input);
+        let mut buf = Vec::new();
+
+        let _event = read_next_event(&mut reader, &mut buf).unwrap();
+        let (value, _next) = read_value(&mut reader, &mut buf).unwrap();
+
+        assert_eq!("sometext", value);
+    }
+
+    #[test]
+    fn read_value_with_char_entities() {
+        let input = "<sometag>some&lt;&amp;text&#x30;&gt;</sometag>";
+        let mut reader = Reader::from_str(input);
+        let mut buf = Vec::new();
+
+        let _event = read_next_event(&mut reader, &mut buf).unwrap();
+        let (value, _next) = read_value(&mut reader, &mut buf).unwrap();
+
+        assert_eq!("some<&text0>", value);
+    }
+
+    // #[test]
+    // fn read_value_with_cdata() {
+    //     let input = "<sometag>some<![CDATA[<&text>]]></sometag>";
+    //     let mut reader = Reader::from_str(input);
+    //     let mut buf = Vec::new();
+
+    //     let _event = read_next_event(&mut reader, &mut buf).unwrap();
+    //     let (value, _next) = read_value(&mut reader, &mut buf).unwrap();
+
+    //     assert_eq!("some<&text>", value);
+    // }
 }

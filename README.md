@@ -2,11 +2,11 @@
 
 Libraries and tools for reading and visualizing scientific data.
 
-You can try the application at [GitLab Pages](https://devrosch.gitlab.io/sf/index.html).
+You can try the application at [GitLab Pages](https://devrosch.gitlab.io/sciformats/index.html).
 
 ## Structure
 
-- lib-cpp (**Deprecated**): Native C++ library that supports reading the JCAMP-DX format. Can be compiled to WASM and used in JS. Will be removed in a future release as its feature set is covered by lib-rs.
+- lib-cpp (**Deprecated**): Native C++ library that supports reading the JCAMP-DX format. Can be compiled to WASM and used in JS. No longer used. Will be removed in a future release as its feature set is covered by lib-rs.
 - lib-rs: Native Rust library that supports reading multiple formats. Core library used by other lib-xxx libraries except lib-cpp.
 - lib-js: JavaScript/TypeScript bindings for lib-rs. This requires the JS runtime to support WebAssembly (WASM). All current browsers and major runtimes do.
 - web-ui: An HTML/CSS/JS UI for data viewing that leverages lib-js.

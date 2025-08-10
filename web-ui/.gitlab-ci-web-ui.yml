@@ -55,7 +55,7 @@ web-ui:release:
     - cd web-ui
     - npm ci
     - CI=true npm run build
-    - npm run import-wasm
+    # - npm run import-wasm
   needs: ["lib-js:release"]
   dependencies:
     - "lib-js:release"

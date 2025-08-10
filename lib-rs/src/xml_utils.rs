@@ -294,6 +294,10 @@ pub(super) fn read_value<'buf, R: BufRead>(
                     }
                 }
             },
+            Event::CData(bytes) => {
+                value += &bytes.decode()?;
+                None
+            }
             Event::Comment(_) => None,
             any_other => Some(any_other),
         };
@@ -609,15 +613,15 @@ mod tests {
         assert_eq!("some<&text0>", value);
     }
 
-    // #[test]
-    // fn read_value_with_cdata() {
-    //     let input = "<sometag>some<![CDATA[<&text>]]></sometag>";
-    //     let mut reader = Reader::from_str(input);
-    //     let mut buf = Vec::new();
+    #[test]
+    fn read_value_with_cdata() {
+        let input = "<sometag>some<![CDATA[<&text;&amp;text&#x30;>]]></sometag>";
+        let mut reader = Reader::from_str(input);
+        let mut buf = Vec::new();
 
-    //     let _event = read_next_event(&mut reader, &mut buf).unwrap();
-    //     let (value, _next) = read_value(&mut reader, &mut buf).unwrap();
+        let _event = read_next_event(&mut reader, &mut buf).unwrap();
+        let (value, _next) = read_value(&mut reader, &mut buf).unwrap();
 
-    //     assert_eq!("some<&text>", value);
-    // }
+        assert_eq!("some<&text;&amp;text&#x30;>", value);
+    }
 }

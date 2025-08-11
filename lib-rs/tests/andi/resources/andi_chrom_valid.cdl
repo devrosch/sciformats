@@ -39,11 +39,11 @@ variables:
 		:netcdf_revision = "2.0" ;
 		:languages = "English" ;
 		:administrative_comments = "dummy admin comment" ;
-		:dataset_origin = "sf_rs" ;
+		:dataset_origin = "sciformats" ;
 		:dataset_owner = "Robert" ;
 		:dataset_date_time_stamp = "20230908200501+0200" ;
 		:injection_date_time_stamp = "20230908200501+0200" ;
-		:experiment_title = "sf_rs sample file" ;
+		:experiment_title = "sciformats sample file" ;
 		:operator_name = "Rob" ;
 		:separation_experiment_type = "liquid chromatography" ;
 		:company_method_name = "dummy company method 1" ;

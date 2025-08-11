@@ -336,6 +336,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "sciformats"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "binrw",
+ "chrono",
+ "netcdf3",
+ "quick-xml",
+ "regex",
+ "serde",
+ "serde_json",
+ "strum",
+]
+
+[[package]]
+name = "sciformats_js"
+version = "0.1.0"
+dependencies = [
+ "js-sys",
+ "sciformats",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
+ "web-sys",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.219"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -365,34 +393,6 @@ dependencies = [
  "memchr",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "sf_js"
-version = "0.1.0"
-dependencies = [
- "js-sys",
- "serde",
- "serde_json",
- "sf_rs",
- "wasm-bindgen",
- "wasm-bindgen-test",
- "web-sys",
-]
-
-[[package]]
-name = "sf_rs"
-version = "0.1.0"
-dependencies = [
- "base64",
- "binrw",
- "chrono",
- "netcdf3",
- "quick-xml",
- "regex",
- "serde",
- "serde_json",
- "strum",
 ]
 
 [[package]]

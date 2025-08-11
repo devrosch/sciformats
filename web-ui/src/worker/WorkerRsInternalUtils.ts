@@ -1,4 +1,4 @@
-import * as sf_js from 'sf_js';
+import * as sciformats_js from 'sciformats_js';
 import { extractFilename, extractHashPath } from 'util/UrlUtils';
 import WorkerFileInfo from './WorkerFileInfo';
 import WorkerRequest from './WorkerRequest';
@@ -36,7 +36,7 @@ const extractFromRequest = (request: WorkerRequest) => {
 
 export const onScan = (
   request: WorkerRequest,
-  scanner: sf_js.ScannerRepository,
+  scanner: sciformats_js.ScannerRepository,
 ) =>
   errorHandlingWrapper(request, () => {
     const { fileInfo, fileName } = extractFromRequest(request);
@@ -46,8 +46,8 @@ export const onScan = (
 
 export const onOpen = (
   request: WorkerRequest,
-  scanner: sf_js.ScannerRepository,
-  openFiles: Map<string, sf_js.Reader>,
+  scanner: sciformats_js.ScannerRepository,
+  openFiles: Map<string, sciformats_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const { fileInfo, rootUrl, fileName } = extractFromRequest(request);
@@ -60,7 +60,7 @@ export const onOpen = (
 
 export const onRead = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_js.Reader>,
+  openFiles: Map<string, sciformats_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const { url, rootUrl } = extractFromRequest(request);
@@ -85,7 +85,7 @@ export const onRead = (
 
 export const onExport = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_js.Reader>,
+  openFiles: Map<string, sciformats_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const fileUrl = request.detail as WorkerExportInfo;
@@ -107,7 +107,7 @@ export const onExport = (
 
 export const onClose = (
   request: WorkerRequest,
-  openFiles: Map<string, sf_js.Reader>,
+  openFiles: Map<string, sciformats_js.Reader>,
 ) =>
   errorHandlingWrapper(request, () => {
     const fileUrl = request.detail as WorkerFileUrl;

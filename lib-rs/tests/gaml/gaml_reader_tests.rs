@@ -1,5 +1,5 @@
 use super::{GAML_SAMPLE_FILE, open_file};
-use sf_rs::{
+use sciformats::{
     api::{Column, Parameter, Parser, PointXy, Reader, Table, Value},
     gaml::{gaml_parser::GamlParser, gaml_reader::GamlReader},
 };

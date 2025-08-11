@@ -5,8 +5,8 @@
 // Initialize library and worker.
 // ------------------------------
 
-import { ScannerRepository } from 'sf_js';
-console.log('Worker: initialized sf_js');
+import { ScannerRepository } from 'sciformats_js';
+console.log('Worker: initialized sciformats_js');
 
 const scannerRepository = new ScannerRepository();
 

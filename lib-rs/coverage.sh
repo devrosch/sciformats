@@ -13,7 +13,7 @@ set -eu pipefail
 # Build with coverage instrumentation
 export RUSTFLAGS="-Cinstrument-coverage -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
 # Output file names
-export LLVM_PROFILE_FILE="./target/debug/coverage/sf_rs-%p-%m.profraw"
+export LLVM_PROFILE_FILE="./target/debug/coverage/sciformats-%p-%m.profraw"
 # Full build
 export CARGO_INCREMENTAL=0
 export RUSTDOCFLAGS="-Cpanic=abort"

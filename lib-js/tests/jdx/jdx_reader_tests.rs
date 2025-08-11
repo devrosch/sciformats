@@ -1,5 +1,5 @@
 use super::{COMPOUND_FILE, open_file};
-use sf_rs::{
+use sciformats::{
     api::{Parser, Reader, SeekBufRead},
     jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},
 };

@@ -1,6 +1,6 @@
 # Examples - Node.js
 
-Node.js example application that reads scientific files and prints the contents to the console. Uses sf_js for reading scientific data formats.
+Node.js example application that reads scientific files and prints the contents to the console. Uses sciformats_js for reading scientific data formats.
 
 ## Prerequisites
 
@@ -8,7 +8,7 @@ Node.js example application that reads scientific files and prints the contents 
 
 Install the [Rust Toolchain](https://www.rust-lang.org/tools/install) including cargo. It may be necessary to activate the WebAssembly target with: `rustup target add wasm32-unknown-unknown`.
 
-Build the sf_js library. In the `lib-js` directory run:
+Build the sciformats_js library. In the `lib-js` directory run:
 
 ```
 cargo install

@@ -1,6 +1,6 @@
 # Examples - Vanilla JS
 
-An vanilla JavaScript example application that reads scientific files and prints the contents in the browser. Uses sf_js for reading scientific data formats. The application allows selecting files and if the format is recognized shows their content.
+An vanilla JavaScript example application that reads scientific files and prints the contents in the browser. Uses sciformats_js for reading scientific data formats. The application allows selecting files and if the format is recognized shows their content.
 
 This example demonstrates how to read data eagerly, loading file contents fully into memory for parsing. This is suitable for running in the main thread but files must be small enough to fit into memory.
 
@@ -10,7 +10,7 @@ This example demonstrates how to read data eagerly, loading file contents fully 
 
 Install the [Rust Toolchain](https://www.rust-lang.org/tools/install) including cargo. It may be necessary to activate the WebAssembly target with: `rustup target add wasm32-unknown-unknown`.
 
-Build the sf_js library. In the `lib-js` directory run:
+Build the sciformats_js library. In the `lib-js` directory run:
 
 ```
 cargo install

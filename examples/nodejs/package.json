@@ -7,8 +7,8 @@
   },
   "author": "Robert Schiwon",
   "license": "MIT",
-  "description": "A Node.js sample application demonstrating the use uf sf_js.",
+  "description": "A Node.js sample application demonstrating the use uf sciformats_js.",
   "dependencies": {
-    "sf_js": "file:../../lib-js/pkg"
+    "sciformats_js": "file:../../lib-js/pkg"
   }
 }

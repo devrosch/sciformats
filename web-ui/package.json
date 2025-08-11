@@ -4,7 +4,6 @@
   "description": "An HTML/CSS/JS UI for visualizing scientific data.",
   "private": true,
   "scripts": {
-    "import-wasm-rs": "rm -rf ./node_modules/sf_rs/ && cp -R ../lib-rs/pkg/. ./node_modules/sf_rs",
     "test": "APP_VERSION=$npm_package_version jest",
     "test:coverage": "APP_VERSION=$npm_package_version jest --coverage",
     "lint": "eslint ./src",
@@ -72,7 +71,7 @@
   },
   "dependencies": {
     "plotly.js-dist-min": "^3.0.1",
-    "sf_js": "file:../lib-js/pkg"
+    "sciformats_js": "file:../lib-js/pkg"
   },
   "browser": {
     "crypto": false,

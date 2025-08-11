@@ -1,6 +1,6 @@
 import { log } from 'node:console';
 import { openSync, closeSync, readFileSync } from 'node:fs';
-import { ScannerRepository } from 'sf_js';
+import { ScannerRepository } from 'sciformats_js';
 
 const resourcesDir = '../_resources/';
 const exportDir = './exports/';

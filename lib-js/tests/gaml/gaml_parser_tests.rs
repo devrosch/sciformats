@@ -1,5 +1,5 @@
 use super::{GAML_SAMPLE_FILE, open_file};
-use sf_rs::{api::Parser, gaml::gaml_parser::GamlParser};
+use sciformats::{api::Parser, gaml::gaml_parser::GamlParser};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);

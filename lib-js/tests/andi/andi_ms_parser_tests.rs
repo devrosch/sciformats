@@ -1,5 +1,5 @@
 use super::{ANDI_MS_CENTROID, open_file};
-use sf_rs::{andi::andi_ms_parser::AndiMsParser, api::Parser};
+use sciformats::{andi::andi_ms_parser::AndiMsParser, api::Parser};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);

@@ -1,5 +1,5 @@
 use super::{ANDI_CHROM_VALID, ANDI_MS_CENTROID, open_file};
-use sf_rs::{andi::andi_scanner::AndiScanner, api::Scanner};
+use sciformats::{andi::andi_scanner::AndiScanner, api::Scanner};
 use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);

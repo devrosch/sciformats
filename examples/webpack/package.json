@@ -1,7 +1,7 @@
 {
   "name": "webpack_example",
   "version": "0.1.0",
-  "description": "A sample application demonstrating the use uf sf_js with webpack in the browser.",
+  "description": "A sample application demonstrating the use of sciformats_js with webpack in the browser.",
   "scripts": {
     "start": "webpack serve --open",
     "build": "webpack"
@@ -9,12 +9,12 @@
   "author": "Robert Schiwon",
   "license": "MIT",
   "dependencies": {
-    "sf_js": "file:../../lib-js/pkg"
+    "sciformats_js": "file:../../lib-js/pkg"
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.6.0",
     "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4",
+    "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.1.0"
   }
 }

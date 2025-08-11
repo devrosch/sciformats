@@ -5,13 +5,13 @@
 // Initialize library.
 // -------------------
 
-import init, { ScannerRepository } from './pkg/sf_js.js';
+import init, { ScannerRepository } from './pkg/sciformats_js.js';
 
 // Initialize display.
 clearDisplay('fileInput');
 // Load and initialize package.
-await init({ url: './pkg/sf_js_bg.wasm' });
-console.log('Main thread: initialized sf_rs');
+await init({ url: './pkg/sciformats_js_bg.wasm' });
+console.log('Main thread: initialized sciformats_js');
 
 const scannerRepository = new ScannerRepository();
 

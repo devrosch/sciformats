@@ -1,5 +1,5 @@
 use super::{ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID, ANDI_NON_CDF_DUMMY, open_file};
-use sf_rs::{
+use sciformats::{
     andi::{AndiDatasetCompleteness, andi_chrom_parser::AndiChromParser},
     api::Parser,
 };
@@ -28,7 +28,7 @@ fn andi_chrom_parse_valid_succeeds() {
         "dummy admin comment",
         admin_data.administrative_comments.as_ref().unwrap()
     );
-    assert_eq!("sf_rs", admin_data.dataset_origin.as_ref().unwrap());
+    assert_eq!("sciformats", admin_data.dataset_origin.as_ref().unwrap());
     assert_eq!("Robert", admin_data.dataset_owner.as_ref().unwrap());
     assert_eq!(
         "20230908200501+0200",
@@ -36,7 +36,7 @@ fn andi_chrom_parse_valid_succeeds() {
     );
     assert_eq!("20230908200501+0200", admin_data.injection_date_time_stamp);
     assert_eq!(
-        "sf_rs sample file",
+        "sciformats sample file",
         admin_data.experiment_title.as_ref().unwrap()
     );
     assert_eq!("Rob", admin_data.operator_name.as_ref().unwrap());

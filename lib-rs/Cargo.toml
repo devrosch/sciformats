@@ -1,5 +1,5 @@
 [package]
-name = "sf_rs"
+name = "sciformats"
 version = "0.1.0"
 edition = "2024"
 

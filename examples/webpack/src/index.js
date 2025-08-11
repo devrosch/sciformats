@@ -5,7 +5,7 @@
 // Initialize library.
 // -------------------
 
-import { ScannerRepository } from 'sf_js';
+import { ScannerRepository } from 'sciformats_js';
 
 // Initialize display.
 clearDisplay('fileInput');

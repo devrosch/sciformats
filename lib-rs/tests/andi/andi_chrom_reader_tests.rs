@@ -1,5 +1,5 @@
 use super::{ANDI_CHROM_QUIRKS, ANDI_CHROM_VALID, open_file};
-use sf_rs::{
+use sciformats::{
     andi::{andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader},
     api::{Column, Parameter, Parser, Reader, Value},
 };
@@ -56,7 +56,7 @@ fn andi_chrom_read_valid_succeeds() {
         admin_data.parameters[4]
     );
     assert_eq!(
-        Parameter::from_str_str("Dataset Origin", "sf_rs"),
+        Parameter::from_str_str("Dataset Origin", "sciformats"),
         admin_data.parameters[5]
     );
     assert_eq!(
@@ -72,7 +72,7 @@ fn andi_chrom_read_valid_succeeds() {
         admin_data.parameters[8]
     );
     assert_eq!(
-        Parameter::from_str_str("Experiment Title", "sf_rs sample file"),
+        Parameter::from_str_str("Experiment Title", "sciformats sample file"),
         admin_data.parameters[9]
     );
     assert_eq!(

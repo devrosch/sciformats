@@ -1,5 +1,5 @@
 use super::{BlobSeekRead, JsNode, JsReader, create_js_reader, create_js_scanner, map_to_js_err};
-use sf_rs::{api::Scanner, gaml::gaml_scanner::GamlScanner};
+use sciformats::{api::Scanner, gaml::gaml_scanner::GamlScanner};
 use wasm_bindgen::{JsError, prelude::wasm_bindgen};
 use web_sys::Blob;
 

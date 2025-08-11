@@ -1,4 +1,4 @@
-# sf_rs
+# sciformats
 
 A library for reading scientific data formats.
 
@@ -15,7 +15,6 @@ This is a library implemented in [Rust](https://www.rust-lang.org/) for reading 
 
 * Install the [Rust Toolchain](https://www.rust-lang.org/tools/install) including cargo.
     * It may be necessary to activate the WebAssembly target with: `rustup target add wasm32-unknown-unknown`.
-* Optionally, for WASM builds install [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/).
 * Optionally, for checking code formatting install `rustfmt` with `rustup component add rustfmt`.
 * Optionally, for linting the code install `clippy` with `rustup component add clippy`.
 
@@ -24,19 +23,15 @@ For capturing code coverage, the following additional tools are required:
 * `grcov`: Install with: `cargo install grcov`.
 * Optionally, install `genhtml` if you want to use it to generate a coverage report instead of the `grcov` generated report.
 
-## Native
+## Build
 
-Native compilation (tested on Ubuntu Linux x86-64 and macOS ARM) and cross-compilation to WebAssembly (WASM) are supported.
-
-### Build
-
-You can build the library with:
+You can build the library (tested on Ubuntu Linux x86-64 and macOS ARM) with:
 
 ```
 cargo build
 ```
 
-### Test
+## Test
 
 To run unit tests, integration tests, and doc tests, run:
 
@@ -44,7 +39,7 @@ To run unit tests, integration tests, and doc tests, run:
 cargo test
 ```
 
-### Code Coverage
+## Code Coverage
 
 For capturing code coverage:
 
@@ -73,7 +68,7 @@ genhtml -o ./target/debug/coverage/ --show-details --highlight --ignore-errors s
 
 More information on capturing code coverage can be found at [doc.rust-lang.org](https://doc.rust-lang.org/rustc/instrument-coverage.html) and [grcov](https://github.com/mozilla/grcov).
 
-### Formatting
+## Formatting
 
 To check correct code formatting, run:
 ```
@@ -82,7 +77,7 @@ cargo fmt --check
 
 To fix formatting issues, run the same command without the `--check` flag.
 
-### Linting
+## Linting
 
 To lint the code, run:
 ```

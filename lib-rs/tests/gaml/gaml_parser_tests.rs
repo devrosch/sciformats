@@ -1,5 +1,5 @@
 use super::{GAML_SAMPLE_FILE, open_file};
-use sf_rs::{
+use sciformats::{
     api::Parser,
     gaml::gaml_parser::{
         Byteorder, Experiment, Format, GamlParser, Integrity, Link, Parameter, Peaktable,

@@ -1,4 +1,4 @@
-# web-ui
+# SciFormats Web UI
 
 An HTML/CSS/JS UI for visualizing scientific data.
 

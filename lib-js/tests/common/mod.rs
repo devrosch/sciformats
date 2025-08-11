@@ -1,5 +1,5 @@
 use super::open_files;
-use sf_rs::{
+use sciformats::{
     api::SeekRead,
     common::{BufSeekRead, ScannerRepository},
 };

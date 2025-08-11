@@ -7,7 +7,7 @@ pub mod spc;
 use js_sys::{Array, Number, Object, Uint8Array};
 #[cfg(not(feature = "nodejs"))]
 use js_sys::{Array, Uint8Array};
-use sf_rs::{
+use sciformats::{
     api::{ExportFormat, Node, Reader, SeekRead, Value},
     common::{BufSeekRead, ScannerRepository},
 };
@@ -842,11 +842,11 @@ pub(crate) fn map_js_input_to_seekread(input: &JsValue) -> Result<Box<dyn SeekRe
 mod tests {
     use super::*;
     use js_sys::{Array, BigInt};
-    use serde_json::json;
-    use sf_rs::{
+    use sciformats::{
         api::{self, Column, Parameter, PointXy, Scanner, Table, Value},
         common::SfError,
     };
+    use serde_json::json;
     use std::collections::HashMap;
     use wasm_bindgen_test::*;
     // see: https://github.com/rustwasm/wasm-bindgen/issues/3340

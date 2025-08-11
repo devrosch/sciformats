@@ -1,4 +1,4 @@
-import * as sf_js from 'sf_js';
+import * as sciformats_js from 'sciformats_js';
 import WorkerRequest from './WorkerRequest';
 import WorkerResponse from './WorkerResponse';
 import WorkerStatus from './WorkerStatus';
@@ -10,8 +10,8 @@ import {
   onScan,
 } from './WorkerRsInternalUtils';
 
-const openFiles = new Map<string, sf_js.Reader>();
-const scanner = new sf_js.ScannerRepository();
+const openFiles = new Map<string, sciformats_js.Reader>();
+const scanner = new sciformats_js.ScannerRepository();
 
 self.onmessage = (event) => {
   const request = event.data as WorkerRequest;

@@ -2,7 +2,7 @@ use super::JdxSequenceParser;
 use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str};
 use super::{JdxError, jdx_parser::AuditTrailEntry};
 use crate::api::SeekBufRead;
-use lazy_static::lazy_static;
+use std::sync::LazyLock;
 
 /// matches 5 - 7 audit trail entry segments as groups 1-7, groups 5 nd 6
 /// being optional, corresponding to one of (NUMBER, WHEN, WHO, WHERE, WHAT),
@@ -19,9 +19,8 @@ const TUPLE_REGEX_PATTERN: &str = concat!(
     r"(?:\s*,\s*<([^>]*)>)",
     r"\s*\)\s*$",
 );
-lazy_static! {
-    static ref TUPLE_REGEX: regex::Regex = regex::Regex::new(TUPLE_REGEX_PATTERN).unwrap();
-}
+static TUPLE_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(TUPLE_REGEX_PATTERN).unwrap());
 
 /// A parser for AUDIT TRAIL.
 pub struct AuditTrailParser<'r, T: SeekBufRead> {

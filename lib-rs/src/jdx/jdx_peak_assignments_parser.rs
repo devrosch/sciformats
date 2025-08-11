@@ -2,22 +2,14 @@ use super::jdx_parser::PeakAssignment;
 use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str, parse_str};
 use super::{JdxError, JdxSequenceParser};
 use crate::api::SeekBufRead;
-use lazy_static::lazy_static;
-
-const TUPLE_SEPARATOR_REGEX_PATTERN: &str = r"((?<tuple>.*?[^,\s])(\s*(?:\s|;)\s*))?(?<tail>.*)";
-lazy_static! {
-    static ref TUPLE_SEPARATOR_REGEX: regex::Regex =
-        regex::Regex::new(TUPLE_SEPARATOR_REGEX_PATTERN).unwrap();
-}
+use std::sync::LazyLock;
 
 /// Matches 2 - 5 peak assignments segments  as groups 1-5, corresponding to
 /// one of (X[, Y][, W], A), (X[, Y][, M], A), (X[, Y][, M][, W], A), with X
 /// as matches[1] and A as matches[5]
 const TUPLE_COMPONENTS_REGEX_PATTERN: &str = r"^\s*\(\s*([^,]*)(?:\s*,\s*([^,]*))?(?:\s*,\s*([^,]*))?(?:\s*,\s*([^,]*))?\s*,\s*<(.*)>\s*\)\s*$";
-lazy_static! {
-    static ref TUPLE_COMPONENTS_REGEX: regex::Regex =
-        regex::Regex::new(TUPLE_COMPONENTS_REGEX_PATTERN).unwrap();
-}
+static TUPLE_COMPONENTS_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(TUPLE_COMPONENTS_REGEX_PATTERN).unwrap());
 
 /// A parser for PEAK ASSIGNMENTS.
 pub struct PeakAssignmentsParser<'r, T: SeekBufRead> {

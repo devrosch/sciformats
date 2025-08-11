@@ -1,12 +1,12 @@
 use super::{JdxError, JdxSequenceParser, jdx_parser::StringLdr};
 use crate::{api::SeekBufRead, utils::from_iso_8859_1_cstr};
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::{
     cell::{RefCell, RefMut},
     io::{BufRead, SeekFrom},
     rc::Rc,
     str::FromStr,
+    sync::LazyLock,
 };
 
 pub trait BinBufRead: BufRead {
@@ -58,9 +58,8 @@ impl<T: BufRead> BinBufRead for T {
 }
 
 const LDR_START_REGEX_PATTERN: &str = "^\\s*##(.*?)=(.*)";
-lazy_static! {
-    static ref LDR_START_REGEX: Regex = Regex::new(LDR_START_REGEX_PATTERN).unwrap();
-}
+static LDR_START_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| Regex::new(LDR_START_REGEX_PATTERN).unwrap());
 
 pub fn is_ldr_start(line: &str) -> bool {
     LDR_START_REGEX.is_match(line)
@@ -107,9 +106,9 @@ pub fn strip_line_comment(
 ) -> (&str, Option<&str>) {
     // (?s) includes newlines in dot matching syntax
     const COMMENT_REGEX_PATTERN: &str = "(?s)^(.*?)\\$\\$(.*)$";
-    lazy_static! {
-        static ref COMMENT_REGEX: regex::Regex = regex::Regex::new(COMMENT_REGEX_PATTERN).unwrap();
-    }
+    static COMMENT_REGEX: LazyLock<regex::Regex> =
+        LazyLock::new(|| regex::Regex::new(COMMENT_REGEX_PATTERN).unwrap());
+
     let caps = COMMENT_REGEX.captures(line);
 
     if let Some((_, [mut content, mut comment])) = caps.map(|c| c.extract()) {

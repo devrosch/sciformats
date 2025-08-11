@@ -1,16 +1,13 @@
-use std::io::SeekFrom;
-
 use super::{JdxError, jdx_utils::BinBufRead};
 use crate::{
     api::SeekBufRead,
     jdx::jdx_utils::{is_ldr_start, strip_line_comment},
 };
-use lazy_static::lazy_static;
+use std::{io::SeekFrom, sync::LazyLock};
 
 const EXPONENT_REGEX_PATTERN: &str = "^[eE][+-]{0,1}\\d{1,3}([;,\\s]{0,1})(.*)";
-lazy_static! {
-    static ref EXPONENT_REGEX: regex::Regex = regex::Regex::new(EXPONENT_REGEX_PATTERN).unwrap();
-}
+static EXPONENT_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(EXPONENT_REGEX_PATTERN).unwrap());
 
 #[derive(PartialEq)]
 enum TokenType {

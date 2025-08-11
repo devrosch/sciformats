@@ -2,23 +2,19 @@ use super::JdxSequenceParser;
 use super::jdx_utils::{BinBufRead, is_ldr_start, strip_line_comment};
 use super::{JdxError, jdx_parser::Peak};
 use crate::api::SeekBufRead;
-use lazy_static::lazy_static;
 use std::collections::VecDeque;
+use std::sync::LazyLock;
 
 const TUPLE_SEPARATOR_REGEX_PATTERN: &str = r"((?<tuple>.*?[^,\s])(\s*(?:\s|;)\s*))?(?<tail>.*)";
-lazy_static! {
-    static ref TUPLE_SEPARATOR_REGEX: regex::Regex =
-        regex::Regex::new(TUPLE_SEPARATOR_REGEX_PATTERN).unwrap();
-}
+static TUPLE_SEPARATOR_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(TUPLE_SEPARATOR_REGEX_PATTERN).unwrap());
 
 /// Matches 2-3 peak segments as groups 1-3, corresponding to
 /// (XY..XY), (XYW..XYW), or (XYM..XYM), with X as group 1, Y as group 2
 /// and W or M as group 3
 const TUPLE_COMPONENTS_REGEX_PATTERN: &str = r"^\s*([^,]*)(?:\s*,\s*([^,]*))(?:\s*,\s*([^,]*))?$";
-lazy_static! {
-    static ref TUPLE_COMPONENTS_REGEX: regex::Regex =
-        regex::Regex::new(TUPLE_COMPONENTS_REGEX_PATTERN).unwrap();
-}
+static TUPLE_COMPONENTS_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(TUPLE_COMPONENTS_REGEX_PATTERN).unwrap());
 
 pub struct PeakTableParser<'r, T: SeekBufRead> {
     variable_list: &'r str,

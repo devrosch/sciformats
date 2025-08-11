@@ -13,11 +13,11 @@ use crate::jdx::jdx_utils::{
     find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start, parse_string_value,
     skip_pure_comments, skip_to_next_ldr,
 };
-use lazy_static::lazy_static;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::str::FromStr;
+use std::sync::LazyLock;
 use std::vec;
 
 pub struct JdxParser {}
@@ -1211,9 +1211,8 @@ pub struct Page<T: SeekBufRead> {
 }
 
 const PAGE_VARS_REGEX_PATTERN: &str = r"(\(.*\))(?:\s*,\s*)?(.*)";
-lazy_static! {
-    static ref PAGE_VARS_REGEX: regex::Regex = regex::Regex::new(PAGE_VARS_REGEX_PATTERN).unwrap();
-}
+static PAGE_VARS_REGEX: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(PAGE_VARS_REGEX_PATTERN).unwrap());
 
 impl<T: SeekBufRead> Page<T> {
     const LABEL: &'static str = "PAGE";
@@ -1365,8 +1364,8 @@ pub struct DataTable<T: SeekBufRead> {
     address: u64,
 }
 
-lazy_static! {
-    static ref DATA_TABLE_VAR_MAP: HashMap<&'static str, (&'static str, &'static str)> = {
+static DATA_TABLE_VAR_MAP: LazyLock<HashMap<&'static str, (&'static str, &'static str)>> =
+    LazyLock::new(|| {
         HashMap::from([
             ("(X++(Y..Y))", ("X", "Y")),
             ("(X++(R..R))", ("X", "R")),
@@ -1378,14 +1377,13 @@ lazy_static! {
             ("(XR..XR)", ("X", "R")),
             ("(XI..XI)", ("X", "I")),
         ])
-    };
-    static ref DATA_TABLE_VARIABLE_LISTS: Vec<&'static str> =
-        DATA_TABLE_VAR_MAP.keys().copied().collect();
-    static ref DATA_TABLE_X_SYMBOLS: HashSet<&'static str> =
-        DATA_TABLE_VAR_MAP.values().map(|(x, _y)| *x).collect();
-    static ref DATA_TABLE_Y_SYMBOLS: HashSet<&'static str> =
-        DATA_TABLE_VAR_MAP.values().map(|(_x, y)| *y).collect();
-}
+    });
+static DATA_TABLE_VARIABLE_LISTS: LazyLock<Vec<&'static str>> =
+    LazyLock::new(|| DATA_TABLE_VAR_MAP.keys().copied().collect());
+static DATA_TABLE_X_SYMBOLS: LazyLock<HashSet<&'static str>> =
+    LazyLock::new(|| DATA_TABLE_VAR_MAP.values().map(|(x, _y)| *x).collect());
+static DATA_TABLE_Y_SYMBOLS: LazyLock<HashSet<&'static str>> =
+    LazyLock::new(|| DATA_TABLE_VAR_MAP.values().map(|(_x, y)| *y).collect());
 
 impl<T: SeekBufRead> DataTable<T> {
     const LABEL: &'static str = "DATATABLE";

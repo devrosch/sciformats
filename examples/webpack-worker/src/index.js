@@ -94,10 +94,10 @@ function showNodeContent(path, node) {
   const fileNameEl = document.getElementById('fileContent');
   fileNameEl.value += `Node path: "${path}"\n`;
   fileNameEl.value += `name: ${JSON.stringify(node.name)}\n`;
-  fileNameEl.value += `parameters: ${JSON.stringify(node.parameters)}\n`;
-  fileNameEl.value += `data: ${JSON.stringify(node.data)}\n`;
-  fileNameEl.value += `metadata: ${JSON.stringify(node.metadata)}\n`;
-  fileNameEl.value += `table: ${JSON.stringify(node.table)}\n`;
+  fileNameEl.value += `parameters: ${JSON.stringify(node.parameters, (_, v) => typeof v === 'bigint' ? v.toString() : v)}\n`;
+  fileNameEl.value += `data: ${JSON.stringify(node.data, (_, v) => typeof v === 'bigint' ? v.toString() : v)}\n`;
+  fileNameEl.value += `metadata: ${JSON.stringify(node.metadata, (_, v) => typeof v === 'bigint' ? v.toString() : v)}\n`;
+  fileNameEl.value += `table: ${JSON.stringify(node.table, (_, v) => typeof v === 'bigint' ? v.toString() : v)}\n`;
   fileNameEl.value += `childNodeNames: ${JSON.stringify(node.childNodeNames)}\n\n`;
 }
 

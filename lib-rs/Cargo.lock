@@ -184,9 +184,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.174"
+version = "0.2.175"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
+checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 
 [[package]]
 name = "log"
@@ -208,8 +208,9 @@ checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "netcdf3"
-version = "0.5.2"
-source = "git+https://github.com/devrosch/netcdf3.git?branch=main#cc1f4341163791a94de1f7a1ace90291f28a53c5"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b3a6a97b0a402ab751b89c4536a9ba3e36264a29d1b66db44466b2ab6524bb5"
 dependencies = [
  "byteorder",
  "nom",

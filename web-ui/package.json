@@ -1,7 +1,15 @@
 {
-  "name": "sf-ui",
+  "name": "sciformats_web",
   "version": "0.1.0",
-  "description": "An HTML/CSS/JS UI for visualizing scientific data.",
+  "author": "Robert Schiwon <devrosch@gmx.net>",
+  "description": "An HTML/CSS/JS web UI for visualizing scientific data read witrh sciformats, a library for reading scientific data formats.",
+  "homepage": "https://sciformats.org/",
+  "license": "MIT",
+  "repository": { 
+    "type": "git", 
+    "url": "https://github.com/devrosch/sciformats.git" 
+  },
+  "keywords": ["parsing", "science", "data formats", "JCAMP-DX", "GAML", "AnDI", "netCDF"],
   "private": true,
   "scripts": {
     "test": "APP_VERSION=$npm_package_version jest",
@@ -42,11 +50,6 @@
       "<rootDir>/src/jest.stub.ts"
     ]
   },
-  "keywords": [
-    "sciformats"
-  ],
-  "author": "Robert Schiwon",
-  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@babel/preset-env": "^7.22.20",
     "@babel/preset-typescript": "^7.23.0",

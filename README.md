@@ -2,7 +2,7 @@
 
 Libraries and tools for reading and visualizing scientific data.
 
-You can try the application at [GitLab Pages](https://devrosch.gitlab.io/sciformats/index.html).
+You can try the application at [Github Pages](https://devrosch.github.io/sciformats/index.html).
 
 ## Structure
 
@@ -18,7 +18,7 @@ More detailed documentation can be found in the individual directories.
 
 ## Author
 
-**Robert Schiwon** - [devrosch](https://gitlab.com/devrosch)
+* [Robert Schiwon (devrosch)](https://github.com/devrosch)
 
 ## License
 

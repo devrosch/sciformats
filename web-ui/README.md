@@ -2,7 +2,7 @@
 
 An HTML/CSS/JS web UI for visualizing scientific data read witrh sciformats, a library for reading scientific data formats.
 
-You can find the application published at [GitLab Pages](https://devrosch.gitlab.io/sf/index.html).
+You can find the application published at [Github Pages](https://devrosch.github.io/sciformats/index.html).
 
 ## Prerequisites
 

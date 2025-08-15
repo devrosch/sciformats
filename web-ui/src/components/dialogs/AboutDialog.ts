@@ -5,10 +5,10 @@ import Logo from 'assets/sf-ui.svg';
 const template = `
 <dialog>
   <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>SciFormats</span></p>
-  <p>Copyright © 2022-2025 Robert Schiwon</p>
-  <p>SciFormats is free software according to the terms of the GNU General Public License Version 3
-    (license: <a href="https://gitlab.com/devrosch/sf-ui/blob/master/COPYING">GPL</a>, source code:
-    <a href="https://gitlab.com/devrosch/sf-ui">GitLab</a>)
+  <p>Copyright © 2025 Robert Schiwon</p>
+  <p>SciFormats is release under the MIT license
+    (license: <a href="https://github.com/devrosch/sciformats/LICENSE.txt">MIT</a>, source code:
+    <a href="https://github.com/devrosch/sciformats">GitHub</a>)
     and makes use of the following third-party package that comes with its own license terms.
   </p>
   <ul>
@@ -27,7 +27,7 @@ const template = `
     </li>
   </ul>
   <p>
-    See <a href="https://gitlab.com/devrosch/sf-ui/blob/master/package.json">package.json</a>
+    See <a href="https://github.com/devrosch/sciformats/web-ui/package.json">package.json</a>
     for details on additional dependencies for development.
   </p>
   <form method="dialog">

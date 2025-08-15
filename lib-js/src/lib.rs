@@ -20,7 +20,6 @@
 pub mod andi;
 pub mod gaml;
 pub mod jdx;
-pub mod spc;
 
 #[cfg(feature = "nodejs")]
 use js_sys::{Array, Number, Object, Uint8Array};

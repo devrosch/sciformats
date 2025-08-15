@@ -43,7 +43,7 @@ This will start a web application that can be opened at https://localhost:3000.
 
 ## Author
 
-**Robert Schiwon** - [devrosch](https://gitlab.com/devrosch)
+* [Robert Schiwon (devrosch)](https://github.com/devrosch)
 
 ## License
 

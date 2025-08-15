@@ -51,7 +51,7 @@ This will place the build output in the `dist` directory.
 
 ## Author
 
-**Robert Schiwon** - [devrosch](https://gitlab.com/devrosch)
+* [Robert Schiwon (devrosch)](https://github.com/devrosch)
 
 ## License
 

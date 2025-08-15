@@ -21,7 +21,6 @@ mod andi;
 mod common;
 mod gaml;
 mod jdx;
-mod spc;
 
 /// Provides access to test resources. For non WASM this happens by opening them from the
 /// filesystem, for WASM they are embedded into the binary.

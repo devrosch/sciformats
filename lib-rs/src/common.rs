@@ -21,7 +21,6 @@ use crate::andi::andi_scanner::AndiScanner;
 use crate::api::{Reader, Scanner, SeekRead};
 use crate::gaml::gaml_scanner::GamlScanner;
 use crate::jdx::jdx_scanner::JdxScanner;
-use crate::spc::spc_scanner::SpcScanner;
 use std::fmt;
 use std::io::{BufReader, ErrorKind, SeekFrom};
 use std::{
@@ -78,11 +77,10 @@ impl ScannerRepository {
     /// Create a repository containing all available scanners.
     pub fn init_all() -> ScannerRepository {
         let andi_scanner: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiScanner::new());
-        let spc_scanner = Box::new(SpcScanner::new());
         let gaml_scanner = Box::new(GamlScanner::new());
         let jdx_scanner = Box::new(JdxScanner::new());
         let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> =
-            vec![andi_scanner, spc_scanner, gaml_scanner, jdx_scanner];
+            vec![andi_scanner, gaml_scanner, jdx_scanner];
         ScannerRepository { scanners }
     }
 

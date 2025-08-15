@@ -39,7 +39,7 @@ This will read example files and print their contents to the console. Please che
 
 ## Author
 
-**Robert Schiwon** - [devrosch](https://gitlab.com/devrosch)
+* [Robert Schiwon (devrosch)](https://github.com/devrosch)
 
 ## License
 

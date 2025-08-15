@@ -111,6 +111,7 @@ pub(crate) fn from_iso_8859_1_fixed_size_cstr_arr<const N: usize>(
 }
 
 /// Parse N zero terminated ISO 8859-1 strings of variable length. If additional strings exist they are discarded.
+#[allow(dead_code)]
 pub(crate) fn from_iso_8859_1_cstr_arr<const N: usize>(bytes: &[u8]) -> Option<[String; N]> {
     let split: Vec<&[u8]> = bytes.split(|byte| *byte == 0).collect();
     if split.len() < N {

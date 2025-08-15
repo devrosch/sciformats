@@ -1,26 +1,3 @@
-# SciFormats
-
-Libraries and tools for reading and visualizing scientific data.
-
-You can try the application at [Github Pages](https://devrosch.github.io/sciformats/index.html).
-
-## Structure
-
-- lib-rs: Native Rust library that supports reading multiple formats. Core library used by other lib-xxx.
-- lib-js: JavaScript/TypeScript bindings for lib-rs. This requires the JS runtime to support WebAssembly (WASM). All current browsers and major runtimes do.
-- web-ui: An HTML/CSS/JS UI for data viewing that leverages lib-js.
-- examples: Code examples for using the library and its bindings.
-
-## Documentation
-
-More detailed documentation can be found in the individual directories.
-
-## Author
-
-- [Robert Schiwon (devrosch)](https://github.com/devrosch)
-
-## License
-
 The MIT License (MIT)
 
 Copyright (c) 2025 Robert Schiwon

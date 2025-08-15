@@ -33,30 +33,5 @@
       },
       "args": []
     },
-    {
-      "name": "(gdb) Launch jdx_test",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/lib-cpp/build/tests/jdx/jdx_test",
-      "args": [""],
-      "stopAtEntry": false,
-      // "cwd": "${fileDirname}",
-      "cwd": "${workspaceFolder}/lib-cpp/build/tests/jdx",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "setupCommands": [
-          {
-              "description": "Enable pretty-printing for gdb",
-              "text": "-enable-pretty-printing",
-              "ignoreFailures": true
-          },
-          {
-              "description": "Set Disassembly Flavor to Intel",
-              "text": "-gdb-set disassembly-flavor intel",
-              "ignoreFailures": true
-          }
-      ]
-    },
   ]
 }

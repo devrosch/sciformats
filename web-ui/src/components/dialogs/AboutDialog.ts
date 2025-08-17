@@ -6,29 +6,87 @@ const template = `
 <dialog>
   <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>SciFormats</span></p>
   <p>Copyright © 2025 Robert Schiwon</p>
-  <p>SciFormats is release under the MIT license
+  <p>SciFormats is made available under the terms of the MIT license
     (license: <a href="https://github.com/devrosch/sciformats/LICENSE.txt">MIT</a>, source code:
     <a href="https://github.com/devrosch/sciformats">GitHub</a>)
-    and makes use of the following third-party package that comes with its own license terms.
+    and makes use of the following third-party packages that are provided by their copyright owners under their own license terms.
   </p>
   <ul>
     <li>
-      <a
-        href="https://www.npmjs.com/package/plotly.js-dist-min">
-        plotly.js-dist-min</a>
-      (Copyright © 2016-2024 Plotly Technologies Inc.,
-      license:
-      <a
-        href="https://github.com/plotly/plotly.js/blob/master/LICENSE">MIT</a>,
-      source code:
-      <a
-        href="https://github.com/plotly/plotly.js">
-        GitHub</a>)
+      <a href="https://www.npmjs.com/package/plotly.js-dist-min">plotly.js-dist-min</a>,
+      license: <a href="https://github.com/plotly/plotly.js/blob/master/LICENSE">MIT</a>,
+      source code: <a href="https://github.com/plotly/plotly.js">plotly.js</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/wasm-bindgen">wasm-bindgen</a>,
+      license: <a href="https://github.com/wasm-bindgen/wasm-bindgen/blob/main/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/wasm-bindgen/wasm-bindgen/blob/main/APACHE-MIT">Apache 2.0</a>,
+      source code: <a href="https://github.com/wasm-bindgen/wasm-bindgen">wasm-bindgen</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/web-sys">web-sys</a>,
+      license: <a href="https://github.com/wasm-bindgen/wasm-bindgen/blob/main/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/wasm-bindgen/wasm-bindgen/blob/main/APACHE-MIT">Apache 2.0</a>,
+      source code: <a href="https://github.com/wasm-bindgen/wasm-bindgen/tree/main/crates/web-sys">web-sys</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/js-sys">js-sys</a>,
+      license: <a href="https://github.com/wasm-bindgen/wasm-bindgen/blob/main/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/wasm-bindgen/wasm-bindgen/blob/main/APACHE-MIT">Apache 2.0</a>,
+      source code: <a href="https://github.com/wasm-bindgen/wasm-bindgen/tree/main/crates/js-sys">js-sys</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/netcdf3">netcdf3</a>,
+      license: <a href="https://github.com/julienbt/netcdf3/blob/main/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/julienbt/netcdf3/blob/main/LICENSE-APACHE">Apache 2.0</a>,
+      source code: <a href="https://github.com/julienbt/netcdf3">netcdf3</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/strum">strum</a>,
+      license: <a href="https://github.com/Peternator7/strum/blob/master/LICENSE">MIT</a>,
+      source code: <a href="https://github.com/Peternator7/strum">strum</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/chrono">chrono</a>,
+      license: <a href="https://github.com/chronotope/chrono/blob/main/LICENSE.txt">MIT or Apache 2.0</a>,
+      source code: <a href="https://github.com/chronotope/chrono">chrono</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/quick-xml">quick-xml</a>,
+      license: <a href="https://github.com/tafia/quick-xml/blob/master/LICENSE-MIT.md">MIT</a>,
+      source code: <a href="https://github.com/tafia/quick-xml">quick-xml</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/base64">base64</a>,
+      license: <a href="https://github.com/marshallpierce/rust-base64/blob/master/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/marshallpierce/rust-base64/blob/master/LICENSE-APACHE">Apache 2.0</a>,
+      source code: <a href="https://github.com/marshallpierce/rust-base64">rust-base64</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/regex">regex</a>,
+      license: <a href="https://github.com/rust-lang/regex/blob/master/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/rust-lang/regex/blob/master/LICENSE-APACHE">Apache 2.0</a>,
+      source code: <a href="https://github.com/rust-lang/regex">regex</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/serde">serde</a>,
+      license: <a href="https://github.com/serde-rs/serde/blob/master/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/serde-rs/serde/blob/master/LICENSE-APACHE">Apache 2.0</a>,
+      source code: <a href="https://github.com/serde-rs/serde">serde</a>
+    </li>
+    <li>
+      <a href="https://crates.io/crates/serde_json">serde_json</a>,
+      license: <a href="https://github.com/serde-rs/json/blob/master/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/serde-rs/json/blob/master/LICENSE-APACHE">Apache 2.0</a>,
+      source code: <a href="https://github.com/serde-rs/json">json</a>
     </li>
   </ul>
   <p>
-    See <a href="https://github.com/devrosch/sciformats/web-ui/package.json">package.json</a>
-    for details on additional dependencies for development.
+    See the above links for details.
+    Also see <a href="https://github.com/devrosch/sciformats/web-ui/package.json">package.json</a>,
+    <a href="https://github.com/devrosch/sciformats/lib-js/Cargo.toml">Cargo.toml</a>, and
+    <a href="https://github.com/devrosch/sciformats/lib-rs/Cargo.toml">Cargo.toml</a>
+    for the above dependencies and additional dependencies for development.
   </p>
   <form method="dialog">
     <button autofocus>OK</button>

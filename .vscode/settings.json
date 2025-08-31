@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "lib-rs/Cargo.toml",
+        "lib-js/Cargo.toml",
+        "examples/rust/Cargo.toml"
+    ]
+}

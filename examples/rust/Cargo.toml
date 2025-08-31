@@ -1,0 +1,15 @@
+[package]
+name = "sciformats_rust_example"
+version = "0.1.0"
+edition = "2024"
+authors = ["Robert Schiwon <devrosch@gmx.net>"]
+description = "An example for using the sciformats library for reading scientific data formats in Rust."
+readme = "README.md"
+homepage = "https://sciformats.org/"
+repository = "https://github.com/devrosch/sciformats.git"
+license = "MIT"
+keywords = ["data formats", "JCAMP-DX", "GAML", "AnDI", "netCDF"]
+categories = ["parsing", "science"]
+
+[dependencies]
+sciformats = { path = "../../lib-rs" }

@@ -1,59 +1,22 @@
-# SciFormats Web UI
+# Examples - Webpack
 
-An HTML/CSS/JS web UI for visualizing scientific data read witrh sciformats, a library for reading scientific data formats.
-
-You can find the application published at [Github Pages](https://devrosch.github.io/sciformats/index.html).
+A Rust example application that reads scientific files and prints the contents using sciformats.
 
 ## Prerequisites
 
-- Node.js v20 or later (including npm) needs to be installed.
-- The WASM library needs to have been built as described in `lib-js`.
+- Install the [Rust Toolchain](https://www.rust-lang.org/tools/install) including cargo.
+- Optionally, for checking code formatting install `rustfmt` with `rustup component add rustfmt`.
+- Optionally, for linting the code install `clippy` with `rustup component add clippy`.
 
-## Build
+## Run example
 
-To install the required packages run:
-
-```
-npm install
-```
-
-After that, to run the tests, run:
+To start the application, in the `examples/rust` directory run:
 
 ```
-npm test
+cargo run
 ```
 
-Test coverage information can be generated with `npm test -- --coverage`.
-
-To check code formatting, run:
-
-```
-npm run format
-```
-
-To lint the code, run:
-
-```
-npm run lint
-```
-
-To start the development server, run:
-
-```
-npm start
-```
-
-For building a release version, run:
-
-```
-npm run build
-```
-
-Build artifacts are placed into the `dist` directory.
-
-## Documentation
-
-More detailed documentation can be found in the [doc](doc) directory.
+This will run the application that reads sample data and outputs its content to the console.
 
 ## Author
 

@@ -69,7 +69,7 @@ window.onFileExport = async function (fileInputElementId) {
 // ----------------------------
 
 worker.onmessage = (e) => {
-  console.log(`Message received from worker: ${JSON.stringify(e.data)}`);
+  console.log(`Message received from worker: ${JSON.stringify(e.data, (_, v) => typeof v === 'bigint' ? v.toString() : v)}`);
 
   const { command, data } = e.data;
 
@@ -86,7 +86,7 @@ worker.onmessage = (e) => {
       saveFile(name, blob);
       break;
     default:
-      console.log(`Error, command not recognized: ${JSON.stringify(command)}. Data: ${JSON.stringify(data)}.`);
+      console.log(`Error, command not recognized: ${JSON.stringify(command)}. Data: ${JSON.stringify(data, (_, v) => typeof v === 'bigint' ? v.toString() : v)}.`);
   }
 };
 

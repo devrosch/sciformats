@@ -1,0 +1,39 @@
+name: Rust build and publish
+
+on:
+  workflow_dispatch:
+    # inputs:
+    #   environment:
+    #     type: choice
+    #     description: Into what environment to deploy.
+    #     options: 
+    #       - dev
+    #       - qa
+    #       - prod
+  workflow_call:
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: ./lib-js
+
+jobs:
+  publish_lib_js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # - name: Login into crates.io
+      #   run: cargo login ${{ secrets.CRATES_IO }}
+      - name: Install dependencies
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-pack --quiet
+      - name: Build
+        run: wasm-pack build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm-webpack
+          retention-days: 1
+          path: ./lib-js/pkg/

@@ -61,10 +61,10 @@ impl<T: Seek + Read + 'static> Scanner<T> for JdxScanner {
             Err(_) => false,
             Ok(_) => {
                 let s = from_iso_8859_1_cstr(&buf);
-                if is_ldr_start(&s) {
-                    if let Ok((label, _)) = parse_ldr_start(&s) {
-                        return label == Self::JDX_START_LABEL;
-                    }
+                if is_ldr_start(&s)
+                    && let Ok((label, _)) = parse_ldr_start(&s)
+                {
+                    return label == Self::JDX_START_LABEL;
                 }
                 false
             }

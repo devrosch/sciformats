@@ -559,10 +559,10 @@ fn find_basecurve(
     basecurve_idx: usize,
 ) -> Result<(&Basecurve, &Peak, usize), GamlError> {
     for (i, peak) in peaktable.peaks.iter().enumerate() {
-        if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref()) {
-            if i == basecurve_idx {
-                return Ok((basecurve, peak, i));
-            }
+        if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref())
+            && i == basecurve_idx
+        {
+            return Ok((basecurve, peak, i));
         }
     }
     Err(GamlError::new(&format!(

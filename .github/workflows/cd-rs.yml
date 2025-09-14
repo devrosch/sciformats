@@ -15,11 +15,11 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+defaults:
+  run:
+    working-directory: ./lib-rs
+
 jobs:
-  defaults:
-    run:
-      working-directory: ./lib-rs
-  
   publish_lib_rs:
     runs-on: ubuntu-latest
     steps:

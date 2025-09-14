@@ -9,11 +9,11 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-jobs:
-  defaults:
-    run:
-      working-directory: ./lib-rs
+defaults:
+  run:
+    working-directory: ./lib-rs
 
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:

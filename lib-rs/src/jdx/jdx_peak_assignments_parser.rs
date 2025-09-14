@@ -128,6 +128,7 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
                 && wm_opt.is_some()
             {
                 let y = Self::parse_f64_token(y_opt.unwrap().as_str())?;
+                #[allow(clippy::unnecessary_unwrap)]
                 let m = wm_opt.unwrap().as_str();
                 (Some(y), Some(m), None)
             } else if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[3] == self.variable_list

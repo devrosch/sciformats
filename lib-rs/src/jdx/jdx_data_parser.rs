@@ -100,16 +100,16 @@ pub fn parse_xyxy_data<T: SeekBufRead>(
     let mut xy_data = DataParser::read_xyxy_data(reader)?;
     // reset stream position
     reader.seek(SeekFrom::Start(pos))?;
-    if let Some(np) = n_points {
-        if xy_data.len() as u64 != np {
-            return Err(JdxError::new(&format!(
-                "Mismatch between NPOINTS and actual number of points \
+    if let Some(np) = n_points
+        && xy_data.len() as u64 != np
+    {
+        return Err(JdxError::new(&format!(
+            "Mismatch between NPOINTS and actual number of points \
                 in \"{}\". NPOINTS: {}, actual: {}",
-                label,
-                np,
-                xy_data.len()
-            )));
-        }
+            label,
+            np,
+            xy_data.len()
+        )));
     }
 
     // generate and return xy data

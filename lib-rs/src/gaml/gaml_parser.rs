@@ -738,13 +738,13 @@ impl Values {
                 raw_data.len()
             )));
         }
-        if let Some(n) = self.numvalues {
-            if n != raw_data.len() as u64 / multiple {
-                return Err(GamlError::new(&format!(
-                    "Number of data bytes does not correspond to numvalues and format attributes: {}",
-                    raw_data.len()
-                )));
-            }
+        if let Some(n) = self.numvalues
+            && n != raw_data.len() as u64 / multiple
+        {
+            return Err(GamlError::new(&format!(
+                "Number of data bytes does not correspond to numvalues and format attributes: {}",
+                raw_data.len()
+            )));
         }
 
         let data = if Format::Float32 == self.format {

@@ -1,4 +1,4 @@
-name: Rust build and publish
+name: CI JavaScript
 
 on:
   push:
@@ -63,7 +63,7 @@ jobs:
         run: wasm-pack test --chrome --headless
     
   publish:
-    needs: [test, coverage]
+    needs: [test]
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-js.yml'

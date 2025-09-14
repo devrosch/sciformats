@@ -1,4 +1,4 @@
-name: Rust build and publish
+name: CI Rust
 
 on:
   push:

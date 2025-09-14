@@ -1,4 +1,4 @@
-name: Rust build and publish
+name: CD JavaScript
 
 on:
   workflow_dispatch:

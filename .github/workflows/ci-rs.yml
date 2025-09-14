@@ -1,0 +1,80 @@
+name: Rust build and publish
+
+on:
+  push:
+    # branches: ['main']
+  pull_request:
+    # branches: ['main']
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  defaults:
+    run:
+      working-directory: ./lib-rs
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Temporarily modify the rust toolchain version
+      #   run: rustup override set nightly
+      - name: Rust version
+        run: rustup --version
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint
+        run: cargo clippy
+
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for updates
+        run: ./check_updates.sh
+
+  test:
+    runs-on: ubuntu-latest
+    needs: [build, format, lint, outdated]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --check
+      - name: Lint
+        run: cargo clippy
+      - name: Test
+        run: cargo test
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: [build, format, lint, outdated]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update && sudo apt-get -y install lcov
+          rustup component add llvm-tools-preview
+          cargo install grcov --quiet
+      - name: Capture coverage
+        run: ./coverage.sh
+    
+  publish:
+    needs: [test, coverage]
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/cd.yml'
+    # with:
+    #   environment: prod

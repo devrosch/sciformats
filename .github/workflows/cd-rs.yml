@@ -1,0 +1,34 @@
+name: Rust build and publish
+
+on:
+  workflow_dispatch:
+    # inputs:
+    #   environment:
+    #     type: choice
+    #     description: Into what environment to deploy.
+    #     options: 
+    #       - dev
+    #       - qa
+    #       - prod
+  workflow_call:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  defaults:
+    run:
+      working-directory: ./lib-rs
+  
+  publish_lib_rs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # - name: Login into crates.io
+      #   run: cargo login ${{ secrets.CRATES_IO }}
+      - name: Build release
+        run: cargo build --release
+      - name: Package
+        run: cargo package
+      - name: "Publish (dry run)"
+        run: cargo publish --dry-run

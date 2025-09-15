@@ -2,7 +2,7 @@ name: CI Web
 
 on:
   workflow_run:
-    workflows: [CD JavaScript]
+    workflows: [CI JavaScript]
     types: [completed]
 # on:
 #   push:

@@ -1,0 +1,86 @@
+name: CI Web
+
+# on:
+#   workflow_run:
+#     workflows: [CD JavaScript]
+#     types: [completed]
+on:
+  push:
+    # branches: ['main']
+  pull_request:
+    # branches: ['main']
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: ./web-ui
+
+jobs:
+  # build:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  #   steps:
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Coverage
+        run: |
+          npm ci
+          CI=true npm test -- --coverage
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Format
+        run: |
+          npm ci
+          npm run format
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Lint
+        run: |
+          npm ci
+          npm run lint
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Audit
+        run: |
+          npm ci
+          npm audit --audit-level=critical --production
+
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Outdated
+        run: |
+          npm ci
+          npm run outdated
+    
+  publish:
+    needs: [coverage]
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/cd-web.yml'
+    # with:
+    #   environment: prod

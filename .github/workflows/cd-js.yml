@@ -62,7 +62,7 @@ jobs:
     needs: [publish_lib_js]
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
-    uses: './.github/workflows/cd-web.yml'
+    uses: './.github/workflows/ci-web.yml'
     with:
       runid: ${{ github.run_id }}
       artifactid: ${{needs.publish_lib_js.outputs.artifact-id}}

@@ -41,6 +41,23 @@ jobs:
   #   if: ${{ github.event.workflow_run.conclusion == 'success' }}
   #   steps:
 
+  debug:
+    runs-on: ubuntu-latest
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: [${{ github.event.inputs.artifactid }}]
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Coverage
+        run: |
+          echo "Run ID: ${{ github.event.inputs.runid }}"
+          echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
+
   coverage:
     runs-on: ubuntu-latest
     # if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -51,9 +68,6 @@ jobs:
           node-version: 22
       - uses: actions/download-artifact@v5
         with:
-          # name: wasm-webpack
-          # run-id: ${{ github.event.workflow_run.id }}
-          # run-id: ${{ github.event.inputs.runid }}
           artifact-ids: [${{ github.event.inputs.artifactid }}]
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Coverage

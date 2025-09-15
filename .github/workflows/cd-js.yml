@@ -41,7 +41,6 @@ jobs:
       - name: Debug
         run: |
           echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
-          echo 'Run ID is ${{ github.event.workflow_run.id }}'
           echo 'Run ID is ${{ github.run_id }}'
 
   debug:
@@ -56,7 +55,6 @@ jobs:
         run: echo "Artifact ID from previous job is $ART_ID"
       - name: Debug
         run: |
-          echo 'Run ID is ${{ github.event.workflow_run.id }}'
           echo 'Run ID is ${{ github.run_id }}'
           echo 'Artifact ID is $ART_ID'
   

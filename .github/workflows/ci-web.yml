@@ -51,7 +51,7 @@ jobs:
           node-version: 22
       - uses: actions/download-artifact@v5
         with:
-          artifact-ids: [${{ github.event.inputs.artifactid }}]
+          artifact-ids: ${{ github.event.inputs.artifactid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Coverage
         run: |

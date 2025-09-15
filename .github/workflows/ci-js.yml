@@ -64,6 +64,7 @@ jobs:
     
   publish:
     needs: [test]
+    permissions: read-all
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-js.yml'

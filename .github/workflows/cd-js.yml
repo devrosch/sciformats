@@ -24,8 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # - name: Login into crates.io
-      #   run: cargo login ${{ secrets.CRATES_IO }}
       - name: Install dependencies
         run: |
           rustup target add wasm32-unknown-unknown
@@ -42,6 +40,7 @@ jobs:
         run: |
           echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
           echo 'Run ID is ${{ github.event.workflow_run.id }}'
+          echo 'Run ID is ${{ github.run_id }}'
 
   web:
     runs-on: ubuntu-latest
@@ -49,14 +48,16 @@ jobs:
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
+      - uses: actions/checkout@v5
       - env:
-          ART_ID: ${{needs.publish_lib_js.outputs.output1}}
+          ART_ID: ${{needs.publish_lib_js.outputs.artifact-id}}
         run: echo "Artifact ID from previous job is $ART_ID"
       - name: Debug
         run: |
           echo 'Run ID is ${{ github.event.workflow_run.id }}'
+          echo 'Run ID is ${{ github.run_id }}'
           echo 'Artifact ID is $ART_ID'
       - uses: './.github/workflows/ci-web.yml'
         with:
-          runid: ${{ github.event.workflow_run.id }}
+          runid: ${{ github.run_id }}
           artifactid: $ART_ID

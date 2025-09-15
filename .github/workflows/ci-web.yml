@@ -54,7 +54,12 @@ jobs:
         with:
           artifact-ids: ${{ github.event.inputs.artifactid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Coverage
+      - name: Files
+        run: |
+          ls -la ..
+          ls -la ../lib-js/
+          ls -la ../lib-js/pkg/
+      - name: Inputs
         run: |
           echo "Run ID: ${{ github.event.inputs.runid }}"
           echo "Artifact ID: ${{ github.event.inputs.artifactid }}"

@@ -33,15 +33,29 @@ jobs:
       - name: Build
         run: wasm-pack build --release
       - uses: actions/upload-artifact@v4
+        id: artifact-upload-step
         with:
           name: wasm-webpack
           retention-days: 1
           path: ./lib-js/pkg/
+      - name: Debug
+        run: |
+          echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+          echo 'Run ID is ${{ github.event.workflow_run.id }}'
 
   web:
     needs: [publish_lib_js]
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
-    uses: './.github/workflows/ci-web.yml'
-    with:
-      runid: ${{ github.event.workflow_run.id }}
+    steps:
+      - env:
+          ART_ID: ${{needs.publish_lib_js.outputs.output1}}
+        run: echo "Artifact ID from previous job is $ART_ID"
+      - name: Debug
+        run: |
+          echo 'Run ID is ${{ github.event.workflow_run.id }}'
+          echo 'Artifact ID is $ART_ID'
+      - uses: './.github/workflows/ci-web.yml'
+        with:
+          runid: ${{ github.event.workflow_run.id }}
+          artifactid: $ART_ID

@@ -16,12 +16,20 @@ on:
         type: string
         required: true
         description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the workflow that uploaded the wasm-webpack build artifact.
   workflow_call:
     inputs:
       runid:
         type: string
         required: true
         description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the workflow that uploaded the wasm-webpack build artifact.
 
 defaults:
   run:
@@ -43,9 +51,10 @@ jobs:
           node-version: 22
       - uses: actions/download-artifact@v5
         with:
-          name: wasm-webpack
+          # name: wasm-webpack
           # run-id: ${{ github.event.workflow_run.id }}
-          run-id: ${{ github.event.inputs.runid }}
+          # run-id: ${{ github.event.inputs.runid }}
+          artifact-ids: [${{ github.event.inputs.artifactid }}]
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Coverage
         run: |

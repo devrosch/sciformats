@@ -44,6 +44,7 @@ jobs:
           echo 'Run ID is ${{ github.event.workflow_run.id }}'
 
   web:
+    runs-on: ubuntu-latest
     needs: [publish_lib_js]
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')

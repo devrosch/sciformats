@@ -54,6 +54,7 @@ jobs:
         with:
           artifact-ids: ${{ github.event.inputs.artifactid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lib-js/pkg
       - name: Files
         run: |
           ls -la ..
@@ -77,6 +78,7 @@ jobs:
         with:
           artifact-ids: ${{ github.event.inputs.artifactid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lib-js/pkg
       - name: Coverage
         run: |
           npm ci

@@ -22,6 +22,8 @@ defaults:
 jobs:
   publish_lib_js:
     runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies
@@ -42,7 +44,7 @@ jobs:
           echo 'Run ID is ${{ github.event.workflow_run.id }}'
           echo 'Run ID is ${{ github.run_id }}'
 
-  web:
+  debug:
     runs-on: ubuntu-latest
     needs: [publish_lib_js]
     # if: github.refs == 'refs/heads/main'
@@ -57,7 +59,14 @@ jobs:
           echo 'Run ID is ${{ github.event.workflow_run.id }}'
           echo 'Run ID is ${{ github.run_id }}'
           echo 'Artifact ID is $ART_ID'
-      - uses: './.github/workflows/ci-web.yml'
-        with:
-          runid: ${{ github.run_id }}
-          artifactid: $ART_ID
+  
+  web:
+    needs: [publish_lib_js]
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    - env:
+        ART_ID: ${{needs.publish_lib_js.outputs.artifact-id}}
+    - uses: './.github/workflows/cd-web.yml'
+      with:
+        runid: ${{ github.run_id }}
+        artifactid: $ART_ID

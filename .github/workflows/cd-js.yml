@@ -37,3 +37,11 @@ jobs:
           name: wasm-webpack
           retention-days: 1
           path: ./lib-js/pkg/
+
+  web:
+    needs: [publish_lib_js]
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/ci-web.yml'
+    with:
+      runid: ${{ github.event.workflow_run.id }}

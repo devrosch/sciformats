@@ -9,9 +9,19 @@ on:
 #     # branches: ['main']
 #   pull_request:
 #     # branches: ['main']
-
-env:
-  CARGO_TERM_COLOR: always
+on:
+  workflow_dispatch:
+    inputs:
+      runid:
+        type: string
+        required: true
+        description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
+  workflow_call:
+    inputs:
+      runid:
+        type: string
+        required: true
+        description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
 
 defaults:
   run:
@@ -25,7 +35,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -34,7 +44,8 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: wasm-webpack
-          run-id: ${{ github.event.workflow_run.id }}
+          # run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.inputs.runid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Coverage
         run: |

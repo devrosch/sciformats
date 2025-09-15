@@ -12,9 +12,6 @@ on:
     #       - prod
   workflow_call:
 
-env:
-  CARGO_TERM_COLOR: always
-
 defaults:
   run:
     working-directory: ./web-ui
@@ -24,8 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      # - name: Login into crates.io
-      #   run: cargo login ${{ secrets.CRATES_IO }}
       - name: Noop
         run: |
           echo "publish called"
+          ls -la ..

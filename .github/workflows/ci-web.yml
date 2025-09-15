@@ -1,9 +1,9 @@
 name: CI Web
 
-on:
-  workflow_run:
-    workflows: [CI JavaScript]
-    types: [completed]
+# on:
+#   workflow_run:
+#     workflows: [CI JavaScript]
+#     types: [completed]
 # on:
 #   push:
 #     # branches: ['main']

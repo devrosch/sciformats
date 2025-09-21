@@ -48,11 +48,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Debug
-        # run: |
-        #   echo "Run ID: ${{ github.event.inputs.runid }}"
-        #   echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
+        env:
+          ART_ID: ${{ github.event.inputs.artifactid }}
         run: |
           echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
+          echo "Artifact ID: $ART_ID"
       - uses: actions/setup-node@v5
         with:
           node-version: 22

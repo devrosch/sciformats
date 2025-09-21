@@ -12,20 +12,20 @@ name: CI Web
 on:
   workflow_dispatch:
     inputs:
-      runid:
-        type: string
-        required: true
-        description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
+      # runid:
+      #   type: string
+      #   required: true
+      #   description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
       artifactid:
         type: string
         required: true
         description: The artifact ID of the workflow that uploaded the wasm-webpack build artifact.
   workflow_call:
     inputs:
-      runid:
-        type: string
-        required: true
-        description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
+      # runid:
+      #   type: string
+      #   required: true
+      #   description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
       artifactid:
         type: string
         required: true
@@ -61,28 +61,11 @@ jobs:
           ls -la ../lib-js/
           ls -la ../lib-js/pkg/
       - name: Inputs
+        # run: |
+        #   echo "Run ID: ${{ github.event.inputs.runid }}"
+        #   echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
         run: |
-          echo "Run ID: ${{ github.event.inputs.runid }}"
           echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
-
-  coverage:
-    runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    permissions: read-all
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-      - uses: actions/download-artifact@v5
-        with:
-          artifact-ids: ${{ github.event.inputs.artifactid }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: ./lib-js/pkg
-      - name: Coverage
-        run: |
-          npm ci
-          CI=true npm test -- --coverage
 
   format:
     runs-on: ubuntu-latest
@@ -126,10 +109,29 @@ jobs:
           npm ci
           npm outdated
     
-  publish:
-    needs: [coverage]
-    # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
-    uses: './.github/workflows/cd-web.yml'
-    # with:
-    #   environment: prod
+  coverage:
+    runs-on: ubuntu-latest
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions: read-all
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ github.event.inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lib-js/pkg
+      - name: Coverage
+        run: |
+          npm ci
+          CI=true npm test -- --coverage
+
+  # publish:
+  #   needs: [coverage]
+  #   # if: github.refs == 'refs/heads/main'
+  #   # if: startsWith(github.event.ref, 'refs/tags/v')
+  #   uses: './.github/workflows/cd-web.yml'
+  #   # with:
+  #   #   environment: prod

@@ -1,10 +1,13 @@
 name: CI JavaScript
 
+# on:
+#   push:
+#     # branches: ['main']
+#   pull_request:
+#     # branches: ['main']
 on:
-  push:
-    # branches: ['main']
-  pull_request:
-    # branches: ['main']
+  workflow_dispatch:
+  workflow_call:
 
 env:
   CARGO_TERM_COLOR: always
@@ -62,11 +65,11 @@ jobs:
       - name: Build
         run: wasm-pack test --chrome --headless
     
-  publish:
-    needs: [test]
-    permissions: read-all
-    # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
-    uses: './.github/workflows/cd-js.yml'
-    # with:
-    #   environment: prod
+  # publish:
+  #   needs: [test]
+  #   permissions: read-all
+  #   # if: github.refs == 'refs/heads/main'
+  #   # if: startsWith(github.event.ref, 'refs/tags/v')
+  #   uses: './.github/workflows/cd-js.yml'
+  #   # with:
+  #   #   environment: prod

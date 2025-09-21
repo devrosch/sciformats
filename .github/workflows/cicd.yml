@@ -1,0 +1,31 @@
+name: CI Rust
+
+on:
+  push:
+    # branches: ['main']
+  pull_request:
+    # branches: ['main']
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci_rs:
+    uses: './.github/workflows/ci-rs.yml'
+
+  ci_js:
+    uses: './.github/workflows/ci-js.yml'
+
+  ci_web:
+    permissions: read-all
+    uses: './.github/workflows/ci-web.yml'
+    with:
+      artifactid: ${{needs.ci_js.outputs.artifact-id}}
+
+  cd:
+    needs: [ci_rs, ci_js, ci_web]
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/cd-rs.yml'
+    # with:
+    #   environment: prod

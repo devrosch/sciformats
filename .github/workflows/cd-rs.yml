@@ -2,6 +2,11 @@ name: CD Rust
 
 on:
   workflow_dispatch:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the Rust crate artifact.
     # inputs:
     #   environment:
     #     type: choice
@@ -11,6 +16,11 @@ on:
     #       - qa
     #       - prod
   workflow_call:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the Rust crate artifact.
 
 env:
   CARGO_TERM_COLOR: always
@@ -24,11 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lib-rs/target/package
       # - name: Login into crates.io
       #   run: cargo login ${{ secrets.CRATES_IO }}
-      - name: Build
-        run: cargo build --release
-      - name: Package
-        run: cargo package
       - name: "Publish (dry run)"
         run: cargo publish --dry-run

@@ -12,24 +12,16 @@ name: CI Web
 on:
   workflow_dispatch:
     inputs:
-      # runid:
-      #   type: string
-      #   required: true
-      #   description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
       artifactid:
         type: string
         required: true
-        description: The artifact ID of the workflow that uploaded the wasm-webpack build artifact.
+        description: The artifact ID of the wasm-webpack build artifact.
   workflow_call:
     inputs:
-      # runid:
-      #   type: string
-      #   required: true
-      #   description: The run ID of the workflow that uploaded the wasm-webpack build artifact.
       artifactid:
         type: string
         required: true
-        description: The artifact ID of the workflow that uploaded the wasm-webpack build artifact.
+        description: The artifact ID of the wasm-webpack build artifact.
 
 defaults:
   run:

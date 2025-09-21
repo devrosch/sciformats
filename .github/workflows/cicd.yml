@@ -23,24 +23,26 @@ jobs:
     with:
       artifactid: ${{ needs.ci_js.outputs.artifact-id }}
 
-  cd:
+  cd_rs:
     needs: [ci_rs, ci_js, ci_web]
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-rs.yml'
+    with:
+      artifactid: ${{ needs.ci_rs.outputs.artifact-id }}
     # with:
     #   environment: prod
 
-  debug:
-    runs-on: ubuntu-latest
-    needs: [ci_js]
-    permissions: read-all
-    steps:
-      - uses: actions/checkout@v5
-      - env:
-          ART_ID: ${{ needs.ci_js.outputs.artifact-id }}
-        run: echo "Artifact ID from previous job is $ART_ID"
-      - name: Debug
-        run: |
-          echo 'Run ID is ${{ github.run_id }}'
-          echo 'Artifact ID is ${{ needs.ci_js.outputs.artifact-id }}'
+  # debug:
+  #   runs-on: ubuntu-latest
+  #   needs: [ci_js]
+  #   permissions: read-all
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - env:
+  #         ART_ID: ${{ needs.ci_js.outputs.artifact-id }}
+  #       run: echo "Artifact ID from previous job is $ART_ID"
+  #     - name: Debug
+  #       run: |
+  #         echo 'Run ID is ${{ github.run_id }}'
+  #         echo 'Artifact ID is ${{ needs.ci_js.outputs.artifact-id }}'

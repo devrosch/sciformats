@@ -6,8 +6,12 @@ name: CI Rust
 #   pull_request:
 #     # branches: ['main']
 on:
-  workflow_dispatch:
+  # workflow_dispatch:
   workflow_call:
+    outputs:
+      artifact-id:
+        description: "Rust crate artifact ID"
+        value: ${{ jobs.build_release.outputs.artifact-id }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -84,7 +88,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         id: artifact-upload-step
         with:
-          name: rust
+          name: rust-crate
           retention-days: 1
           path: ./lib-rs/target/package/
       - name: Debug

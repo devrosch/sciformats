@@ -21,7 +21,7 @@ jobs:
     permissions: read-all
     uses: './.github/workflows/ci-web.yml'
     with:
-      artifactid: ${{needs.ci_js.outputs.artifact-id}}
+      artifactid: ${{ needs.ci_js.outputs.artifact-id }}
 
   cd:
     needs: [ci_rs, ci_js, ci_web]

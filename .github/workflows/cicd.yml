@@ -30,3 +30,17 @@ jobs:
     uses: './.github/workflows/cd-rs.yml'
     # with:
     #   environment: prod
+
+  debug:
+    runs-on: ubuntu-latest
+    needs: [ci_js]
+    permissions: read-all
+    steps:
+      - uses: actions/checkout@v5
+      - env:
+          ART_ID: ${{ needs.ci_js.outputs.artifact-id }}
+        run: echo "Artifact ID from previous job is $ART_ID"
+      - name: Debug
+        run: |
+          echo 'Run ID is ${{ github.run_id }}'
+          echo 'Artifact ID is ${{ needs.ci_js.outputs.artifact-id }}'

@@ -86,7 +86,7 @@ jobs:
         with:
           name: rust
           retention-days: 1
-          path: ./lib-rs/taget/package/
+          path: ./lib-rs/target/package/
       - name: Debug
         run: |
           echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'

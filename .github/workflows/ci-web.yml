@@ -46,13 +46,13 @@ jobs:
     # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions: read-all
     steps:
-      - name: Inputs
+      - uses: actions/checkout@v5
+      - name: Debug
         # run: |
         #   echo "Run ID: ${{ github.event.inputs.runid }}"
         #   echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
         run: |
           echo "Artifact ID: ${{ github.event.inputs.artifactid }}"
-      - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22

@@ -17,6 +17,7 @@ jobs:
     uses: './.github/workflows/ci-js.yml'
 
   ci_web:
+    needs: [ci_js]
     permissions: read-all
     uses: './.github/workflows/ci-web.yml'
     with:

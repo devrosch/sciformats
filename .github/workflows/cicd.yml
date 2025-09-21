@@ -13,8 +13,8 @@ jobs:
   ci_rs:
     uses: './.github/workflows/ci-rs.yml'
 
-  # ci_js:
-  #   uses: './.github/workflows/ci-js.yml'
+  ci_js:
+    uses: './.github/workflows/ci-js.yml'
 
   # ci_web:
   #   needs: [ci_js]

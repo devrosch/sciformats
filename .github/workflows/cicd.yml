@@ -16,20 +16,20 @@ jobs:
   ci_js:
     uses: './.github/workflows/ci-js.yml'
 
-  ci_web:
-    needs: [ci_js]
-    permissions: read-all
-    uses: './.github/workflows/ci-web.yml'
-    with:
-      artifactid: ${{ needs.ci_js.outputs.artifact-id }}
+  # ci_web:
+  #   needs: [ci_js]
+  #   permissions: read-all
+  #   uses: './.github/workflows/ci-web.yml'
+  #   with:
+  #     artifactid: ${{ needs.ci_js.outputs.artifact-id }}
 
-  cd:
-    needs: [ci_rs, ci_js, ci_web]
-    # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
-    uses: './.github/workflows/cd-rs.yml'
-    # with:
-    #   environment: prod
+  # cd:
+  #   needs: [ci_rs, ci_js, ci_web]
+  #   # if: github.refs == 'refs/heads/main'
+  #   # if: startsWith(github.event.ref, 'refs/tags/v')
+  #   uses: './.github/workflows/cd-rs.yml'
+  #   # with:
+  #   #   environment: prod
 
   debug:
     runs-on: ubuntu-latest

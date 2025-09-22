@@ -145,7 +145,7 @@ jobs:
           npm ci
           CI=true npm run build
       - uses: actions/upload-pages-artifact@v3
-        id: web
+        id: upload-pages-artifact
         with:
           path: ./web-ui/dist/
       # - uses: actions/upload-artifact@v4
@@ -157,6 +157,7 @@ jobs:
       - name: Debug
         run: |
           echo 'Page URL is ${{ steps.upload-pages-artifact.outputs.page_url }}'
+          echo 'Artifact ID is ${{ steps.upload-pages-artifact.artifact_id }}'
           echo 'Run ID is ${{ github.run_id }}'
 
   # publish:

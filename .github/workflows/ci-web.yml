@@ -129,7 +129,7 @@ jobs:
     permissions: read-all
     needs: [format, lint, audit, outdated, coverage]
     outputs:
-      artifact-id: ${{ steps.upload-pages-artifact.outputs.page_url }}
+      page_url: ${{ steps.upload-pages-artifact.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -157,7 +157,7 @@ jobs:
       - name: Debug
         run: |
           echo 'Page URL is ${{ steps.upload-pages-artifact.outputs.page_url }}'
-          echo 'Artifact ID is ${{ steps.upload-pages-artifact.artifact_id }}'
+          echo 'Artifact ID is ${{ steps.upload-pages-artifact.outputs.artifact-id }}'
           echo 'Run ID is ${{ github.run_id }}'
 
   # publish:

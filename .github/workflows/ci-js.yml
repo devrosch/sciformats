@@ -70,7 +70,7 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo install wasm-pack --quiet
-      - name: Build
+      - name: Test
         run: wasm-pack test --chrome --headless
 
   build_release:

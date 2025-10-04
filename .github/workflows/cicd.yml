@@ -50,5 +50,5 @@ jobs:
       - name: Debug2
         run: |
           echo 'Run ID is ${{ github.run_id }}'
-          echo 'Artifact ID is ${{ needs.ci_js.outputs.artifact_id }}'
-          echo 'Page URL is ${{ needs.ci_js.outputs.page_url }}'
+          echo 'Artifact ID is ${{ needs.ci_web.outputs.artifact_id }}'
+          echo 'Page URL is ${{ needs.ci_web.outputs.page_url }}'

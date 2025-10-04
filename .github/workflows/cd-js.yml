@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - env:
-          ART_ID: ${{needs.publish_lib_js.outputs.artifact-id}}
+          ART_ID: ${{ needs.publish_lib_js.outputs.artifact-id }}
         run: echo "Artifact ID from previous job is $ART_ID"
       - name: Debug
         run: |

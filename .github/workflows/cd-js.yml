@@ -11,9 +11,11 @@ on:
     #       - qa
     #       - prod
   workflow_call:
-
-env:
-  CARGO_TERM_COLOR: always
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the WASM package artifact.
 
 defaults:
   run:
@@ -22,26 +24,21 @@ defaults:
 jobs:
   publish_lib_js:
     runs-on: ubuntu-latest
-    outputs:
-      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+    # outputs:
+    #   artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v5
-      - name: Install dependencies
-        run: |
-          rustup target add wasm32-unknown-unknown
-          cargo install wasm-pack --quiet
-      - name: Build
-        run: wasm-pack build --release
-      - uses: actions/upload-artifact@v4
-        id: artifact-upload-step
+      - uses: actions/download-artifact@v5
         with:
-          name: wasm-webpack
-          retention-days: 1
+          artifact-ids: ${{ inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ./lib-js/pkg/
       - name: Debug
         run: |
           echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
           echo 'Run ID is ${{ github.run_id }}'
+          ls -R pkg
+          echo 'TODO: publish'
 
   debug:
     runs-on: ubuntu-latest
@@ -51,20 +48,17 @@ jobs:
     # if: startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v5
-      - env:
-          ART_ID: ${{ needs.publish_lib_js.outputs.artifact-id }}
-        run: echo "Artifact ID from previous job is $ART_ID"
       - name: Debug
         run: |
           echo 'Run ID is ${{ github.run_id }}'
-          echo 'Artifact ID is $ART_ID'
+          echo 'Artifact ID is ${{ inputs.artifactid }}'
   
-  web:
-    needs: [publish_lib_js]
-    permissions: read-all
-    # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
-    uses: './.github/workflows/ci-web.yml'
-    with:
-      runid: ${{ github.run_id }}
-      artifactid: ${{needs.publish_lib_js.outputs.artifact-id}}
+  # web:
+  #   needs: [publish_lib_js]
+  #   permissions: read-all
+  #   # if: github.refs == 'refs/heads/main'
+  #   # if: startsWith(github.event.ref, 'refs/tags/v')
+  #   uses: './.github/workflows/ci-web.yml'
+  #   with:
+  #     runid: ${{ github.run_id }}
+  #     artifactid: ${{needs.publish_lib_js.outputs.artifact-id}}

@@ -40,14 +40,15 @@ jobs:
     permissions: read-all
     steps:
       - uses: actions/checkout@v5
-      - env:
-          ART_ID: ${{ needs.ci_web.outputs.artifact-id }}
+      - name: Debug1
+        env:
+          ART_ID: ${{ needs.ci_web.outputs.artifact_id }}
           PAGE_URL: ${{ needs.ci_web.outputs.page_url }}
         run: |
           echo "Artifact ID from previous job is $ART_ID"
-          echo "Artifact ID from previous job is $PAGE_URL"
-      - name: Debug
+          echo "Page URL from previous job is $PAGE_URL"
+      - name: Debug2
         run: |
           echo 'Run ID is ${{ github.run_id }}'
-          echo 'Artifact ID is ${{ needs.ci_js.outputs.artifact-id }}'
+          echo 'Artifact ID is ${{ needs.ci_js.outputs.artifact_id }}'
           echo 'Page URL is ${{ needs.ci_js.outputs.page_url }}'

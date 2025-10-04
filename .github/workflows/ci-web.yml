@@ -160,19 +160,19 @@ jobs:
           echo 'Artifact ID is ${{ steps.upload-pages-artifact.outputs.artifact-id }}'
           echo 'Run ID is ${{ github.run_id }}'
 
-  deploy:
-    environment:
-      PG_URL: ${{ steps.upload-pages-artifact.outputs.page_url }}
-      ART_ID: ${{ steps.upload-pages-artifact.outputs.artifact-id }}
-    runs-on: ubuntu-latest
-    needs: build_release
-    steps:
-      - name: Debug
-        run: |
-          echo 'page URL: $PG_URL'
-          echo "page URL: $PG_URL"
-          echo 'artifact ID: $ART_ID'
-          echo "artifact ID: $ART_ID"
+  # deploy:
+  #   environment:
+  #     PG_URL: ${{ steps.upload-pages-artifact.outputs.page_url }}
+  #     ART_ID: ${{ steps.upload-pages-artifact.outputs.artifact-id }}
+  #   runs-on: ubuntu-latest
+  #   needs: build_release
+  #   steps:
+  #     - name: Debug
+  #       run: |
+  #         echo 'page URL: $PG_URL'
+  #         echo "page URL: $PG_URL"
+  #         echo 'artifact ID: $ART_ID'
+  #         echo "artifact ID: $ART_ID"
 
   # publish:
   #   needs: [coverage]

@@ -11,6 +11,11 @@ on:
     #       - qa
     #       - prod
   workflow_call:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the web page artifact.
 
 defaults:
   run:
@@ -25,3 +30,14 @@ jobs:
         run: |
           echo "publish called"
           ls -la ..
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lweb-ui/dist/
+      - name: Debug
+        run: |
+          echo 'Artifact ID is ${{ inputs.artifactid }}'
+          echo 'Run ID is ${{ github.run_id }}'
+          ls -R dist
+          echo 'TODO: publish'

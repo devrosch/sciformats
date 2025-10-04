@@ -24,6 +24,7 @@ defaults:
 jobs:
   publish_lib_js:
     runs-on: ubuntu-latest
+    permissions: read-all
     # outputs:
     #   artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     steps:
@@ -35,23 +36,23 @@ jobs:
           path: ./lib-js/pkg/
       - name: Debug
         run: |
-          echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+          echo 'Artifact ID is ${{ inputs.artifactid }}'
           echo 'Run ID is ${{ github.run_id }}'
           ls -R pkg
           echo 'TODO: publish'
 
-  debug:
-    runs-on: ubuntu-latest
-    needs: [publish_lib_js]
-    permissions: read-all
-    # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
-    steps:
-      - uses: actions/checkout@v5
-      - name: Debug
-        run: |
-          echo 'Run ID is ${{ github.run_id }}'
-          echo 'Artifact ID is ${{ inputs.artifactid }}'
+  # debug:
+  #   runs-on: ubuntu-latest
+  #   needs: [publish_lib_js]
+  #   permissions: read-all
+  #   # if: github.refs == 'refs/heads/main'
+  #   # if: startsWith(github.event.ref, 'refs/tags/v')
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Debug
+  #       run: |
+  #         echo 'Run ID is ${{ github.run_id }}'
+  #         echo 'Artifact ID is ${{ inputs.artifactid }}'
   
   # web:
   #   needs: [publish_lib_js]

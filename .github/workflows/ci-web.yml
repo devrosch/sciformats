@@ -40,31 +40,31 @@ jobs:
   #   if: ${{ github.event.workflow_run.conclusion == 'success' }}
   #   steps:
 
-  debug:
-    runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    permissions: read-all
-    steps:
-      - uses: actions/checkout@v5
-      - name: Debug
-        env:
-          ART_ID: ${{ inputs.artifactid }}
-        run: |
-          echo "Artifact ID: ${{ inputs.artifactid }}"
-          echo "Artifact ID: $ART_ID"
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-      - uses: actions/download-artifact@v5
-        with:
-          artifact-ids: ${{ inputs.artifactid }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: ./lib-js/pkg
-      - name: Files
-        run: |
-          ls -la ..
-          ls -la ../lib-js/
-          ls -la ../lib-js/pkg/
+  # debug:
+  #   runs-on: ubuntu-latest
+  #   # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  #   permissions: read-all
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Debug
+  #       env:
+  #         ART_ID: ${{ inputs.artifactid }}
+  #       run: |
+  #         echo "Artifact ID: ${{ inputs.artifactid }}"
+  #         echo "Artifact ID: $ART_ID"
+  #     - uses: actions/setup-node@v5
+  #       with:
+  #         node-version: 22
+  #     - uses: actions/download-artifact@v5
+  #       with:
+  #         artifact-ids: ${{ inputs.artifactid }}
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+  #         path: ./lib-js/pkg
+  #     - name: Files
+  #       run: |
+  #         ls -la ..
+  #         ls -la ../lib-js/
+  #         ls -la ../lib-js/pkg/
 
   format:
     runs-on: ubuntu-latest

@@ -34,7 +34,7 @@ jobs:
         with:
           artifact-ids: ${{ inputs.artifactid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: ./lweb-ui/dist/
+          path: ./web-ui/dist/
       - name: Debug
         run: |
           echo 'Artifact ID is ${{ inputs.artifactid }}'

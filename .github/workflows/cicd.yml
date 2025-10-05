@@ -47,7 +47,10 @@ jobs:
 
   cd_web:
     needs: [ci_rs, ci_js, ci_web]
-    permissions: read-all
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-web.yml'

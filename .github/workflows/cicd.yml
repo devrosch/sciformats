@@ -49,6 +49,7 @@ jobs:
     needs: [ci_rs, ci_js, ci_web]
     permissions:
       contents: read
+      actions: read
       pages: write
       id-token: write
     # if: github.refs == 'refs/heads/main'

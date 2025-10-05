@@ -25,6 +25,7 @@ defaults:
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
+  actions: read # for downloading the artifact
   pages: write
   id-token: write
 

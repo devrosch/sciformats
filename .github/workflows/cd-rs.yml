@@ -29,6 +29,10 @@ defaults:
   run:
     working-directory: ./lib-rs
 
+concurrency:
+  group: "publish-rs"
+  cancel-in-progress: false
+
 jobs:
   publish_lib_rs:
     runs-on: ubuntu-latest

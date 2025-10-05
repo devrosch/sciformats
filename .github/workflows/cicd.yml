@@ -52,7 +52,7 @@ jobs:
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-web.yml'
     with:
-      artifactid: ${{ needs.ci_web.outputs.artifact_id }}
+      artifactid: ${{ needs.ci_web.outputs.artifact-id }}
     # with:
     #   environment: prod
 

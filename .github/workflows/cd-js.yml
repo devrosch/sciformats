@@ -21,6 +21,10 @@ defaults:
   run:
     working-directory: ./lib-js
 
+concurrency:
+  group: "publish-js"
+  cancel-in-progress: false
+
 jobs:
   publish_lib_js:
     runs-on: ubuntu-latest

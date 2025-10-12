@@ -19,7 +19,7 @@ jobs:
   ci_web:
     needs: [ci_js]
     permissions:
-      # contents: read
+      contents: read
       actions: read # for downloading artifacts
     uses: './.github/workflows/ci-web.yml'
     with:

@@ -82,7 +82,7 @@ jobs:
   build_release:
     runs-on: ubuntu-latest
     permissions:
-      # contents: read
+      contents: read
       actions: read # for downloading artifacts
     needs: [format, lint, audit, outdated, coverage]
     outputs:

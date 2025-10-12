@@ -2,14 +2,11 @@ name: CD JavaScript
 
 on:
   workflow_dispatch:
-    # inputs:
-    #   environment:
-    #     type: choice
-    #     description: Into what environment to deploy.
-    #     options: 
-    #       - dev
-    #       - qa
-    #       - prod
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the WASM package artifact.
   workflow_call:
     inputs:
       artifactid:
@@ -28,9 +25,9 @@ concurrency:
 jobs:
   publish_lib_js:
     runs-on: ubuntu-latest
-    permissions: read-all
-    # outputs:
-    #   artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
@@ -38,32 +35,11 @@ jobs:
           artifact-ids: ${{ inputs.artifactid }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ./lib-js/pkg/
-      - name: Debug
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ inputs.artifactid }}'
+      #     echo 'Run ID is ${{ github.run_id }}'
+      #     ls -R pkg
+      - name: Publish (TODO)
         run: |
-          echo 'Artifact ID is ${{ inputs.artifactid }}'
-          echo 'Run ID is ${{ github.run_id }}'
-          ls -R pkg
-          echo 'TODO: publish'
-
-  # debug:
-  #   runs-on: ubuntu-latest
-  #   needs: [publish_lib_js]
-  #   permissions: read-all
-  #   # if: github.refs == 'refs/heads/main'
-  #   # if: startsWith(github.event.ref, 'refs/tags/v')
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - name: Debug
-  #       run: |
-  #         echo 'Run ID is ${{ github.run_id }}'
-  #         echo 'Artifact ID is ${{ inputs.artifactid }}'
-  
-  # web:
-  #   needs: [publish_lib_js]
-  #   permissions: read-all
-  #   # if: github.refs == 'refs/heads/main'
-  #   # if: startsWith(github.event.ref, 'refs/tags/v')
-  #   uses: './.github/workflows/ci-web.yml'
-  #   with:
-  #     runid: ${{ github.run_id }}
-  #     artifactid: ${{needs.publish_lib_js.outputs.artifact-id}}
+          echo 'TODO: publish JS artifact ID ${{ inputs.artifactid }}'

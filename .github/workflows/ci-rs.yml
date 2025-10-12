@@ -1,13 +1,11 @@
 name: CI Rust
 
-# on:
-#   push:
-#     # branches: ['main']
-#   pull_request:
-#     # branches: ['main']
 on:
-  # workflow_dispatch:
-  workflow_call:
+  workflow_dispatch:
+    outputs:
+      artifact-id:
+        description: "Rust crate artifact ID"
+        value: ${{ jobs.build_release.outputs.artifact-id }}  workflow_call:
     outputs:
       artifact-id:
         description: "Rust crate artifact ID"
@@ -55,7 +53,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # needs: [build, format, lint, outdated]
     steps:
       - uses: actions/checkout@v5
       - name: Test
@@ -63,7 +60,6 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    # needs: [build, format, lint, outdated]
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies
@@ -91,7 +87,7 @@ jobs:
           name: rust-crate
           retention-days: 1
           path: ./lib-rs/target/package/
-      - name: Debug
-        run: |
-          echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
-          echo 'Run ID is ${{ github.run_id }}'
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+      #     echo 'Run ID is ${{ github.run_id }}'

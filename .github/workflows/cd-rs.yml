@@ -7,14 +7,6 @@ on:
         type: string
         required: true
         description: The artifact ID of the Rust crate artifact.
-    # inputs:
-    #   environment:
-    #     type: choice
-    #     description: Into what environment to deploy.
-    #     options: 
-    #       - dev
-    #       - qa
-    #       - prod
   workflow_call:
     inputs:
       artifactid:
@@ -36,7 +28,9 @@ concurrency:
 jobs:
   publish_lib_rs:
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5

@@ -1,21 +1,16 @@
 name: CI Web
 
-# on:
-#   workflow_run:
-#     workflows: [CI JavaScript]
-#     types: [completed]
-# on:
-#   push:
-#     # branches: ['main']
-#   pull_request:
-#     # branches: ['main']
 on:
-  # workflow_dispatch:
-  #   inputs:
-  #     artifactid:
-  #       type: string
-  #       required: true
-  #       description: The artifact ID of the wasm-webpack build artifact.
+  workflow_dispatch:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the wasm-webpack build artifact.
+    outputs:
+      artifact-id:
+        description: "Artifact ID for built web site"
+        value: ${{ jobs.build_release.outputs.artifact-id }}
   workflow_call:
     inputs:
       artifactid:
@@ -32,37 +27,6 @@ defaults:
     working-directory: ./web-ui
 
 jobs:
-  # build:
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.workflow_run.conclusion == 'success' }}
-  #   steps:
-
-  # debug:
-  #   runs-on: ubuntu-latest
-  #   # if: ${{ github.event.workflow_run.conclusion == 'success' }}
-  #   permissions: read-all
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - name: Debug
-  #       env:
-  #         ART_ID: ${{ inputs.artifactid }}
-  #       run: |
-  #         echo "Artifact ID: ${{ inputs.artifactid }}"
-  #         echo "Artifact ID: $ART_ID"
-  #     - uses: actions/setup-node@v5
-  #       with:
-  #         node-version: 22
-  #     - uses: actions/download-artifact@v5
-  #       with:
-  #         artifact-ids: ${{ inputs.artifactid }}
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         path: ./lib-js/pkg
-  #     - name: Files
-  #       run: |
-  #         ls -la ..
-  #         ls -la ../lib-js/
-  #         ls -la ../lib-js/pkg/
-
   format:
     runs-on: ubuntu-latest
     steps:
@@ -107,8 +71,9 @@ jobs:
     
   coverage:
     runs-on: ubuntu-latest
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    permissions: read-all
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -126,7 +91,9 @@ jobs:
 
   build_release:
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions:
+      contents: read
+      actions: read
     needs: [format, lint, audit, outdated, coverage]
     outputs:
       artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
@@ -144,39 +111,13 @@ jobs:
         run: |
           npm ci
           CI=true npm run build
-      # - uses: actions/upload-pages-artifact@v3
-      #   id: artifact-upload-step
-      #   with:
-      #     path: ./web-ui/dist/
       - uses: actions/upload-artifact@v4
         id: artifact-upload-step
         with:
           name: web
           retention-days: 1
           path: ./web-ui/dist/
-      - name: Debug
-        run: |
-          echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
-          echo 'Run ID is ${{ github.run_id }}'
-
-  # deploy:
-  #   environment:
-  #     PG_URL: ${{ steps.upload-pages-artifact.outputs.page_url }}
-  #     ART_ID: ${{ steps.upload-pages-artifact.outputs.artifact-id }}
-  #   runs-on: ubuntu-latest
-  #   needs: build_release
-  #   steps:
-  #     - name: Debug
-  #       run: |
-  #         echo 'page URL: $PG_URL'
-  #         echo "page URL: $PG_URL"
-  #         echo 'artifact ID: $ART_ID'
-  #         echo "artifact ID: $ART_ID"
-
-  # publish:
-  #   needs: [coverage]
-  #   # if: github.refs == 'refs/heads/main'
-  #   # if: startsWith(github.event.ref, 'refs/tags/v')
-  #   uses: './.github/workflows/cd-web.yml'
-  #   # with:
-  #   #   environment: prod
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+      #     echo 'Run ID is ${{ github.run_id }}'

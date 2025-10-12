@@ -1,16 +1,11 @@
 name: CI JavaScript
 
-# on:
-#   push:
-#     # branches: ['main']
-#   pull_request:
-#     # branches: ['main']
 on:
-  # workflow_dispatch:
-  #   outputs:
-  #     artifact-id:
-  #       description: "wasm-webpack artifact id"
-  #       value: ${{ jobs.build_release.outputs.artifact-id }}
+  workflow_dispatch:
+    outputs:
+      artifact-id:
+        description: "wasm-webpack artifact id"
+        value: ${{ jobs.build_release.outputs.artifact-id }}
   workflow_call:
     outputs:
       artifact-id:
@@ -63,7 +58,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    # needs: [build, format, lint, outdated]
     steps:
       - uses: actions/checkout@v5
       - name: Install dependencies
@@ -92,32 +86,7 @@ jobs:
           name: wasm-webpack
           retention-days: 1
           path: ./lib-js/pkg/
-      - name: Debug
-        run: |
-          echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
-          echo 'Run ID is ${{ github.run_id }}'
-
-  # debug:
-  #   runs-on: ubuntu-latest
-  #   needs: [build_release]
-  #   permissions: read-all
-  #   # if: github.refs == 'refs/heads/main'
-  #   # if: startsWith(github.event.ref, 'refs/tags/v')
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - env:
-  #         ART_ID: ${{ needs.build_release.outputs.artifact-id }}
-  #       run: echo "Artifact ID from previous job is $ART_ID"
-  #     - name: Debug
-  #       run: |
-  #         echo 'Run ID is ${{ github.run_id }}'
-  #         echo 'Artifact ID is $ART_ID'
-
-  # publish:
-  #   needs: [test]
-  #   permissions: read-all
-  #   # if: github.refs == 'refs/heads/main'
-  #   # if: startsWith(github.event.ref, 'refs/tags/v')
-  #   uses: './.github/workflows/cd-js.yml'
-  #   # with:
-  #   #   environment: prod
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+      #     echo 'Run ID is ${{ github.run_id }}'

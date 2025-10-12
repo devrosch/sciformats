@@ -2,14 +2,11 @@ name: CD Web
 
 on:
   workflow_dispatch:
-    # inputs:
-    #   environment:
-    #     type: choice
-    #     description: Into what environment to deploy.
-    #     options: 
-    #       - dev
-    #       - qa
-    #       - prod
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the web page artifact.
   workflow_call:
     inputs:
       artifactid:
@@ -47,15 +44,12 @@ jobs:
         id: upload-pages-artifact
         with:
           path: ./web-ui/dist/
-      - name: Debug
-        run: |
-          echo 'Artifact ID is ${{ inputs.artifactid }}'
-          echo 'Pages artifact ID is ${{ steps.upload-pages-artifact.outputs.artifact_id }}'
-          echo 'Run ID is ${{ github.run_id }}'
-      - name: Noop
-        run: |
-          echo "publish called"
-          ls -R dist
-          ls -la ..
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ inputs.artifactid }}'
+      #     echo 'Pages artifact ID is ${{ steps.upload-pages-artifact.outputs.artifact_id }}'
+      #     echo 'Run ID is ${{ github.run_id }}'
+      #     ls -R dist
+      #     ls -la ..
       # - uses: actions/deploy-pages@v4
       #   id: web-deploy

@@ -62,8 +62,8 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      actions: read
+      # contents: read
+      actions: read # for downloading artifacts
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

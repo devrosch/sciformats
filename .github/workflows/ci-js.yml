@@ -1,11 +1,6 @@
 name: CI JavaScript
 
 on:
-  workflow_dispatch:
-    outputs:
-      artifact-id:
-        description: "wasm-webpack artifact id"
-        value: ${{ jobs.build_release.outputs.artifact-id }}
   workflow_call:
     outputs:
       artifact-id:

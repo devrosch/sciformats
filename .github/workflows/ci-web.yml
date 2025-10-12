@@ -1,16 +1,6 @@
 name: CI Web
 
 on:
-  workflow_dispatch:
-    inputs:
-      artifactid:
-        type: string
-        required: true
-        description: The artifact ID of the wasm-webpack build artifact.
-    outputs:
-      artifact-id:
-        description: "Artifact ID for built web site"
-        value: ${{ jobs.build_release.outputs.artifact-id }}
   workflow_call:
     inputs:
       artifactid:

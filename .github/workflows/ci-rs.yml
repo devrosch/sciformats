@@ -1,11 +1,7 @@
 name: CI Rust
 
 on:
-  workflow_dispatch:
-    outputs:
-      artifact-id:
-        description: "Rust crate artifact ID"
-        value: ${{ jobs.build_release.outputs.artifact-id }}  workflow_call:
+  workflow_call:
     outputs:
       artifact-id:
         description: "Rust crate artifact ID"

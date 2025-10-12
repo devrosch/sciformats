@@ -28,7 +28,7 @@ jobs:
   cd_rs:
     needs: [ci_rs, ci_js, ci_web]
     permissions:
-      # contents: read
+      contents: read
       actions: read # for downloading artifacts
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
@@ -39,7 +39,7 @@ jobs:
   cd_js:
     needs: [ci_rs, ci_js, ci_web]
     permissions:
-      # contents: read
+      contents: read
       actions: read # for downloading artifacts
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')

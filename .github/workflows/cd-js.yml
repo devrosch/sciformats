@@ -26,7 +26,7 @@ jobs:
   publish_lib_js:
     runs-on: ubuntu-latest
     permissions:
-      # contents: read
+      contents: read
       actions: read # for downloading artifacts
     steps:
       - uses: actions/checkout@v5

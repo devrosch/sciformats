@@ -19,8 +19,8 @@ jobs:
   ci_web:
     needs: [ci_js]
     permissions:
-      contents: read
-      actions: read
+      # contents: read
+      actions: read # for downloading artifacts
     uses: './.github/workflows/ci-web.yml'
     with:
       artifactid: ${{ needs.ci_js.outputs.artifact-id }}
@@ -28,8 +28,8 @@ jobs:
   cd_rs:
     needs: [ci_rs, ci_js, ci_web]
     permissions:
-      contents: read
-      actions: read
+      # contents: read
+      actions: read # for downloading artifacts
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-rs.yml'
@@ -39,8 +39,8 @@ jobs:
   cd_js:
     needs: [ci_rs, ci_js, ci_web]
     permissions:
-      contents: read
-      actions: read
+      # contents: read
+      actions: read # for downloading artifacts
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-js.yml'

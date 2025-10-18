@@ -54,9 +54,9 @@ jobs:
       actions: read
       pages: write
       id-token: write
-    # if: github.refs == 'refs/heads/main'
+    if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
-    if: ${{ (github.refs == 'refs/heads/main') || (startsWith(github.event.ref, 'refs/tags/v')) }}
+    # if: ${{ (github.refs == 'refs/heads/main') || (startsWith(github.event.ref, 'refs/tags/v')) }}
     uses: './.github/workflows/cd-web.yml'
     with:
       artifactid: ${{ needs.ci_web.outputs.artifact-id }}

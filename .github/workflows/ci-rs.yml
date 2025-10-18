@@ -1,0 +1,89 @@
+name: CI Rust
+
+on:
+  workflow_call:
+    outputs:
+      artifact-id:
+        description: "Rust crate artifact ID"
+        value: ${{ jobs.build_release.outputs.artifact-id }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: ./lib-rs
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Temporarily modify the rust toolchain version
+      #   run: rustup override set nightly
+      - uses: actions/checkout@v5
+      - name: Rust version
+        run: rustup --version
+      - name: Build
+        run: cargo build
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Format
+        run: cargo fmt --check
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lint
+        run: cargo clippy
+
+  outdated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check for updates
+        run: ./check_updates.sh
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test
+        run: cargo test
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update && sudo apt-get -y install lcov
+          rustup component add llvm-tools-preview
+          cargo install grcov --quiet
+      - name: Coverage
+        run: ./coverage.sh
+
+  build_release:
+    runs-on: ubuntu-latest
+    needs: [build, format, lint, outdated, test, coverage]
+    outputs:
+      artifact-id: ${{ steps.artifact-upload-step.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        run: cargo build --release
+      - name: Package
+        run: cargo package
+      - uses: actions/upload-artifact@v4
+        id: artifact-upload-step
+        with:
+          name: rust-crate
+          retention-days: 1
+          path: ./lib-rs/target/package/
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ steps.artifact-upload-step.outputs.artifact-id }}'
+      #     echo 'Run ID is ${{ github.run_id }}'

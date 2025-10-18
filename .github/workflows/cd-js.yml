@@ -1,0 +1,45 @@
+name: CD JavaScript
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the WASM package artifact.
+  workflow_call:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the WASM package artifact.
+
+defaults:
+  run:
+    working-directory: ./lib-js
+
+concurrency:
+  group: "publish-js"
+  cancel-in-progress: false
+
+jobs:
+  publish_lib_js:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # for downloading artifacts
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lib-js/pkg/
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ inputs.artifactid }}'
+      #     echo 'Run ID is ${{ github.run_id }}'
+      #     ls -R pkg
+      - name: Publish (TODO)
+        run: |
+          echo 'TODO: publish JS artifact ID ${{ inputs.artifactid }}'

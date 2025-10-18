@@ -1,0 +1,44 @@
+name: CD Rust
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the Rust crate artifact.
+  workflow_call:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the Rust crate artifact.
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    working-directory: ./lib-rs
+
+concurrency:
+  group: "publish-rs"
+  cancel-in-progress: false
+
+jobs:
+  publish_lib_rs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # for downloading artifacts
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./lib-rs/target/package
+      # - name: Login into crates.io
+      #   run: cargo login ${{ secrets.CRATES_IO }}
+      - name: "Publish (dry run)"
+        run: cargo publish --dry-run

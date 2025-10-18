@@ -1,0 +1,55 @@
+name: CD Web
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the web page artifact.
+  workflow_call:
+    inputs:
+      artifactid:
+        type: string
+        required: true
+        description: The artifact ID of the web page artifact.
+
+defaults:
+  run:
+    working-directory: ./web-ui
+
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  actions: read # for downloading artifacts
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "publish-web"
+  cancel-in-progress: false
+
+jobs:
+  publish_web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          artifact-ids: ${{ inputs.artifactid }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./web-ui/dist/
+      - uses: actions/upload-pages-artifact@v3
+        id: upload-pages-artifact
+        with:
+          path: ./web-ui/dist/
+      # - name: Debug
+      #   run: |
+      #     echo 'Artifact ID is ${{ inputs.artifactid }}'
+      #     echo 'Pages artifact ID is ${{ steps.upload-pages-artifact.outputs.artifact_id }}'
+      #     echo 'Run ID is ${{ github.run_id }}'
+      #     ls -R dist
+      #     ls -la ..
+      # - uses: actions/deploy-pages@v4
+      #   id: web-deploy

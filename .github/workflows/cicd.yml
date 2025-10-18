@@ -1,0 +1,61 @@
+name: CI/CD
+
+on:
+  push:
+    # branches: ['main']
+  pull_request:
+    # branches: ['main']
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci_rs:
+    uses: './.github/workflows/ci-rs.yml'
+
+  ci_js:
+    uses: './.github/workflows/ci-js.yml'
+
+  ci_web:
+    needs: [ci_js]
+    permissions:
+      contents: read
+      actions: read # for downloading artifacts
+    uses: './.github/workflows/ci-web.yml'
+    with:
+      artifactid: ${{ needs.ci_js.outputs.artifact-id }}
+
+  cd_rs:
+    needs: [ci_rs, ci_js, ci_web]
+    permissions:
+      contents: read
+      actions: read # for downloading artifacts
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/cd-rs.yml'
+    with:
+      artifactid: ${{ needs.ci_rs.outputs.artifact-id }}
+
+  cd_js:
+    needs: [ci_rs, ci_js, ci_web]
+    permissions:
+      contents: read
+      actions: read # for downloading artifacts
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/cd-js.yml'
+    with:
+      artifactid: ${{ needs.ci_js.outputs.artifact-id }}
+
+  cd_web:
+    needs: [ci_rs, ci_js, ci_web]
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    # if: github.refs == 'refs/heads/main'
+    # if: startsWith(github.event.ref, 'refs/tags/v')
+    uses: './.github/workflows/cd-web.yml'
+    with:
+      artifactid: ${{ needs.ci_web.outputs.artifact-id }}

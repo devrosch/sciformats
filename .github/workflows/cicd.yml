@@ -31,7 +31,7 @@ jobs:
       contents: read
       actions: read # for downloading artifacts
     # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
+    if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-rs.yml'
     with:
       artifactid: ${{ needs.ci_rs.outputs.artifact-id }}
@@ -42,7 +42,7 @@ jobs:
       contents: read
       actions: read # for downloading artifacts
     # if: github.refs == 'refs/heads/main'
-    # if: startsWith(github.event.ref, 'refs/tags/v')
+    if: startsWith(github.event.ref, 'refs/tags/v')
     uses: './.github/workflows/cd-js.yml'
     with:
       artifactid: ${{ needs.ci_js.outputs.artifact-id }}
@@ -56,6 +56,7 @@ jobs:
       id-token: write
     # if: github.refs == 'refs/heads/main'
     # if: startsWith(github.event.ref, 'refs/tags/v')
+    if: ${{ (github.refs == 'refs/heads/main') || (startsWith(github.event.ref, 'refs/tags/v')) }}
     uses: './.github/workflows/cd-web.yml'
     with:
       artifactid: ${{ needs.ci_web.outputs.artifact-id }}

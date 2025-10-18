@@ -51,5 +51,5 @@ jobs:
       #     echo 'Run ID is ${{ github.run_id }}'
       #     ls -R dist
       #     ls -la ..
-      # - uses: actions/deploy-pages@v4
-      #   id: web-deploy
+      - uses: actions/deploy-pages@v4
+        id: web-deploy

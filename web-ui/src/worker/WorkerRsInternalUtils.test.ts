@@ -59,6 +59,7 @@ const mockReader: Reader = {
     table: {},
     childNodeNames: [],
     free: jest.fn(),
+    [Symbol.dispose]: jest.fn(),
   })),
   getExportFormats: jest.fn(() => ['Json']),
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
@@ -172,6 +173,7 @@ test('onOpen() returns error if exception occurs', async () => {
       throw new Error('getReader() error');
     }),
     free: jest.fn(),
+    [Symbol.dispose]: jest.fn(),
   };
   const openFiles = new Map<string, Reader>();
 

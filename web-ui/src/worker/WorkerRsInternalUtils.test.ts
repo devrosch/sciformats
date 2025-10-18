@@ -68,6 +68,7 @@ const mockReader: Reader = {
     return blob;
   }),
   free: jest.fn(),
+  [Symbol.dispose]: jest.fn(),
 };
 
 const fileInfoStub: WorkerFileInfo = {

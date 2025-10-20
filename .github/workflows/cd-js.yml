@@ -13,6 +13,9 @@ on:
         type: string
         required: true
         description: The artifact ID of the WASM package artifact.
+    secrets:
+      NPM_TOKEN:
+        required: true
 
 defaults:
   run:
@@ -45,8 +48,9 @@ jobs:
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
-      - run: cd pkg
       - name: "Publish (dry run)"
-        run: npm publish --dry-run --provenance --access public
+        run: |
+          cd pkg
+          npm publish --dry-run --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

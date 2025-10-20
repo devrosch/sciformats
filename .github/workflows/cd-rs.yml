@@ -13,6 +13,9 @@ on:
         type: string
         required: true
         description: The artifact ID of the Rust crate artifact.
+    secrets:
+      CRATES_IO_TOKEN:
+        required: true
 
 env:
   CARGO_TERM_COLOR: always

@@ -13,6 +13,9 @@ on:
         type: string
         required: true
         description: The artifact ID of the Rust crate artifact.
+    secrets:
+      CRATES_IO_TOKEN:
+        required: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -31,7 +34,7 @@ jobs:
     permissions:
       contents: read
       actions: read # for downloading artifacts
-    environment: crates.io
+    # environment: crates.io
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5

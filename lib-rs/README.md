@@ -1,4 +1,4 @@
-# SciFormats
+# sciformats
 
 A library for reading scientific data formats.
 

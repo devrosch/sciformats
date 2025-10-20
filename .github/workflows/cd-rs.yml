@@ -34,7 +34,7 @@ jobs:
     permissions:
       contents: read
       actions: read # for downloading artifacts
-    # environment: crates.io
+    environment: crates.io
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5

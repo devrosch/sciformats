@@ -13,6 +13,9 @@ on:
         type: string
         required: true
         description: The artifact ID of the WASM package artifact.
+    secrets:
+      NPM_TOKEN:
+        required: true
 
 defaults:
   run:

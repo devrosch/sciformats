@@ -49,6 +49,7 @@ jobs:
     uses: './.github/workflows/cd-js.yml'
     with:
       artifactid: ${{ needs.ci_js.outputs.artifact-id }}
+    secrets: inherit
 
   cd_web:
     needs: [ci_rs, ci_js, ci_web]

@@ -28,6 +28,7 @@ jobs:
     permissions:
       contents: read
       actions: read # for downloading artifacts
+    environment: npmjs.com
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
@@ -40,6 +41,12 @@ jobs:
       #     echo 'Artifact ID is ${{ inputs.artifactid }}'
       #     echo 'Run ID is ${{ github.run_id }}'
       #     ls -R pkg
-      - name: Publish (TODO)
-        run: |
-          echo 'TODO: publish JS artifact ID ${{ inputs.artifactid }}'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: cd pkg
+      - name: "Publish (dry run)"
+        run: npm publish --dry-run --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -10,6 +10,48 @@ This library allows reading multiple scientific data formats. Currently, the fol
 - Generalized Analytical Markup Language ([GAML](https://www.gaml.org/))
 - JCAMP-DX ([JCAMP-DX](http://www.jcamp-dx.org/))
 
+## Usage
+
+```js
+    // Initialize scanner repository with all supported data types.
+    const scannerRepository = new ScannerRepository();
+
+    // Read file from an <input> element of type "file".
+    const file = input.files[0];
+    const fileName = file.name;
+
+    // Get reader for file.
+    const buffer = await file.arrayBuffer();
+    // As a Uint8Array is expected, an ArrayBuffer cannot be used directly.
+    const uint8Array = new Uint8Array(buffer);
+    // Ensure that the file has a supported format.
+    const isRecognized = scannerRepository.isRecognized(fileName, uint8Array);
+    if (!isRecognized) {
+        return;
+    }
+    // Get a reader through which data from the file is retrieved.
+    const reader = scannerRepository.getReader(fileName, uint8Array);
+    
+    // Read the root node.
+    const rootNode = reader.read('/');
+
+    // Use node content.
+    const name = node.name;
+    const parameters = node.parameters;
+    const data = node.data;
+    const metadata = node.metadata;
+    const table = node.table;
+    const childNodeNames = node.childNodeNames;
+
+    // Read the fourth child node. Indexing starts at 0. There are as many child nodes as elements in the child_node_names list.
+    let child3Node = reader.read('/3');
+
+    // Read the first nested child node of the fourth root child node.
+    let child30Node = reader.read('/3/0');
+```
+
+See the "examples" directory in the repository for more example code.
+
 ## How to build
 
 See [Build instructions](./BUILD_INSTRUCTIONS.md)

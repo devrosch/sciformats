@@ -7,7 +7,7 @@ const template = `
   <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>SciFormats</span></p>
   <p>Copyright © 2025 Robert Schiwon</p>
   <p>SciFormats is made available under the terms of the MIT license
-    (license: <a href="https://github.com/devrosch/sciformats/LICENSE.txt">MIT</a>, source code:
+    (license: <a href="https://github.com/devrosch/sciformats/blob/main/LICENSE.txt">MIT</a>, source code:
     <a href="https://github.com/devrosch/sciformats">GitHub</a>)
     and makes use of the following third-party packages that are provided by their copyright owners under their own license terms.
   </p>

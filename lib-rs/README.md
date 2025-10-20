@@ -18,7 +18,7 @@ This is a library implemented in [Rust](https://www.rust-lang.org/) for reading 
     let file = File::open(&file_path)?;
     let mut input: Box<dyn SeekRead> = Box::new(file);
 
-    // Initialize scanner with all supported data types.
+    // Initialize scanner repository with all supported data types.
     let repo = ScannerRepository::init_all();
     // Ensure that the file has a supported format.
     assert!(repo.is_recognized(&file_path, &mut input));
@@ -26,8 +26,7 @@ This is a library implemented in [Rust](https://www.rust-lang.org/) for reading 
     let reader = repo.get_reader(&file_path, input)?;
 
     // Read the root node.
-    let root_node_path = "/";
-    let root_node = reader.read(root_node_path)?;
+    let root_node = reader.read("/")?;
 
     // Output node content.
     println!("name: {}", node.name);
@@ -38,13 +37,14 @@ This is a library implemented in [Rust](https://www.rust-lang.org/) for reading 
     println!("childNodeNames: {:?}", node.child_node_names);
 
     // Read the fourth child node. Indexing starts at 0. There are as many child nodes as elements in the child_node_names list.
-    let child3_path = "/3";
-    let child3_node = reader.read(child3_path)?;
+    let child3_node = reader.read("/3")?;
 
     // Read the first nested child node of the fourth root child node.
-    let child30_path = "/3/0";
-    let child30_node = reader.read(child30_path)?;
+    let child30_node = reader.read("/3/0")?;
 ```
+
+See the "examples" directory in the repository for more example code.
+
 ## How to build
 
 See [Build instructions](./BUILD_INSTRUCTIONS.md)

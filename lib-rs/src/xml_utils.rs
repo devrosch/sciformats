@@ -94,17 +94,15 @@ impl<'buf> BufEvent<'buf> {
 }
 
 type ElemConstructor<'f, 'buf, R, T, E> =
-    &'f (dyn Fn(BufEvent<'buf>, &mut Reader<R>) -> Result<(T, BufEvent<'buf>), E>);
+    &'f dyn Fn(BufEvent<'buf>, &mut Reader<R>) -> Result<(T, BufEvent<'buf>), E>;
 
-type ElemConstructorRc<'f, 'buf, T, E> = &'f (
-        dyn Fn(
+type ElemConstructorRc<'f, 'buf, T, E> = &'f dyn Fn(
     BufEvent<'buf>,
     Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-) -> Result<(T, BufEvent<'buf>), E>
-    );
+) -> Result<(T, BufEvent<'buf>), E>;
 
 type ElemConstructorCore<'f, 'buf, Reader, T, E> =
-    &'f mut (dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<(T, BufEvent<'buf>), E>);
+    &'f mut dyn Fn(BufEvent<'buf>, &mut Reader) -> Result<(T, BufEvent<'buf>), E>;
 
 pub(super) enum XmlTagStart<'buf> {
     Start(HashMap<QName<'buf>, std::borrow::Cow<'buf, str>>),
@@ -125,7 +123,7 @@ impl XmlTagStart<'_> {
     pub fn parse_req_attr<T, E: Error + 'static>(
         &self,
         name: &str,
-        parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+        parse_fn: &dyn Fn(&str) -> Result<T, E>,
         context: &str,
     ) -> Result<T, SfXmlError> {
         let value = self.get_req_attr(name)?;
@@ -142,7 +140,7 @@ impl XmlTagStart<'_> {
     pub fn parse_opt_attr<T, E: Error + 'static>(
         &self,
         name: &str,
-        parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+        parse_fn: &dyn Fn(&str) -> Result<T, E>,
         context: &str,
     ) -> Result<Option<T>, SfXmlError> {
         self.get_opt_attr(name)
@@ -153,7 +151,7 @@ impl XmlTagStart<'_> {
     fn parse_attr_and_map_err<T, E: Error + 'static>(
         value: &str,
         name: &str,
-        parse_fn: &(dyn Fn(&str) -> Result<T, E>),
+        parse_fn: &dyn Fn(&str) -> Result<T, E>,
         context: &str,
     ) -> Result<T, SfXmlError> {
         parse_fn(value).map_err(|e| {

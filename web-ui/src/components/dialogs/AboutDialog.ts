@@ -9,10 +9,10 @@ const template = `
   <p>Copyright © 2025 Robert Schiwon</p>
   <p>Currently, the following formats are supported:
     <ul>
-      <li>AnDI/AIA for Chromatographic Data ([ASTM E1947-98(2022)](https://www.astm.org/e1947-98r22.html), [ASTM E1948-98(2022)](https://www.astm.org/e1948-98r22.html))</li>
-      <li>AnDI/AIA for Mass Spectrometric Data ([ASTM E2077-00(2016)](https://www.astm.org/e2077-00r16.html), [ASTM E2078-00(2016)](https://www.astm.org/e2078-00r16.html))</li>
-      <li>Generalized Analytical Markup Language ([GAML](https://www.gaml.org/))</li>
-      <li>JCAMP-DX ([JCAMP-DX](http://www.jcamp-dx.org/))</li>
+      <li>AnDI/AIA for Chromatographic Data (<a href="https://www.astm.org/e1947-98r22.html">ASTM E1947-98(2022)</a>, <a href="https://www.astm.org/e1948-98r22.html">ASTM E1948-98(2022)</a>)</li>
+      <li>AnDI/AIA for Mass Spectrometric Data (<a href="https://www.astm.org/e2077-00r16.html">ASTM E2077-00(2016)</a>, <a href="https://www.astm.org/e2078-00r16.html">ASTM E2078-00(2016)</a>)</li>
+      <li>Generalized Analytical Markup Language (<a href="https://www.gaml.org/">GAML</a>)</li>
+      <li>JCAMP-DX (<a href="http://www.jcamp-dx.org/">JCAMP-DX</a>)</li>
     </ul>
   </p>
   <p>sciformats and sciformats_web are made available under the terms of the MIT license

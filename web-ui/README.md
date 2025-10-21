@@ -1,59 +1,20 @@
-# sciformats web UI
+# sciformats_web
 
-An HTML/CSS/JS web UI for visualizing scientific data read witrh sciformats, a library for reading scientific data formats.
+An HTML/CSS/JS web UI for visualizing scientific data read with sciformats, a library for reading scientific data formats.
 
 You can find the application published at [Github Pages](https://devrosch.github.io/sciformats/index.html).
 
-## Prerequisites
+## Details
 
-- Node.js v20 or later (including npm) needs to be installed.
-- The WASM library needs to have been built as described in `lib-js`.
+Currently, the following formats are supported:
+- AnDI/AIA for Chromatographic Data ([ASTM E1947-98(2022)](https://www.astm.org/e1947-98r22.html), [ASTM E1948-98(2022)](https://www.astm.org/e1948-98r22.html))
+- AnDI/AIA for Mass Spectrometric Data ([ASTM E2077-00(2016)](https://www.astm.org/e2077-00r16.html), [ASTM E2078-00(2016)](https://www.astm.org/e2078-00r16.html))
+- Generalized Analytical Markup Language ([GAML](https://www.gaml.org/))
+- JCAMP-DX ([JCAMP-DX](http://www.jcamp-dx.org/))
 
-## Build
+## How to build
 
-To install the required packages run:
-
-```
-npm install
-```
-
-After that, to run the tests, run:
-
-```
-npm test
-```
-
-Test coverage information can be generated with `npm test -- --coverage`.
-
-To check code formatting, run:
-
-```
-npm run format
-```
-
-To lint the code, run:
-
-```
-npm run lint
-```
-
-To start the development server, run:
-
-```
-npm start
-```
-
-For building a release version, run:
-
-```
-npm run build
-```
-
-Build artifacts are placed into the `dist` directory.
-
-## Documentation
-
-More detailed documentation can be found in the [doc](doc) directory.
+See [Build instructions](./BUILD_INSTRUCTIONS.md).
 
 ## Author
 

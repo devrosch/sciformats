@@ -4,13 +4,21 @@ import Logo from 'assets/sf-ui.svg';
 
 const template = `
 <dialog>
-  <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>sciformats</span></p>
+  <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>sciformats_web</span></p>
   <p>An HTML/CSS/JS web UI for visualizing scientific data read with sciformats, a library for reading scientific data formats.</p>
   <p>Copyright © 2025 Robert Schiwon</p>
-  <p>sciformats and its web UI are made available under the terms of the MIT license
+  <p>Currently, the following formats are supported:
+    <ul>
+      <li>AnDI/AIA for Chromatographic Data ([ASTM E1947-98(2022)](https://www.astm.org/e1947-98r22.html), [ASTM E1948-98(2022)](https://www.astm.org/e1948-98r22.html))</li>
+      <li>AnDI/AIA for Mass Spectrometric Data ([ASTM E2077-00(2016)](https://www.astm.org/e2077-00r16.html), [ASTM E2078-00(2016)](https://www.astm.org/e2078-00r16.html))</li>
+      <li>Generalized Analytical Markup Language ([GAML](https://www.gaml.org/))</li>
+      <li>JCAMP-DX ([JCAMP-DX](http://www.jcamp-dx.org/))</li>
+    </ul>
+  </p>
+  <p>sciformats and sciformats_web are made available under the terms of the MIT license
     (license: <a href="https://github.com/devrosch/sciformats/blob/main/LICENSE.txt">MIT</a>, source code:
     <a href="https://github.com/devrosch/sciformats">GitHub</a>)
-    and makes use of the following third-party packages that are provided by their copyright owners under their own license terms.
+    and make use of the following third-party packages that are provided by their copyright owners under their own license terms.
   </p>
   <ul>
     <li>

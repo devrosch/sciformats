@@ -47,7 +47,7 @@ See the "examples" directory in the repository for more example code.
 
 ## How to build
 
-See [Build instructions](./BUILD_INSTRUCTIONS.md)
+See [Build instructions](./BUILD_INSTRUCTIONS.md).
 
 ## Author
 

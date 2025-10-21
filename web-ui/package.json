@@ -2,12 +2,12 @@
   "name": "sciformats_web",
   "version": "0.1.0",
   "author": "Robert Schiwon <devrosch@gmx.net>",
-  "description": "An HTML/CSS/JS web UI for visualizing scientific data read witrh sciformats, a library for reading scientific data formats.",
+  "description": "An HTML/CSS/JS web UI for visualizing scientific data read with sciformats, a library for reading scientific data formats.",
   "homepage": "https://sciformats.org/",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/devrosch/sciformats.git"
+    "url": "https://github.com/devrosch/sciformats"
   },
   "keywords": [
     "parsing",

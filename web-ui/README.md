@@ -1,4 +1,4 @@
-# SciFormats Web UI
+# sciformats web UI
 
 An HTML/CSS/JS web UI for visualizing scientific data read witrh sciformats, a library for reading scientific data formats.
 

@@ -1,4 +1,4 @@
-# SciFormats
+# sciformats
 
 Libraries and tools for reading and visualizing scientific data.
 

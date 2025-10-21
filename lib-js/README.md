@@ -20,7 +20,7 @@ This library allows reading multiple scientific data formats. Currently, the fol
     const file = input.files[0];
     const fileName = file.name;
 
-    // Get reader for file.
+    // Read file content.
     const buffer = await file.arrayBuffer();
     // As a Uint8Array is expected, an ArrayBuffer cannot be used directly.
     const uint8Array = new Uint8Array(buffer);
@@ -36,12 +36,12 @@ This library allows reading multiple scientific data formats. Currently, the fol
     const rootNode = reader.read('/');
 
     // Use node content.
-    const name = node.name;
-    const parameters = node.parameters;
-    const data = node.data;
-    const metadata = node.metadata;
-    const table = node.table;
-    const childNodeNames = node.childNodeNames;
+    const name = rootNode.name;
+    const parameters = rootNode.parameters;
+    const data = rootNode.data;
+    const metadata = rootNode.metadata;
+    const table = rootNode.table;
+    const childNodeNames = rootNode.childNodeNames;
 
     // Read the fourth child node. Indexing starts at 0. There are as many child nodes as elements in the child_node_names list.
     let child3Node = reader.read('/3');

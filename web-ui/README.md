@@ -7,6 +7,7 @@ You can find the application published at [Github Pages](https://devrosch.github
 ## Details
 
 Currently, the following formats are supported:
+
 - AnDI/AIA for Chromatographic Data ([ASTM E1947-98(2022)](https://www.astm.org/e1947-98r22.html), [ASTM E1948-98(2022)](https://www.astm.org/e1948-98r22.html))
 - AnDI/AIA for Mass Spectrometric Data ([ASTM E2077-00(2016)](https://www.astm.org/e2077-00r16.html), [ASTM E2078-00(2016)](https://www.astm.org/e2078-00r16.html))
 - Generalized Analytical Markup Language ([GAML](https://www.gaml.org/))

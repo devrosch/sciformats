@@ -76,8 +76,6 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo install wasm-pack --quiet
-      - name: Update package name
-        run: sed -i -e 's/name = "sciformats_js"/name = "sciformats"/g' Cargo.toml
       - name: Build
         run: wasm-pack build --release
       - uses: actions/upload-artifact@v4
@@ -103,7 +101,7 @@ jobs:
           rustup target add wasm32-unknown-unknown
           cargo install wasm-pack --quiet
       - name: Update package name
-        run: sed -i -e 's/name = "sciformats_js"/name = "sciformats_node"/g' Cargo.toml
+        run: sed -i -e 's/name = "sciformats_js"/name = "sciformats_js_node"/g' Cargo.toml
       - name: Build
         run: wasm-pack build --target nodejs -- --features nodejs
       - uses: actions/upload-artifact@v4

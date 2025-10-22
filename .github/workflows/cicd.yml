@@ -49,6 +49,7 @@ jobs:
     uses: './.github/workflows/cd-js.yml'
     with:
       artifactid: ${{ needs.ci_js.outputs.artifact-id }}
+      artifactid-node: ${{ needs.ci_js.outputs.artifact-id-node }}
     secrets: inherit # see: https://github.com/actions/runner/issues/1490#issuecomment-1872256710 for why this is required
 
   cd_web:

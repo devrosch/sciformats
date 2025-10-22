@@ -7,7 +7,7 @@ on:
         type: string
         required: true
         description: The artifact ID of the webpack package artifact.
-      artifactid-node:
+      artifactid-nodejs:
         type: string
         required: true
         description: The artifact ID of the Node.js package artifact.
@@ -17,7 +17,7 @@ on:
         type: string
         required: true
         description: The artifact ID of the package artifact.
-      artifactid-node:
+      artifactid-nodejs:
         type: string
         required: true
         description: The artifact ID of the Node.js package artifact.
@@ -73,7 +73,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
         with:
-          artifact-ids: ${{ inputs.artifactid-node }}
+          artifact-ids: ${{ inputs.artifactid-nodejs }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ./lib-js/pkg/
       # - name: Debug

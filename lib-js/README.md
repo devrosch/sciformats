@@ -1,4 +1,4 @@
-# sciformats_js
+# sciformats_js / sciformats_nodejs
 
 JavaScript/TypeScript bindings for sciformats, a library for reading scientific data formats.
 
@@ -12,7 +12,7 @@ This library allows reading multiple scientific data formats. Currently, the fol
 
 ## Usage
 
-Import "sciformats_js" when targeting browsers and "sciformats_js_node" for use in Node.js.
+Import "sciformats_js" when targeting browsers and "sciformats_nodejs" for use in Node.js.
 
 ```js
     // Initialize scanner repository with all supported data types.

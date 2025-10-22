@@ -12,7 +12,7 @@ This library allows reading multiple scientific data formats. Currently, the fol
 
 ## Usage
 
-Import "sciformats_js" when targeting browsers and "sciformats_nodejs" for use in Node.js.
+Import "sciformats_js" for use with webpack (for use with Vite see [vite-plugin-wasm](https://www.npmjs.com/package/vite-plugin-wasm)) and "sciformats_nodejs" for use with Node.js.
 
 ```js
     // Initialize scanner repository with all supported data types.

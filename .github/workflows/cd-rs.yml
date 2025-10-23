@@ -47,4 +47,4 @@ jobs:
       # - name: "Publish (dry run)"
       #   run: cargo publish --dry-run
       - name: "Publish"
-        run: cargo publish --dry-run
+        run: cargo publish

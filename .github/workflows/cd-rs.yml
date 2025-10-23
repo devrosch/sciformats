@@ -44,5 +44,7 @@ jobs:
           path: ./lib-rs/target/package
       - name: Login to crates.io
         run: cargo login ${{ secrets.CRATES_IO_TOKEN }}
-      - name: "Publish (dry run)"
+      # - name: "Publish (dry run)"
+      #   run: cargo publish --dry-run
+      - name: "Publish"
         run: cargo publish --dry-run

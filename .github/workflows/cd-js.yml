@@ -56,10 +56,14 @@ jobs:
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
-      - name: "Publish (dry run)"
+      # - name: "Publish (dry run)"
+      #   run: |
+      #     cd pkg
+      #     npm publish --dry-run --provenance --access public
+      - name: "Publish"
         run: |
           cd pkg
-          npm publish --dry-run --provenance --access public
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -85,9 +89,13 @@ jobs:
         with:
           node-version: '22.x'
           registry-url: 'https://registry.npmjs.org'
-      - name: "Publish (dry run)"
+      # - name: "Publish (dry run)"
+      #   run: |
+      #     cd pkg
+      #     npm publish --dry-run --provenance --access public
+      - name: "Publish"
         run: |
           cd pkg
-          npm publish --dry-run --provenance --access public
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

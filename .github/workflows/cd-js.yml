@@ -39,6 +39,7 @@ jobs:
     permissions:
       contents: read
       actions: read # for downloading artifacts
+      id-token: write # for getting id_token required when using --provenance flag
     environment: npmjs.com
     steps:
       - uses: actions/checkout@v5
@@ -72,6 +73,7 @@ jobs:
     permissions:
       contents: read
       actions: read # for downloading artifacts
+      id-token: write # for getting id_token required when using --provenance flag
     environment: npmjs.com
     steps:
       - uses: actions/checkout@v5

@@ -1,4 +1,4 @@
-# sciformats_js
+# sciformats_js / sciformats_nodejs
 
 JavaScript/TypeScript bindings for sciformats, a library for reading scientific data formats.
 
@@ -12,18 +12,23 @@ This library allows reading multiple scientific data formats. Currently, the fol
 
 ## Usage
 
+Import "sciformats_js" for use with webpack (for use with Vite see [vite-plugin-wasm](https://www.npmjs.com/package/vite-plugin-wasm)) and "sciformats_nodejs" for use with Node.js.
+
 ```js
     // Initialize scanner repository with all supported data types.
     const scannerRepository = new ScannerRepository();
 
-    // Read file from an <input> element of type "file".
+    // In a browser, read file from an <input> element of type "file".
     const file = input.files[0];
     const fileName = file.name;
-
     // Read file content.
     const buffer = await file.arrayBuffer();
     // As a Uint8Array is expected, an ArrayBuffer cannot be used directly.
     const uint8Array = new Uint8Array(buffer);
+
+    // For Node.js you can read a file into a Uint8Array natively.
+    // const uint8Array = readFileSync(path);
+
     // Ensure that the file has a supported format.
     const isRecognized = scannerRepository.isRecognized(fileName, uint8Array);
     if (!isRecognized) {

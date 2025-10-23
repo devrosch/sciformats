@@ -289,7 +289,7 @@ dependencies = [
 
 [[package]]
 name = "sciformats"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64",
  "chrono",
@@ -303,7 +303,7 @@ dependencies = [
 
 [[package]]
 name = "sciformats_js"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "js-sys",
  "sciformats",

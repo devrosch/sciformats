@@ -1,6 +1,6 @@
 [package]
 name = "sciformats_js"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Robert Schiwon <devrosch@gmx.net>"]
 description = "JavaScript/TypeScript bindings for sciformats, a library for reading scientific data formats."
@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://sciformats.org/"
 repository = "https://github.com/devrosch/sciformats"
 license = "MIT"
-keywords = ["data formats", "JCAMP-DX", "GAML", "AnDI", "netCDF"]
+keywords = ["data-formats", "JCAMP-DX", "GAML", "AnDI", "netCDF"]
 categories = ["parsing", "science"]
 
 [lib]

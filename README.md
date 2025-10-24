@@ -2,7 +2,7 @@
 
 Libraries and tools for reading and visualizing scientific data.
 
-You can try the application at [Github Pages](https://devrosch.github.io/sciformats/index.html).
+You can try the application at [Github Pages](https://devrosch.github.io/sciformats).
 
 ## Structure
 

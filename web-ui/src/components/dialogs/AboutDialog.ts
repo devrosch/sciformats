@@ -2,9 +2,12 @@ import { setElementAttribute } from 'util/RenderUtils';
 import './AboutDialog.css';
 import Logo from 'assets/sf-ui.svg';
 
+const APP_NAME = process.env.APP_NAME;
+const APP_VERSION = process.env.APP_VERSION;
+
 const template = `
 <dialog>
-  <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>sciformats_web</span></p>
+  <p><img src="${Logo}" class="sf-logo" alt="Logo"><span>${APP_NAME}</span><span class="sf-version">v${APP_VERSION}</span></p>
   <p>An HTML/CSS/JS web UI for visualizing scientific data read with sciformats, a library for reading scientific data formats.</p>
   <p>Copyright © 2025 Robert Schiwon</p>
   <p>Currently, the following formats are supported:
@@ -120,6 +123,10 @@ export default class AboutDialog extends HTMLElement {
   }
 
   render() {
+    // console.log(`APP_NAME: ${process.env.APP_NAME}`);
+    // console.log(`APP_VERSION: ${process.env.APP_VERSION}`);
+    // console.log(`process.env: ${process.env}`);
+    // console.log(`npm_package_version: ${process.env.npm_package_version}`);
     const dialog = this.getElementsByTagName('dialog').item(
       0,
     ) as HTMLDialogElement;

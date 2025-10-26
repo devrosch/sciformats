@@ -27,10 +27,6 @@ export default class Dialog extends HTMLElement {
   #open = false;
   #message = '';
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = `

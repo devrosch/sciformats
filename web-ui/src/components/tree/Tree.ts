@@ -40,10 +40,6 @@ export default class Tree extends HTMLElement {
 
   #selectedNodeUrl: URL | null = null;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

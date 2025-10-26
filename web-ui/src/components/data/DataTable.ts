@@ -50,10 +50,6 @@ export default class DataTable extends HTMLElement {
 
   #data: Table | null = null;
 
-  constructor() {
-    super();
-  }
-
   get data() {
     return this.#data;
   }

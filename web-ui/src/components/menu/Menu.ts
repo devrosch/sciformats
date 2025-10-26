@@ -30,11 +30,6 @@ import './Menu.css';
 export default class Menu extends HTMLElement {
   #initialized = false;
 
-  constructor() {
-    super();
-  }
-
-  /* eslint-disable class-methods-use-this */
   init() {
     if (!this.#initialized) {
       // noop, menu items should be inserted by parent

@@ -78,10 +78,6 @@ export default class App extends HTMLElement {
 
   #parserRepository: ParserRepository | null = null;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       // init
@@ -151,7 +147,7 @@ export default class App extends HTMLElement {
     }
   }
 
-  async handleFileExportRequested(message: Message) {
+  async handleFileExportRequested(/* message: Message */) {
     const tree = this.querySelector('.content .tree sf-tree') as Tree;
     const parser = tree.getSelectedNodeParser();
     const rootUrl = parser?.rootUrl;

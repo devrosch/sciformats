@@ -44,10 +44,6 @@ export default class MenuItem extends HTMLElement {
 
   private _shortcut: string | null = null;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       // add <a>

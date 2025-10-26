@@ -44,10 +44,6 @@ export default class Submenu extends HTMLElement {
 
   private _expand = false;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this._title = this.getAttribute('title');

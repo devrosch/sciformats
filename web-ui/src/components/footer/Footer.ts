@@ -39,10 +39,6 @@ export default class Footer extends HTMLElement {
 
   #url: URL | null = null;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

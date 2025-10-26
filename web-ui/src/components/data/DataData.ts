@@ -44,10 +44,6 @@ export default class DataData extends HTMLElement {
 
   #data: { x: number; y: number }[] = [];
 
-  constructor() {
-    super();
-  }
-
   get data() {
     if (this.#data === null) {
       return [];

@@ -19,8 +19,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const path = require("path");
+const webpack = require("webpack");
 
 module.exports = {
   mode: "development",
@@ -37,6 +38,7 @@ module.exports = {
       title: "Development",
       template: "src/index.html",
     }),
+    new webpack.EnvironmentPlugin(["APP_NAME", "APP_VERSION"]),
   ],
   output: {
     filename: "[name].[chunkhash].bundle.js",

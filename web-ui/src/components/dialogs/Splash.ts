@@ -3,12 +3,15 @@ import 'components/common/DancingDots';
 import './Splash.css';
 import Logo from 'assets/sf-ui.svg';
 
+const APP_NAME = process.env.APP_NAME;
+const APP_VERSION = process.env.APP_VERSION;
+
 const template = `
 <dialog>
   <div class="sf-title">
     <img src="${Logo}" class="sf-logo" alt="Logo">
     <div>
-      <p>sciformats</p>
+      <p><span>${APP_NAME}</span><span class="sf-version">${APP_VERSION}</span></p>
       <p>Copyright © 2025 Robert Schiwon</p>
     </div>
   </div>

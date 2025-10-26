@@ -46,7 +46,7 @@ pub fn start() {
 
     const NAME: &str = env!("CARGO_PKG_NAME");
     const VERSION: &str = env!("CARGO_PKG_VERSION");
-    console::log_1(&format!("Rust: {} {} loaded", NAME, VERSION).into());
+    console::log_1(&format!("{} {} loaded", NAME, VERSION).into());
 }
 
 // -------------------------------------------------

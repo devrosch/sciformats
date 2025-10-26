@@ -26,7 +26,6 @@ export default class Splash extends HTMLElement {
 
   constructor() {
     super();
-    console.log('AboutDialog constructor() called');
   }
 
   init() {
@@ -60,14 +59,12 @@ export default class Splash extends HTMLElement {
 
   /* eslint-disable-next-line class-methods-use-this */
   onCancel = (e: Event) => {
-    console.log('Cancel dialog clicked.');
     // prevent default action of close dialog
     e.stopPropagation();
     e.preventDefault();
   };
 
   connectedCallback() {
-    console.log('Splash connectedCallback() called');
     this.init();
     this.#open = this.hasAttribute('open');
     const dialog = this.querySelector('dialog') as HTMLDialogElement;
@@ -76,22 +73,14 @@ export default class Splash extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('AboutDialog disconnectedCallback() called');
     const dialog = this.querySelector('dialog') as HTMLDialogElement;
     dialog.removeEventListener('cancel', this.onCancel);
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('AboutDialog adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('AboutDialog attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-splash');
 customElements.define('sf-splash', Splash);

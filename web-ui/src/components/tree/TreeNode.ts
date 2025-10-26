@@ -60,7 +60,6 @@ export default class TreeNode extends HTMLElement {
 
   constructor(parser: Parser, url: URL) {
     super();
-    console.log('TreeNode constructor() called');
     this.#parser = parser;
     this.#url = url;
   }
@@ -239,13 +238,11 @@ export default class TreeNode extends HTMLElement {
   // #region user events
 
   onToggleCollapsed = () => {
-    console.log('onClickPlusMinus() called');
     this.#expand = !this.#expand;
     this.render();
   };
 
   onSelected = () => {
-    console.log('onSelected() called');
     this.setSelected(true);
   };
 
@@ -261,7 +258,6 @@ export default class TreeNode extends HTMLElement {
   // #region lifecycle events
 
   connectedCallback() {
-    console.log('TreeNode connectedCallback() called');
     this.init();
     this.#eventListener = this.#channel.addListener(
       'sf-tree-node-selected',
@@ -272,7 +268,6 @@ export default class TreeNode extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('TreeNode disconnectedCallback() called');
     // do not call close() as this may not be a root node
     // close() is handled by Tree
     if (this.#selected) {
@@ -281,19 +276,12 @@ export default class TreeNode extends HTMLElement {
     this.#channel.removeListener(this.#eventListener);
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('TreeNode adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('TreeNode attributeChangedCallback() called');
     this.init();
   }
 
   // #endregion lifecycle events
 }
 
-console.log('define "sf-tree-node"');
 customElements.define('sf-tree-node', TreeNode);

@@ -72,7 +72,6 @@ export default class DataPanel extends HTMLElement {
 
   constructor() {
     super();
-    console.log('DataPanel constructor() called');
   }
 
   init() {
@@ -124,10 +123,8 @@ export default class DataPanel extends HTMLElement {
   }
 
   onClick = (e: MouseEvent) => {
-    console.log('DataPanel item clicked.');
     e.preventDefault();
     const id = (e?.target as Element | null)?.getAttribute('id');
-    console.log({ id });
 
     switch (id) {
       case 'sf-data-chart-link':
@@ -148,7 +145,6 @@ export default class DataPanel extends HTMLElement {
   };
 
   handleDataChanged(message: Message) {
-    console.log('DataPanel handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (
@@ -178,7 +174,6 @@ export default class DataPanel extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('DataPanel connectedCallback() called');
     this.init();
     this.addEventListener('click', this.onClick);
     const handle0 = this.#channel.addListener(
@@ -198,24 +193,16 @@ export default class DataPanel extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('DataPanel disconnectedCallback() called');
     this.removeEventListener('click', this.onClick);
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('DataPanel adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('DataPanel attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-data-panel"');
 customElements.define('sf-data-panel', DataPanel);

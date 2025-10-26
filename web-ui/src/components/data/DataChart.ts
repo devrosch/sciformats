@@ -91,7 +91,6 @@ export default class DataChart extends HTMLElement {
 
   constructor() {
     super();
-    console.log('DataChart constructor() called');
   }
 
   get data() {
@@ -291,7 +290,6 @@ export default class DataChart extends HTMLElement {
   }
 
   handleDataChanged(message: Message) {
-    console.log('DataChart handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (
@@ -313,7 +311,6 @@ export default class DataChart extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('DataChart connectedCallback() called');
     this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
@@ -332,23 +329,15 @@ export default class DataChart extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('DataChart disconnectedCallback() called');
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('DataChart adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('DataChart attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-data-chart"');
 customElements.define('sf-data-chart', DataChart);

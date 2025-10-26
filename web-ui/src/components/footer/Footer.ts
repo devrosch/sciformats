@@ -41,7 +41,6 @@ export default class Footer extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Footer constructor() called');
   }
 
   init() {
@@ -59,7 +58,6 @@ export default class Footer extends HTMLElement {
   }
 
   handleUrlChanged(message: Message) {
-    console.log('Footer handleParametersChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (sameUrl && message.name === 'sf-tree-node-deselected') {
@@ -72,7 +70,6 @@ export default class Footer extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('Footer connectedCallback() called');
     this.init();
     const handle0 = this.#channel.addListener(
       'sf-tree-node-selected',
@@ -87,23 +84,15 @@ export default class Footer extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('Footer disconnectedCallback() called');
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('Footer adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     this.init();
-    console.log('Footer attributeChangedCallback() called');
   }
 }
 
-console.log('define "sf-footer"');
 customElements.define('sf-footer', Footer);

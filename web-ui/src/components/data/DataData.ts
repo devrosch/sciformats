@@ -46,7 +46,6 @@ export default class DataData extends HTMLElement {
 
   constructor() {
     super();
-    console.log('DataData constructor() called');
   }
 
   get data() {
@@ -82,7 +81,6 @@ export default class DataData extends HTMLElement {
   }
 
   handleDataChanged(message: Message) {
-    console.log('DataData handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (!sameUrl && message.name === nodeSelectedEvent) {
@@ -97,7 +95,6 @@ export default class DataData extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('DataData connectedCallback() called');
     this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
@@ -116,23 +113,15 @@ export default class DataData extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('DataData disconnectedCallback() called');
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('DataData adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('DataData attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-data-data"');
 customElements.define('sf-data-data', DataData);

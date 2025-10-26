@@ -52,7 +52,6 @@ export default class DataTable extends HTMLElement {
 
   constructor() {
     super();
-    console.log('DataTable constructor() called');
   }
 
   get data() {
@@ -114,7 +113,6 @@ export default class DataTable extends HTMLElement {
   }
 
   handleDataChanged(message: Message) {
-    console.log('DataTable handleDataChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (!sameUrl && message.name === nodeSelectedEvent) {
@@ -129,7 +127,6 @@ export default class DataTable extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('DataTable connectedCallback() called');
     this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
@@ -148,23 +145,15 @@ export default class DataTable extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('DataTable disconnectedCallback() called');
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('DataTable adoptedCallback() called');
-  }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('DataTable attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-data-table"');
 customElements.define('sf-data-table', DataTable);

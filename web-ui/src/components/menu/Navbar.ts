@@ -93,7 +93,6 @@ export default class Navbar extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Navbar constructor() called');
   }
 
   init() {
@@ -134,11 +133,9 @@ export default class Navbar extends HTMLElement {
   }
 
   onClick = (e: MouseEvent) => {
-    console.log('Navbar item clicked.');
     e.preventDefault();
     e.stopPropagation();
     const key = (e?.target as Element | null)?.getAttribute('key');
-    console.log({ key });
     if (!key) {
       return;
     }
@@ -214,7 +211,6 @@ export default class Navbar extends HTMLElement {
   };
 
   handleOutsideSelection = (e: MouseEvent) => {
-    console.log('handleOutsideSelection() called');
     const node = e.target as Node;
     if (!this.contains(node)) {
       // close menu including submenus whenever click ouside navbar occured
@@ -270,7 +266,6 @@ export default class Navbar extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('Navbar connectedCallback() called');
     this.init();
     this.addEventListener('click', this.onClick);
     // only document will reliably receive all keydown events
@@ -281,7 +276,6 @@ export default class Navbar extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('Navbar disconnectedCallback() called');
     this.removeEventListener('click', this.onClick);
     document.removeEventListener('keydown', this.handleShortcuts);
     mediaQuery.removeEventListener('change', this.handleScreenChange);
@@ -291,10 +285,8 @@ export default class Navbar extends HTMLElement {
 
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Navbar attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-menu"');
 customElements.define('sf-navbar', Navbar);

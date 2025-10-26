@@ -29,7 +29,6 @@ export default class Dialog extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Dialog constructor() called');
   }
 
   init() {
@@ -79,7 +78,6 @@ export default class Dialog extends HTMLElement {
   }
 
   handleOutsideSelection = (e: MouseEvent) => {
-    console.log('handleOutsideSelection() called');
     const node = e.target as Node;
     if (node === this.querySelector('dialog')) {
       // close whenever click ouside window occured
@@ -89,7 +87,6 @@ export default class Dialog extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('Splash connectedCallback() called');
     this.init();
     this.#open = this.hasAttribute('open');
     document.addEventListener('click', this.handleOutsideSelection);
@@ -97,21 +94,13 @@ export default class Dialog extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('Dialog disconnectedCallback() called');
     document.removeEventListener('click', this.handleOutsideSelection);
-  }
-
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('Dialog adoptedCallback() called');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Dialog attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-dialog');
 customElements.define('sf-dialog', Dialog);

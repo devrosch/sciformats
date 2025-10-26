@@ -110,7 +110,6 @@ export default class AboutDialog extends HTMLElement {
 
   constructor() {
     super();
-    console.log('AboutDialog constructor() called');
   }
 
   init() {
@@ -143,7 +142,6 @@ export default class AboutDialog extends HTMLElement {
   }
 
   onClick = (e: MouseEvent) => {
-    console.log('About dialog clicked.');
     // make sure default action (e.g. close dialog) takes place
     e.stopPropagation();
     if ((e?.target as Element | null)?.nodeName === 'DIALOG') {
@@ -152,7 +150,6 @@ export default class AboutDialog extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('AboutDialog connectedCallback() called');
     this.init();
     this.#open = this.hasAttribute('open');
     this.addEventListener('click', this.onClick);
@@ -160,21 +157,13 @@ export default class AboutDialog extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('AboutDialog disconnectedCallback() called');
     this.removeEventListener('click', this.onClick);
-  }
-
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('AboutDialog adoptedCallback() called');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('AboutDialog attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-about-dialog"');
 customElements.define('sf-about-dialog', AboutDialog);

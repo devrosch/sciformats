@@ -60,7 +60,6 @@ export default class ParametersPanel extends HTMLElement {
 
   constructor() {
     super();
-    console.log('ParametersPanel constructor() called');
   }
 
   get data() {
@@ -97,7 +96,6 @@ export default class ParametersPanel extends HTMLElement {
     div!.replaceChild(ulNew, ulOld);
     // don't await the async function as it would block the main thread
     ParametersPanel.renderAsync(ulNew!, this.data);
-    console.log('ParametersPanel render() completed');
   }
 
   static async renderAsync(
@@ -108,9 +106,6 @@ export default class ParametersPanel extends HTMLElement {
     for (const param of parameters) {
       if (ul.parentElement === null || !ul.isConnected) {
         // the ul is no longer attached to the DOM
-        console.log(
-          'Stopping async population of ParametersPanel as ul is detached',
-        );
         break;
       }
       if (index % parametersBatchSize === 0) {
@@ -129,11 +124,9 @@ export default class ParametersPanel extends HTMLElement {
       ul.appendChild(li);
       index += 1;
     }
-    console.log('ParametersPanel renderAsync() completed');
   }
 
   handleParametersChanged(message: Message) {
-    console.log('ParametersPanel handleParametersChanged() called');
     const url = new URL(message.detail.url);
     const sameUrl = isSameUrl(this.#url, url);
     if (sameUrl && message.name === nodeDeselectedEvent) {
@@ -148,7 +141,6 @@ export default class ParametersPanel extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('ParametersPanel connectedCallback() called');
     this.init();
     const handle0 = this.#channel.addListener(
       nodeSelectedEvent,
@@ -168,23 +160,15 @@ export default class ParametersPanel extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('ParametersPanel disconnectedCallback() called');
     for (const handle of this.#handles) {
       this.#channel.removeListener(handle);
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('ParametersPanel adoptedCallback() called');
-  }
-
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('ParametersPanel attributeChangedCallback() called');
     this.init();
     updateStateAndRender(this, 'title', '_title', name, newValue);
   }
 }
 
-console.log('define "sf-parameters-panel"');
 customElements.define('sf-parameters-panel', ParametersPanel);

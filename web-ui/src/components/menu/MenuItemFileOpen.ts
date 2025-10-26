@@ -53,7 +53,6 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   constructor() {
     super();
-    console.log('MenuItemFileOpen constructor() called');
   }
 
   init() {
@@ -90,14 +89,11 @@ export default class MenuItemFileOpen extends HTMLElement {
   }
 
   onClick = (e: MouseEvent) => {
-    console.log('MenuItemFileOpen clicked.');
     const key = (e?.target as Element | null)?.getAttribute('key');
-    console.log({ key });
     if (!key) {
       return;
     }
     if (key === `${this._key}-${menuItemKeyPostfix}`) {
-      console.log('MenuItemFileOpen sf-file-open-input-menu-item clicked.');
       e.stopPropagation();
       e.preventDefault();
       const input = this.getElementsByTagName('input').item(
@@ -106,13 +102,11 @@ export default class MenuItemFileOpen extends HTMLElement {
       input.click();
     }
     if (key === `${this._key}-input`) {
-      console.log('MenuItemFileOpen sf-file-open-input clicked.');
       e.stopPropagation();
     }
   };
 
   onChange = (e: Event) => {
-    console.log('MenuItemFileOpen onChange().');
     const input = e.target as HTMLInputElement;
     const selectedFiles = input.files;
     if (selectedFiles === null || typeof selectedFiles === 'undefined') {
@@ -129,7 +123,6 @@ export default class MenuItemFileOpen extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('MenuItemFileOpen connectedCallback() called');
     this.init();
     this._title = this.getAttribute('title');
     this._key = this.getAttribute('key');
@@ -140,18 +133,11 @@ export default class MenuItemFileOpen extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('MenuItemFileOpen disconnectedCallback() called');
     this.removeEventListener('click', this.onClick);
     this.removeEventListener('change', this.onChange);
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('MenuItemFileOpen adoptedCallback() called');
-  }
-
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('MenuItemFileOpen attributeChangedCallback() called');
     this.init();
     updateStateAndRender(this, 'title', '_title', name, newValue);
     updateStateAndRender(this, 'key', '_key', name, newValue);
@@ -159,5 +145,4 @@ export default class MenuItemFileOpen extends HTMLElement {
   }
 }
 
-console.log('define "sf-menu-item-file-open"');
 customElements.define('sf-menu-item-file-open', MenuItemFileOpen);

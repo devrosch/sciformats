@@ -55,9 +55,9 @@ export default class Submenu extends HTMLElement {
       // add <a> at beginning
       const innerHtml = this.innerHTML;
       this.innerHTML = `
-        <a href="#" key="${this._key}">
+        <button key="${this._key}">
           <span class="sf-expand-collapse-indicator">›</span>&nbsp;<span>${this._title}</span>
-        </a>
+        </button>
         <div role="none">
           ${innerHtml}
         </div>
@@ -68,16 +68,16 @@ export default class Submenu extends HTMLElement {
   }
 
   render() {
-    const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const aIndicatorSpan = a.querySelector(':nth-child(1)') as HTMLSpanElement;
-    const aTitleSpan = a.querySelector(':nth-child(2)') as HTMLSpanElement;
+    const button = this.getElementsByTagName('button').item(0) as HTMLButtonElement;
+    const buttonIndicatorSpan = button.querySelector(':nth-child(1)') as HTMLSpanElement;
+    const buttonTitleSpan = button.querySelector(':nth-child(2)') as HTMLSpanElement;
 
     setElementAttribute(this, 'role', 'menu');
-    setElementAttribute(a, 'key', this._key);
-    setElementAttribute(a, 'title', this._title);
-    setElementAttribute(aIndicatorSpan, 'key', this._key);
-    setElementAttribute(aTitleSpan, 'key', this._key);
-    setElementTextContent(aTitleSpan, this._title);
+    setElementAttribute(button, 'key', this._key);
+    setElementAttribute(button, 'title', this._title);
+    setElementAttribute(buttonIndicatorSpan, 'key', this._key);
+    setElementAttribute(buttonTitleSpan, 'key', this._key);
+    setElementTextContent(buttonTitleSpan, this._title);
     if (this._expand) {
       setElementAttribute(this, 'expand', 'true');
       this.classList.add('sf-submenu-expand');

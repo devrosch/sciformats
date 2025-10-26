@@ -27,10 +27,10 @@ import {
 import './MenuItem.css';
 
 const template = `
-  <a href="#">
+  <button>
     <span class="menu-item-name"></span>
     <span class="menu-item-shortcut"></span>
-  </a>
+  </button>
 `;
 
 export default class MenuItem extends HTMLElement {
@@ -46,18 +46,17 @@ export default class MenuItem extends HTMLElement {
 
   init() {
     if (!this.#initialized) {
-      // add <a>
       this.innerHTML = template;
       this.#initialized = true;
     }
   }
 
   render() {
-    const a = this.getElementsByTagName('a').item(0) as HTMLAnchorElement;
-    const nameSpan = a.children.item(0) as HTMLSpanElement;
-    const shortcutSpan = a.children.item(1) as HTMLSpanElement;
+    const button = this.getElementsByTagName('button').item(0) as HTMLButtonElement;
+    const nameSpan = button.children.item(0) as HTMLSpanElement;
+    const shortcutSpan = button.children.item(1) as HTMLSpanElement;
     setElementAttribute(this, 'role', 'none');
-    setElementAttribute(a, 'role', 'menuitem');
+    setElementAttribute(button, 'role', 'menuitem');
     setElementTextContent(nameSpan, this._title);
     setElementTextContent(shortcutSpan, this._shortcut);
   }

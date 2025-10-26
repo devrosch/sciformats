@@ -25,7 +25,7 @@ sf-navbar {
   height: 100%;
 }
 
-sf-navbar a {
+sf-navbar button {
   font-family: sans-serif;
   font-size: 1em;
   color: black;
@@ -51,7 +51,13 @@ sf-navbar > nav {
 
 /* hamburger */
 
-sf-navbar > a.sf-hamburger {
+sf-navbar > button.sf-hamburger {
+  background: none;
+  color: inherit;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
   display: none;
   position: relative;
   float: right;
@@ -62,7 +68,7 @@ sf-navbar > a.sf-hamburger {
   outline-offset: -0.2em;
 }
 
-sf-navbar > a.sf-hamburger:hover {
+sf-navbar > button.sf-hamburger:hover {
   background-color: #ddd;
 }
 
@@ -77,7 +83,7 @@ sf-navbar > a.sf-hamburger:hover {
     display: block;
   }
   /* hamburger */
-  sf-navbar > a.sf-hamburger {
+  sf-navbar > button.sf-hamburger {
     display: flex;
   }
 }

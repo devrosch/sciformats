@@ -21,14 +21,14 @@
 
 /* menu */
 
-sf-menu-item > a > span.menu-item-shortcut {
+sf-menu-item > button > span.menu-item-shortcut {
   font-size: 0.7em;
   padding-left: 0.5em;
   margin-left: auto;
 }
 
 @media screen and (max-width: 576px) {
-  sf-menu-item > a > span.menu-item-shortcut {
+  sf-menu-item > button > span.menu-item-shortcut {
     display: none;
   }
 }

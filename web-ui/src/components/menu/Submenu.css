@@ -27,7 +27,7 @@ sf-submenu .sf-expand-collapse-indicator {
   transition: all 0.1s ease-in;
 }
 
-sf-submenu.sf-submenu-expand > a > span.sf-expand-collapse-indicator {
+sf-submenu.sf-submenu-expand > button > span.sf-expand-collapse-indicator {
   transform: rotate(90deg);
   transition: all 0.1s ease-in;
 }

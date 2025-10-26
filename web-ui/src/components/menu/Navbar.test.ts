@@ -44,7 +44,7 @@ const testEventDispatchedForClickedKey = (
   const navbar = document.body.querySelector(element) as Navbar;
   expect(navbar).toBeTruthy();
 
-  const mockElement = document.createElement('a');
+  const mockElement = document.createElement('button');
   mockElement.setAttribute('key', key);
   const mouseEvent = {
     target: mockElement,
@@ -137,7 +137,7 @@ test('sf-navbar renders', async () => {
 
   expect(navbar.children).toHaveLength(3);
   expect(navbar.children.item(0)?.nodeName).toBe('IMG');
-  expect(navbar.children.item(1)?.nodeName).toBe('A');
+  expect(navbar.children.item(1)?.nodeName).toBe('BUTTON');
   expect(navbar.children.item(2)?.nodeName).toBe('NAV');
 });
 
@@ -151,7 +151,7 @@ test('sf-navbar hamburger menu toggles menu visibility', async () => {
   const mockShowMenu = jest.fn((show) => show);
   menu.showMenu = mockShowMenu;
 
-  const mockElement = document.createElement('a');
+  const mockElement = document.createElement('button');
   mockElement.setAttribute('key', 'sf-navbar-hamburger');
   const mouseEvent = {
     target: mockElement,
@@ -181,7 +181,7 @@ test('sf-navbar menu item click closes menu', async () => {
   const mockShowMenu = jest.fn((show) => show);
   menu.showMenu = mockShowMenu;
 
-  const mockElement = document.createElement('a');
+  const mockElement = document.createElement('button');
   mockElement.setAttribute('key', 'sf-menu-item-1');
   const mouseEvent = {
     target: mockElement,
@@ -221,7 +221,7 @@ test('sf-navbar selction outside menu closes menu', async () => {
   const mockShowMenu = jest.fn((show) => show);
   menu.showMenu = mockShowMenu;
 
-  const mockElement = document.createElement('a');
+  const mockElement = document.createElement('button');
   mockElement.setAttribute('key', 'any');
   const mouseEvent = {
     target: mockElement,

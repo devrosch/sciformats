@@ -34,7 +34,7 @@ const shortcutAttr = 'shortcut';
 const shortcut = 'Ctrl-A';
 const roleAttr = 'role';
 const role = 'none';
-const aRole = 'menuitem';
+const buttonRole = 'menuitem';
 
 afterEach(() => {
   // make sure disconnectedCallback() is called during test
@@ -50,17 +50,17 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(menuItem.getAttribute(keyAttr)).toBe(key);
   expect(menuItem.getAttribute(roleAttr)).toBe(role);
 
-  const a = menuItem.querySelector('a') as HTMLAnchorElement;
-  expect(a).toBeTruthy();
-  expect(a.getAttribute(roleAttr)).toBe(aRole);
+  const button = menuItem.querySelector('button') as HTMLButtonElement;
+  expect(button).toBeTruthy();
+  expect(button.getAttribute(roleAttr)).toBe(buttonRole);
 
-  const nameSpan = a.children.item(0) as HTMLSpanElement;
+  const nameSpan = button.children.item(0) as HTMLSpanElement;
   expect(nameSpan).toBeTruthy();
   // a.innerText not available in JSDOM
   // see: https://github.com/jsdom/jsdom/issues/1245
   expect(nameSpan.textContent).toBe(title);
 
-  const shortcutSpan = a.children.item(1) as HTMLSpanElement;
+  const shortcutSpan = button.children.item(1) as HTMLSpanElement;
   expect(shortcutSpan).toBeTruthy();
   expect(shortcutSpan.textContent).toBe(shortcut);
 
@@ -76,12 +76,12 @@ test('sf-menu-item generates click events', async () => {
   document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
   const menuItem = document.body.querySelector(element) as MenuItem;
   expect(menuItem).toBeTruthy();
-  const a = menuItem.querySelector('a') as HTMLAnchorElement;
-  expect(a).toBeTruthy();
+  const button = menuItem.querySelector('button') as HTMLButtonElement;
+  expect(button).toBeTruthy();
 
   const clickHandler = jest.fn((e) => e.target.getAttribute(keyAttr));
   document.body.addEventListener('click', clickHandler);
-  a.click();
+  button.click();
   document.body.removeEventListener('click', clickHandler);
   expect(clickHandler).toHaveBeenCalledTimes(1);
   expect(clickHandler.mock.results[0].value).toBe(key);

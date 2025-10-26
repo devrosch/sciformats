@@ -44,9 +44,10 @@ afterEach(() => {
 test('sf-menu-item renders and observes attribute changes', async () => {
   document.body.innerHTML = `
     <${element}
-    ${keyAttr}="${key}"
-    ${titleAttr}="${title}"
-    ${expandAttr}="${expandFalse}"/>`;
+      ${keyAttr}="${key}"
+      ${titleAttr}="${title}"
+      ${expandAttr}="${expandFalse}">
+    </${element}>`;
   const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
   expect(submenu.getAttribute(titleAttr)).toBe(title);
@@ -54,80 +55,80 @@ test('sf-menu-item renders and observes attribute changes', async () => {
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandFalse}`);
   expect(submenu.getAttribute(roleAttr)).toBe(role);
 
-  const a = submenu.querySelector('a') as HTMLAnchorElement;
-  expect(a).toBeTruthy();
-  expect(a.getAttribute(titleAttr)).toBe(title);
-  expect(a.getAttribute(keyAttr)).toBe(key);
+  const button = submenu.querySelector('button') as HTMLButtonElement;
+  expect(button).toBeTruthy();
+  expect(button.getAttribute(titleAttr)).toBe(title);
+  expect(button.getAttribute(keyAttr)).toBe(key);
 
-  expect(a.children).toHaveLength(2);
-  const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
-  const aTitleSpan = a.children.item(1) as HTMLSpanElement;
-  expect(aPlusMinusSpan.textContent).toBe('›');
+  expect(button.children).toHaveLength(2);
+  const buttonPlusMinusSpan = button.children.item(0) as HTMLSpanElement;
+  const buttonTitleSpan = button.children.item(1) as HTMLSpanElement;
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
   // HTMLElement.innerText not available in JSDOM
   // see: https://github.com/jsdom/jsdom/issues/1245
-  expect(aTitleSpan.textContent).toBe(`${title}`);
+  expect(buttonTitleSpan.textContent).toBe(`${title}`);
 
   submenu.setAttribute(keyAttr, key2);
   expect(submenu.getAttribute(keyAttr)).toBe(key2);
-  expect(a.getAttribute(keyAttr)).toBe(key2);
+  expect(button.getAttribute(keyAttr)).toBe(key2);
 
   submenu.setAttribute(titleAttr, title2);
   expect(submenu.getAttribute(titleAttr)).toBe(title2);
-  expect(a.getAttribute(titleAttr)).toBe(title2);
+  expect(button.getAttribute(titleAttr)).toBe(title2);
 
   submenu.setAttribute(expandAttr, `${expandTrue}`);
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandTrue}`);
-  expect(aPlusMinusSpan.textContent).toBe('›');
-  expect(aTitleSpan.textContent).toBe(`${title2}`);
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
+  expect(buttonTitleSpan.textContent).toBe(`${title2}`);
 });
 
 test('sf-submenu expands on click', async () => {
-  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"></${element}>`;
   const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
-  const a = submenu.querySelector('a') as HTMLAnchorElement;
-  expect(a).toBeTruthy();
-  expect(a.children).toHaveLength(2);
-  const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
-  const aTitleSpan = a.children.item(1) as HTMLSpanElement;
-  expect(aPlusMinusSpan.textContent).toBe('›');
-  expect(aTitleSpan.textContent).toBe(`${title}`);
+  const button = submenu.querySelector('button') as HTMLButtonElement;
+  expect(button).toBeTruthy();
+  expect(button.children).toHaveLength(2);
+  const buttonPlusMinusSpan = button.children.item(0) as HTMLSpanElement;
+  const buttonTitleSpan = button.children.item(1) as HTMLSpanElement;
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
+  expect(buttonTitleSpan.textContent).toBe(`${title}`);
 
   const clickHandler = jest.fn();
   document.body.addEventListener('click', clickHandler);
-  a.click();
+  button.click();
   document.body.removeEventListener('click', clickHandler);
-  expect(aPlusMinusSpan.textContent).toBe('›');
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandTrue}`);
-  expect(aTitleSpan.textContent).toBe(`${title}`);
+  expect(buttonTitleSpan.textContent).toBe(`${title}`);
 });
 
 test('sf-submenu expands/collapses on mouse enter/leave', async () => {
-  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"/>`;
+  document.body.innerHTML = `<${element} ${keyAttr}="${key}" ${titleAttr}="${title}"></${element}>`;
   const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
-  const a = submenu.querySelector('a') as HTMLAnchorElement;
-  expect(a).toBeTruthy();
-  expect(a.children).toHaveLength(2);
-  const aPlusMinusSpan = a.children.item(0) as HTMLSpanElement;
-  const aTitleSpan = a.children.item(1) as HTMLSpanElement;
-  expect(aPlusMinusSpan.textContent).toBe('›');
+  const button = submenu.querySelector('button') as HTMLButtonElement;
+  expect(button).toBeTruthy();
+  expect(button.children).toHaveLength(2);
+  const buttonPlusMinusSpan = button.children.item(0) as HTMLSpanElement;
+  const buttonTitleSpan = button.children.item(1) as HTMLSpanElement;
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandFalse}`);
-  expect(aTitleSpan.textContent).toBe(`${title}`);
+  expect(buttonTitleSpan.textContent).toBe(`${title}`);
 
   submenu.onMouseEnter(new Event('onmouseenter'));
-  expect(aPlusMinusSpan.textContent).toBe('›');
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandTrue}`);
-  expect(aTitleSpan.textContent).toBe(`${title}`);
+  expect(buttonTitleSpan.textContent).toBe(`${title}`);
 
   submenu.onMouseLeave(new Event('onmouseleave'));
-  expect(aPlusMinusSpan.textContent).toBe('›');
+  expect(buttonPlusMinusSpan.textContent).toBe('›');
   expect(submenu.getAttribute(expandAttr)).toBe(`${expandFalse}`);
-  expect(aTitleSpan.textContent).toBe(`${title}`);
+  expect(buttonTitleSpan.textContent).toBe(`${title}`);
 });
 
 test('sf-submenu "expand" attribute sets visibility', async () => {
-  document.body.innerHTML = `<${element}/>`;
+  document.body.innerHTML = `<${element}></${element}>`;
   const submenu = document.body.querySelector(element) as Submenu;
   expect(submenu).toBeTruthy();
 

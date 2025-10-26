@@ -40,7 +40,12 @@ sf-submenu {
   position: relative;
 }
 
-sf-menu a {
+sf-menu button {
+  background: none;
+  color: inherit;
+  border: none;
+  font: inherit;
+  outline: inherit;
   cursor: pointer;
   text-decoration: none;
   display: flex;
@@ -51,7 +56,7 @@ sf-menu a {
   outline-offset: -0.2em;
 }
 
-sf-menu a:hover {
+sf-menu button:hover {
   background-color: #ddd;
 }
 

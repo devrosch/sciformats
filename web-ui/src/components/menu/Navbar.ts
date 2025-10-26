@@ -43,7 +43,7 @@ const fileOpenShortcutModifierKeys = isMacOs
 // <div>s required for relative/absolute placement of child elements
 const template = `
   <img src="${Logo}" class="sf-logo" alt="Logo">
-  <a href="#" class="sf-hamburger" key="sf-navbar-hamburger">☰</a>
+  <button class="sf-hamburger" key="sf-navbar-hamburger">☰</button>
   <nav>
     <sf-menu>
       <sf-submenu key="sf-submenu-file" title="File">

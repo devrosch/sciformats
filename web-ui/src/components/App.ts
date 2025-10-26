@@ -74,7 +74,7 @@ export default class App extends HTMLElement {
 
   #channel: Channel = CustomEventsMessageBus.getDefaultChannel();
 
-  #eventListeners: any[] = [];
+  #channelEventListeners: any[] = [];
 
   #parserRepository: ParserRepository | null = null;
 
@@ -203,9 +203,20 @@ export default class App extends HTMLElement {
     aboutDialog.showModal(true);
   }
 
+  handleEscape(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      const isBody = document.activeElement === document.body;
+      if (!isBody && document.activeElement instanceof HTMLElement) {
+        const activeElement = document.activeElement as HTMLElement;
+        activeElement.blur();
+      }
+    }
+  }
+
   connectedCallback() {
     this.init();
     this.addEventListener('dragstart', this.onDragStart);
+    this.addEventListener('keydown', this.handleEscape);
     const fileOpenHandle = this.#channel.addListener(
       'sf-file-open-requested',
       this.handleFilesOpenRequested.bind(this),
@@ -226,18 +237,19 @@ export default class App extends HTMLElement {
       'sf-show-about-requested',
       this.handleShowAboutDialog.bind(this),
     );
-    this.#eventListeners.push(fileOpenHandle);
-    this.#eventListeners.push(fileCloseHandle);
-    this.#eventListeners.push(fileCloseAllHandle);
-    this.#eventListeners.push(fileExportHandle);
-    this.#eventListeners.push(showAboutHandle);
+    this.#channelEventListeners.push(fileOpenHandle);
+    this.#channelEventListeners.push(fileCloseHandle);
+    this.#channelEventListeners.push(fileCloseAllHandle);
+    this.#channelEventListeners.push(fileExportHandle);
+    this.#channelEventListeners.push(showAboutHandle);
 
     this.render();
   }
 
   disconnectedCallback() {
     this.removeEventListener('dragstart', this.onDragStart);
-    for (const handle of this.#eventListeners) {
+    this.removeEventListener('keydown', this.handleEscape);
+    for (const handle of this.#channelEventListeners) {
       this.#channel.removeListener(handle);
     }
   }

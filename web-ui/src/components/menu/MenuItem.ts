@@ -46,7 +46,6 @@ export default class MenuItem extends HTMLElement {
 
   constructor() {
     super();
-    console.log('MenuItem constructor() called');
   }
 
   init() {
@@ -76,7 +75,6 @@ export default class MenuItem extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('MenuItem connectedCallback() called');
     this.init();
     this._title = this.getAttribute('title');
     this._shortcut = this.getAttribute('shortcut');
@@ -85,22 +83,14 @@ export default class MenuItem extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('MenuItem disconnectedCallback() called');
     this.removeEventListener('click', this.onClick);
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('MenuItem adoptedCallback() called');
-  }
-
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('MenuItem attributeChangedCallback() called');
     this.init();
     updateStateAndRender(this, 'title', '_title', name, newValue);
     updateStateAndRender(this, 'shortcut', '_shortcut', name, newValue);
   }
 }
 
-console.log('define "sf-menu-item"');
 customElements.define('sf-menu-item', MenuItem);

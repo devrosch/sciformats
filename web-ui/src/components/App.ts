@@ -80,7 +80,6 @@ export default class App extends HTMLElement {
 
   constructor() {
     super();
-    console.log('App constructor() called');
   }
 
   init() {
@@ -119,8 +118,6 @@ export default class App extends HTMLElement {
     const files = message.detail.files as File[];
     // find parsers
     for (const file of files) {
-      console.log(`Tree -> sf-file-open-requested received for: ${file.name}`);
-
       // find parser
       let parser = null;
       try {
@@ -155,10 +152,6 @@ export default class App extends HTMLElement {
   }
 
   async handleFileExportRequested(message: Message) {
-    console.log(
-      `App::handleFileExportRequested() -> ${message.name}: ${message.detail}`,
-    );
-
     const tree = this.querySelector('.content .tree sf-tree') as Tree;
     const parser = tree.getSelectedNodeParser();
     const rootUrl = parser?.rootUrl;
@@ -190,7 +183,6 @@ export default class App extends HTMLElement {
   }
 
   handleFileCloseRequested() {
-    console.log('App::handleFileCloseRequested()');
     const tree = this.querySelector('.content .tree sf-tree') as Tree;
     const url = tree.removeSelectedNode();
     if (url !== null) {
@@ -199,7 +191,6 @@ export default class App extends HTMLElement {
   }
 
   handleFileCloseAllRequested() {
-    console.log('handleFileCloseAllRequested()');
     const tree = this.querySelector('.content .tree sf-tree') as Tree;
     const urls = tree.removeAllNodes();
     for (const url of urls) {
@@ -213,7 +204,6 @@ export default class App extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('App connectedCallback() called');
     this.init();
     this.addEventListener('dragstart', this.onDragStart);
     const fileOpenHandle = this.#channel.addListener(
@@ -246,7 +236,6 @@ export default class App extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('App disconnectedCallback() called');
     this.removeEventListener('dragstart', this.onDragStart);
     for (const handle of this.#eventListeners) {
       this.#channel.removeListener(handle);
@@ -255,10 +244,8 @@ export default class App extends HTMLElement {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('TreeNode attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-app"');
 customElements.define('sf-app', App);

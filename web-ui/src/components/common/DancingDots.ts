@@ -50,5 +50,4 @@ export default class DancingDots extends HTMLElement {
   }
 }
 
-console.log('define "sf-dancing-dots');
 customElements.define('sf-dancing-dots', DancingDots);

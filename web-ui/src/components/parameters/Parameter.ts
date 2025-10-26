@@ -37,7 +37,6 @@ export default class Parameter extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Parameter constructor() called');
   }
 
   init() {
@@ -64,7 +63,6 @@ export default class Parameter extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('Parameter connectedCallback() called');
     this.init();
     const key = this.getAttribute('key');
     const value = this.getAttribute('value');
@@ -73,18 +71,7 @@ export default class Parameter extends HTMLElement {
     this.render();
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  disconnectedCallback() {
-    console.log('Parameter disconnectedCallback() called');
-  }
-
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('Parameter adoptedCallback() called');
-  }
-
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Parameter attributeChangedCallback() called');
     this.init();
     updateStateAndRender(this, 'key', '_key', name, newValue);
     updateStateAndRender(this, 'value', '_value', name, newValue);
@@ -92,5 +79,4 @@ export default class Parameter extends HTMLElement {
   }
 }
 
-console.log('define "sf-parameter"');
 customElements.define('sf-parameter', Parameter);

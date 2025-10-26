@@ -26,7 +26,6 @@
  * @param blob The data to be saved.
  */
 export const saveFile = (fileName: string, blob: Blob) => {
-  console.log('File save');
   // save blob via anchor element with download attribute and object URL
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);

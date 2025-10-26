@@ -46,7 +46,6 @@ export default class Submenu extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Submenu constructor() called');
   }
 
   init() {
@@ -102,7 +101,6 @@ export default class Submenu extends HTMLElement {
   }
 
   onMouseEnter = (e: Event) => {
-    console.log(`onMouseEnter(): ${this._key}`);
     // only take action if screen is small
     if (window.innerWidth > maxWidth) {
       e.stopPropagation();
@@ -113,7 +111,6 @@ export default class Submenu extends HTMLElement {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onMouseLeave = (e: Event) => {
-    console.log(`onMouseLeave(): ${this._key}`);
     // only take action if screen is small
     if (window.innerWidth > maxWidth) {
       this._expand = false;
@@ -122,7 +119,6 @@ export default class Submenu extends HTMLElement {
   };
 
   onClick = (e: MouseEvent) => {
-    console.log(`onClick(): ${this._key}`);
     const key = (e?.target as Element | null)?.getAttribute('key');
     if (key === this._key && !(e.target instanceof Submenu)) {
       e.stopPropagation();
@@ -134,7 +130,6 @@ export default class Submenu extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('Submenu connectedCallback() called');
     this.init();
     this._title = this.getAttribute('title');
     this._key = this.getAttribute('key');
@@ -146,27 +141,12 @@ export default class Submenu extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('Submenu disconnectedCallback() called');
     this.removeEventListener('mouseenter', this.onMouseEnter);
     this.removeEventListener('mouseleave', this.onMouseLeave);
     this.removeEventListener('click', this.onClick);
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('Submenu adoptedCallback() called');
-  }
-
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log(
-      'Submenu attributeChangedCallback() called',
-      this._key,
-      name,
-      this._expand,
-      oldValue,
-      newValue,
-      this.getAttribute('expand'),
-    );
     this.init();
     updateStateAndRender(this, 'title', '_title', name, newValue);
     updateStateAndRender(this, 'key', '_key', name, newValue);
@@ -174,5 +154,4 @@ export default class Submenu extends HTMLElement {
   }
 }
 
-console.log('define "sf-submenu"');
 customElements.define('sf-submenu', Submenu);

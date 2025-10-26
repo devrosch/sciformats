@@ -32,7 +32,6 @@ export default class Menu extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Menu constructor() called');
   }
 
   /* eslint-disable class-methods-use-this */
@@ -84,27 +83,19 @@ export default class Menu extends HTMLElement {
   };
 
   connectedCallback() {
-    console.log('Menu connectedCallback() called');
     this.init();
     this.addEventListener('click', this.handleClick);
     this.render();
   }
 
   disconnectedCallback() {
-    console.log('Menu disconnectedCallback() called');
     this.removeEventListener('click', this.handleClick);
-  }
-
-  adoptedCallback() {
-    console.log('Menu adoptedCallback() called');
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Menu attributeChangedCallback() called');
     this.init();
   }
 }
 
-console.log('define "sf-menu"');
 customElements.define('sf-menu', Menu);

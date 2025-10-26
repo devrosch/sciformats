@@ -42,7 +42,6 @@ export default class Tree extends HTMLElement {
 
   constructor() {
     super();
-    console.log('Tree constructor() called');
   }
 
   init() {
@@ -105,9 +104,10 @@ export default class Tree extends HTMLElement {
         const index = this.#children.indexOf(child);
         this.#children.splice(index, 1);
         // todo: return Parser and close in App?
-        child.close().then(() => {
-          console.log(`File closed: ${child.name}`);
-        });
+        child.close();
+        // child.close().then(() => {
+        //   console.log(`File closed: ${child.name}`);
+        // });
         this.render();
         return new URL(childUrl);
       }
@@ -123,9 +123,10 @@ export default class Tree extends HTMLElement {
     for (const child of this.#children) {
       const childUrl = child.getAttribute('url');
       urls.push(new URL(childUrl!));
-      child.close().then(() => {
-        console.log(`File closed: ${child.name}`);
-      });
+      child.close();
+      // child.close().then(() => {
+      //   console.log(`File closed: ${child.name}`);
+      // });
     }
     this.#children = [];
     this.render();
@@ -133,9 +134,6 @@ export default class Tree extends HTMLElement {
   }
 
   #handleTreeNodeSelection(message: Message) {
-    console.log(
-      `handleTreeNodeSelection() -> ${message.name}: ${message.detail.url}`,
-    );
     const url = message.detail.url;
     if (message.name === 'sf-tree-node-selected') {
       this.#selectedNodeUrl = url;
@@ -230,10 +228,7 @@ export default class Tree extends HTMLElement {
   }
 
   onKeyDown(e: KeyboardEvent) {
-    console.log('onKeyDown()');
     const key = e.key;
-    console.log(key);
-
     if (key === 'Enter') {
       // event may originate from element within TreeNode => find TreeNode parentElement
       const treeNode = Tree.#findEventNode(e);
@@ -307,7 +302,6 @@ export default class Tree extends HTMLElement {
   // #region lifecycle events
 
   connectedCallback() {
-    console.log('Tree connectedCallback() called');
     this.init();
     this.addEventListener('keydown', this.onKeyDown);
     this.addEventListener('click', this.onClick);
@@ -325,7 +319,6 @@ export default class Tree extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('Tree disconnectedCallback() called');
     this.removeEventListener('keydown', this.onKeyDown);
     this.removeEventListener('click', this.onClick);
     for (const handle of this.#eventListeners) {
@@ -333,19 +326,12 @@ export default class Tree extends HTMLElement {
     }
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
-  adoptedCallback() {
-    console.log('Tree adoptedCallback() called');
-  }
-
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log('Tree attributeChangedCallback() called');
     this.init();
   }
 
   // #endregion lifecycle events
 }
 
-console.log('define "sf-tree"');
 customElements.define('sf-tree', Tree);

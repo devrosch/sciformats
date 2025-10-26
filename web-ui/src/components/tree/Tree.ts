@@ -100,6 +100,7 @@ export default class Tree extends HTMLElement {
         const index = this.#children.indexOf(child);
         this.#children.splice(index, 1);
         // todo: return Parser and close in App?
+        this.#selectedNodeUrl = null;
         child.close();
         // child.close().then(() => {
         //   console.log(`File closed: ${child.name}`);
@@ -124,6 +125,7 @@ export default class Tree extends HTMLElement {
       //   console.log(`File closed: ${child.name}`);
       // });
     }
+    this.#selectedNodeUrl = null;
     this.#children = [];
     this.render();
     return urls;

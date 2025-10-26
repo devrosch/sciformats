@@ -27,10 +27,6 @@ export default class Splash extends HTMLElement {
 
   #open = false;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

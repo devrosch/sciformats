@@ -89,10 +89,6 @@ export default class DataChart extends HTMLElement {
     },
   };
 
-  constructor() {
-    super();
-  }
-
   get data() {
     const x = this.#chartState.data.x;
     const y = this.#chartState.data.y;

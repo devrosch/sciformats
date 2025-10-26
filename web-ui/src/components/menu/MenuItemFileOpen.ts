@@ -51,10 +51,6 @@ export default class MenuItemFileOpen extends HTMLElement {
 
   #shortcutActive = false;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

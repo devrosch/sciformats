@@ -111,10 +111,6 @@ export default class AboutDialog extends HTMLElement {
 
   #open = false;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

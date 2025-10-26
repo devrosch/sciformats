@@ -58,10 +58,6 @@ export default class ParametersPanel extends HTMLElement {
 
   #data: { key: string; value: string | boolean | number | bigint }[] = [];
 
-  constructor() {
-    super();
-  }
-
   get data() {
     return this.#data;
   }

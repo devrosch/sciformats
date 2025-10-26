@@ -91,10 +91,6 @@ export default class Navbar extends HTMLElement {
 
   #shortcutsActive = false;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       // init

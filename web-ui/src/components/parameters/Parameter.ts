@@ -35,10 +35,6 @@ export default class Parameter extends HTMLElement {
 
   private _value = null as string | boolean | number | bigint | null;
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       // noop

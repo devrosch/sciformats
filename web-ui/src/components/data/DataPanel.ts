@@ -70,10 +70,6 @@ export default class DataPanel extends HTMLElement {
 
   #active = 'chart';
 
-  constructor() {
-    super();
-  }
-
   init() {
     if (!this.#initialized) {
       this.innerHTML = template;

@@ -48,7 +48,7 @@ Import "sciformats_js" for use with webpack (for use with Vite see [vite-plugin-
     const table = rootNode.table;
     const childNodeNames = rootNode.childNodeNames;
 
-    // Read the fourth child node. Indexing starts at 0. There are as many child nodes as elements in the child_node_names list.
+    // Read the fourth child node. Indexing starts at 0. There are as many child nodes as elements in the childNodeNames list.
     let child3Node = reader.read('/3');
 
     // Read the first nested child node of the fourth root child node.

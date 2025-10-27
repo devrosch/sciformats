@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed minor navigation issues in sciformats_web.
 - Updated dependencies.
+- Fixed minor documentation issue.
 
 ### Removed
 

@@ -52,7 +52,9 @@ export default class MenuItem extends HTMLElement {
   }
 
   render() {
-    const button = this.getElementsByTagName('button').item(0) as HTMLButtonElement;
+    const button = this.getElementsByTagName('button').item(
+      0,
+    ) as HTMLButtonElement;
     const nameSpan = button.children.item(0) as HTMLSpanElement;
     const shortcutSpan = button.children.item(1) as HTMLSpanElement;
     setElementAttribute(this, 'role', 'none');

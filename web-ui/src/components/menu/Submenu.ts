@@ -68,9 +68,15 @@ export default class Submenu extends HTMLElement {
   }
 
   render() {
-    const button = this.getElementsByTagName('button').item(0) as HTMLButtonElement;
-    const buttonIndicatorSpan = button.querySelector(':nth-child(1)') as HTMLSpanElement;
-    const buttonTitleSpan = button.querySelector(':nth-child(2)') as HTMLSpanElement;
+    const button = this.getElementsByTagName('button').item(
+      0,
+    ) as HTMLButtonElement;
+    const buttonIndicatorSpan = button.querySelector(
+      ':nth-child(1)',
+    ) as HTMLSpanElement;
+    const buttonTitleSpan = button.querySelector(
+      ':nth-child(2)',
+    ) as HTMLSpanElement;
 
     setElementAttribute(this, 'role', 'menu');
     setElementAttribute(button, 'key', this._key);

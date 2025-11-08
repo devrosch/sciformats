@@ -19,7 +19,7 @@
 
 use crate::api::{Column, Exporter, Parameter, PointXy, Reader, Table, Value};
 use serde::ser::{Serialize, SerializeSeq, SerializeStruct, Serializer};
-use std::{error::Error, io::Write};
+use std::{collections::HashMap, error::Error, io::Write};
 
 // see:
 // https://github.com/serde-rs/json/issues/345#issuecomment-636215611
@@ -68,6 +68,18 @@ struct MetadataWrapper<'a> {
 
 struct MetadataItemWrapper<'a> {
     item: &'a (String, String),
+}
+
+struct RowsWrapper<'a> {
+    rows: &'a Vec<HashMap<String, Value>>,
+}
+
+struct RowWrapper<'a> {
+    row: &'a HashMap<String, Value>,
+}
+
+struct CellWrapper<'a> {
+    cell: &'a (&'a String, &'a Value),
 }
 
 impl<R: Reader + ?Sized> Serialize for NodeWrapper<'_, R> {
@@ -210,7 +222,8 @@ impl Serialize for Table {
     {
         let mut serializer = serializer.serialize_struct("table", 2)?;
         serializer.serialize_field("columnNames", &self.column_names)?;
-        serializer.serialize_field("rows", &self.rows)?;
+        let rows = RowsWrapper { rows: &self.rows };
+        serializer.serialize_field("rows", &rows)?;
         serializer.end()
     }
 }
@@ -228,6 +241,46 @@ impl Serialize for Column {
         let mut serializer = serializer.serialize_struct("column", 1)?;
         serializer.serialize_field("key", &self.key)?;
         serializer.serialize_field("name", &self.name)?;
+        serializer.end()
+    }
+}
+
+impl Serialize for RowsWrapper<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut serializer = serializer.serialize_seq(Some(self.rows.len()))?;
+        for row in self.rows {
+            let row_wrapper = RowWrapper { row };
+            serializer.serialize_element(&row_wrapper)?;
+        }
+        serializer.end()
+    }
+}
+
+impl Serialize for RowWrapper<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut serializer = serializer.serialize_seq(Some(self.row.len()))?;
+        for cell in self.row {
+            let cell_wrapper = CellWrapper { cell: &cell };
+            serializer.serialize_element(&cell_wrapper)?;
+        }
+        serializer.end()
+    }
+}
+
+impl Serialize for CellWrapper<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut serializer = serializer.serialize_struct("cell", 2)?;
+        serializer.serialize_field("key", &self.cell.0)?;
+        serializer.serialize_field("value", &self.cell.1)?;
         serializer.end()
     }
 }
@@ -356,14 +409,14 @@ mod tests {
                 // "columnNames": [{"col key": "col name"}],
                 "columnNames": [{"key": "col key", "name": "col name"}],
                 "rows": [
-                    {"col key": "String value"},
-                    {"col key": true},
-                    {"col key": -1},
-                    {"col key": 1},
-                    {"col key": -2},
-                    {"col key": 2},
-                    {"col key": -1.0},
-                    {"col key": 1.0}
+                    [{"key": "col key", "value": "String value"}],
+                    [{"key": "col key", "value": true}],
+                    [{"key": "col key", "value": -1}],
+                    [{"key": "col key", "value": 1}],
+                    [{"key": "col key", "value": -2}],
+                    [{"key": "col key", "value": 2}],
+                    [{"key": "col key", "value": -1.0}],
+                    [{"key": "col key", "value": 1.0}],
                 ],
             },
             // "children": [],

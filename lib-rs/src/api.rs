@@ -251,7 +251,7 @@ pub struct Table {
     ///
     /// Each key-value pair in the map represents a single cell,
     /// e.g., peak parameters such as position or height.
-    /// Only keys from the coulmn_names may occur but not all keys from
+    /// Only keys from the column_names may occur but not all keys from
     /// that list need to occur as there may be missing values for cells.
     pub rows: Vec<HashMap<String, Value>>,
 }

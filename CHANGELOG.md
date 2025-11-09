@@ -14,9 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking (Rust only):** Use of SfError type instead of dynamic error in API functions.
 - Fixed minor navigation issues in sciformats_web.
-- Updated dependencies.
 - Fixed minor documentation issue.
+- Updated dependencies.
 
 ### Removed
 

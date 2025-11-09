@@ -17,7 +17,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::{error::Error, path::Path};
+use crate::common::SfError;
+use std::path::Path;
 
 // -------------------------------------------------
 // Util functions
@@ -55,7 +56,7 @@ pub(crate) fn is_recognized_extension(path: &str, accepted_extensions: &[&str]) 
 ///     - "/some_text/1": missing index for first segment
 ///     - "\1\1": wrong separator
 ///     - " /1": missing index for first (blank) segment
-pub(crate) fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, Box<dyn Error>> {
+pub(crate) fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, SfError> {
     let mut path_segments: Vec<&str> = path.split('/').collect();
     // remove blank start segment(s)
     match path_segments[..] {
@@ -71,7 +72,9 @@ pub(crate) fn convert_path_to_node_indices(path: &str) -> Result<Vec<usize>, Box
     let mut indices: Vec<usize> = vec![];
     for seg in path_segments {
         let idx_str = seg.split_once('-').map_or(seg, |p| p.0);
-        let idx = idx_str.parse::<usize>()?;
+        let idx = idx_str
+            .parse::<usize>()
+            .map_err(|e| SfError::from_source(e, "Error parsing path indices."))?;
         indices.push(idx);
     }
 

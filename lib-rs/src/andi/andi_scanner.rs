@@ -26,10 +26,7 @@ use crate::{
     common::SfError,
     utils::is_recognized_extension,
 };
-use std::{
-    error::Error,
-    io::{Read, Seek},
-};
+use std::io::{Read, Seek};
 
 #[derive(Default)]
 pub struct AndiScanner {}
@@ -63,7 +60,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
         buf.as_slice() == Self::MAGIC_BYTES
     }
 
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError> {
         let input_seek_read = Box::new(input);
         let cdf_reader = netcdf3::FileReader::open_seek_read(path, input_seek_read)
             .map_err(|e| SfError::from_source(e, "AnDI Error. Error parsing netCDF."))?;

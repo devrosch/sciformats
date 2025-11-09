@@ -246,7 +246,7 @@ mod tests {
     struct StubReader {}
 
     impl Reader for StubReader {
-        fn read(&self, path: &str) -> Result<Node, Box<dyn std::error::Error>> {
+        fn read(&self, path: &str) -> Result<Node, SfError> {
             let root = Node {
                 name: "root node name".to_owned(),
                 parameters: vec![

@@ -26,7 +26,7 @@ use crate::{
     common::SfError,
     utils::convert_path_to_node_indices,
 };
-use std::{collections::HashMap, error::Error, path::Path, vec};
+use std::{collections::HashMap, path::Path, vec};
 
 macro_rules! generate_map_xy_parameters_fn {
     ($xy_data_type:ty, $xy_type_name:literal, $fn_name:ident) => {
@@ -102,7 +102,7 @@ pub struct GamlReader {
 }
 
 impl Reader for GamlReader {
-    fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
+    fn read(&self, path: &str) -> Result<Node, SfError> {
         let path_indices = convert_path_to_node_indices(path)?;
         match &path_indices[..] {
             [] => Ok(Self::map_root(&self.path, &self.file)?), // "", "/"

@@ -19,13 +19,13 @@
 
 use crate::{common::SfError, utils::from_iso_8859_1_cstr};
 use netcdf3::{DataType, DataVector};
-use std::{error::Error, ops::Range, str::FromStr};
+use std::{ops::Range, str::FromStr};
 
 fn read_index_from_var<T: Clone + Copy + From<i16> + PartialEq>(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     values: Option<&[T]>,
     index: usize,
-) -> Result<Option<T>, Box<dyn Error>> {
+) -> Result<Option<T>, SfError> {
     let var_name = var.as_ref().map(|(name, _, _)| *name).unwrap_or_default();
     let res = read_index_from_slice(values, var_name, index)?
         .copied()
@@ -37,7 +37,7 @@ fn read_index_from_var<T: Clone + Copy + From<i16> + PartialEq>(
 pub fn read_index_from_var_i16(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<i16>, Box<dyn Error>> {
+) -> Result<Option<i16>, SfError> {
     let slice = var.as_ref().and_then(|(_, _, v)| v.get_i16());
     read_index_from_var(var, slice, index)
 }
@@ -45,7 +45,7 @@ pub fn read_index_from_var_i16(
 pub fn read_index_from_var_i32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<i32>, Box<dyn Error>> {
+) -> Result<Option<i32>, SfError> {
     let slice = var.as_ref().and_then(|(_, _, v)| v.get_i32());
     read_index_from_var(var, slice, index)
 }
@@ -53,7 +53,7 @@ pub fn read_index_from_var_i32(
 pub fn read_index_from_var_f32(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<f32>, Box<dyn Error>> {
+) -> Result<Option<f32>, SfError> {
     let slice = var.as_ref().and_then(|(_, _, v)| v.get_f32());
     read_index_from_var(var, slice, index)
 }
@@ -61,7 +61,7 @@ pub fn read_index_from_var_f32(
 pub fn read_index_from_var_f64(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<f64>, Box<dyn Error>> {
+) -> Result<Option<f64>, SfError> {
     let slice = var.as_ref().and_then(|(_, _, v)| v.get_f64());
     read_index_from_var(var, slice, index)
 }
@@ -124,7 +124,7 @@ pub fn read_var_2d_slice_f64(
 pub fn read_multi_string_var(
     reader: &mut netcdf3::FileReader,
     var_name: &str,
-) -> Result<Vec<String>, Box<dyn Error>> {
+) -> Result<Vec<String>, SfError> {
     let var_opt = read_optional_var(reader, var_name)?;
     match var_opt {
         None => Ok(vec![]),
@@ -146,14 +146,14 @@ pub fn read_index_from_slice<'a, T: 'a>(
     slice: Option<&'a [T]>,
     var_name: &str,
     index: usize,
-) -> Result<Option<&'a T>, Box<dyn Error>> {
+) -> Result<Option<&'a T>, SfError> {
     match slice {
         None => Ok(None),
         Some(sl) => match sl.get(index) {
-            None => Err(Box::new(SfError::new(&format!(
+            None => Err(SfError::new(&format!(
                 "Index out of bounds for {}: {}",
                 var_name, index
-            )))),
+            ))),
             Some(val) => Ok(Some(val)),
         },
     }
@@ -164,12 +164,14 @@ type NcVariable<'a> = (&'a str, Vec<usize>, DataVector);
 pub fn read_optional_var<'a>(
     reader: &mut netcdf3::FileReader,
     var_name: &'a str,
-) -> Result<Option<NcVariable<'a>>, Box<dyn Error>> {
+) -> Result<Option<NcVariable<'a>>, SfError> {
     let var = reader.data_set().get_var(var_name);
     match var {
         Some(var) => {
             let dims: Vec<usize> = var.get_dims().iter().map(|dim| dim.size()).collect();
-            let vec = reader.read_var(var_name)?;
+            let vec = reader
+                .read_var(var_name)
+                .map_err(|e| SfError::from_source(e, "Error reading netCDF variable."))?;
             Ok(Some((var_name, dims, vec)))
         }
         None => Ok(None),
@@ -203,7 +205,7 @@ pub fn read_scalar_var_f32(
 pub fn read_optional_var_or_attr_f32(
     reader: &mut netcdf3::FileReader,
     var_name: &str,
-) -> Result<Option<f32>, Box<dyn Error>> {
+) -> Result<Option<f32>, SfError> {
     let mut value = read_scalar_var_f32(reader, var_name)?;
     if value.is_none() {
         let attr_opt = reader.data_set().get_global_attr(var_name);
@@ -212,10 +214,10 @@ pub fn read_optional_var_or_attr_f32(
                 match val {
                     [single_val] => value = Some(single_val.to_owned()),
                     _ => {
-                        return Err(Box::new(SfError::new(&format!(
+                        return Err(SfError::new(&format!(
                             "Unexpected content for {}.",
                             var_name
-                        ))));
+                        )));
                     }
                 }
             } else if let Some(mut val) = attr.get_as_string() {
@@ -223,7 +225,9 @@ pub fn read_optional_var_or_attr_f32(
                 trim_zeros_in_place(&mut val);
                 let no_zero_bytes_val = val.trim();
                 if !no_zero_bytes_val.is_empty() {
-                    let v = val.parse::<f32>()?;
+                    let v = val.parse::<f32>().map_err(|_e| {
+                        SfError::new(&format!("Error parsing value as float: {}", val))
+                    })?;
                     value = Some(v);
                 }
             }

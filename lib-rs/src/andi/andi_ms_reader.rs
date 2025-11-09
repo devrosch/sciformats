@@ -26,7 +26,7 @@ use crate::{
     common::SfError,
     utils::convert_path_to_node_indices,
 };
-use std::{collections::HashMap, error::Error, path::Path};
+use std::{collections::HashMap, path::Path};
 
 pub struct AndiMsReader {
     path: String,
@@ -34,7 +34,7 @@ pub struct AndiMsReader {
 }
 
 impl Reader for AndiMsReader {
-    fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
+    fn read(&self, path: &str) -> Result<Node, SfError> {
         let path_indices = convert_path_to_node_indices(path)?;
         match path_indices[..] {
             [] => self.read_root(), // "", "/"
@@ -64,7 +64,7 @@ impl AndiMsReader {
         }
     }
 
-    fn read_root(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_root(&self) -> Result<Node, SfError> {
         let path = Path::new(&self.path);
         let file_name = path.file_name().map_or("", |f| f.to_str().unwrap_or(""));
         let mut child_node_names = vec![
@@ -112,7 +112,7 @@ impl AndiMsReader {
         }
     }
 
-    fn read_admin_data(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_admin_data(&self) -> Result<Node, SfError> {
         let admin_data = &self.file.admin_data;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -283,7 +283,7 @@ impl AndiMsReader {
         }
     }
 
-    fn read_instrument_components(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_instrument_components(&self) -> Result<Node, SfError> {
         let components = &self.file.instrument_data.instrument_components;
         let child_node_names: Vec<String> = components
             .iter()
@@ -301,7 +301,7 @@ impl AndiMsReader {
         })
     }
 
-    fn read_instrument_component(&self, index: usize) -> Result<Node, Box<dyn Error>> {
+    fn read_instrument_component(&self, index: usize) -> Result<Node, SfError> {
         let components = &self.file.instrument_data.instrument_components;
         let component = components.get(index).ok_or(SfError::new(&format!(
             "Illegal path. Instrument component not found for index: {}",
@@ -367,7 +367,7 @@ impl AndiMsReader {
         })
     }
 
-    fn read_sample_data(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_sample_data(&self) -> Result<Node, SfError> {
         let sample_data = &self.file.sample_data;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -448,7 +448,7 @@ impl AndiMsReader {
         })
     }
 
-    fn read_test_data(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_test_data(&self) -> Result<Node, SfError> {
         let test_data = &self.file.test_data;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -573,7 +573,7 @@ impl AndiMsReader {
         })
     }
 
-    fn read_raw_data_global(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_raw_data_global(&self) -> Result<Node, SfError> {
         let raw_data_global = &self.file.raw_data_global;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -745,7 +745,7 @@ impl AndiMsReader {
         }
     }
 
-    fn read_raw_data_scans(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_raw_data_scans(&self) -> Result<Node, SfError> {
         let scans = &self.file.raw_data_scans.raw_data_per_scan_list;
         let child_node_names: Vec<String> = scans.iter().map(Self::generate_scan_name).collect();
 
@@ -760,7 +760,7 @@ impl AndiMsReader {
     }
 
     #[allow(clippy::vec_init_then_push)]
-    fn read_raw_data_per_scan(&self, index: usize) -> Result<Node, Box<dyn Error>> {
+    fn read_raw_data_per_scan(&self, index: usize) -> Result<Node, SfError> {
         let scans = &self.file.raw_data_scans.raw_data_per_scan_list;
         let scan = scans.get(index).ok_or(SfError::new(&format!(
             "Illegal path. Raw data per scan not found for index: {}",
@@ -933,7 +933,7 @@ impl AndiMsReader {
         })
     }
 
-    fn read_library_data_per_scan(&self, index: usize) -> Result<Node, Box<dyn Error>> {
+    fn read_library_data_per_scan(&self, index: usize) -> Result<Node, SfError> {
         let library_data = &self
             .file
             .library_data
@@ -1060,7 +1060,7 @@ impl AndiMsReader {
         })
     }
 
-    pub fn read_scan_groups(&self) -> Result<Node, Box<dyn Error>> {
+    pub fn read_scan_groups(&self) -> Result<Node, SfError> {
         let scan_groups = &self
             .file
             .scan_groups
@@ -1083,7 +1083,7 @@ impl AndiMsReader {
         })
     }
 
-    pub fn read_scan_group(&self, n: usize) -> Result<Node, Box<dyn Error>> {
+    pub fn read_scan_group(&self, n: usize) -> Result<Node, SfError> {
         let scan_groups = &self
             .file
             .scan_groups
@@ -1157,7 +1157,7 @@ impl AndiMsReader {
         })
     }
 
-    fn read_error_log(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_error_log(&self) -> Result<Node, SfError> {
         let column_names: Vec<Column> = vec![Column::new("message", "Message")];
         let rows: Vec<HashMap<String, Value>> = self
             .file

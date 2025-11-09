@@ -20,6 +20,7 @@
 use super::{gaml_parser::GamlParser, gaml_reader::GamlReader};
 use crate::{
     api::{Parser, Reader, Scanner, SeekRead},
+    common::SfError,
     utils::is_recognized_extension,
 };
 use std::{
@@ -74,7 +75,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for GamlScanner {
         }
     }
 
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError> {
         let input_seek_read: Box<dyn SeekRead> = Box::new(input);
         let gaml = GamlParser::parse(path, input_seek_read)?;
         Ok(Box::new(GamlReader::new(path, gaml)))

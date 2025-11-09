@@ -23,7 +23,7 @@ use crate::{
     common::SfError,
     utils::convert_path_to_node_indices,
 };
-use std::{collections::HashMap, error::Error, path::Path};
+use std::{collections::HashMap, path::Path};
 
 pub struct AndiChromReader {
     path: String,
@@ -31,7 +31,7 @@ pub struct AndiChromReader {
 }
 
 impl Reader for AndiChromReader {
-    fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
+    fn read(&self, path: &str) -> Result<Node, SfError> {
         let path_indices = convert_path_to_node_indices(path)?;
         match path_indices[..] {
             [] => self.read_root(), // "", "/"
@@ -54,7 +54,7 @@ impl AndiChromReader {
         }
     }
 
-    fn read_root(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_root(&self) -> Result<Node, SfError> {
         let path = Path::new(&self.path);
         let file_name = path.file_name().map_or("", |f| f.to_str().unwrap_or(""));
         Ok(Node {
@@ -85,7 +85,7 @@ impl AndiChromReader {
         }
     }
 
-    fn read_admin_data(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_admin_data(&self) -> Result<Node, SfError> {
         let admin_data = &self.file.admin_data;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -169,7 +169,7 @@ impl AndiChromReader {
         })
     }
 
-    fn read_sample_description(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_sample_description(&self) -> Result<Node, SfError> {
         let sample_description = &self.file.sample_description;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -210,7 +210,7 @@ impl AndiChromReader {
         })
     }
 
-    fn read_detection_method(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_detection_method(&self) -> Result<Node, SfError> {
         let detection_method = &self.file.detection_method;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -260,7 +260,7 @@ impl AndiChromReader {
         })
     }
 
-    fn read_raw_data(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_raw_data(&self) -> Result<Node, SfError> {
         let raw_data = &self.file.raw_data;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -306,9 +306,9 @@ impl AndiChromReader {
                 // x values present
                 let y_values = &raw_data.get_ordinate_values()?;
                 if x_values.len() != y_values.len() {
-                    return Err(Box::new(SfError::new(
+                    return Err(SfError::new(
                         "Numbers of ordinate and retention values do not match.",
-                    )));
+                    ));
                 }
                 let xy_values: Vec<PointXy> = x_values
                     .iter()
@@ -354,7 +354,7 @@ impl AndiChromReader {
         })
     }
 
-    fn read_peak_processing_results(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_peak_processing_results(&self) -> Result<Node, SfError> {
         let peak_processing_results = &self.file.peak_processing_results;
 
         let mut parameters: Vec<Parameter> = Vec::new();
@@ -403,7 +403,7 @@ impl AndiChromReader {
         })
     }
 
-    fn read_peaks(&self, num_peaks: usize) -> Result<Table, Box<dyn Error>> {
+    fn read_peaks(&self, num_peaks: usize) -> Result<Table, SfError> {
         let peaks = self
             .file
             .peak_processing_results
@@ -586,7 +586,7 @@ impl AndiChromReader {
         Ok(Table { column_names, rows })
     }
 
-    fn read_error_log(&self) -> Result<Node, Box<dyn Error>> {
+    fn read_error_log(&self) -> Result<Node, SfError> {
         let column_names: Vec<Column> = vec![Column::new("message", "Message")];
         let rows: Vec<HashMap<String, Value>> = self
             .file

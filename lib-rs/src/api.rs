@@ -99,7 +99,7 @@ pub trait Reader {
     /// * `writer` - A writer to write the export to.
     ///
     /// Writes data in the export format to the writer. Returns an error in case of any issue.
-    fn export(&self, format: ExportFormat, writer: &mut dyn Write) -> Result<(), Box<dyn Error>> {
+    fn export(&self, format: ExportFormat, writer: &mut dyn Write) -> Result<(), SfError> {
         match format {
             ExportFormat::Json => {
                 let mut exporter = JsonExporter::new(self);
@@ -278,7 +278,7 @@ pub enum ExportFormat {
 /// Exports data.
 pub trait Exporter {
     fn get_name(&self) -> &'static str;
-    fn write(&mut self, writer: &mut dyn Write) -> Result<(), Box<dyn Error>>;
+    fn write(&mut self, writer: &mut dyn Write) -> Result<(), SfError>;
 }
 
 #[cfg(test)]

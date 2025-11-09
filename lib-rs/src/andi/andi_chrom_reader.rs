@@ -264,10 +264,10 @@ impl AndiChromReader {
         let raw_data = &self.file.raw_data;
 
         let mut parameters: Vec<Parameter> = Vec::new();
-        parameters.push(Parameter {
-            key: "Point Number".into(),
-            value: Value::I32(raw_data.point_number),
-        });
+        parameters.push(Parameter::from_str_i32(
+            "Point Number",
+            raw_data.point_number,
+        ));
         Self::push_opt_str(
             "Raw Data Table Name",
             &raw_data.raw_data_table_name,

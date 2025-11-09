@@ -166,10 +166,19 @@ impl Serialize for Parameter {
     where
         S: Serializer,
     {
-        let mut serializer = serializer.serialize_struct("parameter", 2)?;
-        serializer.serialize_field("key", &self.key)?;
-        serializer.serialize_field("value", &self.value)?;
-        serializer.end()
+        match self {
+            Parameter::KeyValue(k, v) => {
+                let mut serializer = serializer.serialize_struct("parameter", 2)?;
+                serializer.serialize_field("key", k)?;
+                serializer.serialize_field("value", v)?;
+                serializer.end()
+            }
+            Parameter::Value(v) => {
+                let mut serializer = serializer.serialize_struct("parameter", 1)?;
+                serializer.serialize_field("value", v)?;
+                serializer.end()
+            }
+        }
     }
 }
 

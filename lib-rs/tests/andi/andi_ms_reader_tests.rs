@@ -1939,9 +1939,14 @@ fn andi_ms_sid_read_succeeds() {
     // no time_range_min
     // no time_range_max
     // no inter_scan_time
-    assert_eq!("Resolution", raw_data_scan_0.parameters[9].key);
-    match raw_data_scan_0.parameters[9].value {
-        Value::F64(value) => assert!(value.is_nan()),
+    match &raw_data_scan_0.parameters[9] {
+        Parameter::KeyValue(k, v) => {
+            assert_eq!("Resolution", k);
+            match v {
+                Value::F64(value) => assert!(value.is_nan()),
+                _ => assert!(false),
+            }
+        }
         _ => assert!(false),
     }
     assert_eq!(

@@ -137,68 +137,77 @@ impl Display for Value {
     }
 }
 
-/// A key value parameter.
 #[derive(Debug, PartialEq)]
-pub struct Parameter {
-    pub key: String,
-    pub value: Value,
+/// A parameter.
+pub enum Parameter {
+    KeyValue(String, Value),
+    Value(Value),
 }
 
 impl Parameter {
     pub fn from_str_str(key: impl Into<String>, value: impl Into<String>) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::String(value.into()),
-        }
+        Self::KeyValue(key.into(), Value::String(value.into()))
     }
 
     pub fn from_str_bool(key: impl Into<String>, value: bool) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::Bool(value),
-        }
+        Self::KeyValue(key.into(), Value::Bool(value))
     }
 
     pub fn from_str_i32(key: impl Into<String>, value: i32) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::I32(value),
-        }
+        Self::KeyValue(key.into(), Value::I32(value))
     }
 
     pub fn from_str_u32(key: impl Into<String>, value: u32) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::U32(value),
-        }
+        Self::KeyValue(key.into(), Value::U32(value))
     }
 
     pub fn from_str_i64(key: impl Into<String>, value: i64) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::I64(value),
-        }
+        Self::KeyValue(key.into(), Value::I64(value))
     }
 
     pub fn from_str_u64(key: impl Into<String>, value: u64) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::U64(value),
-        }
+        Self::KeyValue(key.into(), Value::U64(value))
     }
 
     pub fn from_str_f32(key: impl Into<String>, value: f32) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::F32(value),
-        }
+        Self::KeyValue(key.into(), Value::F32(value))
     }
 
     pub fn from_str_f64(key: impl Into<String>, value: f64) -> Self {
-        Self {
-            key: key.into(),
-            value: Value::F64(value),
-        }
+        Self::KeyValue(key.into(), Value::F64(value))
+    }
+
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(value: impl Into<String>) -> Self {
+        Self::Value(Value::String(value.into()))
+    }
+
+    pub fn from_bool(value: bool) -> Self {
+        Self::Value(Value::Bool(value))
+    }
+
+    pub fn from_i32(value: i32) -> Self {
+        Self::Value(Value::I32(value))
+    }
+
+    pub fn from_u32(value: u32) -> Self {
+        Self::Value(Value::U32(value))
+    }
+
+    pub fn from_i64(value: i64) -> Self {
+        Self::Value(Value::I64(value))
+    }
+
+    pub fn from_u64(value: u64) -> Self {
+        Self::Value(Value::U64(value))
+    }
+
+    pub fn from_f32(value: f32) -> Self {
+        Self::Value(Value::F32(value))
+    }
+
+    pub fn from_f64(value: f64) -> Self {
+        Self::Value(Value::F64(value))
     }
 }
 
@@ -309,61 +318,52 @@ mod tests {
     #[test]
     fn parameters_are_correctly_initialized_for_all_value_types() {
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::String("abc".to_owned())
-            },
+            Parameter::KeyValue("x".to_owned(), Value::String("abc".to_owned())),
             Parameter::from_str_str("x", "abc")
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::Bool(true)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::Bool(true)),
             Parameter::from_str_bool("x", true)
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::I32(1)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::I32(1)),
             Parameter::from_str_i32("x", 1)
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::U32(2)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::U32(2)),
             Parameter::from_str_u32("x", 2)
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::I64(3)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::I64(3)),
             Parameter::from_str_i64("x", 3)
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::U64(4)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::U64(4)),
             Parameter::from_str_u64("x", 4)
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::F32(5.0)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::F32(5.0)),
             Parameter::from_str_f32("x", 5.0)
         );
         assert_eq!(
-            Parameter {
-                key: "x".to_owned(),
-                value: Value::F64(6.0)
-            },
+            Parameter::KeyValue("x".to_owned(), Value::F64(6.0)),
             Parameter::from_str_f64("x", 6.0)
         );
+
+        assert_eq!(
+            Parameter::Value(Value::String("abc".to_owned())),
+            Parameter::from_str("abc")
+        );
+        assert_eq!(
+            Parameter::Value(Value::Bool(true)),
+            Parameter::from_bool(true)
+        );
+        assert_eq!(Parameter::Value(Value::I32(1)), Parameter::from_i32(1));
+        assert_eq!(Parameter::Value(Value::U32(2)), Parameter::from_u32(2));
+        assert_eq!(Parameter::Value(Value::I64(3)), Parameter::from_i64(3));
+        assert_eq!(Parameter::Value(Value::U64(4)), Parameter::from_u64(4));
+        assert_eq!(Parameter::Value(Value::F32(5.0)), Parameter::from_f32(5.0));
+        assert_eq!(Parameter::Value(Value::F64(6.0)), Parameter::from_f64(6.0));
     }
 
     #[test]

@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use sciformats::api::{Node, SeekRead};
+use sciformats::api::{Node, Scanner};
 use sciformats::common::ScannerRepository;
 use std::fs::File;
 
@@ -25,15 +25,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Open file.
     let file_name = "CompoundFile.jdx";
     let file_path = format!("{}/../_resources/{}", env!("CARGO_MANIFEST_DIR"), file_name);
-    let file = File::open(&file_path)?;
-    let mut input: Box<dyn SeekRead> = Box::new(file);
+    let mut file = File::open(&file_path)?;
 
     // Read file.
     let repo = ScannerRepository::init_all();
     // Ensure that the file has a supported format.
-    assert!(repo.is_recognized(&file_path, &mut input));
+    assert!(repo.is_recognized(&file_path, &mut file));
     // Get a reader that through which data from the file is retrieved.
-    let reader = repo.get_reader(&file_path, input)?;
+    let reader = repo.get_reader(&file_path, file)?;
 
     // Read the root node.
     let root_node_path = "/";

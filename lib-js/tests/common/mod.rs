@@ -19,7 +19,7 @@
 
 use super::open_files;
 use sciformats::{
-    api::SeekRead,
+    api::{Scanner, SeekRead},
     common::{BufSeekRead, ScannerRepository},
 };
 use wasm_bindgen_test::wasm_bindgen_test;

@@ -20,7 +20,7 @@
 use chrono::ParseError;
 
 use crate::andi::andi_scanner::AndiScanner;
-use crate::api::{Reader, Scanner, SeekRead};
+use crate::api::{Reader, Scanner};
 use crate::gaml::gaml_scanner::GamlScanner;
 use crate::jdx::jdx_scanner::JdxScanner;
 use std::fmt;
@@ -78,33 +78,13 @@ impl From<ParseError> for SfError {
 }
 
 /// A repository for scanners.
-pub struct ScannerRepository {
-    scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>>,
+pub struct ScannerRepository<T: Seek + Read + 'static> {
+    scanners: Vec<Box<dyn Scanner<T>>>,
 }
 
-impl ScannerRepository {
-    /// Create a repository containing the passed scanners.
-    pub fn new(scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>>) -> ScannerRepository {
-        ScannerRepository { scanners }
-    }
-
-    /// Create a repository containing all available scanners.
-    pub fn init_all() -> ScannerRepository {
-        let andi_scanner: Box<dyn Scanner<Box<dyn SeekRead>>> = Box::new(AndiScanner::new());
-        let gaml_scanner = Box::new(GamlScanner::new());
-        let jdx_scanner = Box::new(JdxScanner::new());
-        let scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>> =
-            vec![andi_scanner, gaml_scanner, jdx_scanner];
-        ScannerRepository { scanners }
-    }
-
-    /// Add a scanner to the repository.
-    pub fn push(&mut self, scanner: Box<dyn Scanner<Box<dyn SeekRead>>>) {
-        self.scanners.push(scanner)
-    }
-
+impl<T: Seek + Read + 'static> Scanner<T> for ScannerRepository<T> {
     /// Checks whether a data set is recognized by any contained scanner. Shallow check.
-    pub fn is_recognized(&self, path: &str, input: &mut Box<dyn SeekRead>) -> bool {
+    fn is_recognized(&self, path: &str, input: &mut T) -> bool {
         self.scanners
             .iter()
             .any(|scanner| scanner.is_recognized(path, input))
@@ -113,11 +93,7 @@ impl ScannerRepository {
     /// Provides a reader for a recognized data set.
     ///
     /// If multiple scanners recognize a data set, any of them may be returned.
-    pub fn get_reader(
-        &self,
-        path: &str,
-        mut input: Box<dyn SeekRead>,
-    ) -> Result<Box<dyn Reader>, SfError> {
+    fn get_reader(&self, path: &str, mut input: T) -> Result<Box<dyn Reader>, SfError> {
         for scanner in &self.scanners {
             input.seek(SeekFrom::Start(0))?;
             if scanner.is_recognized(path, &mut input) {
@@ -135,7 +111,28 @@ impl ScannerRepository {
     }
 }
 
-impl Default for ScannerRepository {
+impl<T: Seek + Read + 'static> ScannerRepository<T> {
+    /// Create a repository containing the passed scanners.
+    pub fn new(scanners: Vec<Box<dyn Scanner<T>>>) -> ScannerRepository<T> {
+        ScannerRepository { scanners }
+    }
+
+    /// Create a repository containing all available scanners.
+    pub fn init_all() -> ScannerRepository<T> {
+        let andi_scanner: Box<dyn Scanner<T>> = Box::new(AndiScanner::new());
+        let gaml_scanner = Box::new(GamlScanner::new());
+        let jdx_scanner = Box::new(JdxScanner::new());
+        let scanners: Vec<Box<dyn Scanner<T>>> = vec![andi_scanner, gaml_scanner, jdx_scanner];
+        ScannerRepository { scanners }
+    }
+
+    /// Add a scanner to the repository.
+    pub fn push(&mut self, scanner: Box<dyn Scanner<T>>) {
+        self.scanners.push(scanner)
+    }
+}
+
+impl<T: Seek + Read + 'static> Default for ScannerRepository<T> {
     fn default() -> Self {
         ScannerRepository::new(vec![])
     }
@@ -220,8 +217,8 @@ impl<T: Seek + Read> Read for BufSeekRead<T> {
 mod tests {
     use super::*;
     use crate::{
-        api::{Node, Reader, Scanner},
-        common::{BufSeekRead, SeekRead},
+        api::{Node, Reader, Scanner, SeekRead},
+        common::BufSeekRead,
     };
     use std::io::{Cursor, Read, Seek, SeekFrom};
 

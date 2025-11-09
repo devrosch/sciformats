@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Breaking:** Value only parameter type. Parameter type that has no key but holds a value.
 - This changelog.
 - Version information to sciformats_web.
 

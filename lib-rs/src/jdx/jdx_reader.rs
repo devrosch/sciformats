@@ -26,7 +26,7 @@ use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, SeekBufRead, Table, Value},
     utils::convert_path_to_node_indices,
 };
-use std::{collections::HashMap, error::Error, path::Path};
+use std::{collections::HashMap, path::Path};
 
 pub struct JdxReader {
     path: String,
@@ -34,7 +34,7 @@ pub struct JdxReader {
 }
 
 impl Reader for JdxReader {
-    fn read(&self, path: &str) -> Result<Node, Box<dyn Error>> {
+    fn read(&self, path: &str) -> Result<Node, SfError> {
         let node_indices = convert_path_to_node_indices(path)?;
         Ok(self.retrieve_node(&node_indices)?)
     }

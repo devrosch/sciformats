@@ -1255,7 +1255,7 @@ impl AndiMsRawDataPerScanGroup {
     fn read_scan_group_var_slice_f64(
         &self,
         var: &(&str, Vec<usize>, DataVector),
-    ) -> Result<Vec<f64>, Box<dyn Error>> {
+    ) -> Result<Vec<f64>, SfError> {
         let var_name = &var.0;
         let dims = &var.1;
         check_var_is_2d(var_name, dims)?;
@@ -1268,7 +1268,7 @@ impl AndiMsRawDataPerScanGroup {
         Ok(values)
     }
 
-    pub fn get_group_masses(&self) -> Result<Vec<f64>, Box<dyn Error>> {
+    pub fn get_group_masses(&self) -> Result<Vec<f64>, SfError> {
         let var_name = "group_masses";
         let group_masses_var = match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)?
         {
@@ -1282,7 +1282,7 @@ impl AndiMsRawDataPerScanGroup {
         self.read_scan_group_var_slice_f64(&group_masses_var)
     }
 
-    pub fn get_group_sampling_times(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+    pub fn get_group_sampling_times(&self) -> Result<Option<Vec<f64>>, SfError> {
         let var_name = "group_sampling_times";
         let group_sampling_times_var =
             match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)? {
@@ -1295,7 +1295,7 @@ impl AndiMsRawDataPerScanGroup {
         )?))
     }
 
-    pub fn get_group_delay_times(&self) -> Result<Option<Vec<f64>>, Box<dyn Error>> {
+    pub fn get_group_delay_times(&self) -> Result<Option<Vec<f64>>, SfError> {
         let var_name = "group_delay_times";
         let group_delay_times_var =
             match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)? {

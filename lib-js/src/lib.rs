@@ -213,7 +213,7 @@ impl JsReader {
         let read_result = self.reader.read(path);
         match read_result {
             Ok(node) => Ok(JsNode::from(node)),
-            Err(error) => Err(map_to_js_err(&*error)),
+            Err(error) => Err(map_to_js_err(&error)),
         }
     }
 
@@ -751,7 +751,7 @@ macro_rules! create_js_scanner {
                 let reader_result = self.scanner.get_reader(path, blob);
                 match reader_result {
                     Ok(reader) => Ok(JsReader::from(reader)),
-                    Err(error) => Err(map_to_js_err(&*error)),
+                    Err(error) => Err(map_to_js_err(&error)),
                 }
             }
         }
@@ -879,7 +879,7 @@ mod tests {
             true
         }
 
-        fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
+        fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, SfError> {
             Ok(Box::new(StubReader {}))
         }
     }
@@ -887,7 +887,7 @@ mod tests {
 
     struct StubReader {}
     impl Reader for StubReader {
-        fn read(&self, path: &str) -> Result<Node, Box<dyn std::error::Error>> {
+        fn read(&self, path: &str) -> Result<Node, SfError> {
             let root = Node {
                 name: "root node name".to_owned(),
                 parameters: vec![

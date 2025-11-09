@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::json_exporter::JsonExporter;
+use crate::{common::SfError, json_exporter::JsonExporter};
 use std::{
     collections::HashMap,
     error::Error,
@@ -71,7 +71,7 @@ pub trait Scanner<T: Read + Seek> {
     /// or just the file name, e.g. when run in a browser.
     ///
     /// May fail even if `is_recognized()` returns true.
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>>;
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError>;
 }
 
 /// Provides a harmonized view for reading a scientifc data set.
@@ -81,7 +81,7 @@ pub trait Reader {
     /// # Arguments
     ///
     /// * `path` - The path inside the data set identifying the Node.
-    fn read(&self, path: &str) -> Result<Node, Box<dyn Error>>;
+    fn read(&self, path: &str) -> Result<Node, SfError>;
 
     /// Provides a list of the supported export formats for the reader.
     ///

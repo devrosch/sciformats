@@ -433,7 +433,7 @@ impl AndiChromPeakProcessingResults {
         })
     }
 
-    pub fn get_peaks(&self) -> Result<Option<Vec<AndiChromPeak>>, Box<dyn Error>> {
+    pub fn get_peaks(&self) -> Result<Option<Vec<AndiChromPeak>>, SfError> {
         let reader = &mut self.reader_ref.borrow_mut();
 
         let peak_number = self.peak_number;

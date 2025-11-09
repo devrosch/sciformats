@@ -17,13 +17,11 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::{
-    error::Error,
-    io::{BufReader, Read, Seek},
-};
+use std::io::{BufReader, Read, Seek};
 
 use crate::{
     api::{Parser, Reader, Scanner, SeekBufRead},
+    common::SfError,
     utils::{from_iso_8859_1_cstr, is_recognized_extension},
 };
 
@@ -71,7 +69,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for JdxScanner {
         }
     }
 
-    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError> {
         let buf_reader = BufReader::new(input);
         let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);
         let jdx_file = JdxParser::parse(path, buf_input)?;

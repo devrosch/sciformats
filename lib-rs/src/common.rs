@@ -17,6 +17,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use chrono::ParseError;
+
 use crate::andi::andi_scanner::AndiScanner;
 use crate::api::{Reader, Scanner, SeekRead};
 use crate::gaml::gaml_scanner::GamlScanner;
@@ -65,7 +67,13 @@ impl fmt::Display for SfError {
 
 impl From<std::io::Error> for SfError {
     fn from(value: std::io::Error) -> Self {
-        Self::from_source(value, "I/O error parsing data.")
+        Self::from_source(value, "I/O error.")
+    }
+}
+
+impl From<ParseError> for SfError {
+    fn from(value: ParseError) -> Self {
+        Self::from_source(value, "Parsing value error.")
     }
 }
 
@@ -215,17 +223,14 @@ mod tests {
         api::{Node, Reader, Scanner},
         common::{BufSeekRead, SeekRead},
     };
-    use std::{
-        error::Error,
-        io::{Cursor, Read, Seek, SeekFrom},
-    };
+    use std::io::{Cursor, Read, Seek, SeekFrom};
 
     struct StubReader {
         pub name: String,
         node_ok: bool,
     }
     impl Reader for StubReader {
-        fn read(&self, _path: &str) -> Result<crate::api::Node, Box<dyn std::error::Error>> {
+        fn read(&self, _path: &str) -> Result<crate::api::Node, SfError> {
             match self.node_ok {
                 true => Ok(Node {
                     name: self.name.clone(),
@@ -253,7 +258,7 @@ mod tests {
             &self,
             _path: &str,
             _input: T,
-        ) -> Result<Box<dyn crate::api::Reader>, Box<dyn Error>> {
+        ) -> Result<Box<dyn crate::api::Reader>, SfError> {
             match &self.reader_name {
                 Some(name) => Ok(Box::new(StubReader {
                     name: name.to_owned(),

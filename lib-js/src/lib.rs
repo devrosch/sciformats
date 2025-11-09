@@ -627,7 +627,7 @@ impl JsScannerRepository {
         let reader_result = self.repo.get_reader(path, Box::new(input));
         match reader_result {
             Ok(reader) => Ok(JsReader::from(reader)),
-            Err(error) => Err(map_to_js_err(&*error)),
+            Err(error) => Err(map_to_js_err(&error)),
         }
     }
 }

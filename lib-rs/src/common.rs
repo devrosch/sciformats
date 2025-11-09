@@ -117,7 +117,7 @@ impl ScannerRepository {
         &self,
         path: &str,
         mut input: Box<dyn SeekRead>,
-    ) -> Result<Box<dyn Reader>, Box<dyn Error>> {
+    ) -> Result<Box<dyn Reader>, SfError> {
         for scanner in &self.scanners {
             input.seek(SeekFrom::Start(0))?;
             if scanner.is_recognized(path, &mut input) {

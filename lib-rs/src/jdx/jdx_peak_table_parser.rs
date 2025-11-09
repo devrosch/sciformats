@@ -18,9 +18,10 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use super::JdxSequenceParser;
+use super::jdx_parser::Peak;
 use super::jdx_utils::{BinBufRead, is_ldr_start, strip_line_comment};
-use super::{JdxError, jdx_parser::Peak};
 use crate::api::SeekBufRead;
+use crate::common::SfError;
 use std::collections::VecDeque;
 use std::sync::LazyLock;
 
@@ -45,7 +46,7 @@ pub struct PeakTableParser<'r, T: SeekBufRead> {
 impl<T: SeekBufRead> PeakTableParser<'_, T> {
     const PEAK_TABLE_VARIABLE_LISTS: [&'static str; 3] = ["(XY..XY)", "(XYW..XYW)", "(XYM..XYM)"];
 
-    fn next_tuple(&mut self) -> Result<Option<String>, JdxError> {
+    fn next_tuple(&mut self) -> Result<Option<String>, SfError> {
         while self.tuple_queue.is_empty() {
             let pos = self.reader.stream_position()?;
             let next_line = self.reader.read_line_iso_8859_1(&mut self.buf)?;
@@ -97,7 +98,7 @@ impl<T: SeekBufRead> PeakTableParser<'_, T> {
                         }
                     }
                     if !tail.trim().is_empty() {
-                        return Err(JdxError::new(&format!(
+                        return Err(SfError::new(&format!(
                             "Unexpected content found while parsing PEAK TABLE: {}",
                             tail
                         )));
@@ -109,10 +110,10 @@ impl<T: SeekBufRead> PeakTableParser<'_, T> {
         Ok(self.tuple_queue.pop_front())
     }
 
-    fn create_peak(&self, tuple: &str) -> Result<Peak, JdxError> {
+    fn create_peak(&self, tuple: &str) -> Result<Peak, SfError> {
         let caps = TUPLE_COMPONENTS_REGEX.captures(tuple);
         if caps.as_ref().is_none() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal PEAK TABLE tuple: {}",
                 tuple
             )));
@@ -128,14 +129,14 @@ impl<T: SeekBufRead> PeakTableParser<'_, T> {
             || (Self::PEAK_TABLE_VARIABLE_LISTS[1..].contains(&self.variable_list)
                 && wm_opt.is_none())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal PEAK TABLE entry for {}: {}",
                 self.variable_list, tuple
             )));
         }
 
         let x = x_opt.unwrap().as_str().parse::<f64>().map_err(|_e| {
-            JdxError::new(&format!(
+            SfError::new(&format!(
                 "Illegal x value encountered while parsing PEAK TABLE token: {}",
                 tuple
             ))
@@ -143,7 +144,7 @@ impl<T: SeekBufRead> PeakTableParser<'_, T> {
         let y = match y_opt.unwrap().as_str() {
             s if s.trim().is_empty() => f64::NAN,
             s => s.parse::<f64>().map_err(|_e| {
-                JdxError::new(&format!(
+                SfError::new(&format!(
                     "Illegal y value encountered while parsing PEAK TABLE token: {}",
                     tuple
                 ))
@@ -155,7 +156,7 @@ impl<T: SeekBufRead> PeakTableParser<'_, T> {
                 let w = match wm_opt.unwrap().as_str() {
                     wm if wm.trim().is_empty() => f64::NAN,
                     wm => wm.parse::<f64>().map_err(|_e| {
-                        JdxError::new(&format!(
+                        SfError::new(&format!(
                             "Illegal w value encountered while parsing PEAK TABLE token: {}",
                             tuple
                         ))
@@ -177,9 +178,9 @@ impl<T: SeekBufRead> PeakTableParser<'_, T> {
 impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for PeakTableParser<'r, T> {
     type Item = Peak;
 
-    fn new(variable_list: &'r str, reader: &'r mut T) -> Result<Self, JdxError> {
+    fn new(variable_list: &'r str, reader: &'r mut T) -> Result<Self, SfError> {
         if !Self::PEAK_TABLE_VARIABLE_LISTS.contains(&variable_list) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unsupported variable list for PEAK TABLE: {}",
                 &variable_list
             )));
@@ -197,9 +198,9 @@ impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for PeakTableParser<'r, T> {
     ///
     /// Assumes that a peak tuple does not span multiple lines, but one
     /// line may contain multiple tuples. Returns the next peak,
-    /// None if there is none, or JdxError if the next peak assignment is
+    /// None if there is none, or SfError if the next peak assignment is
     /// malformed.
-    fn next(&mut self) -> Result<Option<Self::Item>, JdxError> {
+    fn next(&mut self) -> Result<Option<Self::Item>, SfError> {
         let tuple_opt = self.next_tuple()?;
         match tuple_opt {
             None => Ok(None),

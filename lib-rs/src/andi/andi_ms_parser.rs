@@ -17,6 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use super::AndiDatasetCompleteness;
 use super::andi_enums::{
     AndiMsDataFormat, AndiMsDetectorType, AndiMsExperimentType, AndiMsFlagValue,
     AndiMsIntensityAxisUnit, AndiMsIonizationMethod, AndiMsIonizationPolarity, AndiMsMassAxisUnit,
@@ -30,8 +31,8 @@ use super::andi_utils::{
     read_index_from_var_i16, read_index_from_var_i32, read_multi_string_var, read_optional_var,
     read_var_2d_slice_f64, trim_zeros_in_place,
 };
-use super::{AndiDatasetCompleteness, AndiError};
 use crate::api::Parser;
+use crate::common::SfError;
 use netcdf3::{DataVector, Variable};
 use std::cell::RefCell;
 use std::ops::Range;
@@ -45,19 +46,19 @@ use std::{
 pub struct AndiMsParser {}
 
 impl AndiMsParser {
-    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiMsFile, AndiError> {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiMsFile, SfError> {
         AndiMsFile::new(reader)
     }
 }
 
 impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
     type R = AndiMsFile;
-    type E = AndiError;
+    type E = SfError;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
-            .map_err(|e| AndiError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
+            .map_err(|e| SfError::from_source(Box::new(e), "AnDI Error. Error parsing netCDF."))?;
         Self::parse_cdf(reader)
     }
 }
@@ -78,24 +79,23 @@ pub struct AndiMsFile {
 }
 
 impl AndiMsFile {
-    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, AndiError> {
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, SfError> {
         let admin_data = AndiMsAdminData::new(&mut reader)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS admin data."))?;
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS admin data."))?;
         let instrument_data = AndiMsInstrumentData::new(&mut reader, admin_data.instrument_number)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS instrument data."))?;
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS instrument data."))?;
         let sample_data = AndiMsSampleData::new(&reader)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS sample data."))?;
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS sample data."))?;
         let test_data = AndiMsTestData::new(&reader)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS test data."))?;
-        let raw_data_global =
-            Rc::new(AndiMsRawDataGlobal::new(&reader).map_err(|e| {
-                AndiError::from_source(e, "Error parsing AnDI MS raw data global.")
-            })?);
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS test data."))?;
+        let raw_data_global = Rc::new(
+            AndiMsRawDataGlobal::new(&reader)
+                .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS raw data global."))?,
+        );
         let library_data = match &admin_data.experiment_type {
             &AndiMsExperimentType::LibraryMassSpectrum => Some(
-                AndiMsLibraryData::new(&mut reader, raw_data_global.scan_number).map_err(|e| {
-                    AndiError::from_source(e, "Error parsing AnDI MS library data.")
-                })?,
+                AndiMsLibraryData::new(&mut reader, raw_data_global.scan_number)
+                    .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS library data."))?,
             ),
             _ => None,
         };
@@ -105,11 +105,11 @@ impl AndiMsFile {
             Rc::clone(&raw_data_global),
             test_data.resolution_type.clone(),
         )
-        .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS raw data scans."))?;
+        .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS raw data scans."))?;
         let scan_groups = match &test_data.scan_function {
             AndiMsScanFunction::Sid => Some(
                 AndiMsRawDataScanGroups::new(reader_ref)
-                    .map_err(|e| AndiError::from_source(e, "Error parsing AnDI MS scan groups."))?,
+                    .map_err(|e| SfError::from_source(e, "Error parsing AnDI MS scan groups."))?,
             ),
             _ => None,
         };
@@ -173,22 +173,22 @@ pub struct AndiMsAdminData {
 impl AndiMsAdminData {
     pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
         let dataset_completeness_attr = read_global_attr_str(reader, "dataset_completeness")
-            .ok_or(AndiError::new("Missing dataset_completeness attribute."))?;
+            .ok_or(SfError::new("Missing dataset_completeness attribute."))?;
         let dataset_completeness = AndiDatasetCompleteness::from_str(&dataset_completeness_attr)?;
         let ms_template_revision = read_global_attr_str(reader, "ms_template_revision")
-            .ok_or(AndiError::new("Missing ms_template_revision attribute."))?;
+            .ok_or(SfError::new("Missing ms_template_revision attribute."))?;
         let administrative_comments = read_global_attr_str(reader, "administrative_comments");
         let dataset_origin = read_global_attr_str(reader, "dataset_origin");
         let dataset_owner = read_global_attr_str(reader, "dataset_owner");
         let experiment_title = read_global_attr_str(reader, "experiment_title");
         let experiment_date_time_stamp = read_global_attr_str(reader, "experiment_date_time_stamp")
-            .ok_or(AndiError::new(
+            .ok_or(SfError::new(
                 "Missing experiment_date_time_stamp attribute.",
             ))?;
         let experiment_type = read_global_attr_str(reader, "experiment_type").map_or(
             Ok(AndiMsExperimentType::default()),
             |s| {
-                AndiMsExperimentType::from_str(&s).or(Err(AndiError::new(&format!(
+                AndiMsExperimentType::from_str(&s).or(Err(SfError::new(&format!(
                     "Illegal experiment_type: {}",
                     s
                 ))))
@@ -199,11 +199,11 @@ impl AndiMsAdminData {
         let experiment_x_ref_2 = read_global_attr_str(reader, "experiment_x_ref_2");
         let experiment_x_ref_3 = read_global_attr_str(reader, "experiment_x_ref_3");
         let netcdf_file_date_time_stamp =
-            read_global_attr_str(reader, "netcdf_file_date_time_stamp").ok_or(AndiError::new(
+            read_global_attr_str(reader, "netcdf_file_date_time_stamp").ok_or(SfError::new(
                 "Missing netcdf_file_date_time_stamp attribute.",
             ))?;
         let netcdf_revision = read_global_attr_str(reader, "netcdf_revision")
-            .ok_or(AndiError::new("Missing netcdf_revision attribute."))?;
+            .ok_or(SfError::new("Missing netcdf_revision attribute."))?;
         let operator_name = read_global_attr_str(reader, "operator_name");
         let source_file_reference = read_global_attr_str(reader, "source_file_reference");
         let source_file_format = read_global_attr_str(reader, "source_file_format");
@@ -214,7 +214,7 @@ impl AndiMsAdminData {
         let external_file_ref_2 = read_global_attr_str(reader, "external_file_ref_2");
         let external_file_ref_3 = read_global_attr_str(reader, "external_file_ref_3");
         let languages = read_global_attr_str(reader, "languages")
-            .ok_or(AndiError::new("Missing languages attribute."))?;
+            .ok_or(SfError::new("Missing languages attribute."))?;
         let number_of_times_processed = read_global_attr_i32(reader, "number_of_times_processed")?;
         let number_of_times_calibrated =
             read_global_attr_i32(reader, "number_of_times_calibrated")?;
@@ -317,13 +317,13 @@ impl AndiMsInstrumentData {
             items: &[T],
             var_name: &str,
             index: usize,
-        ) -> Result<Option<String>, AndiError> {
+        ) -> Result<Option<String>, SfError> {
             if items.is_empty() {
                 return Ok(None);
             }
             match items.get(index) {
                 Some(item) => Ok(Some(item.as_ref().to_owned())),
-                None => Err(AndiError::new(&format!(
+                None => Err(SfError::new(&format!(
                     "Missing element for {} at index: {}",
                     var_name, index
                 ))),
@@ -400,7 +400,7 @@ impl AndiMsSampleData {
             Ok(AndiMsSampleState::default()),
             |s| {
                 AndiMsSampleState::from_str(&s)
-                    .or(Err(AndiError::new(&format!("Illegal sample_state: {}", s))))
+                    .or(Err(SfError::new(&format!("Illegal sample_state: {}", s))))
             },
         )?;
         let sample_matrix = read_global_attr_str(reader, "sample_matrix");
@@ -599,14 +599,14 @@ pub struct AndiMsRawDataGlobal {
 pub fn read_var_attr_f64(
     var_opt: Option<&Variable>,
     attr_name: &str,
-) -> Result<Option<f64>, AndiError> {
+) -> Result<Option<f64>, SfError> {
     match var_opt.and_then(|var| var.get_attr_f64(attr_name)) {
         None | Some([]) => Ok(None),
         Some([val]) => Ok(Some(val.to_owned())),
         Some([..]) => {
             // unwrap is safe here as this can only match if var exists
             let var_name = var_opt.unwrap().name();
-            Err(AndiError::new(&format!(
+            Err(SfError::new(&format!(
                 "More than one element found in {} attribute for variable {}.",
                 attr_name, var_name
             )))
@@ -628,7 +628,7 @@ impl AndiMsRawDataGlobal {
         let scan_number_dim = reader
             .data_set()
             .get_dim("scan_number")
-            .ok_or(AndiError::new("Missing scan_number dimension."))?;
+            .ok_or(SfError::new("Missing scan_number dimension."))?;
         // TODO: usize?
         let scan_number = scan_number_dim.size() as i32;
         let starting_scan_number = read_global_attr_i32(reader, "starting_scan_number")?;
@@ -647,21 +647,21 @@ impl AndiMsRawDataGlobal {
             read_var_attr_f64(intensity_values_var, "add_offset")?.unwrap_or(0f64);
         let mass_axis_units = match read_var_attr_str(mass_values_var, "units") {
             None => AndiMsMassAxisUnit::default(),
-            Some(s) => AndiMsMassAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+            Some(s) => AndiMsMassAxisUnit::from_str(&s).or(Err(SfError::new(&format!(
                 "Illegal mass_values units: {}",
                 s
             ))))?,
         };
         let time_axis_units = match read_var_attr_str(time_values_var, "units") {
             None => AndiMsTimeAxisUnit::default(),
-            Some(s) => AndiMsTimeAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+            Some(s) => AndiMsTimeAxisUnit::from_str(&s).or(Err(SfError::new(&format!(
                 "Illegal time_values units: {}",
                 s
             ))))?,
         };
         let intensity_axis_units = match read_var_attr_str(intensity_values_var, "units") {
             None => AndiMsIntensityAxisUnit::default(),
-            Some(s) => AndiMsIntensityAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+            Some(s) => AndiMsIntensityAxisUnit::from_str(&s).or(Err(SfError::new(&format!(
                 "Illegal intensity_values units: {}",
                 s
             ))))?,
@@ -669,7 +669,7 @@ impl AndiMsRawDataGlobal {
         let total_intensity_var = reader.data_set().get_var("total_intensity");
         let total_intensity_units = match read_var_attr_str(total_intensity_var, "units") {
             None => AndiMsIntensityAxisUnit::default(),
-            Some(s) => AndiMsIntensityAxisUnit::from_str(&s).or(Err(AndiError::new(&format!(
+            Some(s) => AndiMsIntensityAxisUnit::from_str(&s).or(Err(SfError::new(&format!(
                 "Illegal total_intensity units: {}",
                 s
             ))))?,
@@ -682,7 +682,7 @@ impl AndiMsRawDataGlobal {
         let intensity_axis_data_format =
             match read_global_attr_str(reader, "raw_data_intensity_format") {
                 None => AndiMsDataFormat::Long,
-                Some(s) => AndiMsDataFormat::from_str(&s).or(Err(AndiError::new(&format!(
+                Some(s) => AndiMsDataFormat::from_str(&s).or(Err(SfError::new(&format!(
                     "Illegal raw_data_intensity_format: {}",
                     s
                 ))))?,
@@ -771,7 +771,7 @@ impl AndiMsRawDataScans {
         let mut raw_data_per_scan_list = Vec::<AndiMsRawDataPerScan>::new();
         for i in 0..number_of_scans {
             let scan_index = read_index_from_var_i32(&scan_index_var, i as usize)?.ok_or(
-                AndiError::new(&format!(
+                SfError::new(&format!(
                     "Could not read scan_index from scan_index variable at index: {}",
                     i
                 )),
@@ -780,13 +780,13 @@ impl AndiMsRawDataScans {
             let actual_scan_number =
                 read_index_from_var_i32(&actual_scan_number_var, i as usize)?.unwrap_or(i);
             let number_of_points = read_index_from_var_i32(&point_count_var, i as usize)?.ok_or(
-                AndiError::new(&format!(
+                SfError::new(&format!(
                     "Could not read number_of_points from point_count variable at index: {}",
                     i
                 )),
             )?;
             let number_of_flags = read_index_from_var_i32(&flag_count_var, i as usize)?.ok_or(
-                AndiError::new(&format!(
+                SfError::new(&format!(
                     "Could not read number_of_flags from flag_count variable at index: {}",
                     i
                 )),
@@ -878,12 +878,10 @@ impl AndiMsRawDataPerScan {
         f64: From<T>,
         T: Copy,
     {
-        let slice = var_values
-            .get(range.clone())
-            .ok_or(AndiError::new(&format!(
-                "Illegal range for {}: {}..{}",
-                var_name, &range.start, &range.end
-            )))?;
+        let slice = var_values.get(range.clone()).ok_or(SfError::new(&format!(
+            "Illegal range for {}: {}..{}",
+            var_name, &range.start, &range.end
+        )))?;
 
         let scaled_values: Vec<f64> = slice
             .iter()
@@ -942,27 +940,27 @@ impl AndiMsRawDataPerScan {
         Ok(Some(res))
     }
 
-    pub fn get_mass_axis_values(&self) -> Result<Option<Vec<f64>>, AndiError> {
+    pub fn get_mass_axis_values(&self) -> Result<Option<Vec<f64>>, SfError> {
         let data_format = &self.raw_data_global.mass_axis_data_format;
         let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
         let scale_factor = self.raw_data_global.mass_axis_scale_factor;
         let offset = 0.0f64;
 
         self.read_values("mass_values", data_format, &range, scale_factor, offset)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI mass axis values."))
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI mass axis values."))
     }
 
-    pub fn get_time_axis_values(&self) -> Result<Option<Vec<f64>>, AndiError> {
+    pub fn get_time_axis_values(&self) -> Result<Option<Vec<f64>>, SfError> {
         let data_format = &self.raw_data_global.time_axis_data_format;
         let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
         let scale_factor = self.raw_data_global.time_axis_scale_factor;
         let offset = 0.0f64;
 
         self.read_values("time_values", data_format, &range, scale_factor, offset)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI time axis values."))
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI time axis values."))
     }
 
-    pub fn get_intensity_axis_values(&self) -> Result<Option<Vec<f64>>, AndiError> {
+    pub fn get_intensity_axis_values(&self) -> Result<Option<Vec<f64>>, SfError> {
         let data_format = &self.raw_data_global.intensity_axis_data_format;
         let range = self.scan_index as usize..(self.scan_index + self.number_of_points) as usize;
         let scale_factor = self.raw_data_global.intensity_axis_scale_factor;
@@ -975,11 +973,11 @@ impl AndiMsRawDataPerScan {
             scale_factor,
             offset,
         )
-        .map_err(|e| AndiError::from_source(e, "Error parsing AnDI intensity axis values."))
+        .map_err(|e| SfError::from_source(e, "Error parsing AnDI intensity axis values."))
     }
 
     // TODO: account for -9999 values
-    pub fn get_flagged_peak_indices(&self) -> Result<Vec<i32>, AndiError> {
+    pub fn get_flagged_peak_indices(&self) -> Result<Vec<i32>, SfError> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;
         let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;
@@ -993,7 +991,7 @@ impl AndiMsRawDataPerScan {
                 0f64,
             )
             .map_err(|e| {
-                AndiError::from_source(e, "Error parsing AnDI flagged peaks mass values.")
+                SfError::from_source(e, "Error parsing AnDI flagged peaks mass values.")
             })?;
         if flagged_peaks.is_none() {
             flagged_peaks = self
@@ -1005,7 +1003,7 @@ impl AndiMsRawDataPerScan {
                     0f64,
                 )
                 .map_err(|e| {
-                    AndiError::from_source(e, "Error parsing AnDI flagged peaks time values.")
+                    SfError::from_source(e, "Error parsing AnDI flagged peaks time values.")
                 })?;
         }
 
@@ -1015,7 +1013,7 @@ impl AndiMsRawDataPerScan {
         }
     }
 
-    pub fn get_flag_values(&self) -> Result<Vec<Vec<AndiMsFlagValue>>, AndiError> {
+    pub fn get_flag_values(&self) -> Result<Vec<Vec<AndiMsFlagValue>>, SfError> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;
         let range = flag_index as usize..(flag_index + self.number_of_flags) as usize;
@@ -1028,7 +1026,7 @@ impl AndiMsRawDataPerScan {
                 1f64,
                 0f64,
             )
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI flag values."))?;
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI flag values."))?;
 
         match flag_values {
             None => Ok(vec![]),
@@ -1216,14 +1214,14 @@ impl AndiMsRawDataScanGroups {
         for group_number in 0..number_of_groups {
             let number_of_masses_in_group =
                 read_index_from_var_i32(&group_mass_count_var, group_number)?.ok_or(
-                    AndiError::new(&format!(
+                    SfError::new(&format!(
                         "Could not read group_mass_count at index: {}",
                         group_number
                     )),
                 )?;
             let starting_scan_number =
                 read_index_from_var_i32(&group_starting_scan_var, group_number)?.ok_or(
-                    AndiError::new(&format!(
+                    SfError::new(&format!(
                         "Could not read group_starting_scan at index: {}",
                         group_number
                     )),
@@ -1275,7 +1273,7 @@ impl AndiMsRawDataPerScanGroup {
         let group_masses_var = match read_optional_var(&mut self.reader_ref.borrow_mut(), var_name)?
         {
             Some(var) => var,
-            None => Err(AndiError::new(&format!(
+            None => Err(SfError::new(&format!(
                 "Could not find required variable: {}",
                 var_name
             )))?,

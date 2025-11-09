@@ -18,9 +18,10 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use super::JdxSequenceParser;
+use super::jdx_parser::AuditTrailEntry;
 use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str};
-use super::{JdxError, jdx_parser::AuditTrailEntry};
 use crate::api::SeekBufRead;
+use crate::common::SfError;
 use std::sync::LazyLock;
 
 /// matches 5 - 7 audit trail entry segments as groups 1-7, groups 5 nd 6
@@ -55,13 +56,13 @@ impl<T: SeekBufRead> AuditTrailParser<'_, T> {
         "(NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)",
     ];
 
-    fn next_tuple(&mut self) -> Result<Option<String>, JdxError> {
+    fn next_tuple(&mut self) -> Result<Option<String>, SfError> {
         next_multiline_parser_tuple("AUDIT TRAIL", self.reader, &mut self.buf, '\n')
     }
 
-    fn create_audit_trail_entry(&self, tuple: &str) -> Result<AuditTrailEntry, JdxError> {
+    fn create_audit_trail_entry(&self, tuple: &str) -> Result<AuditTrailEntry, SfError> {
         let caps_opt = TUPLE_REGEX.captures(tuple);
-        let caps = caps_opt.ok_or(JdxError::new(&format!(
+        let caps = caps_opt.ok_or(SfError::new(&format!(
             "Illegal AUDIT TRAIL tuple: {}",
             tuple
         )))?;
@@ -77,7 +78,7 @@ impl<T: SeekBufRead> AuditTrailParser<'_, T> {
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[0] == self.variable_list
             && (process_or_version_opt.is_some() || version_opt.is_some())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal AUDIT TRAIL entry: {}",
                 tuple
             )));
@@ -85,7 +86,7 @@ impl<T: SeekBufRead> AuditTrailParser<'_, T> {
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[1] == self.variable_list
             && (process_or_version_opt.is_none() || version_opt.is_some())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal AUDIT TRAIL entry: {}",
                 tuple
             )));
@@ -93,7 +94,7 @@ impl<T: SeekBufRead> AuditTrailParser<'_, T> {
         if Self::AUDIT_TRAIL_VARIABLE_LISTS[2] == self.variable_list
             && (process_or_version_opt.is_none() || version_opt.is_none())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal AUDIT TRAIL entry: {}",
                 tuple
             )));
@@ -134,9 +135,9 @@ impl<T: SeekBufRead> AuditTrailParser<'_, T> {
 impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for AuditTrailParser<'r, T> {
     type Item = AuditTrailEntry;
 
-    fn new(variable_list: &'r str, reader: &'r mut T) -> Result<AuditTrailParser<'r, T>, JdxError> {
+    fn new(variable_list: &'r str, reader: &'r mut T) -> Result<AuditTrailParser<'r, T>, SfError> {
         if !Self::AUDIT_TRAIL_VARIABLE_LISTS.contains(&variable_list) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unsupported variable list for AUDIT TRAIL: {}",
                 &variable_list
             )));
@@ -153,9 +154,9 @@ impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for AuditTrailParser<'r, T> {
     ///
     /// Assumes that an audit trail entry tuple always starts on a new
     /// line, but may span multiple lines. Returns the next audit trail
-    /// entry, None if there is none, and JdxError if next audit trail
+    /// entry, None if there is none, and SfError if next audit trail
     /// entry is malformed.
-    fn next(&mut self) -> Result<Option<AuditTrailEntry>, JdxError> {
+    fn next(&mut self) -> Result<Option<AuditTrailEntry>, SfError> {
         let tuple_opt = self.next_tuple()?;
         match tuple_opt {
             None => Ok(None),

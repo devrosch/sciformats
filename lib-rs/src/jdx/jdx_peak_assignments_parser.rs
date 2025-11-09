@@ -17,10 +17,11 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use super::JdxSequenceParser;
 use super::jdx_parser::PeakAssignment;
 use super::jdx_utils::{next_multiline_parser_tuple, parse_opt_str, parse_str};
-use super::{JdxError, JdxSequenceParser};
 use crate::api::SeekBufRead;
+use crate::common::SfError;
 use std::sync::LazyLock;
 
 /// Matches 2 - 5 peak assignments segments  as groups 1-5, corresponding to
@@ -41,13 +42,13 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
     const PEAK_ASSIGNMENTS_VARIABLE_LISTS: [&'static str; 4] =
         ["(XYA)", "(XYWA)", "(XYMA)", "(XYMWA)"];
 
-    fn next_tuple(&mut self) -> Result<Option<String>, JdxError> {
+    fn next_tuple(&mut self) -> Result<Option<String>, SfError> {
         next_multiline_parser_tuple("PEAK ASSIGNMENTS", self.reader, &mut self.buf, ' ')
     }
 
-    fn create_peak_assignment(&self, tuple: &str) -> Result<PeakAssignment, JdxError> {
+    fn create_peak_assignment(&self, tuple: &str) -> Result<PeakAssignment, SfError> {
         let caps_opt = TUPLE_COMPONENTS_REGEX.captures(tuple);
-        let caps = caps_opt.ok_or(JdxError::new(&format!(
+        let caps = caps_opt.ok_or(SfError::new(&format!(
             "Illegal PEAK ASSIGNMENTS tuple: {}",
             tuple
         )))?;
@@ -59,7 +60,7 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
         let a_opt = caps.get(5);
 
         if x_opt.is_none() || a_opt.is_none() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal PEAK ASSIGNMENTS entry: {}",
                 tuple
             )));
@@ -67,13 +68,13 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
         if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[0] == self.variable_list
             && (wm_opt.is_some() || w_opt.is_some())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal PEAK ASSIGNMENTS entry for {}: {}",
                 self.variable_list, tuple
             )));
         }
         if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[1] == self.variable_list && w_opt.is_some() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal PEAK ASSIGNMENTS entry for {}: {}",
                 self.variable_list, tuple
             )));
@@ -81,13 +82,13 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
         if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[1] == self.variable_list
             && (y_opt.is_some() && wm_opt.is_none())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Ambiguous PEAK ASSIGNMENTS entry for {}: {}",
                 self.variable_list, tuple
             )));
         }
         if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[2] == self.variable_list && w_opt.is_some() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal PEAK ASSIGNMENTS entry for {}: {}",
                 self.variable_list, tuple
             )));
@@ -95,7 +96,7 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
         if Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS[2] == self.variable_list
             && (y_opt.is_some() && wm_opt.is_none())
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Ambiguous PEAK ASSIGNMENTS entry for {}: {}",
                 self.variable_list, tuple
             )));
@@ -104,7 +105,7 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
             && (!(y_opt.is_some() && wm_opt.is_some() && w_opt.is_some())
                 && (y_opt.is_some() || wm_opt.is_some() || w_opt.is_some()))
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Ambiguous PEAK ASSIGNMENTS entry for {}: {}",
                 self.variable_list, tuple
             )));
@@ -153,7 +154,7 @@ impl<T: SeekBufRead> PeakAssignmentsParser<'_, T> {
         })
     }
 
-    fn parse_f64_token(token: &str) -> Result<f64, JdxError> {
+    fn parse_f64_token(token: &str) -> Result<f64, SfError> {
         match token.trim() {
             "" => Ok(f64::NAN),
             v => parse_str(v, "numeric token in PEAK ASSIGNMENTS"),
@@ -167,9 +168,9 @@ impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for PeakAssignmentsParser<'r, 
     fn new(
         variable_list: &'r str,
         reader: &'r mut T,
-    ) -> Result<PeakAssignmentsParser<'r, T>, JdxError> {
+    ) -> Result<PeakAssignmentsParser<'r, T>, SfError> {
         if !Self::PEAK_ASSIGNMENTS_VARIABLE_LISTS.contains(&variable_list) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unsupported variable list for PEAK ASSIGNMENTS: {}",
                 &variable_list
             )));
@@ -186,9 +187,9 @@ impl<'r, T: SeekBufRead> JdxSequenceParser<'r, T> for PeakAssignmentsParser<'r, 
     ///
     /// Assumes that a peak assignment tuple always starts on a new line,
     /// but may span multiple lines. Returns the next peak assignment,
-    /// None if there is none, or JdxError if the next peak assignment is
+    /// None if there is none, or SfError if the next peak assignment is
     /// malformed.
-    fn next(&mut self) -> Result<Option<PeakAssignment>, JdxError> {
+    fn next(&mut self) -> Result<Option<PeakAssignment>, SfError> {
         let tuple_opt = self.next_tuple()?;
         match tuple_opt {
             None => Ok(None),

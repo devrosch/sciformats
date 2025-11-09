@@ -17,7 +17,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::{andi::AndiError, utils::from_iso_8859_1_cstr};
+use crate::{common::SfError, utils::from_iso_8859_1_cstr};
 use netcdf3::{DataType, DataVector};
 use std::{error::Error, ops::Range, str::FromStr};
 
@@ -66,9 +66,9 @@ pub fn read_index_from_var_f64(
     read_index_from_var(var, slice, index)
 }
 
-pub fn check_var_is_2d(var_name: &str, dims: &[usize]) -> Result<(), AndiError> {
+pub fn check_var_is_2d(var_name: &str, dims: &[usize]) -> Result<(), SfError> {
     if dims.len() != 2 {
-        return Err(AndiError::new(&format!(
+        return Err(SfError::new(&format!(
             "Unexpected number of dimensions for {}: {}",
             var_name,
             dims.len()
@@ -80,7 +80,7 @@ pub fn check_var_is_2d(var_name: &str, dims: &[usize]) -> Result<(), AndiError> 
 pub fn read_index_from_var_2d_string(
     var: &Option<(&str, Vec<usize>, DataVector)>,
     index: usize,
-) -> Result<Option<String>, AndiError> {
+) -> Result<Option<String>, SfError> {
     match var {
         None => Ok(None),
         Some((var_name, dims, data)) => {
@@ -89,7 +89,7 @@ pub fn read_index_from_var_2d_string(
             let row_length = dims[1];
             let bytes = data
                 .get_u8()
-                .ok_or(AndiError::new(&format!("Failed to read {}", var_name)))?;
+                .ok_or(SfError::new(&format!("Failed to read {}", var_name)))?;
             let start_index = index * row_length;
             let end_index = start_index + row_length;
             let string_bytes = &bytes[start_index..end_index];
@@ -103,18 +103,18 @@ pub fn read_index_from_var_2d_string(
 pub fn read_var_2d_slice_f64(
     var: &(&str, Vec<usize>, DataVector),
     range: &Range<usize>,
-) -> Result<Vec<f64>, AndiError> {
+) -> Result<Vec<f64>, SfError> {
     // TODO: inefficient, add option to read slice to netcdf3 library
     let values = var
         .2
         .get_f64()
-        .ok_or(AndiError::new(&format!(
+        .ok_or(SfError::new(&format!(
             "Could not read values for variable: {}",
             var.0
         )))?
         .get(range.to_owned())
         .map(|v| v.to_owned())
-        .ok_or(AndiError::new(&format!(
+        .ok_or(SfError::new(&format!(
             "Could not read range for variable {}: {}..{}",
             var.0, range.start, range.end
         )))?;
@@ -134,7 +134,7 @@ pub fn read_multi_string_var(
             let mut vec = vec![];
             for i in 0..dims[0] {
                 let value = read_index_from_var_2d_string(&var_opt, i)?
-                    .ok_or(AndiError::new(&format!("Failed to read {}", var_name)))?;
+                    .ok_or(SfError::new(&format!("Failed to read {}", var_name)))?;
                 vec.push(value);
             }
             Ok(vec)
@@ -150,7 +150,7 @@ pub fn read_index_from_slice<'a, T: 'a>(
     match slice {
         None => Ok(None),
         Some(sl) => match sl.get(index) {
-            None => Err(Box::new(AndiError::new(&format!(
+            None => Err(Box::new(SfError::new(&format!(
                 "Index out of bounds for {}: {}",
                 var_name, index
             )))),
@@ -179,15 +179,15 @@ pub fn read_optional_var<'a>(
 pub fn read_scalar_var_f32(
     reader: &mut netcdf3::FileReader,
     var_name: &str,
-) -> Result<Option<f32>, AndiError> {
+) -> Result<Option<f32>, SfError> {
     let var = reader.data_set().get_var(var_name);
     match var {
         Some(var) => {
             if var.len() != 1 {
-                return Err(AndiError::new(&format!("{} not scalar", var_name)));
+                return Err(SfError::new(&format!("{} not scalar", var_name)));
             }
             if var.data_type() != DataType::F32 {
-                return Err(AndiError::new(&format!(
+                return Err(SfError::new(&format!(
                     "{} unexpected data type: {}",
                     var_name,
                     var.data_type()
@@ -212,7 +212,7 @@ pub fn read_optional_var_or_attr_f32(
                 match val {
                     [single_val] => value = Some(single_val.to_owned()),
                     _ => {
-                        return Err(Box::new(AndiError::new(&format!(
+                        return Err(Box::new(SfError::new(&format!(
                             "Unexpected content for {}.",
                             var_name
                         ))));
@@ -249,11 +249,11 @@ pub fn read_global_attr_str(reader: &netcdf3::FileReader, attr_name: &str) -> Op
 pub fn extract_single_attr_value<T: Clone>(
     attr_name: &str,
     values: Option<&[T]>,
-) -> Result<Option<T>, AndiError> {
+) -> Result<Option<T>, SfError> {
     match values {
         None | Some([]) => Ok(None),
         Some([val]) => Ok(Some(val.to_owned())),
-        Some([..]) => Err(AndiError::new(&format!(
+        Some([..]) => Err(SfError::new(&format!(
             "More than one element found in global {} attribute.",
             attr_name
         ))),
@@ -263,40 +263,37 @@ pub fn extract_single_attr_value<T: Clone>(
 pub fn read_global_attr_i16(
     reader: &netcdf3::FileReader,
     attr_name: &str,
-) -> Result<Option<i16>, AndiError> {
+) -> Result<Option<i16>, SfError> {
     extract_single_attr_value(attr_name, reader.data_set().get_global_attr_i16(attr_name))
 }
 
 pub fn read_global_attr_i32(
     reader: &netcdf3::FileReader,
     attr_name: &str,
-) -> Result<Option<i32>, AndiError> {
+) -> Result<Option<i32>, SfError> {
     extract_single_attr_value(attr_name, reader.data_set().get_global_attr_i32(attr_name))
 }
 
 pub fn read_global_attr_f32(
     reader: &netcdf3::FileReader,
     attr_name: &str,
-) -> Result<Option<f32>, AndiError> {
+) -> Result<Option<f32>, SfError> {
     extract_single_attr_value(attr_name, reader.data_set().get_global_attr_f32(attr_name))
 }
 
 pub fn read_global_attr_f64(
     reader: &netcdf3::FileReader,
     attr_name: &str,
-) -> Result<Option<f64>, AndiError> {
+) -> Result<Option<f64>, SfError> {
     extract_single_attr_value(attr_name, reader.data_set().get_global_attr_f64(attr_name))
 }
 
 pub fn read_enum_from_global_attr_str<T: Default + FromStr>(
     reader: &netcdf3::FileReader,
     attr_name: &str,
-) -> Result<T, AndiError> {
+) -> Result<T, SfError> {
     read_global_attr_str(reader, attr_name).map_or(Ok(T::default()), |s| {
-        T::from_str(&s).or(Err(AndiError::new(&format!(
-            "Illegal {}: {}",
-            attr_name, s
-        ))))
+        T::from_str(&s).or(Err(SfError::new(&format!("Illegal {}: {}", attr_name, s))))
     })
 }
 

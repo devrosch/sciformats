@@ -17,68 +17,24 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::api::SeekBufRead;
+use crate::{api::SeekBufRead, common::SfError};
 use quick_xml::{
     Reader,
     escape::resolve_predefined_entity,
     events::{BytesStart, Event},
     name::QName,
 };
-use std::{cell::RefCell, collections::HashMap, error::Error, fmt, io::BufRead, rc::Rc, str, vec};
+use std::{cell::RefCell, collections::HashMap, error::Error, io::BufRead, rc::Rc, str, vec};
 
-#[derive(Debug)]
-pub struct SfXmlError {
-    message: String,
-    source: Option<Box<dyn Error>>,
-}
-
-impl SfXmlError {
-    pub fn new(msg: &str) -> Self {
-        Self {
-            message: msg.into(),
-            source: None,
-        }
-    }
-
-    pub fn from_source(source: impl Into<Box<dyn Error>>, message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-            source: Some(source.into()),
-        }
-    }
-
-    pub(super) fn into_inner(self) -> (String, Option<Box<dyn Error>>) {
-        (self.message, self.source)
-    }
-}
-
-impl Error for SfXmlError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_ref().map(|b| b.as_ref())
-    }
-}
-
-impl fmt::Display for SfXmlError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl From<quick_xml::Error> for SfXmlError {
+impl From<quick_xml::Error> for SfError {
     fn from(value: quick_xml::Error) -> Self {
-        Self::from_source(value, "Structural error parsing XML.")
+        Self::from_source(Box::new(value), "Structural error parsing XML.")
     }
 }
 
-impl From<quick_xml::encoding::EncodingError> for SfXmlError {
+impl From<quick_xml::encoding::EncodingError> for SfError {
     fn from(value: quick_xml::encoding::EncodingError) -> Self {
-        Self::from_source(value, "Encoding error parsing XML.")
-    }
-}
-
-impl From<std::io::Error> for SfXmlError {
-    fn from(value: std::io::Error) -> Self {
-        Self::from_source(value, "I/O error parsing XML.")
+        Self::from_source(Box::new(value), "Encoding error parsing XML.")
     }
 }
 
@@ -110,11 +66,11 @@ pub(super) enum XmlTagStart<'buf> {
 }
 
 impl XmlTagStart<'_> {
-    pub fn get_req_attr(&self, name: &str) -> Result<String, SfXmlError> {
+    pub fn get_req_attr(&self, name: &str) -> Result<String, SfError> {
         match self {
             Self::Start(attributes) | Self::Empty(attributes) => Ok(attributes
                 .get(&QName(name.as_bytes()))
-                .ok_or(SfXmlError::new(&format!("Missing attribute: {:?}", name)))?
+                .ok_or(SfError::new(&format!("Missing attribute: {:?}", name)))?
                 .clone()
                 .into_owned()),
         }
@@ -125,7 +81,7 @@ impl XmlTagStart<'_> {
         name: &str,
         parse_fn: &dyn Fn(&str) -> Result<T, E>,
         context: &str,
-    ) -> Result<T, SfXmlError> {
+    ) -> Result<T, SfError> {
         let value = self.get_req_attr(name)?;
         Self::parse_attr_and_map_err(&value, name, parse_fn, context)
     }
@@ -142,7 +98,7 @@ impl XmlTagStart<'_> {
         name: &str,
         parse_fn: &dyn Fn(&str) -> Result<T, E>,
         context: &str,
-    ) -> Result<Option<T>, SfXmlError> {
+    ) -> Result<Option<T>, SfError> {
         self.get_opt_attr(name)
             .map(|value| Self::parse_attr_and_map_err(&value, name, parse_fn, context))
             .transpose()
@@ -153,10 +109,10 @@ impl XmlTagStart<'_> {
         name: &str,
         parse_fn: &dyn Fn(&str) -> Result<T, E>,
         context: &str,
-    ) -> Result<T, SfXmlError> {
+    ) -> Result<T, SfError> {
         parse_fn(value).map_err(|e| {
-            SfXmlError::from_source(
-                e,
+            SfError::from_source(
+                Box::new(e),
                 format!(
                     "Error parsing {}. Unexpected {} attribute: {}",
                     context, name, &value
@@ -169,7 +125,7 @@ impl XmlTagStart<'_> {
 pub(super) fn skip_xml_decl<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
-) -> Result<BufEvent<'buf>, SfXmlError> {
+) -> Result<BufEvent<'buf>, SfError> {
     let buf_event = skip_whitespace(reader, buf)?;
     match &buf_event.event {
         Event::Decl(_) => skip_whitespace(reader, buf_event.buf),
@@ -181,7 +137,7 @@ pub(super) fn read_start_or_empty<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<XmlTagStart<'buf>, SfXmlError> {
+) -> Result<XmlTagStart<'buf>, SfError> {
     match &buf_event.event {
         Event::Start(bytes) => {
             check_matches_tag_name(tag, bytes)?;
@@ -191,7 +147,7 @@ pub(super) fn read_start_or_empty<'buf, R>(
             check_matches_tag_name(tag, bytes)?;
             Ok(XmlTagStart::Empty(read_attributes(bytes, reader)))
         }
-        _ => Err(SfXmlError::new(&format!(
+        _ => Err(SfError::new(&format!(
             "Unexpected event instead of start of {}: {:?}",
             str::from_utf8(tag).unwrap_or_default(),
             buf_event.event
@@ -203,10 +159,10 @@ pub(super) fn read_start<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<XmlTagStart<'buf>, SfXmlError> {
+) -> Result<XmlTagStart<'buf>, SfError> {
     match read_start_or_empty(tag, reader, buf_event) {
         Ok(XmlTagStart::Start(attr)) => Ok(XmlTagStart::Start(attr)),
-        Ok(XmlTagStart::Empty(_)) => Err(SfXmlError::new(&format!(
+        Ok(XmlTagStart::Empty(_)) => Err(SfError::new(&format!(
             "Empty XML tag instead of start tag found for: {}",
             str::from_utf8(tag).unwrap_or_default()
         ))),
@@ -218,9 +174,9 @@ pub(super) fn read_empty<'buf, R>(
     tag: &[u8],
     reader: &Reader<R>,
     buf_event: &'buf BufEvent<'buf>,
-) -> Result<XmlTagStart<'buf>, SfXmlError> {
+) -> Result<XmlTagStart<'buf>, SfError> {
     match read_start_or_empty(tag, reader, buf_event) {
-        Ok(XmlTagStart::Start(_)) => Err(SfXmlError::new(&format!(
+        Ok(XmlTagStart::Start(_)) => Err(SfError::new(&format!(
             "Start XML tag instead of empty tag found for: {}",
             str::from_utf8(tag).unwrap_or_default()
         )))?,
@@ -232,7 +188,7 @@ pub(super) fn read_empty<'buf, R>(
 pub(super) fn read_next_event<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
-) -> Result<BufEvent<'buf>, SfXmlError> {
+) -> Result<BufEvent<'buf>, SfError> {
     let raw_next = reader.read_event_into(buf)?;
     Ok(BufEvent::new(raw_next.into_owned(), buf))
 }
@@ -240,7 +196,7 @@ pub(super) fn read_next_event<'buf, R: BufRead>(
 pub(super) fn skip_whitespace<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
-) -> Result<BufEvent<'buf>, SfXmlError> {
+) -> Result<BufEvent<'buf>, SfError> {
     let event = loop {
         match reader.read_event_into(buf)? {
             Event::Text(bytes) => {
@@ -258,7 +214,7 @@ pub(super) fn skip_whitespace<'buf, R: BufRead>(
 pub(super) fn next_non_whitespace<'buf, R: BufRead>(
     next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-) -> Result<BufEvent<'buf>, SfXmlError> {
+) -> Result<BufEvent<'buf>, SfError> {
     let is_ws = match &next.event {
         Event::Text(bytes) => bytes.decode()?.trim().is_empty(),
         Event::Comment(_) => true,
@@ -274,7 +230,7 @@ pub(super) fn next_non_whitespace<'buf, R: BufRead>(
 pub(super) fn next_non_whitespace_rc(
     next: BufEvent<'_>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-) -> Result<BufEvent<'_>, SfXmlError> {
+) -> Result<BufEvent<'_>, SfError> {
     let mut reader = reader_ref.borrow_mut();
     next_non_whitespace(next, &mut reader)
 }
@@ -282,7 +238,7 @@ pub(super) fn next_non_whitespace_rc(
 pub(super) fn read_value<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
-) -> Result<(String, BufEvent<'buf>), SfXmlError> {
+) -> Result<(String, BufEvent<'buf>), SfError> {
     let mut value = String::new();
     let next = loop {
         let event = match reader.read_event_into(buf)? {
@@ -303,7 +259,7 @@ pub(super) fn read_value<'buf, R: BufRead>(
                             None
                         }
                         None => {
-                            return Err(SfXmlError::new(&format!(
+                            return Err(SfError::new(&format!(
                                 "Could not resolve entity as char reference: {}",
                                 bytes.decode()?
                             )));
@@ -330,7 +286,7 @@ pub(super) fn read_value<'buf, R: BufRead>(
 pub(super) fn read_value_pos<'buf, R: BufRead>(
     reader: &mut Reader<R>,
     buf: &'buf mut Vec<u8>,
-) -> Result<(u64, u64, BufEvent<'buf>), SfXmlError> {
+) -> Result<(u64, u64, BufEvent<'buf>), SfError> {
     let start_pos = reader.buffer_position();
     let mut end_pos = start_pos;
     let next = loop {
@@ -355,7 +311,7 @@ pub(super) fn consume_end<'buf, R: BufRead>(
     tag_name: &[u8],
     reader: &mut Reader<R>,
     next: BufEvent<'buf>,
-) -> Result<BufEvent<'buf>, SfXmlError> {
+) -> Result<BufEvent<'buf>, SfError> {
     let next = next_non_whitespace(next, reader)?;
     match &next.event {
         Event::End(bytes) => {
@@ -363,14 +319,14 @@ pub(super) fn consume_end<'buf, R: BufRead>(
                 let next_raw = reader.read_event_into(next.buf)?.into_owned();
                 Ok(BufEvent::new(next_raw, next.buf))
             } else {
-                Err(SfXmlError::new(&format!(
+                Err(SfError::new(&format!(
                     "Unexpected end tag for \"{}\": {}",
                     str::from_utf8(tag_name).unwrap_or_default(),
                     std::str::from_utf8(bytes.name().as_ref()).unwrap_or_default(),
                 )))?
             }
         }
-        e => Err(SfXmlError::new(&format!(
+        e => Err(SfError::new(&format!(
             "Unexpected event instead of end tag for \"{}\": {:?}",
             str::from_utf8(tag_name).unwrap_or_default(),
             e
@@ -382,13 +338,13 @@ pub(super) fn consume_end_rc<'buf>(
     tag_name: &[u8],
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     next: BufEvent<'buf>,
-) -> Result<BufEvent<'buf>, SfXmlError> {
+) -> Result<BufEvent<'buf>, SfError> {
     let mut reader = reader_ref.borrow_mut();
     consume_end(tag_name, &mut reader, next)
 }
 
 #[allow(dead_code)]
-pub(super) fn read_req_elem<'buf, R: BufRead, T, E: Error + From<SfXmlError>>(
+pub(super) fn read_req_elem<'buf, R: BufRead, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     reader: &mut Reader<R>,
@@ -398,7 +354,7 @@ pub(super) fn read_req_elem<'buf, R: BufRead, T, E: Error + From<SfXmlError>>(
     read_req_elem_core(tag_name, next, &mut |e| constructor(e, reader))
 }
 
-pub(super) fn read_req_elem_rc<'buf, T, E: Error + From<SfXmlError>>(
+pub(super) fn read_req_elem_rc<'buf, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
@@ -410,7 +366,7 @@ pub(super) fn read_req_elem_rc<'buf, T, E: Error + From<SfXmlError>>(
     })
 }
 
-pub(super) fn read_opt_elem<'buf, R: BufRead, T, E: Error + From<SfXmlError>>(
+pub(super) fn read_opt_elem<'buf, R: BufRead, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     mut reader: &mut Reader<R>,
@@ -425,7 +381,7 @@ pub(super) fn read_opt_elem<'buf, R: BufRead, T, E: Error + From<SfXmlError>>(
     )
 }
 
-pub(super) fn read_opt_elem_rc<'buf, T, E: Error + From<SfXmlError>>(
+pub(super) fn read_opt_elem_rc<'buf, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     mut reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
@@ -440,7 +396,7 @@ pub(super) fn read_opt_elem_rc<'buf, T, E: Error + From<SfXmlError>>(
     )
 }
 
-pub(super) fn read_sequence<'buf, R: BufRead, T, E: Error + From<SfXmlError>>(
+pub(super) fn read_sequence<'buf, R: BufRead, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     mut reader: &mut Reader<R>,
@@ -455,7 +411,7 @@ pub(super) fn read_sequence<'buf, R: BufRead, T, E: Error + From<SfXmlError>>(
     )
 }
 
-pub(super) fn read_sequence_rc<'buf, T, E: Error + From<SfXmlError>>(
+pub(super) fn read_sequence_rc<'buf, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     mut reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
@@ -474,7 +430,7 @@ pub(super) fn read_req_elem_value<'buf, R: BufRead>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-) -> Result<(String, BufEvent<'buf>), SfXmlError> {
+) -> Result<(String, BufEvent<'buf>), SfError> {
     let next = next_non_whitespace(next, reader)?;
     read_start(tag_name, reader, &next)?;
     let (value, next) = read_value(reader, next.buf)?;
@@ -487,11 +443,11 @@ pub(super) fn read_req_elem_value_f64<'buf, R: BufRead>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     reader: &mut Reader<R>,
-) -> Result<(f64, BufEvent<'buf>), SfXmlError> {
+) -> Result<(f64, BufEvent<'buf>), SfError> {
     let (value, next) = read_req_elem_value(tag_name, next, reader)?;
     let value_f64 = value.parse::<f64>().map_err(|e| {
         let tag = String::from_utf8_lossy(tag_name);
-        SfXmlError::from_source(e, format!("Illegal value for {}: {}", tag, value))
+        SfError::from_source(Box::new(e), format!("Illegal value for {}: {}", tag, value))
     })?;
 
     Ok((value_f64, next))
@@ -501,9 +457,9 @@ pub(super) fn read_req_elem_value_f64<'buf, R: BufRead>(
 // private
 // -------------------------------------------------------------
 
-fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), SfXmlError> {
+fn check_matches_tag_name(tag: &[u8], bytes_start: &BytesStart<'_>) -> Result<(), SfError> {
     if bytes_start.name().as_ref() != tag {
-        Err(SfXmlError::new(&format!(
+        Err(SfError::new(&format!(
             "Unexpected tag instead of \"{}\": {:?}",
             str::from_utf8(tag).unwrap_or_default(),
             str::from_utf8(bytes_start.name().as_ref())
@@ -531,7 +487,7 @@ fn read_attributes<'buf, R>(
         .collect::<HashMap<_, _>>()
 }
 
-fn read_req_elem_core<'buf, T, E: Error + From<SfXmlError>>(
+fn read_req_elem_core<'buf, T, E: Error + From<SfError>>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     wrapped_constructor: &mut dyn FnMut(BufEvent<'buf>) -> Result<(T, BufEvent<'buf>), E>,
@@ -541,13 +497,13 @@ fn read_req_elem_core<'buf, T, E: Error + From<SfXmlError>>(
             if bytes.name().as_ref() == tag_name {
                 wrapped_constructor(next)
             } else {
-                Err(SfXmlError::new(&format!(
+                Err(SfError::new(&format!(
                     "Unexpected start tag: {:?}",
                     std::str::from_utf8(bytes.name().as_ref())
                 )))?
             }
         }
-        e => Err(SfXmlError::new(&format!(
+        e => Err(SfError::new(&format!(
             "Unexpected event instead of start tag: {:?}",
             &e
         )))?,

@@ -17,13 +17,11 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{
-    JdxError,
-    jdx_parser::{
-        AuditTrail, BrukerRelaxSection, BrukerSpecificParameters, JdxBlock, NTuples, Page,
-        PeakAssignments, PeakTable,
-    },
+use super::jdx_parser::{
+    AuditTrail, BrukerRelaxSection, BrukerSpecificParameters, JdxBlock, NTuples, Page,
+    PeakAssignments, PeakTable,
 };
+use crate::common::SfError;
 use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, SeekBufRead, Table, Value},
     utils::convert_path_to_node_indices,
@@ -66,11 +64,11 @@ impl JdxReader {
         data_type == "mass spectrum"
     }
 
-    fn retrieve_node(&self, node_indices: &[usize]) -> Result<Node, JdxError> {
+    fn retrieve_node(&self, node_indices: &[usize]) -> Result<Node, SfError> {
         let generate_illegal_path_error =
-            |node_index: usize, block: &JdxBlock<Box<dyn SeekBufRead>>| -> JdxError {
+            |node_index: usize, block: &JdxBlock<Box<dyn SeekBufRead>>| -> SfError {
                 let block_title = Self::get_block_name(block);
-                JdxError::new(&format!(
+                SfError::new(&format!(
                     "Illegal path for reading node. Block: \"{}\", child index: {}",
                     block_title, node_index
                 ))
@@ -162,7 +160,7 @@ impl JdxReader {
         Ok(block_node)
     }
 
-    fn map_bruker_relax_section(section: &BrukerRelaxSection) -> Result<Node, JdxError> {
+    fn map_bruker_relax_section(section: &BrukerRelaxSection) -> Result<Node, SfError> {
         let name = section
             .name
             .as_ref()
@@ -184,9 +182,7 @@ impl JdxReader {
         })
     }
 
-    fn map_bruker_specific_parameters(
-        section: &BrukerSpecificParameters,
-    ) -> Result<Node, JdxError> {
+    fn map_bruker_specific_parameters(section: &BrukerSpecificParameters) -> Result<Node, SfError> {
         let name = section.name.clone();
         let mut parameters = vec![];
         for ldr in &section.content {
@@ -207,7 +203,7 @@ impl JdxReader {
         n_tuples: &NTuples<Box<dyn SeekBufRead>>,
         node_indices: &[usize],
         is_peak_data: bool,
-    ) -> Result<Node, JdxError> {
+    ) -> Result<Node, SfError> {
         if node_indices.is_empty() {
             // map NTUPLES record
             let name = n_tuples.data_form.to_owned();
@@ -238,7 +234,7 @@ impl JdxReader {
                 .map(|i| i.to_string())
                 .collect::<Vec<String>>()
                 .join(" ");
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal indices for reading NTUPLES node: {}",
                 path
             )));
@@ -259,7 +255,7 @@ impl JdxReader {
     fn map_n_tuples_page(
         page: &Page<Box<dyn SeekBufRead>>,
         is_peak_data: bool,
-    ) -> Result<Node, JdxError> {
+    ) -> Result<Node, SfError> {
         let name = Self::map_n_tuples_page_name(page);
 
         let mut parameters = vec![];
@@ -327,7 +323,7 @@ impl JdxReader {
     fn map_block(
         block: &JdxBlock<Box<dyn SeekBufRead>>,
         is_peak_data: bool,
-    ) -> Result<Node, JdxError> {
+    ) -> Result<Node, SfError> {
         let name = Self::get_block_name(block).to_owned();
 
         let mut parameters = Vec::<Parameter>::new();
@@ -390,7 +386,7 @@ impl JdxReader {
         })
     }
 
-    fn map_block_data(block: &JdxBlock<Box<dyn SeekBufRead>>) -> Result<Vec<PointXy>, JdxError> {
+    fn map_block_data(block: &JdxBlock<Box<dyn SeekBufRead>>) -> Result<Vec<PointXy>, SfError> {
         let raw_data = if let Some(xy_data) = &block.xy_data {
             xy_data.get_data()?
         } else if let Some(ra_data) = &block.ra_data {
@@ -450,7 +446,7 @@ impl JdxReader {
         metadata
     }
 
-    fn map_peak_table(peak_table: &PeakTable<Box<dyn SeekBufRead>>) -> Result<Table, JdxError> {
+    fn map_peak_table(peak_table: &PeakTable<Box<dyn SeekBufRead>>) -> Result<Table, SfError> {
         let peak_table_data = peak_table.get_data()?;
         let has_w = peak_table_data.iter().any(|peak| peak.w.is_some());
         let has_m = peak_table_data.iter().any(|peak| peak.m.is_some());
@@ -496,7 +492,7 @@ impl JdxReader {
 
     fn map_peak_table_as_data(
         peak_table: &PeakTable<Box<dyn SeekBufRead>>,
-    ) -> Result<Vec<PointXy>, JdxError> {
+    ) -> Result<Vec<PointXy>, SfError> {
         let data = peak_table
             .get_data()?
             .iter()
@@ -532,7 +528,7 @@ impl JdxReader {
 
     fn map_peak_assignments(
         peak_assignments: &PeakAssignments<Box<dyn SeekBufRead>>,
-    ) -> Result<Table, JdxError> {
+    ) -> Result<Table, SfError> {
         let peak_assignments_data = peak_assignments.get_data()?;
         let has_y = peak_assignments_data.iter().any(|peak| peak.y.is_some());
         let has_w = peak_assignments_data.iter().any(|peak| peak.w.is_some());
@@ -586,7 +582,7 @@ impl JdxReader {
         Ok(Table { column_names, rows })
     }
 
-    fn map_audit_trail(audit_trail: &AuditTrail<Box<dyn SeekBufRead>>) -> Result<Node, JdxError> {
+    fn map_audit_trail(audit_trail: &AuditTrail<Box<dyn SeekBufRead>>) -> Result<Node, SfError> {
         let audit_entries = audit_trail.get_data()?;
         let has_process = audit_entries.iter().any(|entry| entry.process.is_some());
         let has_version = audit_entries.iter().any(|entry| entry.version.is_some());

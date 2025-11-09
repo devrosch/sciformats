@@ -19,8 +19,8 @@
 
 use super::andi_chrom_parser::AndiChromFile;
 use crate::{
-    andi::AndiError,
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
+    common::SfError,
     utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path};
@@ -41,7 +41,7 @@ impl Reader for AndiChromReader {
             [3] => self.read_raw_data(),
             [4] => self.read_peak_processing_results(),
             [0, 0] => self.read_error_log(),
-            _ => Err(AndiError::new(&format!("Illegal node path: {}", path)).into()),
+            _ => Err(SfError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
 }
@@ -306,7 +306,7 @@ impl AndiChromReader {
                 // x values present
                 let y_values = &raw_data.get_ordinate_values()?;
                 if x_values.len() != y_values.len() {
-                    return Err(Box::new(AndiError::new(
+                    return Err(Box::new(SfError::new(
                         "Numbers of ordinate and retention values do not match.",
                     )));
                 }
@@ -410,7 +410,7 @@ impl AndiChromReader {
             .get_peaks()?
             // .peaks
             // .as_ref()
-            .ok_or(AndiError::new(&format!(
+            .ok_or(SfError::new(&format!(
                 "No peaks found but peak_number paramater not zero: {}",
                 num_peaks
             )))?;

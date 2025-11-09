@@ -18,11 +18,12 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use super::{
-    AndiError, andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader,
+    andi_chrom_parser::AndiChromParser, andi_chrom_reader::AndiChromReader,
     andi_ms_parser::AndiMsParser, andi_ms_reader::AndiMsReader,
 };
 use crate::{
     api::{Reader, Scanner},
+    common::SfError,
     utils::is_recognized_extension,
 };
 use std::{
@@ -65,7 +66,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
     fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, Box<dyn Error>> {
         let input_seek_read = Box::new(input);
         let cdf_reader = netcdf3::FileReader::open_seek_read(path, input_seek_read)
-            .map_err(|e| AndiError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
+            .map_err(|e| SfError::from_source(Box::new(e), "AnDI Error. Error parsing netCDF."))?;
 
         if cdf_reader
             .data_set()
@@ -82,7 +83,7 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
             return Ok(Box::new(AndiMsReader::new(path, file)));
         }
 
-        Err(AndiError::new(&format!(
+        Err(SfError::new(&format!(
             "Could not parse \"{}\". Expected one attribute of: {}, {}",
             path,
             Self::AIA_TEMPLATE_REVISION_ATTR,

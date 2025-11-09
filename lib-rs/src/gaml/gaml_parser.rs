@@ -17,8 +17,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::GamlError;
 use crate::api::{Parser, SeekBufRead};
+use crate::common::SfError;
 use crate::xml_utils::{
     BufEvent, XmlTagStart, consume_end, consume_end_rc, next_non_whitespace, read_empty,
     read_next_event, read_opt_elem, read_opt_elem_rc, read_req_elem_rc, read_req_elem_value_f64,
@@ -39,7 +39,7 @@ pub struct GamlParser {}
 
 impl<T: Seek + Read + 'static> Parser<T> for GamlParser {
     type R = Gaml;
-    type E = GamlError;
+    type E = SfError;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let buf_reader: Box<dyn SeekBufRead> = Box::new(BufReader::new(input));
@@ -66,7 +66,7 @@ impl Gaml {
     fn new(
         _name: &str,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<Self, GamlError> {
+    ) -> Result<Self, SfError> {
         let mut reader = reader_ref.borrow_mut();
         let mut buf = Vec::new();
 
@@ -134,7 +134,7 @@ impl Integrity {
     fn new<'buf, R: BufRead>(
         next: BufEvent<'buf>,
         reader: &mut Reader<R>,
-    ) -> Result<(Self, BufEvent<'buf>), GamlError> {
+    ) -> Result<(Self, BufEvent<'buf>), SfError> {
         let start = read_start(Self::TAG, reader, &next)?;
 
         // attributes
@@ -166,7 +166,7 @@ impl Parameter {
     fn new<'buf, R: BufRead>(
         next: BufEvent<'buf>,
         reader: &mut Reader<R>,
-    ) -> Result<(Self, BufEvent<'buf>), GamlError> {
+    ) -> Result<(Self, BufEvent<'buf>), SfError> {
         // attributes
         let start = read_start_or_empty(Self::TAG, reader, &next)?;
         let group = start.get_opt_attr("group");
@@ -217,7 +217,7 @@ impl Experiment {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -230,7 +230,7 @@ impl Experiment {
         let collectdate = datetime
             .map(|dt| {
                 DateTime::parse_from_rfc3339(&dt.value)
-                    .map_err(|e| GamlError::from_source(e, "Error parsing date/time."))
+                    .map_err(|e| SfError::from_source(Box::new(e), "Error parsing date/time."))
             })
             .transpose()?
             .map(|d| d.to_rfc3339_opts(SecondsFormat::AutoSi, true));
@@ -264,7 +264,7 @@ impl Collectdate {
     pub fn new<'buf, R: BufRead>(
         next: BufEvent<'buf>,
         reader: &mut Reader<R>,
-    ) -> Result<(Self, BufEvent<'buf>), GamlError> {
+    ) -> Result<(Self, BufEvent<'buf>), SfError> {
         read_start(Self::TAG, reader, &next)?;
 
         // Content
@@ -332,7 +332,7 @@ impl Trace {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -543,7 +543,7 @@ impl Coordinates {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         // attributes
         let (
             DataAttributes {
@@ -599,7 +599,7 @@ impl Link {
     fn new<'buf, R: BufRead>(
         next: BufEvent<'buf>,
         reader: &mut Reader<R>,
-    ) -> Result<(Self, BufEvent<'buf>), GamlError> {
+    ) -> Result<(Self, BufEvent<'buf>), SfError> {
         // attributes
         let start = read_empty(Self::TAG, reader, &next)?;
         let linkref = start.get_req_attr("linkref")?;
@@ -666,7 +666,7 @@ impl Values {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -707,7 +707,7 @@ impl Values {
         ))
     }
 
-    pub fn get_data(&self) -> Result<Vec<f64>, GamlError> {
+    pub fn get_data(&self) -> Result<Vec<f64>, SfError> {
         let mut reader = self.reader_ref.borrow_mut();
 
         let start = self.value_start_pos;
@@ -726,14 +726,14 @@ impl Values {
 
         let raw_data = BASE64_STANDARD
             .decode(value.as_bytes())
-            .map_err(|e| GamlError::from_source(e, "Error decoding base64 data."))?;
+            .map_err(|e| SfError::from_source(Box::new(e), "Error decoding base64 data."))?;
 
         let multiple = match &self.format {
             Format::Float32 => 4u64,
             Format::Float64 => 8u64,
         };
         if raw_data.len() as u64 % multiple != 0 {
-            return Err(GamlError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal number of data bytes: {}",
                 raw_data.len()
             )));
@@ -741,7 +741,7 @@ impl Values {
         if let Some(n) = self.numvalues
             && n != raw_data.len() as u64 / multiple
         {
-            return Err(GamlError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Number of data bytes does not correspond to numvalues and format attributes: {}",
                 raw_data.len()
             )));
@@ -817,7 +817,7 @@ impl Xdata {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         // attributes
         let (
             DataAttributes {
@@ -847,7 +847,7 @@ impl Xdata {
             read_sequence_rc(b"altXdata", next, Rc::clone(&reader_ref), &AltXdata::new)?;
         let (y_data, next) = read_sequence_rc(b"Ydata", next, Rc::clone(&reader_ref), &Ydata::new)?;
         if y_data.is_empty() {
-            return Err(GamlError::new("No Ydata found for Xdata."));
+            return Err(SfError::new("No Ydata found for Xdata."));
         }
 
         let next = consume_end_rc(Self::TAG, Rc::clone(&reader_ref), next)?;
@@ -888,7 +888,7 @@ impl AltXdata {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         // attributes
         let (
             DataAttributes {
@@ -949,7 +949,7 @@ impl Ydata {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         // attributes
         let (DataAttributes { units, label, .. }, next) = read_data_attributes(
             Self::TAG,
@@ -1000,7 +1000,7 @@ impl Peaktable {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -1046,7 +1046,7 @@ impl Peak {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -1058,7 +1058,7 @@ impl Peak {
         )?;
         if number == 0 {
             // only strictly positive peak numbers allowed by schema
-            return Err(GamlError::new("Illegal peak number: 0"));
+            return Err(SfError::new("Illegal peak number: 0"));
         }
         let group = start.get_opt_attr("group");
         let name = start.get_opt_attr("name");
@@ -1106,7 +1106,7 @@ impl Baseline {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -1152,7 +1152,7 @@ impl Basecurve {
     fn new(
         next: BufEvent<'_>,
         reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-    ) -> Result<(Self, BufEvent<'_>), GamlError> {
+    ) -> Result<(Self, BufEvent<'_>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         // attributes
@@ -1175,7 +1175,7 @@ impl Basecurve {
         ))
     }
 
-    fn get_data(&self, values: &[Values]) -> Result<Vec<f64>, GamlError> {
+    fn get_data(&self, values: &[Values]) -> Result<Vec<f64>, SfError> {
         let mut ret = Vec::<f64>::new();
         for values_elem in values {
             let mut arr = values_elem.get_data()?;
@@ -1185,11 +1185,11 @@ impl Basecurve {
         Ok(ret)
     }
 
-    pub fn get_x_data(&self) -> Result<Vec<f64>, GamlError> {
+    pub fn get_x_data(&self) -> Result<Vec<f64>, SfError> {
         self.get_data(&self.base_x_data)
     }
 
-    pub fn get_y_data(&self) -> Result<Vec<f64>, GamlError> {
+    pub fn get_y_data(&self) -> Result<Vec<f64>, SfError> {
         self.get_data(&self.base_y_data)
     }
 }
@@ -1202,7 +1202,7 @@ fn read_base_values<'buf>(
     tag_name: &[u8],
     next: BufEvent<'buf>,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
-) -> Result<(Vec<Values>, BufEvent<'buf>), GamlError> {
+) -> Result<(Vec<Values>, BufEvent<'buf>), SfError> {
     let mut reader = reader_ref.borrow_mut();
     let next = next_non_whitespace(next, &mut reader)?;
 
@@ -1229,7 +1229,7 @@ fn read_data_attributes<'buf>(
     display_name: &str,
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     next: BufEvent<'buf>,
-) -> Result<(DataAttributes, BufEvent<'buf>), GamlError> {
+) -> Result<(DataAttributes, BufEvent<'buf>), SfError> {
     let mut reader = reader_ref.borrow_mut();
     // attributes
     let start = read_start(tag_name, &reader, &next)?;
@@ -1261,7 +1261,7 @@ struct DataElements {
 fn read_data_elements(
     reader_ref: Rc<RefCell<Reader<Box<dyn SeekBufRead>>>>,
     next: BufEvent<'_>,
-) -> Result<(DataElements, BufEvent<'_>), GamlError> {
+) -> Result<(DataElements, BufEvent<'_>), SfError> {
     let mut reader = reader_ref.borrow_mut();
 
     let (links, next) = read_sequence(b"link", next, &mut reader, &Link::new)?;
@@ -1697,13 +1697,13 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("Unexpected tag"));
-        assert!(gaml_err.message.contains("NOGAML"));
+        assert!(gaml_err.to_string().contains("Unexpected tag"));
+        assert!(gaml_err.to_string().contains("NOGAML"));
         let error_str = gaml_err.to_string();
         assert!(error_str.contains("Unexpected tag"));
         assert!(error_str.contains("NOGAML"));
         let error_debug = format!("{gaml_err:?}");
-        assert!(error_debug.contains("GamlError"));
+        assert!(error_debug.contains("SfError"));
         assert!(error_debug.contains("NOGAML"));
     }
 
@@ -1731,9 +1731,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_TECHNIQUE"));
-        assert!(gaml_err.message.contains("technique"));
-        assert!(gaml_err.message.contains("trace"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_TECHNIQUE"));
+        assert!(gaml_err.to_string().contains("technique"));
+        assert!(gaml_err.to_string().contains("trace"));
         let source_err = gaml_err.source();
         assert!(source_err.is_some());
     }
@@ -1755,9 +1755,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_UNITS"));
-        assert!(gaml_err.message.contains("units"));
-        assert!(gaml_err.message.contains("coordinates"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_UNITS"));
+        assert!(gaml_err.to_string().contains("units"));
+        assert!(gaml_err.to_string().contains("coordinates"));
     }
 
     #[test]
@@ -1777,9 +1777,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_VALUEORDER"));
-        assert!(gaml_err.message.contains("valueorder"));
-        assert!(gaml_err.message.contains("coordinates"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_VALUEORDER"));
+        assert!(gaml_err.to_string().contains("valueorder"));
+        assert!(gaml_err.to_string().contains("coordinates"));
     }
 
     #[test]
@@ -1796,9 +1796,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_UNITS"));
-        assert!(gaml_err.message.contains("units"));
-        assert!(gaml_err.message.contains("Xdata"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_UNITS"));
+        assert!(gaml_err.to_string().contains("units"));
+        assert!(gaml_err.to_string().contains("Xdata"));
     }
 
     #[test]
@@ -1815,9 +1815,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_VALUEORDER"));
-        assert!(gaml_err.message.contains("valueorder"));
-        assert!(gaml_err.message.contains("Xdata"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_VALUEORDER"));
+        assert!(gaml_err.to_string().contains("valueorder"));
+        assert!(gaml_err.to_string().contains("Xdata"));
     }
 
     #[test]
@@ -1838,9 +1838,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_BYTEORDER"));
-        assert!(gaml_err.message.contains("byteorder"));
-        assert!(gaml_err.message.contains("values"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_BYTEORDER"));
+        assert!(gaml_err.to_string().contains("byteorder"));
+        assert!(gaml_err.to_string().contains("values"));
     }
 
     #[test]
@@ -1861,9 +1861,9 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_FORMAT"));
-        assert!(gaml_err.message.contains("format"));
-        assert!(gaml_err.message.contains("values"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_FORMAT"));
+        assert!(gaml_err.to_string().contains("format"));
+        assert!(gaml_err.to_string().contains("values"));
     }
 
     #[test]
@@ -1884,8 +1884,8 @@ mod tests {
         let cursor = Cursor::new(xml);
 
         let gaml_err = GamlParser::parse("test.gaml", cursor).unwrap_err();
-        assert!(gaml_err.message.contains("ILLEGAL_NUMVALUES"));
-        assert!(gaml_err.message.contains("numvalues"));
-        assert!(gaml_err.message.contains("values"));
+        assert!(gaml_err.to_string().contains("ILLEGAL_NUMVALUES"));
+        assert!(gaml_err.to_string().contains("numvalues"));
+        assert!(gaml_err.to_string().contains("values"));
     }
 }

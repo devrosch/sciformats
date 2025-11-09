@@ -17,9 +17,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::api::{Column, Exporter, Parameter, PointXy, Reader, Table, Value};
+use crate::{
+    api::{Column, Exporter, Parameter, PointXy, Reader, Table, Value},
+    common::SfError,
+};
 use serde::ser::{Serialize, SerializeSeq, SerializeStruct, Serializer};
-use std::{error::Error, io::Write};
+use std::io::Write;
 
 // see:
 // https://github.com/serde-rs/json/issues/345#issuecomment-636215611
@@ -42,13 +45,15 @@ impl<R: Reader + ?Sized> Exporter for JsonExporter<'_, R> {
         "Canonical JSON Exporter"
     }
 
-    fn write(&mut self, writer: &mut dyn Write) -> Result<(), Box<dyn Error>> {
+    fn write(&mut self, writer: &mut dyn Write) -> Result<(), SfError> {
         let mut serializer = serde_json::Serializer::new(writer);
         let wrapper = NodeWrapper {
             path: "",
             reader: self.reader,
         };
-        wrapper.serialize(&mut serializer).map_err(|e| e.into())
+        wrapper
+            .serialize(&mut serializer)
+            .map_err(|e| SfError::from_source(e, "Error writing export."))
     }
 }
 

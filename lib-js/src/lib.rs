@@ -259,7 +259,7 @@ impl JsReader {
             "Json" => self
                 .reader
                 .export(ExportFormat::Json, &mut writer)
-                .map_err(|e| map_to_js_err(&*e)),
+                .map_err(|e| map_to_js_err(&e)),
             _ => Err(JsError::new(&format!("Unknown export format: {}", format))),
         }?;
         Ok(())

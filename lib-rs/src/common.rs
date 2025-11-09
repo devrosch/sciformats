@@ -43,10 +43,10 @@ impl SfError {
         }
     }
 
-    pub fn from_source(source: Box<dyn Error>, message: impl Into<String>) -> Self {
+    pub fn from_source(source: impl Into<Box<dyn Error>>, message: impl Into<String>) -> Self {
         Self {
             message: message.into(),
-            source: Some(source),
+            source: Some(source.into()),
         }
     }
 }
@@ -65,7 +65,7 @@ impl fmt::Display for SfError {
 
 impl From<std::io::Error> for SfError {
     fn from(value: std::io::Error) -> Self {
-        Self::from_source(Box::new(value), "I/O error parsing data.")
+        Self::from_source(value, "I/O error parsing data.")
     }
 }
 

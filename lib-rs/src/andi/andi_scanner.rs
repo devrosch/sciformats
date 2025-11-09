@@ -85,7 +85,6 @@ impl<T: Seek + Read + 'static> Scanner<T> for AndiScanner {
             path,
             Self::AIA_TEMPLATE_REVISION_ATTR,
             Self::MS_TEMPLATE_REVISION_ATTR
-        ))
-        .into())
+        )))
     }
 }

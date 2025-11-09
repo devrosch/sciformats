@@ -36,7 +36,7 @@ pub struct JdxReader {
 impl Reader for JdxReader {
     fn read(&self, path: &str) -> Result<Node, SfError> {
         let node_indices = convert_path_to_node_indices(path)?;
-        Ok(self.retrieve_node(&node_indices)?)
+        self.retrieve_node(&node_indices)
     }
 }
 

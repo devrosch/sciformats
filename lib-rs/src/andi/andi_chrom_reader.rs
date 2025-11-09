@@ -41,7 +41,7 @@ impl Reader for AndiChromReader {
             [3] => self.read_raw_data(),
             [4] => self.read_peak_processing_results(),
             [0, 0] => self.read_error_log(),
-            _ => Err(SfError::new(&format!("Illegal node path: {}", path)).into()),
+            _ => Err(SfError::new(&format!("Illegal node path: {}", path))),
         }
     }
 }

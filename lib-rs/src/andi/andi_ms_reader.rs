@@ -51,7 +51,7 @@ impl Reader for AndiMsReader {
             [5, n, 0] => self.read_library_data_per_scan(n),
             [6] => self.read_scan_groups(),
             [6, n] => self.read_scan_group(n),
-            _ => Err(SfError::new(&format!("Illegal node path: {}", path)).into()),
+            _ => Err(SfError::new(&format!("Illegal node path: {}", path))),
         }
     }
 }

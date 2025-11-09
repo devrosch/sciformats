@@ -732,7 +732,7 @@ impl Values {
             Format::Float32 => 4u64,
             Format::Float64 => 8u64,
         };
-        if raw_data.len() as u64 % multiple != 0 {
+        if !(raw_data.len() as u64).is_multiple_of(multiple) {
             return Err(SfError::new(&format!(
                 "Illegal number of data bytes: {}",
                 raw_data.len()

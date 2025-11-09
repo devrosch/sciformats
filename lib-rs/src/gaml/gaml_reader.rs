@@ -110,13 +110,13 @@ impl Reader for GamlReader {
                 let experiment =
                     read_item_at_index(&self.file.experiments, *exp_idx, "experiment")?;
                 if tail.is_empty() {
-                    return Ok(Self::map_experiment(experiment, *exp_idx)?);
+                    return Self::map_experiment(experiment, *exp_idx);
                 }
 
                 let (trace_idx, tail) = tail.split_first().unwrap();
                 let trace = read_item_at_index(&experiment.traces, *trace_idx, "trace")?;
                 if tail.is_empty() {
-                    return Ok(Self::map_trace(trace, *trace_idx)?);
+                    return Self::map_trace(trace, *trace_idx);
                 }
 
                 let (xy_data_idx, tail) = tail.split_first().unwrap();
@@ -127,24 +127,24 @@ impl Reader for GamlReader {
                     let coordinates = trace.coordinates.as_slice();
                     match alt_x_data_idx {
                         None => {
-                            return Ok(Self::map_xy_data(
+                            return Self::map_xy_data(
                                 x_data,
                                 (x_data_idx, y_data_idx),
                                 coordinates,
-                            )?);
+                            );
                         }
                         Some(alt_x_idx) => {
-                            return Ok(Self::map_alt_xy_data(
+                            return Self::map_alt_xy_data(
                                 x_data,
                                 (x_data_idx, alt_x_idx, y_data_idx),
                                 coordinates,
-                            )?);
+                            );
                         }
                     }
                 }
                 if alt_x_data_idx.is_some() {
                     // no children for altXdata
-                    return Err(SfError::new(&format!("Illegal node path: {}", path)).into());
+                    return Err(SfError::new(&format!("Illegal node path: {}", path)));
                 }
 
                 let (peaktable_idx, tail) = tail.split_first().unwrap();
@@ -152,16 +152,16 @@ impl Reader for GamlReader {
                 let peaktable =
                     read_item_at_index(&y_data.peaktables, *peaktable_idx, "peaktable")?;
                 if tail.is_empty() {
-                    return Ok(Self::map_peaktable(peaktable, *peaktable_idx)?);
+                    return Self::map_peaktable(peaktable, *peaktable_idx);
                 }
 
                 let (basecurve_idx, tail) = tail.split_first().unwrap();
                 let (basecurve, peak, peak_index) = find_basecurve(peaktable, *basecurve_idx)?;
                 if tail.is_empty() {
-                    return Ok(Self::map_basecurve(basecurve, peak_index, peak.number)?);
+                    return Self::map_basecurve(basecurve, peak_index, peak.number);
                 }
 
-                Err(SfError::new(&format!("Illegal node path: {}", path)).into())
+                Err(SfError::new(&format!("Illegal node path: {}", path)))
             }
         }
     }

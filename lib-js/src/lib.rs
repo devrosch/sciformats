@@ -26,7 +26,7 @@ use js_sys::{Array, Number, Object, Uint8Array};
 #[cfg(not(feature = "nodejs"))]
 use js_sys::{Array, Uint8Array};
 use sciformats::{
-    api::{ExportFormat, Node, Reader, SeekRead, Value},
+    api::{ExportFormat, Node, Reader, Scanner, SeekRead, Value},
     common::{BufSeekRead, ScannerRepository},
 };
 use std::{
@@ -598,7 +598,7 @@ impl Read for FdSeekRead {
 
 #[wasm_bindgen(js_name = ScannerRepository)]
 pub struct JsScannerRepository {
-    repo: ScannerRepository,
+    repo: ScannerRepository<Box<dyn SeekRead>>,
 }
 
 #[wasm_bindgen(js_class = ScannerRepository)]

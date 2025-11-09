@@ -56,13 +56,15 @@ export default class ParametersPanel extends HTMLElement {
 
   #url: URL | null = null;
 
-  #data: { key: string; value: string | boolean | number | bigint }[] = [];
+  #data: { key?: string; value: string | boolean | number | bigint }[] = [];
 
   get data() {
     return this.#data;
   }
 
-  set data(data: { key: string; value: string | boolean | number | bigint }[]) {
+  set data(
+    data: { key?: string; value: string | boolean | number | bigint }[],
+  ) {
     this.#data = data;
     this.render();
   }
@@ -96,7 +98,7 @@ export default class ParametersPanel extends HTMLElement {
 
   static async renderAsync(
     ul: HTMLUListElement,
-    parameters: { key: string; value: string | boolean | number | bigint }[],
+    parameters: { key?: string; value: string | boolean | number | bigint }[],
   ) {
     let index = 0;
     for (const param of parameters) {
@@ -114,7 +116,9 @@ export default class ParametersPanel extends HTMLElement {
       }
       const li = document.createElement('li');
       const parameterEl = document.createElement('sf-parameter');
-      parameterEl.setAttribute('key', param.key);
+      if (typeof param.key !== 'undefined' && param.key !== null) {
+        parameterEl.setAttribute('key', param.key);
+      }
       parameterEl.setAttribute('value', param.value?.toString() ?? null);
       li.append(parameterEl);
       ul.appendChild(li);

@@ -168,8 +168,7 @@ impl JdxReader {
             .unwrap_or_default();
         let mut parameters = vec![];
         if let Some(content) = &section.content {
-            // todo: use different param type once available
-            parameters.push(Parameter::from_str_str("", content));
+            parameters.push(Parameter::from_str(content));
         }
 
         Ok(Node {
@@ -1341,7 +1340,7 @@ mod tests {
         assert!(bruker_relax_node0.child_node_names.is_empty());
         assert_eq!(1, bruker_relax_node0.parameters.len());
         assert_eq!(
-            vec![Parameter::from_str_str("", "1.0\n0.0 1.0 2.0\n")],
+            vec![Parameter::from_str("1.0\n0.0 1.0 2.0\n")],
             bruker_relax_node0.parameters
         );
 
@@ -1351,8 +1350,7 @@ mod tests {
         assert!(bruker_relax_node1.child_node_names.is_empty());
         assert_eq!(1, bruker_relax_node1.parameters.len());
         assert_eq!(
-            vec![Parameter::from_str_str(
-                "",
+            vec![Parameter::from_str(
                 "##TITLE= Parameter file\n\
                 ##JCAMPDX= 5.0\n\
                 $$ c:/nmr/data/somepath\n\

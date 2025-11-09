@@ -43,7 +43,7 @@ export default class Parameter extends HTMLElement {
   }
 
   render() {
-    if (this._key === '') {
+    if (this._key === '' || this._key === null) {
       this.innerHTML = valueOnlyTemplate;
       const valueSpan = this.querySelector('span');
       valueSpan!.textContent = this._value?.toString() ?? null;

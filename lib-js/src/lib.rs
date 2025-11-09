@@ -26,7 +26,7 @@ use js_sys::{Array, Number, Object, Uint8Array};
 #[cfg(not(feature = "nodejs"))]
 use js_sys::{Array, Uint8Array};
 use sciformats::{
-    api::{ExportFormat, Node, Reader, Scanner, SeekRead, Value},
+    api::{ExportFormat, Node, Parameter, Reader, Scanner, SeekRead, Value},
     common::{BufSeekRead, ScannerRepository},
 };
 use std::{
@@ -92,15 +92,28 @@ impl JsNode {
     pub fn parameters(&self) -> Vec<JsValue> {
         let mut vec: Vec<JsValue> = vec![];
         for param in &self.node.parameters {
-            let key = JsValue::from(&param.key);
-            let value = map_to_jsvalue(&param.value);
             let js_param = js_sys::Object::new();
-            let set_key_ret = js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
-            let set_val_ret =
-                js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
-            if !set_key_ret || !set_val_ret {
-                panic!("Could not convert parameter to JS Object.");
-            }
+            match param {
+                Parameter::KeyValue(k, v) => {
+                    let key = JsValue::from(k);
+                    let value = map_to_jsvalue(v);
+                    let set_key_ret =
+                        js_sys::Reflect::set(&js_param, &JsValue::from("key"), &key).unwrap();
+                    let set_val_ret =
+                        js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
+                    if !set_key_ret || !set_val_ret {
+                        panic!("Could not convert key value parameter to JS Object.");
+                    }
+                }
+                Parameter::Value(v) => {
+                    let value = map_to_jsvalue(v);
+                    let set_val_ret =
+                        js_sys::Reflect::set(&js_param, &JsValue::from("value"), &value).unwrap();
+                    if !set_val_ret {
+                        panic!("Could not convert value parameter to JS Object.");
+                    }
+                }
+            };
             vec.push(js_param.into());
         }
         vec
@@ -861,7 +874,7 @@ mod tests {
     use super::*;
     use js_sys::{Array, BigInt};
     use sciformats::{
-        api::{self, Column, Parameter, PointXy, Scanner, Table, Value},
+        api::{self, Column, Parameter, PointXy, Scanner, Table},
         common::SfError,
     };
     use serde_json::json;
@@ -963,10 +976,7 @@ mod tests {
     fn map_node_to_js() {
         let node = Node {
             name: "abc".to_owned(),
-            parameters: vec![Parameter {
-                key: "a".into(),
-                value: Value::String("b".into()),
-            }],
+            parameters: vec![Parameter::from_str_str("a", "b")],
             data: vec![],
             metadata: vec![],
             table: None,

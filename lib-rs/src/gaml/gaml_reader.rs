@@ -775,7 +775,10 @@ fn map_gaml_parameters_with_prefix(
 ) -> Vec<crate::api::Parameter> {
     let mut params = map_gaml_parameters(raw_params);
     for param in &mut params {
-        param.key.insert_str(0, prefix);
+        match param {
+            Parameter::KeyValue(k, _v) => k.insert_str(0, prefix),
+            Parameter::Value(_v) => (),
+        }
     }
     params
 }

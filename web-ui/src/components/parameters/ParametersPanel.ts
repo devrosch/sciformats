@@ -62,7 +62,9 @@ export default class ParametersPanel extends HTMLElement {
     return this.#data;
   }
 
-  set data(data: { key?: string; value: string | boolean | number | bigint }[]) {
+  set data(
+    data: { key?: string; value: string | boolean | number | bigint }[],
+  ) {
     this.#data = data;
     this.render();
   }
@@ -114,7 +116,7 @@ export default class ParametersPanel extends HTMLElement {
       }
       const li = document.createElement('li');
       const parameterEl = document.createElement('sf-parameter');
-      if (typeof (param.key) !== 'undefined' && param.key !== null) {
+      if (typeof param.key !== 'undefined' && param.key !== null) {
         parameterEl.setAttribute('key', param.key);
       }
       parameterEl.setAttribute('value', param.value?.toString() ?? null);

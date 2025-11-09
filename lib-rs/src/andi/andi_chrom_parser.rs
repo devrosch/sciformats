@@ -22,10 +22,11 @@ use super::andi_utils::{
     read_index_from_var_f32, read_multi_string_var, read_optional_var, trim_zeros_in_place,
 };
 use super::{
-    AndiDatasetCompleteness, AndiError,
+    AndiDatasetCompleteness,
     andi_utils::{read_optional_var_or_attr_f32, read_scalar_var_f32},
 };
 use crate::api::Parser;
+use crate::common::SfError;
 use std::{
     cell::RefCell,
     error::Error,
@@ -37,19 +38,19 @@ use std::{
 pub struct AndiChromParser {}
 
 impl AndiChromParser {
-    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, AndiError> {
+    pub(crate) fn parse_cdf(reader: netcdf3::FileReader) -> Result<AndiChromFile, SfError> {
         AndiChromFile::new(reader)
     }
 }
 
 impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     type R = AndiChromFile;
-    type E = AndiError;
+    type E = SfError;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
-            .map_err(|e| AndiError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
+            .map_err(|e| SfError::from_source(Box::new(e), "AnDI Error. Error parsing netCDF."))?;
         Self::parse_cdf(reader)
     }
 }
@@ -66,26 +67,26 @@ pub struct AndiChromFile {
 }
 
 impl AndiChromFile {
-    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, AndiError> {
+    pub fn new(mut reader: netcdf3::FileReader) -> Result<Self, SfError> {
         let admin_data = AndiChromAdminData::new(&mut reader)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI Chrom admin data."))?;
-        let sample_description = AndiChromSampleDescription::new(&mut reader).map_err(|e| {
-            AndiError::from_source(e, "Error parsing AnDI Chrom sample description.")
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI Chrom admin data."))?;
+        let sample_description = AndiChromSampleDescription::new(&mut reader)
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI Chrom sample description."))?;
+        let detection_method = AndiChromDetectionMethod::new(&mut reader).map_err(|e| {
+            SfError::from_source(Box::new(e), "Error parsing AnDI Chrom detection method.")
         })?;
-        let detection_method = AndiChromDetectionMethod::new(&mut reader)
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI Chrom detection method."))?;
 
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
 
         let raw_data = AndiChromRawData::new(Rc::clone(&reader_ref))
-            .map_err(|e| AndiError::from_source(e, "Error parsing AnDI Chrom raw data."))?;
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI Chrom raw data."))?;
         let peak_processing_results = AndiChromPeakProcessingResults::new(
             reader_ref,
             &raw_data.retention_unit,
             detection_method.detector_unit.as_deref(),
         )
         .map_err(|e| {
-            AndiError::from_source(e, "Error parsing AnDI Chrom peak processing results.")
+            SfError::from_source(e, "Error parsing AnDI Chrom peak processing results.")
         })?;
 
         Ok(Self {
@@ -127,21 +128,20 @@ pub struct AndiChromAdminData {
 impl AndiChromAdminData {
     pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, Box<dyn Error>> {
         let dataset_completeness_attr = read_global_attr_str(reader, "dataset_completeness")
-            .ok_or(AndiError::new("Missing dataset_completeness attribute."))?;
+            .ok_or(SfError::new("Missing dataset_completeness attribute."))?;
         let dataset_completeness = AndiDatasetCompleteness::from_str(&dataset_completeness_attr)?;
         let protocol_template_revision = read_global_attr_str(reader, "aia_template_revision")
-            .ok_or(AndiError::new("Missing aia_template_revision attribute."))?;
+            .ok_or(SfError::new("Missing aia_template_revision attribute."))?;
         let netcdf_revision = read_global_attr_str(reader, "netcdf_revision")
-            .ok_or(AndiError::new("Missing netcdf_revision attribute."))?;
+            .ok_or(SfError::new("Missing netcdf_revision attribute."))?;
         let languages = read_global_attr_str(reader, "languages");
         let administrative_comments = read_global_attr_str(reader, "administrative_comments");
         let dataset_origin = read_global_attr_str(reader, "dataset_origin");
         let dataset_owner = read_global_attr_str(reader, "dataset_owner");
         let dataset_date_time_stamp = read_global_attr_str(reader, "dataset_date_time_stamp");
-        let injection_date_time_stamp = read_global_attr_str(reader, "injection_date_time_stamp")
-            .ok_or(AndiError::new(
-            "Missing injection_date_time_stamp attribute.",
-        ))?;
+        let injection_date_time_stamp =
+            read_global_attr_str(reader, "injection_date_time_stamp")
+                .ok_or(SfError::new("Missing injection_date_time_stamp attribute."))?;
         let experiment_title = read_global_attr_str(reader, "experiment_title");
         let operator_name = read_global_attr_str(reader, "operator_name");
         let separation_experiment_type = read_global_attr_str(reader, "separation_experiment_type");
@@ -222,7 +222,7 @@ pub struct AndiChromDetectionMethod {
 }
 
 impl AndiChromDetectionMethod {
-    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, AndiError> {
+    pub fn new(reader: &mut netcdf3::FileReader) -> Result<Self, SfError> {
         let detection_method_table_name =
             read_global_attr_str(reader, "detection_method_table_name");
         // "detector_method_comment" or "detector_method_comments"?
@@ -275,7 +275,7 @@ impl AndiChromRawData {
         let point_number_dim = reader
             .data_set()
             .get_dim("point_number")
-            .ok_or(AndiError::new("Missing dataset_completeness dimension."))?;
+            .ok_or(SfError::new("Missing dataset_completeness dimension."))?;
         // TODO: usize?
         let point_number = point_number_dim.size() as i32;
         let raw_data_table_name = read_global_attr_str(&reader, "raw_data_table_name");
@@ -284,16 +284,16 @@ impl AndiChromRawData {
             None => {
                 // quirk: accomodate different naming found in some data
                 read_global_attr_str(&reader, "retention_units")
-                    .ok_or(AndiError::new("Missing retention_unit attribute."))?
+                    .ok_or(SfError::new("Missing retention_unit attribute."))?
             }
         };
         let actual_run_time_length = read_scalar_var_f32(&mut reader, "actual_run_time_length")?
-            .ok_or(AndiError::new("Missing actual_run_time_length variable."))?;
+            .ok_or(SfError::new("Missing actual_run_time_length variable."))?;
         let actual_sampling_interval =
             read_scalar_var_f32(&mut reader, "actual_sampling_interval")?
-                .ok_or(AndiError::new("Missing actual_sampling_interval variable."))?;
+                .ok_or(SfError::new("Missing actual_sampling_interval variable."))?;
         let actual_delay_time = read_scalar_var_f32(&mut reader, "actual_delay_time")?
-            .ok_or(AndiError::new("Missing actual_delay_time variable."))?;
+            .ok_or(SfError::new("Missing actual_delay_time variable."))?;
         // ordinate_values are lazily accessed through a method
         let mut uniform_sampling_flag_attr = reader
             .data_set()
@@ -337,20 +337,23 @@ impl AndiChromRawData {
         })
     }
 
-    pub fn get_ordinate_values(&self) -> Result<Vec<f32>, AndiError> {
+    pub fn get_ordinate_values(&self) -> Result<Vec<f32>, SfError> {
         let mut reader = self.reader_ref.borrow_mut();
         let ordinate_values = reader
             .read_var("ordinate_values")
             .map_err(|e| {
-                AndiError::from_source(e, "AnDI error. Error parsing AnDI ordinate values.")
+                SfError::from_source(
+                    Box::new(e),
+                    "AnDI error. Error parsing AnDI ordinate values.",
+                )
             })?
             .get_f32()
-            .ok_or(AndiError::new("Missing ordinate_values variable."))?
+            .ok_or(SfError::new("Missing ordinate_values variable."))?
             .to_owned();
         Ok(ordinate_values)
     }
 
-    pub fn get_raw_data_retention(&self) -> Result<Option<Vec<f32>>, AndiError> {
+    pub fn get_raw_data_retention(&self) -> Result<Option<Vec<f32>>, SfError> {
         let mut reader = self.reader_ref.borrow_mut();
         let raw_data_retention = match self.uniform_sampling_flag {
             true => None,
@@ -358,10 +361,10 @@ impl AndiChromRawData {
                 reader
                     .read_var("raw_data_retention")
                     .map_err(|e| {
-                        AndiError::from_source(e, "Error parsing AnDI raw datat retention.")
+                        SfError::from_source(Box::new(e), "Error parsing AnDI raw datat retention.")
                     })?
                     .get_f32()
-                    .ok_or(AndiError::new(
+                    .ok_or(SfError::new(
                         "AnDI error. Missing raw_data_retention variable.",
                     ))?
                     .to_owned(),

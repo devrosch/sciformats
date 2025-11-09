@@ -17,15 +17,13 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{
-    GamlError,
-    gaml_parser::{
-        AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
-        Xdata, Ydata,
-    },
+use super::gaml_parser::{
+    AltXdata, Basecurve, Coordinates, Experiment, Gaml, Peak, Peaktable, Trace, Units, Values,
+    Xdata, Ydata,
 };
 use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
+    common::SfError,
     utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path, vec};
@@ -146,7 +144,7 @@ impl Reader for GamlReader {
                 }
                 if alt_x_data_idx.is_some() {
                     // no children for altXdata
-                    return Err(GamlError::new(&format!("Illegal node path: {}", path)).into());
+                    return Err(SfError::new(&format!("Illegal node path: {}", path)).into());
                 }
 
                 let (peaktable_idx, tail) = tail.split_first().unwrap();
@@ -163,7 +161,7 @@ impl Reader for GamlReader {
                     return Ok(Self::map_basecurve(basecurve, peak_index, peak.number)?);
                 }
 
-                Err(GamlError::new(&format!("Illegal node path: {}", path)).into())
+                Err(SfError::new(&format!("Illegal node path: {}", path)).into())
             }
         }
     }
@@ -177,7 +175,7 @@ impl GamlReader {
         }
     }
 
-    fn map_root(path: &str, gaml: &Gaml) -> Result<Node, GamlError> {
+    fn map_root(path: &str, gaml: &Gaml) -> Result<Node, SfError> {
         let path = Path::new(path);
         let name = path
             .file_name()
@@ -216,7 +214,7 @@ impl GamlReader {
         parameters
     }
 
-    fn map_experiment(experiment: &Experiment, index: usize) -> Result<Node, GamlError> {
+    fn map_experiment(experiment: &Experiment, index: usize) -> Result<Node, SfError> {
         let name = Self::generate_experiment_name(experiment, index);
         let parameters = Self::map_experiment_parameters(experiment);
         let child_node_names =
@@ -252,7 +250,7 @@ impl GamlReader {
         parameters
     }
 
-    fn map_trace(trace: &Trace, index: usize) -> Result<Node, GamlError> {
+    fn map_trace(trace: &Trace, index: usize) -> Result<Node, SfError> {
         let name = Self::generate_trace_name(trace, index);
         let parameters = Self::map_trace_parameters(trace);
         let child_node_names = generate_xy_names(trace)?;
@@ -292,8 +290,8 @@ impl GamlReader {
         x_data: &Xdata,
         (x_index, y_index): (usize, usize),
         coordinates: &[Coordinates],
-    ) -> Result<Node, GamlError> {
-        let y_data = x_data.y_data.get(y_index).ok_or(GamlError::new(&format!(
+    ) -> Result<Node, SfError> {
+        let y_data = x_data.y_data.get(y_index).ok_or(SfError::new(&format!(
             "No Ydata found for Xdata {} at index: {}",
             x_index, y_index
         )))?;
@@ -336,15 +334,15 @@ impl GamlReader {
         x_data: &Xdata,
         (x_index, alt_x_index, y_index): (usize, usize, usize),
         coordinates: &[Coordinates],
-    ) -> Result<Node, GamlError> {
+    ) -> Result<Node, SfError> {
         let alt_x_data = x_data
             .alt_x_data
             .get(alt_x_index)
-            .ok_or(GamlError::new(&format!(
+            .ok_or(SfError::new(&format!(
                 "No altXdata found for Xdata {} at index: {}",
                 x_index, alt_x_index
             )))?;
-        let y_data = x_data.y_data.get(y_index).ok_or(GamlError::new(&format!(
+        let y_data = x_data.y_data.get(y_index).ok_or(SfError::new(&format!(
             "No Ydata found for Xdata {} at index: {}",
             x_index, y_index
         )))?;
@@ -382,7 +380,7 @@ impl GamlReader {
 
     generate_map_xy_parameters_fn!(AltXdata, "AltXdata", map_alt_xy_data_parameters);
 
-    fn map_peaktable(peaktable: &Peaktable, index: usize) -> Result<Node, GamlError> {
+    fn map_peaktable(peaktable: &Peaktable, index: usize) -> Result<Node, SfError> {
         let name = Self::generate_peaktable_name(peaktable, index);
         let parameters = Self::map_peaktable_parameters(peaktable);
         // map peaks as table
@@ -497,7 +495,7 @@ impl GamlReader {
         basecurve: &Basecurve,
         peak_index: usize,
         peak_number: u64,
-    ) -> Result<Node, GamlError> {
+    ) -> Result<Node, SfError> {
         let name = Self::generate_basecurve_name(peak_index, peak_number);
 
         let mut parameters = vec![];
@@ -519,7 +517,7 @@ impl GamlReader {
             .base_x_data
             .iter()
             .map(|v| v.get_data())
-            .collect::<Result<Vec<_>, GamlError>>()?
+            .collect::<Result<Vec<_>, SfError>>()?
             .into_iter()
             .flatten()
             .collect::<Vec<_>>();
@@ -528,7 +526,7 @@ impl GamlReader {
             .base_y_data
             .iter()
             .map(|v| v.get_data())
-            .collect::<Result<Vec<_>, GamlError>>()?
+            .collect::<Result<Vec<_>, SfError>>()?
             .into_iter()
             .flatten()
             .collect::<Vec<_>>();
@@ -557,7 +555,7 @@ impl GamlReader {
 fn find_basecurve(
     peaktable: &Peaktable,
     basecurve_idx: usize,
-) -> Result<(&Basecurve, &Peak, usize), GamlError> {
+) -> Result<(&Basecurve, &Peak, usize), SfError> {
     for (i, peak) in peaktable.peaks.iter().enumerate() {
         if let Some(basecurve) = peak.baseline.as_ref().and_then(|bl| bl.basecurve.as_ref())
             && i == basecurve_idx
@@ -565,7 +563,7 @@ fn find_basecurve(
             return Ok((basecurve, peak, i));
         }
     }
-    Err(GamlError::new(&format!(
+    Err(SfError::new(&format!(
         "Illegal basecurve index: {basecurve_idx}"
     )))?
 }
@@ -573,7 +571,7 @@ fn find_basecurve(
 fn find_xy_indices(
     trace: &Trace,
     xy_data_idx: usize,
-) -> Result<(usize, Option<usize>, usize), GamlError> {
+) -> Result<(usize, Option<usize>, usize), SfError> {
     let mut index = 0usize;
     for (x_index, x_data) in trace.x_data.iter().enumerate() {
         // first map Xdata - Ydata pairs
@@ -593,7 +591,7 @@ fn find_xy_indices(
             }
         }
     }
-    Err(GamlError::new(&format!(
+    Err(SfError::new(&format!(
         "Illegal xy data index: {xy_data_idx}"
     )))
 }
@@ -603,12 +601,12 @@ fn generate_xy_name(
     x_index: usize,
     alt_x_index: Option<usize>,
     y_index: usize,
-) -> Result<String, GamlError> {
+) -> Result<String, SfError> {
     // Can this repeated reading of values be optimized away? No big perf issue though.
     let coordinate_values = coordinates
         .iter()
         .map(|co| co.values.get_data())
-        .collect::<Result<Vec<_>, GamlError>>()?;
+        .collect::<Result<Vec<_>, SfError>>()?;
     let mut coordinate_details = Vec::<String>::new();
     for (i, coordinate) in coordinates.iter().enumerate() {
         let values = &coordinate_values[i];
@@ -639,7 +637,7 @@ fn generate_xy_name(
     Ok(name)
 }
 
-fn generate_xy_names(trace: &Trace) -> Result<Vec<String>, GamlError> {
+fn generate_xy_names(trace: &Trace) -> Result<Vec<String>, SfError> {
     let coordinates = trace.coordinates.as_slice();
     let mut names = vec![];
     for (x_index, x_data) in trace.x_data.iter().enumerate() {
@@ -797,8 +795,8 @@ fn read_item_at_index<'a, T>(
     slice: &'a [T],
     index: usize,
     context: &str,
-) -> Result<&'a T, GamlError> {
-    slice.get(index).ok_or(GamlError::new(&format!(
+) -> Result<&'a T, SfError> {
+    slice.get(index).ok_or(SfError::new(&format!(
         "Illegal {} index: {}",
         context, index
     )))

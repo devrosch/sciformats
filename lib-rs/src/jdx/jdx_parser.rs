@@ -17,7 +17,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::JdxError;
 use super::jdx_data_parser::{parse_xppyy_data, parse_xyxy_data};
 use super::jdx_peak_assignments_parser::PeakAssignmentsParser;
 use super::jdx_peak_table_parser::PeakTableParser;
@@ -27,6 +26,7 @@ use super::jdx_utils::{
     strip_line_comment, validate_input,
 };
 use crate::api::{Parser, SeekBufRead};
+use crate::common::SfError;
 use crate::jdx::jdx_audit_trail_parser::AuditTrailParser;
 use crate::jdx::jdx_utils::{
     find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start, parse_string_value,
@@ -43,7 +43,7 @@ pub struct JdxParser {}
 
 impl<T: SeekBufRead + 'static> Parser<T> for JdxParser {
     type R = JdxBlock<T>;
-    type E = JdxError;
+    type E = SfError;
 
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         Self::R::new(name, input)
@@ -110,7 +110,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
     const BLOCK_START_LABEL: &'static str = "TITLE";
     const BLOCK_END_LABEL: &'static str = "END";
 
-    pub fn new(_name: &str, mut reader: T) -> Result<Self, JdxError> {
+    pub fn new(_name: &str, mut reader: T) -> Result<Self, SfError> {
         let mut buf = Vec::<u8>::with_capacity(1024);
         let line = reader.read_line_iso_8859_1(&mut buf)?;
         let title = Self::parse_first_line(line.as_deref())?;
@@ -123,7 +123,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         title: &str,
         reader_ref: Rc<RefCell<T>>,
         buf: &mut Vec<u8>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let (block, next_line) = Self::parse_input(title, reader_ref, buf)?;
         Ok((block, next_line))
     }
@@ -132,14 +132,14 @@ impl<T: SeekBufRead> JdxBlock<T> {
         find_ldr(label, &self.ldrs)
     }
 
-    fn parse_first_line(line_opt: Option<&str>) -> Result<String, JdxError> {
+    fn parse_first_line(line_opt: Option<&str>) -> Result<String, SfError> {
         if line_opt.is_none() {
-            return Err(JdxError::new("Malformed block start. First line is empty."));
+            return Err(SfError::new("Malformed block start. First line is empty."));
         }
         let line = line_opt.unwrap();
         let (label, value) = parse_ldr_start(line)?;
         if Self::BLOCK_START_LABEL != label {
-            Err(JdxError::new(&format!("Malformed block start: {line}")))
+            Err(SfError::new(&format!("Malformed block start: {line}")))
         } else {
             Ok(value)
         }
@@ -149,7 +149,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         title: &str,
         reader_ref: Rc<RefCell<T>>,
         buf: &mut Vec<u8>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let mut reader = reader_ref.borrow_mut();
 
         let mut ldrs = Vec::<StringLdr>::new();
@@ -272,7 +272,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
                         // a duplicate LDR is illegal in a block
                         // => accept if content is identical
                         if ldr.value != value {
-                            return Err(JdxError::new(&format!(
+                            return Err(SfError::new(&format!(
                                 "Multiple non-identical values found for \"{}\" in block: {}",
                                 label, title
                             )));
@@ -285,7 +285,7 @@ impl<T: SeekBufRead> JdxBlock<T> {
         }
 
         if next_line.is_none() || "END" != parse_ldr_start(&next_line.unwrap())?.0 {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "No END LDR encountered for block: {}",
                 title
             )));
@@ -367,7 +367,7 @@ impl<T: SeekBufRead> XyData<T> {
         ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(XyData<T>, Option<String>), JdxError> {
+    ) -> Result<(XyData<T>, Option<String>), SfError> {
         validate_input(
             label,
             Some(variable_list),
@@ -395,7 +395,7 @@ impl<T: SeekBufRead> XyData<T> {
     /// Provides the parsed xy data.
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
-    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, SfError> {
         let data = if self.variable_list == Self::QUIRK_OO_VARIABLE_LIST {
             // Ocean Optics quirk
             parse_xyxy_data(
@@ -422,7 +422,7 @@ impl<T: SeekBufRead> XyData<T> {
     }
 }
 
-fn parse_xydata_parameters(ldrs: &[StringLdr], context: &str) -> Result<XyParameters, JdxError> {
+fn parse_xydata_parameters(ldrs: &[StringLdr], context: &str) -> Result<XyParameters, SfError> {
     // required
     // string
     let x_units = find_and_parse_parameter::<String>("XUNITS", ldrs)?;
@@ -467,7 +467,7 @@ fn parse_xydata_parameters(ldrs: &[StringLdr], context: &str) -> Result<XyParame
         missing.push("NPOINTS");
     }
     if !missing.is_empty() {
-        return Err(JdxError::new(&format!(
+        return Err(SfError::new(&format!(
             // Even though XYPOINTS does not require all non optional spectral parameters for parsing, as per JCAMP-DX standard
             // there is no distinction between XYPOINTS and XYDATA as to what spectral parameters are required.
             "Required LDR(s) missing for \"{}\": {}",
@@ -552,7 +552,7 @@ impl<T: SeekBufRead> RaData<T> {
         ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(RaData<T>, Option<String>), JdxError> {
+    ) -> Result<(RaData<T>, Option<String>), SfError> {
         validate_input(
             label,
             Some(variable_list),
@@ -577,7 +577,7 @@ impl<T: SeekBufRead> RaData<T> {
         ))
     }
 
-    fn parse_parameters(ldrs: &[StringLdr]) -> Result<RaParameters, JdxError> {
+    fn parse_parameters(ldrs: &[StringLdr]) -> Result<RaParameters, SfError> {
         // required
         // string
         let r_units = find_and_parse_parameter::<String>("RUNITS", ldrs)?;
@@ -625,7 +625,7 @@ impl<T: SeekBufRead> RaData<T> {
             missing.push("NPOINTS");
         }
         if !missing.is_empty() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Required LDR(s) missing for RADATA: {}",
                 missing.join(", ")
             )));
@@ -652,7 +652,7 @@ impl<T: SeekBufRead> RaData<T> {
     /// Provides the parsed xy data.
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
-    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, SfError> {
         let data = parse_xppyy_data(
             &self.label,
             self.parameters.first_r,
@@ -728,7 +728,7 @@ impl<T: SeekBufRead> XyPoints<T> {
         ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(XyPoints<T>, Option<String>), JdxError> {
+    ) -> Result<(XyPoints<T>, Option<String>), SfError> {
         validate_input(
             label,
             Some(variable_list),
@@ -758,7 +758,7 @@ impl<T: SeekBufRead> XyPoints<T> {
     /// Provides the parsed xy data.
     ///
     /// Returns pairs of xy data. Invalid values ("?") will be represented by NaN.
-    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, SfError> {
         let data = parse_xyxy_data(
             &self.label,
             self.parameters.x_factor,
@@ -791,7 +791,7 @@ impl<T: SeekBufRead> PeakTable<T> {
         variable_list: &str,
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(PeakTable<T>, Option<String>), JdxError> {
+    ) -> Result<(PeakTable<T>, Option<String>), SfError> {
         validate_input(
             label,
             Some(variable_list),
@@ -814,12 +814,12 @@ impl<T: SeekBufRead> PeakTable<T> {
         ))
     }
 
-    pub fn get_width_function(&self) -> Result<Option<String>, JdxError> {
+    pub fn get_width_function(&self) -> Result<Option<String>, SfError> {
         read_width_function(&mut *self.reader_ref.borrow_mut(), self.address)
     }
 
     /// Provides the parsed peak data.
-    pub fn get_data(&self) -> Result<Vec<Peak>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<Peak>, SfError> {
         let reader = &mut *self.reader_ref.borrow_mut();
         let peaks: Vec<Peak> = seek_and_read_sequence_data::<T, PeakTableParser<T>>(
             &self.variable_list,
@@ -865,7 +865,7 @@ impl<T: SeekBufRead> PeakAssignments<T> {
         variable_list: &str,
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(PeakAssignments<T>, Option<String>), JdxError> {
+    ) -> Result<(PeakAssignments<T>, Option<String>), SfError> {
         validate_input(
             label,
             Some(variable_list),
@@ -888,12 +888,12 @@ impl<T: SeekBufRead> PeakAssignments<T> {
         ))
     }
 
-    pub fn get_width_function(&self) -> Result<Option<String>, JdxError> {
+    pub fn get_width_function(&self) -> Result<Option<String>, SfError> {
         read_width_function(&mut *self.reader_ref.borrow_mut(), self.address)
     }
 
     /// Provides the parsed peak data.
-    pub fn get_data(&self) -> Result<Vec<PeakAssignment>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<PeakAssignment>, SfError> {
         let reader = &mut *self.reader_ref.borrow_mut();
         let peaks: Vec<PeakAssignment> = seek_and_read_sequence_data::<T, PeakAssignmentsParser<T>>(
             &self.variable_list,
@@ -950,7 +950,7 @@ impl<T: SeekBufRead> NTuples<T> {
         block_ldrs: &[StringLdr],
         _next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         validate_input(label, None, Self::LABEL, None)?;
         Self::parse(block_ldrs, data_form.trim().to_owned(), reader_ref)
     }
@@ -959,7 +959,7 @@ impl<T: SeekBufRead> NTuples<T> {
         block_ldrs: &[StringLdr],
         data_form: String,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let mut buf = vec![];
         let mut reader = reader_ref.borrow_mut();
         // skip potential comment lines
@@ -995,7 +995,7 @@ impl<T: SeekBufRead> NTuples<T> {
                 ));
             }
             if label != "PAGE" {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Unexpected content found in NTUPLES record: {}",
                     line
                 )));
@@ -1016,7 +1016,7 @@ impl<T: SeekBufRead> NTuples<T> {
             reader = reader_ref.borrow_mut();
         }
         if next_line.is_none() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unexpected end of NTUPLES record: {}",
                 data_form
             )));
@@ -1039,7 +1039,7 @@ impl<T: SeekBufRead> NTuples<T> {
         next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
-    ) -> Result<(Vec<StringLdr>, Vec<NTuplesAttributes>, Option<String>), JdxError> {
+    ) -> Result<(Vec<StringLdr>, Vec<NTuplesAttributes>, Option<String>), SfError> {
         let (ldrs, next_line) = Self::read_ldrs(next_line, reader, buf)?;
         let mut attr_map = Self::split_values(&ldrs)?;
         let mut standard_attr_map = Self::extract_standard_attributes(&mut attr_map);
@@ -1047,7 +1047,7 @@ impl<T: SeekBufRead> NTuples<T> {
         let attr_names_opt = standard_attr_map.get_mut("VARNAME");
         if attr_names_opt.is_none() {
             // VARNAMEs are required by the spec
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "No \"VAR_NAME\" LDR found in NTUPLES: {}",
                 data_form
             )));
@@ -1074,7 +1074,7 @@ impl<T: SeekBufRead> NTuples<T> {
         mut next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
-    ) -> Result<(Vec<StringLdr>, Option<String>), JdxError> {
+    ) -> Result<(Vec<StringLdr>, Option<String>), SfError> {
         let mut output = vec![];
         while let Some(line) = &next_line {
             let (title, value) = parse_ldr_start(line)?;
@@ -1090,7 +1090,7 @@ impl<T: SeekBufRead> NTuples<T> {
         Ok((output, next_line))
     }
 
-    fn split_values(ldrs: &[StringLdr]) -> Result<HashMap<String, Vec<String>>, JdxError> {
+    fn split_values(ldrs: &[StringLdr]) -> Result<HashMap<String, Vec<String>>, SfError> {
         let mut output = HashMap::new();
         for ldr in ldrs {
             let (value_string, _comment) = strip_line_comment(&ldr.value, true, false);
@@ -1100,7 +1100,7 @@ impl<T: SeekBufRead> NTuples<T> {
                 .collect();
             let old = output.insert(ldr.label.clone(), values);
             if old.is_some() {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Duplicate LDR found in NTUPLE: {}",
                     &ldr.label
                 )));
@@ -1134,12 +1134,12 @@ impl<T: SeekBufRead> NTuples<T> {
         standard_attributes: &HashMap<String, Vec<String>>,
         additional_attributes: &HashMap<String, Vec<String>>,
         value_column_index: usize,
-    ) -> Result<NTuplesAttributes, JdxError> {
+    ) -> Result<NTuplesAttributes, SfError> {
         let var_name =
             Self::parse_attribute::<String>("VARNAME", value_column_index, standard_attributes)?;
         if var_name.is_none() {
             // VARNAMEs are required by the spec
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "VAR_NAME missing in NTUPLES column: {}",
                 value_column_index
             )));
@@ -1148,7 +1148,7 @@ impl<T: SeekBufRead> NTuples<T> {
         let symbol =
             Self::parse_attribute::<String>("SYMBOL", value_column_index, standard_attributes)?;
         if symbol.is_none() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "SYMBOL missing in NTUPLES column: {}",
                 value_column_index
             )));
@@ -1197,7 +1197,7 @@ impl<T: SeekBufRead> NTuples<T> {
         key: &str,
         index: usize,
         attributes: &HashMap<String, Vec<String>>,
-    ) -> Result<Option<P>, JdxError> {
+    ) -> Result<Option<P>, SfError> {
         let value_opt = attributes
             .get(key)
             .and_then(|vec| vec.get(index))
@@ -1205,7 +1205,7 @@ impl<T: SeekBufRead> NTuples<T> {
             .filter(|v| !v.is_empty());
         if let Some(value) = value_opt {
             let parsed_value = value.parse::<P>().map_err(|_e| {
-                JdxError::new(&format!(
+                SfError::new(&format!(
                     "Error parsing NTUPLES. Illegal value for \"{}\": {}",
                     key, value
                 ))
@@ -1243,7 +1243,7 @@ impl<T: SeekBufRead> Page<T> {
         block_ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         validate_input(label, None, Self::LABEL, None)?;
         Self::parse(page_var, attributes, block_ldrs, next_line, reader_ref)
     }
@@ -1254,7 +1254,7 @@ impl<T: SeekBufRead> Page<T> {
         block_ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let mut buf = vec![];
         let mut reader = reader_ref.borrow_mut();
 
@@ -1262,7 +1262,7 @@ impl<T: SeekBufRead> Page<T> {
         let next_line = skip_pure_comments(next_line, false, &mut *reader, &mut buf)?;
         let (page_ldrs, next_line) = Self::parse_page_ldrs(next_line, &mut reader, &mut buf)?;
         if next_line.is_none() || !is_ldr_start(next_line.as_ref().unwrap()) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unexpected content found while parsing NTUPLES PAGE: {}",
                 next_line.unwrap_or("<end of file>".to_owned())
             )));
@@ -1281,7 +1281,7 @@ impl<T: SeekBufRead> Page<T> {
             ));
         }
         if label != "DATATABLE" {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unexpected content found while parsing NTUPLES PAGE: {}",
                 next_line.unwrap()
             )));
@@ -1313,7 +1313,7 @@ impl<T: SeekBufRead> Page<T> {
         mut next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
-    ) -> Result<(Vec<StringLdr>, Option<String>), JdxError> {
+    ) -> Result<(Vec<StringLdr>, Option<String>), SfError> {
         let mut page_ldrs = Vec::<StringLdr>::new();
         while let Some(line) = &next_line {
             let (label, mut value) = parse_ldr_start(line)?;
@@ -1329,17 +1329,17 @@ impl<T: SeekBufRead> Page<T> {
         Ok((page_ldrs, next_line))
     }
 
-    fn parse_data_table_vars(raw_page_vars: &str) -> Result<(String, Option<String>), JdxError> {
+    fn parse_data_table_vars(raw_page_vars: &str) -> Result<(String, Option<String>), SfError> {
         let raw_page_vars_trimmed = strip_line_comment(raw_page_vars, true, false).0;
         if raw_page_vars_trimmed.is_empty() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Missing variable list in DATA TABLE: {}",
                 raw_page_vars
             )));
         }
 
         let caps_opt = PAGE_VARS_REGEX.captures(raw_page_vars);
-        let caps = caps_opt.ok_or(JdxError::new(&format!(
+        let caps = caps_opt.ok_or(SfError::new(&format!(
             "Unexpected content found at DATA TABLE start: {}",
             raw_page_vars
         )))?;
@@ -1348,7 +1348,7 @@ impl<T: SeekBufRead> Page<T> {
         let plot_desc_opt = caps.get(2);
 
         if var_list_opt.is_none() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Missing variable list in DATA TABLE: {}",
                 raw_page_vars
             )));
@@ -1418,7 +1418,7 @@ impl<T: SeekBufRead> DataTable<T> {
         page_ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         // validate label and variable list
         validate_input(
             label,
@@ -1428,7 +1428,7 @@ impl<T: SeekBufRead> DataTable<T> {
         )?;
         // validate plot descriptor if present
         if plot_desc.is_some() && !Self::PLOT_DESCRIPTORS.contains(&plot_desc.unwrap()) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal plot descriptor in NTUPLES PAGE: {}",
                 plot_desc.unwrap()
             )));
@@ -1439,7 +1439,7 @@ impl<T: SeekBufRead> DataTable<T> {
         )
     }
 
-    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<(f64, f64)>, SfError> {
         let mut reader = self.reader_ref.borrow_mut();
 
         if ["(XY..XY)", "(XR..XR)", "(XI..XI)"].contains(&self.variable_list.as_str()) {
@@ -1457,13 +1457,13 @@ impl<T: SeekBufRead> DataTable<T> {
             );
         }
 
-        let first_x = self.attributes.0.first.ok_or(JdxError::new(
+        let first_x = self.attributes.0.first.ok_or(SfError::new(
             "Required attribute missing for NTUPLES DATA TABLE: FIRSTX",
         ))?;
-        let last_x = self.attributes.0.last.ok_or(JdxError::new(
+        let last_x = self.attributes.0.last.ok_or(SfError::new(
             "Required attribute missing for NTUPLES DATA TABLE: LASTX",
         ))?;
-        let n_points = self.attributes.1.var_dim.ok_or(JdxError::new(
+        let n_points = self.attributes.1.var_dim.ok_or(SfError::new(
             "Required attribute missing for NTUPLES DATA TABLE: VAR_DIM",
         ))?;
         let y_factor = self.attributes.1.factor.unwrap_or(1.0);
@@ -1487,12 +1487,12 @@ impl<T: SeekBufRead> DataTable<T> {
         page_ldrs: &[StringLdr],
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let (x_symbol, y_symbol) = match DATA_TABLE_VAR_MAP.get(var_list) {
             Some((x, y)) => (*x, *y),
             None => {
                 // should never happen
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Unsupported variabe list in DATA TABLE: {}",
                     var_list
                 )));
@@ -1532,11 +1532,11 @@ impl<T: SeekBufRead> DataTable<T> {
     fn find_ntuples_index(
         symbol: &str,
         attributes: &[NTuplesAttributes],
-    ) -> Result<usize, JdxError> {
+    ) -> Result<usize, SfError> {
         let index_opt = attributes.iter().position(|attr| attr.symbol == symbol);
         match index_opt {
             Some(idx) => Ok(idx),
-            None => Err(JdxError::new(&format!(
+            None => Err(SfError::new(&format!(
                 "Could not find NTUPLES parameters for SYMBOL: {}",
                 symbol
             ))),
@@ -1547,7 +1547,7 @@ impl<T: SeekBufRead> DataTable<T> {
         ntuples_vars: &NTuplesAttributes,
         block_ldrs: &[StringLdr],
         page_ldrs: &[StringLdr],
-    ) -> Result<NTuplesAttributes, JdxError> {
+    ) -> Result<NTuplesAttributes, SfError> {
         let mut output_vars = ntuples_vars.clone();
         output_vars.application_attributes.clear();
 
@@ -1563,7 +1563,7 @@ impl<T: SeekBufRead> DataTable<T> {
             // replace with page LDR values if available
             Self::merge_y_ldrs(&mut output_vars, page_ldrs, true)?;
         } else {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unexpected symbol found during parsing of PAGE: {}",
                 &ntuples_vars.symbol
             )));
@@ -1576,7 +1576,7 @@ impl<T: SeekBufRead> DataTable<T> {
         vars: &mut NTuplesAttributes,
         ldrs: &[StringLdr],
         replace: bool,
-    ) -> Result<(), JdxError> {
+    ) -> Result<(), SfError> {
         for ldr in ldrs {
             match ldr.label.as_str() {
                 "XUNITS" if replace || vars.units.is_none() => {
@@ -1607,7 +1607,7 @@ impl<T: SeekBufRead> DataTable<T> {
         vars: &mut NTuplesAttributes,
         ldrs: &[StringLdr],
         replace: bool,
-    ) -> Result<(), JdxError> {
+    ) -> Result<(), SfError> {
         for ldr in ldrs {
             match ldr.label.as_str() {
                 "YUNITS" if replace || vars.units.is_none() => {
@@ -1638,13 +1638,13 @@ impl<T: SeekBufRead> DataTable<T> {
         merged_vars: &mut NTuplesAttributes,
         page_ldrs: &[StringLdr],
         col_index: usize,
-    ) -> Result<(), JdxError> {
+    ) -> Result<(), SfError> {
         for ldr in page_ldrs {
             if "FIRST" == &ldr.label {
                 let segments: Vec<&str> = ldr.value.split(',').map(|v| v.trim()).collect();
                 if let Some(segment) = segments.get(col_index) {
                     let value = segment.parse::<f64>().map_err(|_e| {
-                        JdxError::new(&format!(
+                        SfError::new(&format!(
                             "Illegal value for \"{}\": {}",
                             &ldr.label, &ldr.value
                         ))
@@ -1717,7 +1717,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
         variable_list: &str,
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         validate_input(
             label,
             Some(variable_list.trim()),
@@ -1755,7 +1755,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
         ))
     }
 
-    pub fn get_data(&self) -> Result<Vec<AuditTrailEntry>, JdxError> {
+    pub fn get_data(&self) -> Result<Vec<AuditTrailEntry>, SfError> {
         let mut variable_list = self
             .bruker_variable_list
             .as_ref()
@@ -1782,7 +1782,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
         _next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
-    ) -> Result<(Option<String>, Option<String>), JdxError> {
+    ) -> Result<(Option<String>, Option<String>), SfError> {
         let mut next_line = reader.read_line_iso_8859_1(buf)?;
         if next_line.is_none()
             || !next_line
@@ -1804,7 +1804,7 @@ impl<T: SeekBufRead> AuditTrail<T> {
                 let bruker_audit_trail =
                     strip_line_comment(next, false, true)
                         .1
-                        .ok_or(JdxError::new(&format!(
+                        .ok_or(SfError::new(&format!(
                             "Unexpected Bruker AUDIT TRAIL start: {}",
                             next
                         )))?;
@@ -1863,7 +1863,7 @@ impl BrukerSpecificParameters {
     fn new<T: SeekBufRead>(
         next_line: Option<String>,
         reader: &mut T,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let (name, content, next_line) = Self::parse(next_line, reader, &mut vec![])?;
 
         Ok((Self { name, content }, next_line))
@@ -1873,9 +1873,9 @@ impl BrukerSpecificParameters {
         next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
-    ) -> Result<(String, Vec<StringLdr>, Option<String>), JdxError> {
+    ) -> Result<(String, Vec<StringLdr>, Option<String>), SfError> {
         if next_line.is_none() || !is_bruker_specific_section_start(next_line.as_ref().unwrap()) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal start of Bruker specific section: {}",
                 next_line.unwrap_or_default()
             )));
@@ -1886,13 +1886,13 @@ impl BrukerSpecificParameters {
 
         let mut next_line = reader.read_line_iso_8859_1(buf)?;
         if next_line.is_none() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal body of Bruker specific section. No content in: {}",
                 next_line.unwrap_or_default()
             )));
         }
         if !Self::is_dashed_line(next_line.as_deref()) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal body of Bruker specific section. No dashed line after: {}",
                 name
             )));
@@ -1918,7 +1918,7 @@ impl BrukerSpecificParameters {
         mut next_line: Option<String>,
         reader: &mut T,
         buf: &mut Vec<u8>,
-    ) -> Result<(Vec<StringLdr>, Option<String>), JdxError> {
+    ) -> Result<(Vec<StringLdr>, Option<String>), SfError> {
         let mut content = Vec::<StringLdr>::new();
         while next_line.is_some()
             && !is_bruker_specific_section_start(next_line.as_ref().unwrap())
@@ -1934,7 +1934,7 @@ impl BrukerSpecificParameters {
             || (!is_bruker_specific_section_start(next_line.as_ref().unwrap())
                 && !is_bruker_specific_section_end(next_line.as_ref().unwrap()))
         {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unexpected end of Bruker specific section: {}",
                 next_line.unwrap_or_default()
             )));
@@ -1943,7 +1943,7 @@ impl BrukerSpecificParameters {
             // skip dashes after section end marker
             next_line = reader.read_line_iso_8859_1(buf)?;
             if !Self::is_dashed_line(next_line.as_deref()) {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Illegal end of Bruker specific section. No dash line after \"{}\". Instead: {}",
                     Self::SECTION_END_TEXT,
                     next_line.unwrap_or_default()
@@ -1985,14 +1985,14 @@ impl BrukerRelaxSection {
         value: &str,
         _next_line: Option<String>,
         reader: &mut T,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         Self::validate_input(label, value, Self::LABEL)?;
         Self::parse(label, reader)
     }
 
-    fn validate_input(label: &str, value: &str, expected_label: &str) -> Result<(), JdxError> {
+    fn validate_input(label: &str, value: &str, expected_label: &str) -> Result<(), SfError> {
         if label != expected_label || !value.trim().is_empty() {
-            Err(JdxError::new(&format!(
+            Err(SfError::new(&format!(
                 "Illegal start of Bruker {} section: ##{}: {}",
                 expected_label, label, value
             )))
@@ -2004,12 +2004,12 @@ impl BrukerRelaxSection {
     fn parse<T: SeekBufRead>(
         label: &str,
         reader: &mut T,
-    ) -> Result<(Self, Option<String>), JdxError> {
+    ) -> Result<(Self, Option<String>), SfError> {
         let mut buf = vec![];
         let next_line = reader.read_line_iso_8859_1(&mut buf)?;
         let file_name = match &next_line {
             None => {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Premature end of Bruker {} section.",
                     label
                 )));
@@ -2030,7 +2030,7 @@ impl BrukerRelaxSection {
 
                 let (label, file_name) = parse_ldr_start(line)?;
                 if !label.starts_with(Self::LABEL_FILE_NAME_START) {
-                    return Err(JdxError::new(&format!(
+                    return Err(SfError::new(&format!(
                         "Illegal start of Bruker {} section. {} not followed by \"{}...\".",
                         Self::LABEL,
                         Self::LABEL,

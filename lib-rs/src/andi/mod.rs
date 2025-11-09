@@ -26,42 +26,10 @@ pub mod andi_scanner;
 mod andi_utils;
 
 use std::collections::BTreeSet;
+use std::fmt;
 use std::str::FromStr;
-use std::{error::Error, fmt};
 
-#[derive(Debug)]
-pub struct AndiError {
-    message: String,
-    source: Option<Box<dyn Error>>,
-}
-
-impl AndiError {
-    pub fn new(msg: &str) -> AndiError {
-        AndiError {
-            message: msg.into(),
-            source: None,
-        }
-    }
-
-    pub fn from_source(source: impl Into<Box<dyn Error>>, message: impl Into<String>) -> Self {
-        Self {
-            message: message.into(),
-            source: Some(source.into()),
-        }
-    }
-}
-
-impl fmt::Display for AndiError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for AndiError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.source.as_ref().map(|b| b.as_ref())
-    }
-}
+use crate::common::SfError;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AndiCategory {
@@ -73,7 +41,7 @@ pub enum AndiCategory {
 }
 
 impl FromStr for AndiCategory {
-    type Err = AndiError;
+    type Err = SfError;
 
     fn from_str(input: &str) -> Result<AndiCategory, Self::Err> {
         match input {
@@ -82,7 +50,7 @@ impl FromStr for AndiCategory {
             "C3" => Ok(AndiCategory::C3),
             "C4" => Ok(AndiCategory::C4),
             "C5" => Ok(AndiCategory::C5),
-            _ => Err(AndiError::new(&format!("Illegal category: {}", input))),
+            _ => Err(SfError::new(&format!("Illegal category: {}", input))),
         }
     }
 }
@@ -112,7 +80,7 @@ impl AndiDatasetCompleteness {
 }
 
 impl FromStr for AndiDatasetCompleteness {
-    type Err = AndiError;
+    type Err = SfError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut categories: BTreeSet<AndiCategory> = BTreeSet::new();
@@ -145,7 +113,7 @@ mod tests {
 
     #[test]
     fn error_to_string_returns_error_message() {
-        let error = AndiError::new("Error message");
+        let error = SfError::new("Error message");
         assert_eq!("Error message", error.to_string());
     }
 

@@ -17,7 +17,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{JdxError, jdx_utils::BinBufRead};
+use super::jdx_utils::BinBufRead;
+use crate::common::SfError;
 use crate::{
     api::SeekBufRead,
     jdx::jdx_utils::{is_ldr_start, strip_line_comment},
@@ -45,7 +46,7 @@ pub fn parse_xppyy_data<T: SeekBufRead>(
     n_points: u64,
     data_address: u64,
     reader: &mut T,
-) -> Result<Vec<(f64, f64)>, JdxError> {
+) -> Result<Vec<(f64, f64)>, SfError> {
     // read raw data from stream
     // remember stream position
     let pos = reader.stream_position()?;
@@ -54,7 +55,7 @@ pub fn parse_xppyy_data<T: SeekBufRead>(
     // reset stream position
     reader.seek(SeekFrom::Start(pos))?;
     if y_data.len() as u64 != n_points {
-        return Err(JdxError::new(&format!(
+        return Err(SfError::new(&format!(
             "Mismatch between NPOINTS and actual number of points \
             in \"{}\". NPOINTS: {}, actual: {}",
             label,
@@ -92,7 +93,7 @@ pub fn parse_xyxy_data<T: SeekBufRead>(
     n_points: Option<u64>,
     data_address: u64,
     reader: &mut T,
-) -> Result<Vec<(f64, f64)>, JdxError> {
+) -> Result<Vec<(f64, f64)>, SfError> {
     // read raw data from stream
     // remember stream position
     let pos = reader.stream_position()?;
@@ -103,7 +104,7 @@ pub fn parse_xyxy_data<T: SeekBufRead>(
     if let Some(np) = n_points
         && xy_data.len() as u64 != np
     {
-        return Err(JdxError::new(&format!(
+        return Err(SfError::new(&format!(
             "Mismatch between NPOINTS and actual number of points \
                 in \"{}\". NPOINTS: {}, actual: {}",
             label,
@@ -128,7 +129,7 @@ impl DataParser {
     pub fn read_xppyy_data<T: SeekBufRead>(
         reader: &mut T,
         expected_n_points: usize,
-    ) -> Result<Vec<f64>, JdxError> {
+    ) -> Result<Vec<f64>, SfError> {
         let mut y_values = Vec::<f64>::with_capacity(expected_n_points);
         let mut y_value_check = Option::<f64>::None;
         let mut pos = reader.stream_position()?;
@@ -172,7 +173,7 @@ impl DataParser {
     }
 
     /// read (XY..XY) data
-    pub fn read_xyxy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<(f64, f64)>, JdxError> {
+    pub fn read_xyxy_data<T: SeekBufRead>(reader: &mut T) -> Result<Vec<(f64, f64)>, SfError> {
         let mut xy_values = Vec::<(f64, f64)>::new();
         let mut pos = reader.stream_position()?;
         let mut buf = Vec::<u8>::with_capacity(128);
@@ -191,7 +192,7 @@ impl DataParser {
             // read xy values from line
             let line_values = Self::read_values(data, false)?.0;
             if line_values.len() % 2 != 0 {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Uneven number of values for xy data encountered in line {}. No y value for x value: {}",
                     &line,
                     line_values.last().unwrap()
@@ -205,7 +206,7 @@ impl DataParser {
                 .zip(line_values.iter().skip(1).step_by(2))
             {
                 if x.is_nan() {
-                    return Err(JdxError::new(&format!(
+                    return Err(SfError::new(&format!(
                         "NaN value encountered as x value in line: {}",
                         &line
                     )));
@@ -220,7 +221,7 @@ impl DataParser {
     fn read_xppyy_line(
         line: &str,
         y_value_check: Option<f64>,
-    ) -> Result<(Vec<f64>, bool), JdxError> {
+    ) -> Result<(Vec<f64>, bool), SfError> {
         let (mut values, dif_encoded) = Self::read_values(line, true)?;
         if !values.is_empty() {
             // remove initial x value (not required for (X++(Y..Y)) encoded data)
@@ -230,7 +231,7 @@ impl DataParser {
         if let (Some(check), Some(first)) = (y_value_check, values.first()) {
             // first y value is a duplicate, check if roughly the same
             if (first - check).abs() >= 1.0 {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Y value check failed in line: {}",
                     line
                 )));
@@ -240,7 +241,7 @@ impl DataParser {
         Ok((values, dif_encoded))
     }
 
-    fn read_values(mut line: &str, is_asdf: bool) -> Result<(Vec<f64>, bool), JdxError> {
+    fn read_values(mut line: &str, is_asdf: bool) -> Result<(Vec<f64>, bool), SfError> {
         let mut y_values = Vec::<f64>::new();
         let mut dif_encoded = false;
         // state
@@ -264,7 +265,7 @@ impl DataParser {
                 } else {
                     "DUP"
                 };
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "{} token without preceding token encountered in sequence: {}",
                     token_name, line
                 )));
@@ -273,7 +274,7 @@ impl DataParser {
                 && previous_token_value.is_some()
                 && previous_token_type == TokenType::Dup
             {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "DUP token with preceding DUP token encountered in sequence: {}",
                     line
                 )));
@@ -286,7 +287,7 @@ impl DataParser {
                 previous_token_value = Some(f64::NAN);
             } else if token_type == TokenType::Dup {
                 let num_repeats = token.parse::<u64>().map_err(|_e| {
-                    JdxError::new(&format!(
+                    SfError::new(&format!(
                         "Illegal DUP token encountered in sequence \"{}\": {}",
                         line, token
                     ))
@@ -303,14 +304,14 @@ impl DataParser {
                 }
             } else {
                 let value = token.parse::<f64>().map_err(|_e| {
-                    JdxError::new(&format!(
+                    SfError::new(&format!(
                         "Illegal token encountered in sequence \"{}\": {}",
                         line, token
                     ))
                 })?;
                 if token_type == TokenType::Dif {
                     if previous_token_type == TokenType::Missing {
-                        return Err(JdxError::new(&format!(
+                        return Err(SfError::new(&format!(
                             "DIF token with preceding ? token encountered in sequence: \"{}\": {}",
                             line, token
                         )));
@@ -331,7 +332,7 @@ impl DataParser {
         Ok((y_values, dif_encoded))
     }
 
-    fn next_token(mut line: &str, is_asdf: bool) -> Result<(Option<&str>, &str), JdxError> {
+    fn next_token(mut line: &str, is_asdf: bool) -> Result<(Option<&str>, &str), SfError> {
         // skip delimiters
         for (idx, c) in line.char_indices() {
             if !Self::is_token_delimiter(c) {
@@ -344,7 +345,7 @@ impl DataParser {
             return Ok((None, line));
         }
         if !Self::is_token_start(line, None, is_asdf) {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal sequence encountered while parsing data: {}",
                 line
             )));
@@ -370,10 +371,10 @@ impl DataParser {
         }
     }
 
-    fn to_affn(token: &str) -> Result<(String, TokenType), JdxError> {
+    fn to_affn(token: &str) -> Result<(String, TokenType), SfError> {
         let (first_digit, token_type) = match token.chars().next() {
             None => {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Illegal token encountered while converting to AFFN: {}",
                     token
                 )));

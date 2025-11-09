@@ -17,8 +17,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::AndiError;
 use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
+
+use crate::common::SfError;
 
 #[derive(Debug, PartialEq, Default, EnumString, Display)]
 pub enum AndiMsExperimentType {
@@ -334,9 +335,9 @@ impl AndiMsFlagValue {
         }
     }
 
-    pub fn values_from_i32(v: i32) -> Result<Vec<Self>, AndiError> {
+    pub fn values_from_i32(v: i32) -> Result<Vec<Self>, SfError> {
         if v as u32 & 0xFFFF0000 != 0 {
-            return Err(AndiError::new(&format!("Illegal flags: {:#0x}", v)));
+            return Err(SfError::new(&format!("Illegal flags: {:#0x}", v)));
         }
         let mut res = Vec::<Self>::new();
         for flag in Self::iter() {

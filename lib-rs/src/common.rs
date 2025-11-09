@@ -63,6 +63,12 @@ impl fmt::Display for SfError {
     }
 }
 
+impl From<std::io::Error> for SfError {
+    fn from(value: std::io::Error) -> Self {
+        Self::from_source(Box::new(value), "I/O error parsing data.")
+    }
+}
+
 /// A repository for scanners.
 pub struct ScannerRepository {
     scanners: Vec<Box<dyn Scanner<Box<dyn SeekRead>>>>,

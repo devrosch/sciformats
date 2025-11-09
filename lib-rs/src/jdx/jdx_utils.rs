@@ -17,7 +17,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{JdxError, JdxSequenceParser, jdx_parser::StringLdr};
+use super::{JdxSequenceParser, jdx_parser::StringLdr};
+use crate::common::SfError;
 use crate::{api::SeekBufRead, utils::from_iso_8859_1_cstr};
 use regex::Regex;
 use std::{
@@ -96,10 +97,10 @@ fn normalize_label(raw_label: &str) -> String {
     label
 }
 
-pub fn parse_ldr_start(line: &str) -> Result<(String, String), JdxError> {
+pub fn parse_ldr_start(line: &str) -> Result<(String, String), SfError> {
     let caps = LDR_START_REGEX.captures(line);
     if caps.as_ref().is_none() || caps.as_ref().unwrap().len() < 3 {
-        return Err(JdxError::new(&format!(
+        return Err(SfError::new(&format!(
             "Malformed LDR start. Line does not match pattern \"{}\": {}",
             LDR_START_REGEX_PATTERN, line
         )));
@@ -154,7 +155,7 @@ pub fn skip_pure_comments<T: BufRead>(
     must_precede_ldr: bool,
     reader: &mut T,
     buf: &mut Vec<u8>,
-) -> Result<Option<String>, JdxError> {
+) -> Result<Option<String>, SfError> {
     while let Some(ref line) = next_line {
         if is_pure_comment(line) {
             next_line = reader.read_line_iso_8859_1(buf)?;
@@ -163,7 +164,7 @@ pub fn skip_pure_comments<T: BufRead>(
         if must_precede_ldr && !is_ldr_start(line) {
             // pure $$ comment lines must be followed by LDR start
             // if not this special case, give up
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Unexpected content found instead of pure comment ($$): {}",
                 line
             )));
@@ -179,7 +180,7 @@ pub fn skip_to_next_ldr<T: SeekBufRead>(
     force_skip_first_line: bool,
     reader: &mut T,
     buf: &mut Vec<u8>,
-) -> Result<Option<String>, JdxError> {
+) -> Result<Option<String>, SfError> {
     if force_skip_first_line {
         next_line = reader.read_line_iso_8859_1(buf)?;
     }
@@ -202,7 +203,7 @@ pub fn parse_string_value<T: SeekBufRead>(
     value: &str,
     reader: &mut T,
     buf: &mut Vec<u8>,
-) -> Result<(String, Option<String>), JdxError> {
+) -> Result<(String, Option<String>), SfError> {
     let mut output = value.trim().to_owned();
     while let Some(line) = reader.read_line_iso_8859_1(buf)? {
         if is_ldr_start(&line) {
@@ -232,15 +233,15 @@ pub fn find_ldr<'ldrs>(raw_label: &str, ldrs: &'ldrs [StringLdr]) -> Option<&'ld
     ldrs.iter().find(|&ldr| label == ldr.label)
 }
 
-pub fn parse_str<P: FromStr>(value: &str, context: &str) -> Result<P, JdxError> {
+pub fn parse_str<P: FromStr>(value: &str, context: &str) -> Result<P, SfError> {
     value
         .parse::<P>()
-        .map_err(|_e| JdxError::new(&format!("Illegal value for \"{}\": {}", context, value)))
+        .map_err(|_e| SfError::new(&format!("Illegal value for \"{}\": {}", context, value)))
 }
 
-pub fn parse_opt_str<P: FromStr>(value_opt: Option<&str>, context: &str) -> Result<P, JdxError> {
+pub fn parse_opt_str<P: FromStr>(value_opt: Option<&str>, context: &str) -> Result<P, SfError> {
     match value_opt {
-        None => Err(JdxError::new(&format!(
+        None => Err(SfError::new(&format!(
             "No value provided for parsing: {}",
             context
         ))),
@@ -248,14 +249,14 @@ pub fn parse_opt_str<P: FromStr>(value_opt: Option<&str>, context: &str) -> Resu
     }
 }
 
-pub fn parse_str_opt<P: FromStr>(value: &str, context: &str) -> Result<Option<P>, JdxError> {
+pub fn parse_str_opt<P: FromStr>(value: &str, context: &str) -> Result<Option<P>, SfError> {
     if value.is_empty() {
         return Ok(None);
     }
     Ok(Some(parse_str(value, context)?))
 }
 
-pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxError> {
+pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, SfError> {
     let value = strip_line_comment(&ldr.value, true, false).0;
     parse_str_opt(value, &ldr.label)
 }
@@ -263,7 +264,7 @@ pub fn parse_parameter<P: FromStr>(ldr: &StringLdr) -> Result<Option<P>, JdxErro
 pub fn find_and_parse_parameter<P: FromStr>(
     key: &str,
     ldrs: &[StringLdr],
-) -> Result<Option<P>, JdxError> {
+) -> Result<Option<P>, SfError> {
     match find_ldr(key, ldrs) {
         None => Ok(None),
         Some(ldr) => parse_parameter(ldr),
@@ -275,9 +276,9 @@ pub fn validate_input(
     variable_list: Option<&str>,
     expected_label: &str,
     expected_variable_lists: Option<&[&str]>,
-) -> Result<(), JdxError> {
+) -> Result<(), SfError> {
     if label != expected_label {
-        return Err(JdxError::new(&format!(
+        return Err(SfError::new(&format!(
             "Illegal label at \"{}\" start encountered: {}",
             expected_label, label
         )));
@@ -285,14 +286,14 @@ pub fn validate_input(
     if let Some(var_lists) = expected_variable_lists {
         match variable_list {
             None => {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Missing variable list encountered for: {}",
                     label
                 )));
             }
             Some(var_list) => {
                 if !var_lists.contains(&var_list) {
-                    return Err(JdxError::new(&format!(
+                    return Err(SfError::new(&format!(
                         "Illegal variable list for \"{}\" encountered: {}",
                         label, var_list
                     )));
@@ -308,12 +309,12 @@ pub(crate) fn parse_element<'t, T: 't, E>(
     label: &str,
     title: &str,
     o: &Option<E>,
-    builder: impl FnOnce() -> Result<(E, Option<String>), JdxError>,
+    builder: impl FnOnce() -> Result<(E, Option<String>), SfError>,
     reader: RefMut<'t, T>,
     reader_ref: &'t Rc<RefCell<T>>,
-) -> Result<(Option<E>, RefMut<'t, T>, Option<String>), JdxError> {
+) -> Result<(Option<E>, RefMut<'t, T>, Option<String>), SfError> {
     if o.is_some() {
-        return Err(JdxError::new(&format!(
+        return Err(SfError::new(&format!(
             "Multiple \"{}\" LDRs found in block: {}",
             label, title
         )));
@@ -327,7 +328,7 @@ pub(crate) fn parse_element<'t, T: 't, E>(
 pub(crate) fn read_width_function<T: SeekBufRead>(
     reader: &mut T,
     address: u64,
-) -> Result<Option<String>, JdxError> {
+) -> Result<Option<String>, SfError> {
     // remember stream position
     let initial_pos = reader.stream_position()?;
     reader.seek(SeekFrom::Start(address))?;
@@ -341,7 +342,7 @@ pub(crate) fn read_width_function<T: SeekBufRead>(
         }
         if let (content, Some(comment)) = strip_line_comment(&line, true, true) {
             if !content.is_empty() {
-                return Err(JdxError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Unexpected content encountered while parsing width function: {}",
                     &line
                 )));
@@ -366,7 +367,7 @@ pub(crate) fn seek_and_read_sequence_data<'r, T, P>(
     variable_list: &'r str,
     address: u64,
     reader: &'r mut T,
-) -> Result<Vec<<P as JdxSequenceParser<'r, T>>::Item>, JdxError>
+) -> Result<Vec<<P as JdxSequenceParser<'r, T>>::Item>, SfError>
 where
     T: SeekBufRead,
     // for lifetimes, see: https://stackoverflow.com/a/78894632/26912077
@@ -408,7 +409,7 @@ pub(crate) fn next_multiline_parser_tuple<T: SeekBufRead>(
     reader: &mut T,
     buf: &mut Vec<u8>,
     line_separator: char,
-) -> Result<Option<String>, JdxError> {
+) -> Result<Option<String>, SfError> {
     let mut pos = reader.stream_position()?;
     let mut tuple = String::new();
 
@@ -429,7 +430,7 @@ pub(crate) fn next_multiline_parser_tuple<T: SeekBufRead>(
             return Ok(None);
         }
         if !line_start.is_empty() {
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Illegal string found in {}: {}",
                 ldr_name, line
             )));
@@ -449,7 +450,7 @@ pub(crate) fn next_multiline_parser_tuple<T: SeekBufRead>(
         if is_ldr_start(line_start) {
             // LDR ended before end of last tuple
             reader.seek(std::io::SeekFrom::Start(pos))?;
-            return Err(JdxError::new(&format!(
+            return Err(SfError::new(&format!(
                 "No closing parenthesis found for {} entry: {}",
                 ldr_name, tuple
             )));
@@ -465,7 +466,7 @@ pub(crate) fn next_multiline_parser_tuple<T: SeekBufRead>(
         pos = reader.stream_position()?;
     }
 
-    Err(JdxError::new(&format!(
+    Err(SfError::new(&format!(
         "File ended before closing parenthesis was found for {}: {}",
         ldr_name, tuple
     )))

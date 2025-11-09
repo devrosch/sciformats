@@ -22,8 +22,8 @@ use super::{
     andi_ms_parser::{AndiMsFile, AndiMsInstrumentComponent, AndiMsRawDataPerScan},
 };
 use crate::{
-    andi::AndiError,
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
+    common::SfError,
     utils::convert_path_to_node_indices,
 };
 use std::{collections::HashMap, error::Error, path::Path};
@@ -51,7 +51,7 @@ impl Reader for AndiMsReader {
             [5, n, 0] => self.read_library_data_per_scan(n),
             [6] => self.read_scan_groups(),
             [6, n] => self.read_scan_group(n),
-            _ => Err(AndiError::new(&format!("Illegal node path: {}", path)).into()),
+            _ => Err(SfError::new(&format!("Illegal node path: {}", path)).into()),
         }
     }
 }
@@ -303,7 +303,7 @@ impl AndiMsReader {
 
     fn read_instrument_component(&self, index: usize) -> Result<Node, Box<dyn Error>> {
         let components = &self.file.instrument_data.instrument_components;
-        let component = components.get(index).ok_or(AndiError::new(&format!(
+        let component = components.get(index).ok_or(SfError::new(&format!(
             "Illegal path. Instrument component not found for index: {}",
             index
         )))?;
@@ -762,7 +762,7 @@ impl AndiMsReader {
     #[allow(clippy::vec_init_then_push)]
     fn read_raw_data_per_scan(&self, index: usize) -> Result<Node, Box<dyn Error>> {
         let scans = &self.file.raw_data_scans.raw_data_per_scan_list;
-        let scan = scans.get(index).ok_or(AndiError::new(&format!(
+        let scan = scans.get(index).ok_or(SfError::new(&format!(
             "Illegal path. Raw data per scan not found for index: {}",
             index
         )))?;
@@ -813,16 +813,16 @@ impl AndiMsReader {
 
         let raw_data_global = &self.file.raw_data_global;
         let x_values = match (raw_data_global.has_masses, raw_data_global.has_times) {
-            (true, _) => scan.get_mass_axis_values()?.ok_or(AndiError::new(&format!(
+            (true, _) => scan.get_mass_axis_values()?.ok_or(SfError::new(&format!(
                 "Could not find m/z values for scan at index: {}",
                 index
             )))?,
-            (_, true) => scan.get_time_axis_values()?.ok_or(AndiError::new(&format!(
+            (_, true) => scan.get_time_axis_values()?.ok_or(SfError::new(&format!(
                 "Could not find time values for scan at index: {}",
                 index
             )))?,
             _ => {
-                return Err(AndiError::new(&format!(
+                return Err(SfError::new(&format!(
                     "Could not find m/z or time values for scan at index: {}",
                     index
                 )))?;
@@ -830,12 +830,12 @@ impl AndiMsReader {
         };
         let y_values = scan
             .get_intensity_axis_values()?
-            .ok_or(AndiError::new(&format!(
+            .ok_or(SfError::new(&format!(
                 "Could not find intensity values for scan at index: {}",
                 index
             )))?;
         if x_values.len() != y_values.len() {
-            return Err(AndiError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Mismatch of x and y value lengths for scan at index: {}",
                 index
             )))?;
@@ -880,14 +880,14 @@ impl AndiMsReader {
         let flagged_peak_indices = scan.get_flagged_peak_indices()?;
         let flag_values = scan.get_flag_values()?;
         if flagged_peak_indices.len() != flag_values.len() {
-            return Err(AndiError::new(&format!(
+            return Err(SfError::new(&format!(
                 "Mismatch of flag index and value lengths for scan at index: {}",
                 index
             )))?;
         }
         let mut flagged_peaks: Vec<f64> = vec![];
         for i in flagged_peak_indices {
-            let peak = x_values.get(i as usize).ok_or(AndiError::new(&format!(
+            let peak = x_values.get(i as usize).ok_or(SfError::new(&format!(
                 "Illegal flag index {} for scan at index: {}",
                 i, index
             )))?;
@@ -938,11 +938,11 @@ impl AndiMsReader {
             .file
             .library_data
             .as_ref()
-            .ok_or(AndiError::new("No library data found."))?;
+            .ok_or(SfError::new("No library data found."))?;
         let scan_lib_data = library_data
             .library_data_per_scan
             .get(index)
-            .ok_or(AndiError::new(&format!(
+            .ok_or(SfError::new(&format!(
                 "Illegal path. Library data per scan not found for index: {}",
                 index
             )))?;
@@ -1065,7 +1065,7 @@ impl AndiMsReader {
             .file
             .scan_groups
             .as_ref()
-            .ok_or(AndiError::new("Illegal path. No scan groups found."))?;
+            .ok_or(SfError::new("Illegal path. No scan groups found."))?;
 
         let child_node_names: Vec<String> = scan_groups
             .raw_data_per_scan_groups
@@ -1088,11 +1088,11 @@ impl AndiMsReader {
             .file
             .scan_groups
             .as_ref()
-            .ok_or(AndiError::new("Illegal path. No scan groups found."))?;
+            .ok_or(SfError::new("Illegal path. No scan groups found."))?;
         let scan_group = &scan_groups
             .raw_data_per_scan_groups
             .get(n)
-            .ok_or(AndiError::new(&format!(
+            .ok_or(SfError::new(&format!(
                 "Illegal path. No scan group found for index: {}",
                 n
             )))?;
@@ -1131,14 +1131,14 @@ impl AndiMsReader {
             let mut row = HashMap::new();
             row.insert("mass".to_owned(), Value::F64(*mass));
             if let Some(samplings) = &sampling_times {
-                let sampling = samplings.get(i).ok_or(AndiError::new(&format!(
+                let sampling = samplings.get(i).ok_or(SfError::new(&format!(
                     "In scan_group {} could not find sampling time at index: {}",
                     n, i
                 )))?;
                 row.insert("sampling_time".to_owned(), Value::F64(*sampling));
             }
             if let Some(delays) = &delay_times {
-                let delay = delays.get(i).ok_or(AndiError::new(&format!(
+                let delay = delays.get(i).ok_or(SfError::new(&format!(
                     "In scan_group {} could not find delay time at index: {}",
                     n, i
                 )))?;

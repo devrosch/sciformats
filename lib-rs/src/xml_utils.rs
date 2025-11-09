@@ -28,13 +28,13 @@ use std::{cell::RefCell, collections::HashMap, error::Error, io::BufRead, rc::Rc
 
 impl From<quick_xml::Error> for SfError {
     fn from(value: quick_xml::Error) -> Self {
-        Self::from_source(Box::new(value), "Structural error parsing XML.")
+        Self::from_source(value, "Structural error parsing XML.")
     }
 }
 
 impl From<quick_xml::encoding::EncodingError> for SfError {
     fn from(value: quick_xml::encoding::EncodingError) -> Self {
-        Self::from_source(Box::new(value), "Encoding error parsing XML.")
+        Self::from_source(value, "Encoding error parsing XML.")
     }
 }
 
@@ -112,7 +112,7 @@ impl XmlTagStart<'_> {
     ) -> Result<T, SfError> {
         parse_fn(value).map_err(|e| {
             SfError::from_source(
-                Box::new(e),
+                e,
                 format!(
                     "Error parsing {}. Unexpected {} attribute: {}",
                     context, name, &value
@@ -447,7 +447,7 @@ pub(super) fn read_req_elem_value_f64<'buf, R: BufRead>(
     let (value, next) = read_req_elem_value(tag_name, next, reader)?;
     let value_f64 = value.parse::<f64>().map_err(|e| {
         let tag = String::from_utf8_lossy(tag_name);
-        SfError::from_source(Box::new(e), format!("Illegal value for {}: {}", tag, value))
+        SfError::from_source(e, format!("Illegal value for {}: {}", tag, value))
     })?;
 
     Ok((value_f64, next))

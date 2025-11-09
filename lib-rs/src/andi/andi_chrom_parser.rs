@@ -50,7 +50,7 @@ impl<T: Seek + Read + 'static> Parser<T> for AndiChromParser {
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
-            .map_err(|e| SfError::from_source(Box::new(e), "AnDI Error. Error parsing netCDF."))?;
+            .map_err(|e| SfError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
         Self::parse_cdf(reader)
     }
 }
@@ -72,9 +72,8 @@ impl AndiChromFile {
             .map_err(|e| SfError::from_source(e, "Error parsing AnDI Chrom admin data."))?;
         let sample_description = AndiChromSampleDescription::new(&mut reader)
             .map_err(|e| SfError::from_source(e, "Error parsing AnDI Chrom sample description."))?;
-        let detection_method = AndiChromDetectionMethod::new(&mut reader).map_err(|e| {
-            SfError::from_source(Box::new(e), "Error parsing AnDI Chrom detection method.")
-        })?;
+        let detection_method = AndiChromDetectionMethod::new(&mut reader)
+            .map_err(|e| SfError::from_source(e, "Error parsing AnDI Chrom detection method."))?;
 
         let reader_ref: Rc<RefCell<netcdf3::FileReader>> = Rc::new(RefCell::new(reader));
 
@@ -361,7 +360,7 @@ impl AndiChromRawData {
                 reader
                     .read_var("raw_data_retention")
                     .map_err(|e| {
-                        SfError::from_source(Box::new(e), "Error parsing AnDI raw datat retention.")
+                        SfError::from_source(e, "Error parsing AnDI raw datat retention.")
                     })?
                     .get_f32()
                     .ok_or(SfError::new(

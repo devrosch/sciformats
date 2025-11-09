@@ -230,7 +230,7 @@ impl Experiment {
         let collectdate = datetime
             .map(|dt| {
                 DateTime::parse_from_rfc3339(&dt.value)
-                    .map_err(|e| SfError::from_source(Box::new(e), "Error parsing date/time."))
+                    .map_err(|e| SfError::from_source(e, "Error parsing date/time."))
             })
             .transpose()?
             .map(|d| d.to_rfc3339_opts(SecondsFormat::AutoSi, true));
@@ -726,7 +726,7 @@ impl Values {
 
         let raw_data = BASE64_STANDARD
             .decode(value.as_bytes())
-            .map_err(|e| SfError::from_source(Box::new(e), "Error decoding base64 data."))?;
+            .map_err(|e| SfError::from_source(e, "Error decoding base64 data."))?;
 
         let multiple = match &self.format {
             Format::Float32 => 4u64,

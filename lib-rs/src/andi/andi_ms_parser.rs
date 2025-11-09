@@ -58,7 +58,7 @@ impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
     fn parse(name: &str, input: T) -> Result<Self::R, Self::E> {
         let input_seek_read = Box::new(input);
         let reader = netcdf3::FileReader::open_seek_read(name, input_seek_read)
-            .map_err(|e| SfError::from_source(Box::new(e), "AnDI Error. Error parsing netCDF."))?;
+            .map_err(|e| SfError::from_source(e, "AnDI Error. Error parsing netCDF."))?;
         Self::parse_cdf(reader)
     }
 }

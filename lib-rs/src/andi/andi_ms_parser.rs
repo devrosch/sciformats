@@ -970,7 +970,7 @@ impl AndiMsRawDataPerScan {
         .map_err(|e| SfError::from_source(e, "Error parsing AnDI intensity axis values."))
     }
 
-    // TODO: account for -9999 values
+    // account for -9999 values?
     pub fn get_flagged_peak_indices(&self) -> Result<Vec<i32>, SfError> {
         // flags are stored right after data points
         let flag_index = self.scan_index + self.number_of_points;

@@ -259,13 +259,19 @@ impl AndiMsReader {
             &mut parameters,
         );
 
+        let child_node_names = if admin_data.error_log.is_empty() {
+            vec![]
+        } else {
+            vec!["Error Log".to_owned()]
+        };
+
         Ok(Node {
             name: "Admin Data".to_owned(),
             parameters,
             data: Vec::new(),
             metadata: Vec::new(),
             table: None,
-            child_node_names: vec!["Error Log".to_owned()],
+            child_node_names,
         })
     }
 
@@ -1183,18 +1189,16 @@ impl AndiMsReader {
             })
             .collect();
 
-        let table = if rows.is_empty() {
-            None
-        } else {
-            Some(Table { column_names, rows })
-        };
+        if rows.is_empty() {
+            return Err(SfError::new("Illegal path. No error log found."));
+        }
 
         Ok(Node {
             name: "Error Log".into(),
             parameters: vec![],
             data: vec![],
             metadata: vec![],
-            table,
+            table: Some(Table { column_names, rows }),
             child_node_names: vec![],
         })
     }

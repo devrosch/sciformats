@@ -1172,7 +1172,7 @@ pub struct AndiMsLibraryDataPerScan {
     pub molfile_reference_name: Option<String>,
     pub other_structure_notation: Option<String>,
     pub retention_index: Option<f64>,
-    // TODO: enum?
+    // enum?, real world data may contain string consisting only of spaces
     pub retention_index_type: Option<String>,
     pub absolute_retention_time: Option<f64>, // in s
     pub relative_retention: Option<f64>,

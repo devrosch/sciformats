@@ -894,7 +894,6 @@ impl AndiMsReader {
             flagged_peaks.push(*peak);
         }
 
-        // TODO: make table None if no rows are present
         let mut table = Table {
             column_names: vec![
                 Column::new("peak", "Peak m/z"),
@@ -916,6 +915,13 @@ impl AndiMsReader {
             table.rows.push(row);
         }
 
+        // make table None if no rows are present
+        let table = if table.rows.is_empty() {
+            None
+        } else {
+            Some(table)
+        };
+
         let mut child_node_names: Vec<String> = vec![];
         if self.file.admin_data.experiment_type == AndiMsExperimentType::LibraryMassSpectrum {
             child_node_names.push("Library Data".to_owned());
@@ -928,7 +934,7 @@ impl AndiMsReader {
             parameters,
             data,
             metadata,
-            table: Some(table),
+            table,
             child_node_names,
         })
     }
@@ -1111,7 +1117,6 @@ impl AndiMsReader {
         let sampling_times = scan_group.get_group_sampling_times()?;
         let delay_times = scan_group.get_group_delay_times()?;
 
-        // TODO: make table None if no rows are present
         let mut table = Table {
             column_names: vec![Column::new("mass", "M/Z")],
             rows: vec![],
@@ -1147,12 +1152,19 @@ impl AndiMsReader {
             table.rows.push(row);
         }
 
+        // make table None if no rows are present
+        let table = if table.rows.is_empty() {
+            None
+        } else {
+            Some(table)
+        };
+
         Ok(Node {
             name,
             parameters,
             data: vec![],
             metadata: vec![],
-            table: Some(table),
+            table,
             child_node_names: vec![],
         })
     }
@@ -1171,12 +1183,18 @@ impl AndiMsReader {
             })
             .collect();
 
+        let table = if rows.is_empty() {
+            None
+        } else {
+            Some(Table { column_names, rows })
+        };
+
         Ok(Node {
             name: "Error Log".into(),
             parameters: vec![],
             data: vec![],
             metadata: vec![],
-            table: Some(Table { column_names, rows }),
+            table,
             child_node_names: vec![],
         })
     }

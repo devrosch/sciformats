@@ -565,8 +565,6 @@ fn andi_ms_centroid_read_succeeds() {
 
     // scan_groups
     assert!(&reader.read("/6").is_err());
-
-    // // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]
@@ -947,15 +945,7 @@ fn andi_ms_continuum_read_succeeds() {
         ],
         raw_data_scan_0.metadata
     );
-    let raw_data_scan_0_table = raw_data_scan_0.table.as_ref().unwrap();
-    assert_eq!(
-        vec![
-            Column::new("peak", "Peak m/z"),
-            Column::new("flags", "Flags")
-        ],
-        raw_data_scan_0_table.column_names
-    );
-    assert!(raw_data_scan_0_table.rows.is_empty());
+    assert!(raw_data_scan_0.table.is_none());
     assert!(raw_data_scan_0.child_node_names.is_empty());
 
     // library_data
@@ -963,8 +953,6 @@ fn andi_ms_continuum_read_succeeds() {
 
     // scan_groups
     assert!(&reader.read("/6").is_err());
-
-    // // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]
@@ -1331,15 +1319,7 @@ fn andi_ms_library_read_succeeds() {
         ],
         raw_data_scan_0.metadata
     );
-    let raw_data_scan_0_table = raw_data_scan_0.table.as_ref().unwrap();
-    assert_eq!(
-        vec![
-            Column::new("peak", "Peak m/z"),
-            Column::new("flags", "Flags")
-        ],
-        raw_data_scan_0_table.column_names
-    );
-    assert!(raw_data_scan_0_table.rows.is_empty());
+    assert!(raw_data_scan_0.table.is_none());
     assert_eq!(vec!["Library Data",], raw_data_scan_0.child_node_names);
 
     // library_data
@@ -1573,8 +1553,6 @@ fn andi_ms_library_read_succeeds() {
 
     // scan_groups
     assert!(&reader.read("/6").is_err());
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]
@@ -1960,18 +1938,8 @@ fn andi_ms_sid_read_succeeds() {
         ],
         raw_data_scan_0.metadata
     );
-    let raw_data_scan_0_table = raw_data_scan_0.table.as_ref().unwrap();
-    assert_eq!(
-        vec![
-            Column::new("peak", "Peak m/z"),
-            Column::new("flags", "Flags")
-        ],
-        raw_data_scan_0_table.column_names
-    );
-    assert!(raw_data_scan_0_table.rows.is_empty());
+    assert!(raw_data_scan_0.table.is_none());
     assert!(raw_data_scan_0.child_node_names.is_empty());
-
-    // TODO: continue
 
     // scan_groups
     let scan_groups = &reader.read("/6").unwrap();
@@ -2032,8 +2000,6 @@ fn andi_ms_sid_read_succeeds() {
     assert!(table_row_1["sampling_time"] == Value::F64(f64::INFINITY));
     assert!(table_row_1["delay_time"] == Value::F64(f64::INFINITY));
     assert!(scan_group_0.child_node_names.is_empty());
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]

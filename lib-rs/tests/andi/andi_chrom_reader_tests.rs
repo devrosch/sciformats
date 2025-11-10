@@ -414,8 +414,6 @@ fn andi_chrom_read_valid_succeeds() {
     );
     assert_eq!(Value::String("ppm".to_owned()), peak_2["peak_amount_unit"]);
     assert_eq!(Value::String("au".to_owned()), peak_2["detector_unit"]);
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]

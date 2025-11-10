@@ -240,8 +240,6 @@ fn andi_chrom_parse_valid_succeeds() {
     assert_eq!("seconds", peak_2.peak_retention_unit);
     assert_eq!("ppm", peak_2.peak_amount_unit.as_ref().unwrap());
     assert_eq!("au", peak_2.detector_unit.as_ref().unwrap());
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]

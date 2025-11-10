@@ -1181,8 +1181,3 @@ impl AndiMsReader {
         })
     }
 }
-
-// TODO: needed?
-// pub struct AndiNonStandardVariables {}
-
-// pub struct AndiNonStandardAttributes {}

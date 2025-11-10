@@ -104,7 +104,7 @@ pub fn read_var_2d_slice_f64(
     var: &(&str, Vec<usize>, DataVector),
     range: &Range<usize>,
 ) -> Result<Vec<f64>, SfError> {
-    // TODO: inefficient, add option to read slice to netcdf3 library
+    // inefficient, but netcdf3 library has no option to read slice
     let values = var
         .2
         .get_f64()

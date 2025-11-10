@@ -610,8 +610,3 @@ impl AndiChromReader {
         })
     }
 }
-
-// TODO: needed?
-// pub struct AndiNonStandardVariables {}
-
-// pub struct AndiNonStandardAttributes {}

@@ -600,12 +600,18 @@ impl AndiChromReader {
             })
             .collect();
 
+        let table = if rows.is_empty() {
+            None
+        } else {
+            Some(Table { column_names, rows })
+        };
+
         Ok(Node {
             name: "Error Log".into(),
             parameters: vec![],
             data: vec![],
             metadata: vec![],
-            table: Some(Table { column_names, rows }),
+            table,
             child_node_names: vec![],
         })
     }

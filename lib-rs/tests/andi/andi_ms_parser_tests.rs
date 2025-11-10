@@ -353,8 +353,6 @@ fn andi_ms_parse_centroid_file_succeeds() {
     assert!(&ms.library_data.is_none());
 
     assert!(ms.scan_groups.is_none());
-
-    // // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]
@@ -634,8 +632,6 @@ fn andi_ms_parse_continuum_file_succeeds() {
     assert!(&ms.library_data.is_none());
 
     assert!(ms.scan_groups.is_none());
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]
@@ -1013,8 +1009,6 @@ fn andi_ms_parse_library_file_succeeds() {
     assert_blank_len(library_data_scan_2.other_information.as_ref().unwrap(), 254);
 
     assert!(ms.scan_groups.is_none());
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]
@@ -1261,8 +1255,6 @@ fn andi_ms_parse_sid_file_succeeds() {
             .unwrap()[1]
             .is_infinite()
     );
-
-    // TODO: add tests for non standard variables and attributes once available
 }
 
 #[test]

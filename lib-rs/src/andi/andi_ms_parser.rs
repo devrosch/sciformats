@@ -66,7 +66,7 @@ impl<T: Seek + Read + 'static> Parser<T> for AndiMsParser {
 #[derive(Debug)]
 pub struct AndiMsFile {
     pub admin_data: AndiMsAdminData,
-    // TODO: make optional?
+    // make optional?
     pub instrument_data: AndiMsInstrumentData,
     pub sample_data: AndiMsSampleData,
     pub test_data: AndiMsTestData,
@@ -74,8 +74,6 @@ pub struct AndiMsFile {
     pub raw_data_scans: AndiMsRawDataScans,
     pub library_data: Option<AndiMsLibraryData>,
     pub scan_groups: Option<AndiMsRawDataScanGroups>,
-    // pub non_standard_variables: Vec<String>,
-    // pub non_standard_attributes: Vec<String>,
 }
 
 impl AndiMsFile {
@@ -123,10 +121,6 @@ impl AndiMsFile {
             raw_data_scans,
             library_data,
             scan_groups,
-            // // TODO: read
-            // non_standard_variables: vec![],
-            // // TODO: read
-            // non_standard_attributes: vec![],
         })
     }
 }
@@ -156,7 +150,7 @@ pub struct AndiMsAdminData {
     pub external_file_ref_2: Option<String>,
     pub external_file_ref_3: Option<String>,
     pub languages: String, // required
-    // TODO: really i32?
+    // really i32?
     pub number_of_times_processed: Option<i32>,
     pub number_of_times_calibrated: Option<i32>,
     pub calibration_history_0: Option<String>,
@@ -166,7 +160,7 @@ pub struct AndiMsAdminData {
     pub pre_experiment_program_name: Option<String>,
     pub post_experiment_program_name: Option<String>,
     pub error_log: Vec<String>,
-    // TODO: really i32?
+    // really i32?
     pub instrument_number: Option<i32>,
 }
 
@@ -227,7 +221,7 @@ impl AndiMsAdminData {
         let post_experiment_program_name =
             read_global_attr_str(reader, "post_experiment_program_name");
         let error_log = read_multi_string_var(reader, "error_log")?;
-        // TODO: really i32?
+        // really i32?
         let instrument_number = reader
             .data_set()
             .get_dim("instrument_number")
@@ -629,7 +623,7 @@ impl AndiMsRawDataGlobal {
             .data_set()
             .get_dim("scan_number")
             .ok_or(SfError::new("Missing scan_number dimension."))?;
-        // TODO: usize?
+        // usize?
         let scan_number = scan_number_dim.size() as i32;
         let starting_scan_number = read_global_attr_i32(reader, "starting_scan_number")?;
         let mass_values_var = reader.data_set().get_var("mass_values");
@@ -905,7 +899,7 @@ impl AndiMsRawDataPerScan {
         }
         // reader currently does not provide an option to read only a part of the array
         // this is inefficient as only a slice is processed
-        // TODO: add method to read slice of data from netCDF variable
+        // inefficient but netCDF library has no method to read slice of data from variable
         let res = match data_format {
             AndiMsDataFormat::Short => Self::extract_scan(
                 reader.read_var_i16(var_name)?,
@@ -1308,8 +1302,3 @@ impl AndiMsRawDataPerScanGroup {
         ))
     }
 }
-
-// TODO: needed?
-// pub struct AndiNonStandardVariables {}
-
-// pub struct AndiNonStandardAttributes {}

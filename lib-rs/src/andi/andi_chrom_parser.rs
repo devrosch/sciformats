@@ -62,8 +62,6 @@ pub struct AndiChromFile {
     pub detection_method: AndiChromDetectionMethod,
     pub raw_data: AndiChromRawData,
     pub peak_processing_results: AndiChromPeakProcessingResults,
-    pub non_standard_variables: Vec<String>,
-    pub non_standard_attributes: Vec<String>,
 }
 
 impl AndiChromFile {
@@ -94,10 +92,6 @@ impl AndiChromFile {
             detection_method,
             raw_data,
             peak_processing_results,
-            // TODO: read
-            non_standard_variables: vec![],
-            // TODO: read
-            non_standard_attributes: vec![],
         })
     }
 }
@@ -275,7 +269,7 @@ impl AndiChromRawData {
             .data_set()
             .get_dim("point_number")
             .ok_or(SfError::new("Missing dataset_completeness dimension."))?;
-        // TODO: usize?
+        // usize?
         let point_number = point_number_dim.size() as i32;
         let raw_data_table_name = read_global_attr_str(&reader, "raw_data_table_name");
         let retention_unit = match read_global_attr_str(&reader, "retention_unit") {
@@ -399,7 +393,7 @@ impl AndiChromPeakProcessingResults {
 
         let peak_number_dim = reader.data_set().get_dim("peak_number");
         let peak_number = match peak_number_dim {
-            // TODO: usize?
+            // usize?
             Some(dim) => dim.size() as i32,
             None => 0,
         };
@@ -575,8 +569,3 @@ pub struct AndiChromPeak {
     pub peak_amount_unit: Option<String>,
     pub detector_unit: Option<String>,
 }
-
-// TODO: needed?
-// pub struct AndiNonStandardVariables {}
-
-// pub struct AndiNonStandardAttributes {}

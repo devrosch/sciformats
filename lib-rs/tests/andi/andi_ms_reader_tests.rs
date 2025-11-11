@@ -558,10 +558,138 @@ fn andi_ms_centroid_read_succeeds() {
     for (key, value) in raw_data_scan_0_table_row_1_expected {
         assert_eq!(&value, raw_data_scan_0_table.rows[1].get(&key).unwrap());
     }
-    assert!(raw_data_scan_0.child_node_names.is_empty());
+
+    assert_eq!(vec!["Time-Mass Data"], raw_data_scan_0.child_node_names);
+
+    // time-mass data
+
+    let raw_data_scan_0_0 = &reader.read("/5/0/0").unwrap();
+    assert_eq!("Time-Mass Data", raw_data_scan_0_0.name);
+    assert_eq!(16, raw_data_scan_0_0.parameters.len());
+    assert_eq!(
+        Parameter::from_str_str(
+            "Resolution Type",
+            AndiMsResolutionType::Proportional.to_string()
+        ),
+        raw_data_scan_0_0.parameters[0]
+    );
+    assert_eq!(
+        Parameter::from_str_i32("Scan Number", 0),
+        raw_data_scan_0_0.parameters[1]
+    );
+    assert_eq!(
+        Parameter::from_str_i32("Actual Scan Number", 99),
+        raw_data_scan_0_0.parameters[2]
+    );
+    assert_eq!(
+        Parameter::from_str_i32("Number Of Points", 4),
+        raw_data_scan_0_0.parameters[3]
+    );
+    assert_eq!(
+        Parameter::from_str_i32("Number Of Flags", 2),
+        raw_data_scan_0_0.parameters[4]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Total Intensity", 50f64),
+        raw_data_scan_0_0.parameters[5]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("A/D Sampling Rate", 400000f64),
+        raw_data_scan_0_0.parameters[6]
+    );
+    assert_eq!(
+        Parameter::from_str_i32("A/D Coaddition Factor", 3),
+        raw_data_scan_0_0.parameters[7]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Scan Acquisition Time", 456f64),
+        raw_data_scan_0_0.parameters[8]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Scan Duration", 12345f64),
+        raw_data_scan_0_0.parameters[9]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Mass Range Min", 20f64),
+        raw_data_scan_0_0.parameters[10]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Mass Range Max", 400f64),
+        raw_data_scan_0_0.parameters[11]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Time Range Min", 0.5f64),
+        raw_data_scan_0_0.parameters[12]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Time Range Max", 0.7f64),
+        raw_data_scan_0_0.parameters[13]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Inter Scan Time", 0.123f64),
+        raw_data_scan_0_0.parameters[14]
+    );
+    assert_eq!(
+        Parameter::from_str_f64("Resolution", 100f64),
+        raw_data_scan_0_0.parameters[15]
+    );
+    assert_eq!(
+        vec![
+            PointXy::new(0.1, 1100.0),
+            PointXy::new(0.2, 2200.0),
+            PointXy::new(0.3, 3300.0),
+            PointXy::new(0.4, 4400.0)
+        ],
+        raw_data_scan_0_0.data
+    );
+    assert_eq!(
+        vec![
+            ("x.unit".to_owned(), "Arbitrary Time Units".to_owned()),
+            ("y.unit".to_owned(), "Arbitrary Intensity Units".to_owned()),
+            ("plot.style".to_owned(), "sticks".to_owned())
+        ],
+        raw_data_scan_0_0.metadata
+    );
+    let raw_data_scan_0_0_table = raw_data_scan_0_0.table.as_ref().unwrap();
+    assert_eq!(
+        vec![
+            Column::new("peak", "Peak time"),
+            Column::new("flags", "Flags")
+        ],
+        raw_data_scan_0_0_table.column_names
+    );
+    assert_eq!(2, raw_data_scan_0_0_table.rows.len());
+    let raw_data_scan_0_0_table_row_0_expected: HashMap<String, Value> = HashMap::from([
+        ("peak".to_owned(), Value::F64(0.2)),
+        (
+            "flags".to_owned(),
+            Value::String(AndiMsFlagValue::Exception.to_string()),
+        ),
+    ]);
+    assert_eq!(
+        raw_data_scan_0_0_table_row_0_expected.len(),
+        raw_data_scan_0_0_table.rows[0].len()
+    );
+    for (key, value) in raw_data_scan_0_0_table_row_0_expected {
+        assert_eq!(&value, raw_data_scan_0_0_table.rows[0].get(&key).unwrap());
+    }
+    let raw_data_scan_0_0_table_row_1_expected: HashMap<String, Value> = HashMap::from([
+        ("peak".to_owned(), Value::F64(0.3)),
+        (
+            "flags".to_owned(),
+            Value::String(AndiMsFlagValue::Saturated.to_string()),
+        ),
+    ]);
+    assert_eq!(
+        raw_data_scan_0_0_table_row_1_expected.len(),
+        raw_data_scan_0_0_table.rows[1].len()
+    );
+    for (key, value) in raw_data_scan_0_0_table_row_1_expected {
+        assert_eq!(&value, raw_data_scan_0_0_table.rows[1].get(&key).unwrap());
+    }
 
     // library_data
-    assert!(&reader.read("/5/0/0").is_err());
+    assert!(&reader.read("/5/0/1").is_err());
 
     // scan_groups
     assert!(&reader.read("/6").is_err());

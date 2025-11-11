@@ -46,9 +46,8 @@ impl Reader for AndiMsReader {
             [3] => self.read_test_data(),
             [4] => self.read_raw_data_global(),
             [5] => self.read_raw_data_scans(),
-            // TODO: add mass-time mapping values as sub node if applicable
             [5, n] => self.read_raw_data_per_scan(n),
-            [5, n, 0] => self.read_library_data_per_scan(n),
+            [5, n, m] => self.read_raw_data_per_scan_child(n, m),
             [6] => self.read_scan_groups(),
             [6, n] => self.read_scan_group(n),
             _ => Err(SfError::new(&format!("Illegal node path: {}", path))),
@@ -765,16 +764,23 @@ impl AndiMsReader {
         })
     }
 
+    fn read_raw_data_per_scan_child(
+        &self,
+        scan_index: usize,
+        child_index: usize,
+    ) -> Result<Node, SfError> {
+        let raw_data_global = &self.file.raw_data_global;
+        let has_time_series_child = raw_data_global.has_masses && raw_data_global.has_times;
+
+        match (has_time_series_child, child_index) {
+            (true, 0) | (false, 1) => self.read_time_mass_raw_data_per_scan(scan_index),
+            (false, 0) => self.read_library_data_per_scan(scan_index),
+            _ => Err(SfError::new("Illegal node path.")),
+        }
+    }
+
     #[allow(clippy::vec_init_then_push)]
-    fn read_raw_data_per_scan(&self, index: usize) -> Result<Node, SfError> {
-        let scans = &self.file.raw_data_scans.raw_data_per_scan_list;
-        let scan = scans.get(index).ok_or(SfError::new(&format!(
-            "Illegal path. Raw data per scan not found for index: {}",
-            index
-        )))?;
-
-        let name = Self::generate_scan_name(scan);
-
+    fn read_parameters_for_scan(scan: &AndiMsRawDataPerScan) -> Vec<Parameter> {
         let mut parameters: Vec<Parameter> = vec![];
         parameters.push(Parameter::from_str_str(
             "Resolution Type",
@@ -816,6 +822,74 @@ impl AndiMsReader {
         Self::push_opt_f64("Time Range Max", &scan.time_range_max, &mut parameters);
         Self::push_opt_f64("Inter Scan Time", &scan.inter_scan_time, &mut parameters);
         Self::push_opt_f64("Resolution", &scan.resolution, &mut parameters);
+
+        parameters
+    }
+
+    fn make_table_for_scan(
+        scan: &AndiMsRawDataPerScan,
+        scan_index: usize,
+        x_values: &[f64],
+        column_names: &[&str; 2],
+    ) -> Result<Option<Table>, SfError> {
+        let flagged_peak_indices = scan.get_flagged_peak_indices()?;
+        let flag_values = scan.get_flag_values()?;
+        if flagged_peak_indices.len() != flag_values.len() {
+            return Err(SfError::new(&format!(
+                "Mismatch of flag index and value lengths for scan at index: {}",
+                scan_index
+            )))?;
+        }
+        let mut flagged_peaks: Vec<f64> = vec![];
+        for i in flagged_peak_indices {
+            let peak = x_values.get(i as usize).ok_or(SfError::new(&format!(
+                "Illegal flag index {} for scan at index: {}",
+                i, scan_index
+            )))?;
+            flagged_peaks.push(*peak);
+        }
+
+        let mut table = Table {
+            column_names: vec![
+                Column::new("peak", column_names[0]),
+                Column::new("flags", column_names[1]),
+            ],
+            rows: vec![],
+        };
+
+        for (i, flags) in flag_values.iter().enumerate() {
+            let mut row = HashMap::new();
+            let peak = flagged_peaks[i];
+            row.insert("peak".to_owned(), Value::F64(peak));
+            let flag_string = flags
+                .iter()
+                .map(|f| f.to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+            row.insert("flags".to_owned(), Value::String(flag_string));
+            table.rows.push(row);
+        }
+
+        // make table None if no rows are present
+        let table = if table.rows.is_empty() {
+            None
+        } else {
+            Some(table)
+        };
+
+        Ok(table)
+    }
+
+    fn read_raw_data_per_scan(&self, index: usize) -> Result<Node, SfError> {
+        let scans = &self.file.raw_data_scans.raw_data_per_scan_list;
+        let scan = scans.get(index).ok_or(SfError::new(&format!(
+            "Illegal path. Raw data per scan not found for index: {}",
+            index
+        )))?;
+
+        let name = Self::generate_scan_name(scan);
+
+        let parameters = Self::read_parameters_for_scan(scan);
 
         let raw_data_global = &self.file.raw_data_global;
         let x_values = match (raw_data_global.has_masses, raw_data_global.has_times) {
@@ -883,57 +957,92 @@ impl AndiMsReader {
             metadata.push(("plot.style".to_owned(), "sticks".to_owned()));
         }
 
-        let flagged_peak_indices = scan.get_flagged_peak_indices()?;
-        let flag_values = scan.get_flag_values()?;
-        if flagged_peak_indices.len() != flag_values.len() {
-            return Err(SfError::new(&format!(
-                "Mismatch of flag index and value lengths for scan at index: {}",
-                index
-            )))?;
-        }
-        let mut flagged_peaks: Vec<f64> = vec![];
-        for i in flagged_peak_indices {
-            let peak = x_values.get(i as usize).ok_or(SfError::new(&format!(
-                "Illegal flag index {} for scan at index: {}",
-                i, index
-            )))?;
-            flagged_peaks.push(*peak);
-        }
-
-        let mut table = Table {
-            column_names: vec![
-                Column::new("peak", "Peak m/z"),
-                Column::new("flags", "Flags"),
-            ],
-            rows: vec![],
-        };
-
-        for (i, flags) in flag_values.iter().enumerate() {
-            let mut row = HashMap::new();
-            let peak = flagged_peaks[i];
-            row.insert("peak".to_owned(), Value::F64(peak));
-            let flag_string = flags
-                .iter()
-                .map(|f| f.to_string())
-                .collect::<Vec<String>>()
-                .join(", ");
-            row.insert("flags".to_owned(), Value::String(flag_string));
-            table.rows.push(row);
-        }
-
-        // make table None if no rows are present
-        let table = if table.rows.is_empty() {
-            None
-        } else {
-            Some(table)
-        };
+        let table = Self::make_table_for_scan(scan, index, &x_values, &["Peak m/z", "Flags"])?;
 
         let mut child_node_names: Vec<String> = vec![];
+        if raw_data_global.has_masses && raw_data_global.has_times {
+            child_node_names.push("Time-Mass Data".to_owned());
+        }
         if self.file.admin_data.experiment_type == AndiMsExperimentType::LibraryMassSpectrum {
             child_node_names.push("Library Data".to_owned());
         }
 
-        // TODO: add mass-time mapping values as sub node if applicable
+        Ok(Node {
+            name,
+            parameters,
+            data,
+            metadata,
+            table,
+            child_node_names,
+        })
+    }
+
+    fn read_time_mass_raw_data_per_scan(&self, index: usize) -> Result<Node, SfError> {
+        let scans = &self.file.raw_data_scans.raw_data_per_scan_list;
+        let scan = scans.get(index).ok_or(SfError::new(&format!(
+            "Illegal path. Raw data per scan not found for index: {}",
+            index
+        )))?;
+
+        let name = "Time-Mass Data".to_owned();
+
+        let parameters = Self::read_parameters_for_scan(scan);
+
+        let raw_data_global = &self.file.raw_data_global;
+        let x_values = match (raw_data_global.has_masses, raw_data_global.has_times) {
+            (true, true) => scan.get_time_axis_values()?.ok_or(SfError::new(&format!(
+                "Could not find time values for scan at index: {}",
+                index
+            )))?,
+            _ => {
+                return Err(SfError::new(&format!(
+                    "Could not find time values for scan at index: {}",
+                    index
+                )))?;
+            }
+        };
+        let y_values = scan
+            .get_intensity_axis_values()?
+            .ok_or(SfError::new(&format!(
+                "Could not find intensity values for scan at index: {}",
+                index
+            )))?;
+        if x_values.len() != y_values.len() {
+            return Err(SfError::new(&format!(
+                "Mismatch of x and y value lengths for scan at index: {}",
+                index
+            )))?;
+        }
+        let data: Vec<PointXy> = x_values
+            .iter()
+            .zip(y_values.iter())
+            .map(|(x, y)| PointXy::new(*x, *y))
+            .collect();
+
+        let mut metadata = Vec::<(String, String)>::new();
+        if let Some(label) = &raw_data_global.time_axis_label {
+            metadata.push(("x.label".to_owned(), label.to_owned()));
+        }
+        metadata.push((
+            "x.unit".to_owned(),
+            raw_data_global.time_axis_units.to_string(),
+        ));
+        if let Some(label) = &raw_data_global.intensity_axis_label {
+            metadata.push(("y.label".to_owned(), label.to_owned()));
+        }
+        metadata.push((
+            "y.unit".to_owned(),
+            raw_data_global.intensity_axis_units.to_string(),
+        ));
+        if self.file.admin_data.experiment_type == AndiMsExperimentType::CentroidedMassSpectrum
+            || self.file.admin_data.experiment_type == AndiMsExperimentType::LibraryMassSpectrum
+        {
+            metadata.push(("plot.style".to_owned(), "sticks".to_owned()));
+        }
+
+        let table = Self::make_table_for_scan(scan, index, &x_values, &["Peak time", "Flags"])?;
+
+        let child_node_names: Vec<String> = vec![];
 
         Ok(Node {
             name,

@@ -15,15 +15,16 @@ This is a library implemented in [Rust](https://www.rust-lang.org/) for reading 
 ```rust
     // Create a File instance or any other data type that implements the Read and Seek traits.
     let file_path = ...;
-    let file = File::open(&file_path)?;
-    let mut input: Box<dyn SeekRead> = Box::new(file);
+    let mut file = File::open(&file_path)?;
 
     // Initialize scanner repository with all supported data types.
     let repo = ScannerRepository::init_all();
     // Ensure that the file has a supported format.
-    assert!(repo.is_recognized(&file_path, &mut input));
-    // Get a reader through which data from the file is retrieved.
-    let reader = repo.get_reader(&file_path, input)?;
+    assert!(repo.is_recognized(&file_path, &mut file));
+    // Get a reader that through which data from the file is retrieved.
+    let reader = repo.get_reader(&file_path, file)?;
+
+    let mut file = File::open(&file_path)?;
 
     // Read the root node.
     let root_node = reader.read("/")?;

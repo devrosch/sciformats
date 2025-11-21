@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_path = format!("{}/../_resources/{}", env!("CARGO_MANIFEST_DIR"), file_name);
     let mut file = File::open(&file_path)?;
 
-    // Read file.
+    // Initialize scanner repository with all supported data types.
     let repo = ScannerRepository::init_all();
     // Ensure that the file has a supported format.
     assert!(repo.is_recognized(&file_path, &mut file));

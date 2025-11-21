@@ -10,13 +10,11 @@
     "url": "https://github.com/devrosch/sciformats"
   },
   "keywords": [
+    "data formats",
+    "parser",
     "parsing",
     "science",
-    "data formats",
-    "JCAMP-DX",
-    "GAML",
-    "AnDI",
-    "netCDF"
+    "FAIR"
   ],
   "private": true,
   "scripts": {

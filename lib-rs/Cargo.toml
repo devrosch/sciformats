@@ -8,7 +8,7 @@ readme = "README.md"
 homepage = "https://sciformats.org/"
 repository = "https://github.com/devrosch/sciformats"
 license = "MIT"
-keywords = ["data-formats", "JCAMP-DX", "GAML", "AnDI", "netCDF"]
+keywords = ["data-formats", "parser", "parsing", "science", "FAIR"]
 categories = ["parsing", "science"]
 
 [lib]

@@ -84,9 +84,8 @@ impl<T: Seek + Read + 'static> Scanner<T> for GamlScanner {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
-
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     fn accepts_valid_gaml() {

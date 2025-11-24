@@ -1,0 +1,228 @@
+// Copyright (c) 2025 Robert Schiwon
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+use crate::api::Parser;
+use crate::common::SfError;
+use serde::Deserialize;
+use std::{
+    collections::HashMap,
+    io::{Read, Seek},
+};
+
+pub struct JsonParser {}
+
+impl<T: Seek + Read + 'static> Parser<T> for JsonParser {
+    type R = JsonDocument;
+    type E = SfError;
+
+    fn parse(_name: &str, input: T) -> Result<Self::R, Self::E> {
+        let doc: JsonDocument = serde_json::from_reader(input)
+            .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
+        Ok(doc)
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct JsonDocument {
+    name: String,
+    parameters: Vec<JsonParameter>,
+    data: Vec<JsonDataItem>,
+    metadata: Vec<JsonMetadataItem>,
+    table: Option<JsonTable>,
+    children: Vec<JsonDocument>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct JsonParameter {
+    key: Option<String>,
+    value: String,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct JsonDataItem {
+    x: f64,
+    y: f64,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct JsonMetadataItem {
+    key: String,
+    value: String,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct JsonTable {
+    #[serde(rename(deserialize = "columnNames"))]
+    column_names: Vec<JsonTableColumn>,
+    rows: Vec<HashMap<String, JsonTableCellValue>>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct JsonTableColumn {
+    key: String,
+    name: String,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(untagged)]
+pub enum JsonTableCellValue {
+    String(String),
+    Bool(bool),
+    Number(f64),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    const JSON: &str = r#"
+        {
+            "name": "Single Node",
+            "parameters": [
+                {
+                    "key": "Parameter key 1",
+                    "value": "Parameter value 1"
+                },
+                {
+                    "value": "Parameter value 2"
+                }
+            ],
+            "data": [
+                {
+                    "x": 0,
+                    "y": 10.1
+                },
+                {
+                    "x": 1,
+                    "y": 1000.01
+                }
+            ],
+            "metadata": [
+                {
+                    "key": "x.unit",
+                    "value": "arbitrary unit"
+                },
+                {
+                    "key": "y.unit",
+                    "value": "another arbitrary unit"
+                }
+            ],
+            "table": {
+                "columnNames": [
+                    {
+                        "key": "col_key1",
+                        "name": "Column name 1"
+                    }
+                ],
+                "rows": [
+                    {
+                        "col_key1": "Cell value 1"
+                    },
+                    {
+                        "col_key1": true
+                    },
+                    {
+                        "col_key1": 123.456
+                    }
+                ]
+            },
+            "children": []
+        }"#;
+
+    #[test]
+    fn parses_single_node_json() {
+        let path = "example.json";
+        let reader = Cursor::new(JSON);
+
+        let root = JsonParser::parse(path, reader).unwrap();
+
+        assert_eq!("Single Node", &root.name);
+
+        assert_eq!(2, root.parameters.len());
+        assert_eq!(
+            JsonParameter {
+                key: Some("Parameter key 1".to_owned()),
+                value: "Parameter value 1".to_owned()
+            },
+            root.parameters[0]
+        );
+        assert_eq!(
+            JsonParameter {
+                key: None,
+                value: "Parameter value 2".to_owned()
+            },
+            root.parameters[1]
+        );
+
+        assert_eq!(2, root.data.len());
+        assert_eq!(JsonDataItem { x: 0.0, y: 10.1 }, root.data[0]);
+        assert_eq!(JsonDataItem { x: 1.0, y: 1000.01 }, root.data[1]);
+
+        assert_eq!(2, root.metadata.len());
+        assert_eq!(
+            JsonMetadataItem {
+                key: "x.unit".to_owned(),
+                value: "arbitrary unit".to_owned()
+            },
+            root.metadata[0]
+        );
+        assert_eq!(
+            JsonMetadataItem {
+                key: "y.unit".to_owned(),
+                value: "another arbitrary unit".to_owned()
+            },
+            root.metadata[1]
+        );
+
+        assert!(root.table.is_some());
+        assert_eq!(1, root.table.as_ref().unwrap().column_names.len());
+        assert_eq!(
+            JsonTableColumn {
+                key: "col_key1".to_owned(),
+                name: "Column name 1".to_owned()
+            },
+            root.table.as_ref().unwrap().column_names[0]
+        );
+        assert_eq!(3, root.table.as_ref().unwrap().rows.len());
+        let row0 = &root.table.as_ref().unwrap().rows[0];
+        assert_eq!(1, row0.len());
+        assert!(row0.contains_key("col_key1"));
+        assert_eq!(
+            Some(&JsonTableCellValue::String("Cell value 1".to_owned())),
+            row0.get("col_key1")
+        );
+        let row1 = &root.table.as_ref().unwrap().rows[1];
+        assert_eq!(1, row1.len());
+        assert!(row1.contains_key("col_key1"));
+        assert_eq!(Some(&JsonTableCellValue::Bool(true)), row1.get("col_key1"));
+        let row2 = &root.table.as_ref().unwrap().rows[2];
+        assert_eq!(1, row2.len());
+        assert!(row2.contains_key("col_key1"));
+        assert_eq!(
+            Some(&JsonTableCellValue::Number(123.456)),
+            row2.get("col_key1")
+        );
+
+        // TODO: test for BigInt cell value
+
+        assert!(root.children.is_empty());
+    }
+}

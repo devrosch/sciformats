@@ -95,7 +95,7 @@ mod tests {
 
     const JSON: &str = r#"
         {
-            "name": "Single Node",
+            "name": "Single node",
             "parameters": [
                 {
                     "key": "Parameter key 1",
@@ -144,17 +144,32 @@ mod tests {
                     }
                 ]
             },
-            "children": []
+            "children": [
+                {
+                    "name": "Nested node 0",
+                    "parameters": [],
+                    "data": [],
+                    "metadata": [],
+                    "children": []
+                },
+                {
+                    "name": "Nested node 1",
+                    "parameters": [],
+                    "data": [],
+                    "metadata": [],
+                    "children": []
+                }
+            ]
         }"#;
 
     #[test]
-    fn parses_single_node_json() {
+    fn parses_json() {
         let path = "example.json";
         let reader = Cursor::new(JSON);
 
         let root = JsonParser::parse(path, reader).unwrap();
 
-        assert_eq!("Single Node", &root.name);
+        assert_eq!("Single node", &root.name);
 
         assert_eq!(2, root.parameters.len());
         assert_eq!(
@@ -223,6 +238,44 @@ mod tests {
 
         // TODO: test for BigInt cell value
 
-        assert!(root.children.is_empty());
+        assert_eq!(2, root.children.len());
+        let nested0 = &root.children[0];
+        assert_eq!("Nested node 0", nested0.name);
+        assert!(nested0.parameters.is_empty());
+        assert!(nested0.data.is_empty());
+        assert!(nested0.metadata.is_empty());
+        assert!(nested0.table.is_none());
+        assert!(nested0.children.is_empty());
+
+        let nested1 = &root.children[1];
+        assert_eq!("Nested node 1", nested1.name);
+        assert!(nested1.parameters.is_empty());
+        assert!(nested1.data.is_empty());
+        assert!(nested1.metadata.is_empty());
+        assert!(nested1.table.is_none());
+        assert!(nested1.children.is_empty());
+    }
+
+    #[test]
+    fn fails_parsing_unexpected_json() {
+        const SOME_JSON: &str = r#"{ somefield: "some value" }"#;
+        let result = JsonParser::parse("somepath.json", Cursor::new(SOME_JSON));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn fails_parsing_extra_fields() {
+        const EXTRA_PARAM_JSON: &str = r#"
+            {
+                "name": "Node 0",
+                "extraparam": "extra",
+                "parameters": [],
+                "data": [],
+                "metadata": [],
+                "children": []
+            }
+        "#;
+        let result = JsonParser::parse("extra.json", Cursor::new(EXTRA_PARAM_JSON));
+        assert!(result.is_err());
     }
 }

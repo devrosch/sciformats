@@ -93,77 +93,76 @@ mod tests {
     use super::*;
     use std::io::Cursor;
 
-    const JSON: &str = r#"
-        {
-            "name": "Single node",
-            "parameters": [
-                {
-                    "key": "Parameter key 1",
-                    "value": "Parameter value 1"
-                },
-                {
-                    "value": "Parameter value 2"
-                }
-            ],
-            "data": [
-                {
-                    "x": 0,
-                    "y": 10.1
-                },
-                {
-                    "x": 1,
-                    "y": 1000.01
-                }
-            ],
-            "metadata": [
-                {
-                    "key": "x.unit",
-                    "value": "arbitrary unit"
-                },
-                {
-                    "key": "y.unit",
-                    "value": "another arbitrary unit"
-                }
-            ],
-            "table": {
-                "columnNames": [
-                    {
-                        "key": "col_key1",
-                        "name": "Column name 1"
-                    }
-                ],
-                "rows": [
-                    {
-                        "col_key1": "Cell value 1"
-                    },
-                    {
-                        "col_key1": true
-                    },
-                    {
-                        "col_key1": 123.456
-                    }
-                ]
-            },
-            "children": [
-                {
-                    "name": "Nested node 0",
-                    "parameters": [],
-                    "data": [],
-                    "metadata": [],
-                    "children": []
-                },
-                {
-                    "name": "Nested node 1",
-                    "parameters": [],
-                    "data": [],
-                    "metadata": [],
-                    "children": []
-                }
-            ]
-        }"#;
-
     #[test]
     fn parses_json() {
+        const JSON: &str = r#"
+            {
+                "name": "Single node",
+                "parameters": [
+                    {
+                        "key": "Parameter key 1",
+                        "value": "Parameter value 1"
+                    },
+                    {
+                        "value": "Parameter value 2"
+                    }
+                ],
+                "data": [
+                    {
+                        "x": 0,
+                        "y": 10.1
+                    },
+                    {
+                        "x": 1,
+                        "y": 1000.01
+                    }
+                ],
+                "metadata": [
+                    {
+                        "key": "x.unit",
+                        "value": "arbitrary unit"
+                    },
+                    {
+                        "key": "y.unit",
+                        "value": "another arbitrary unit"
+                    }
+                ],
+                "table": {
+                    "columnNames": [
+                        {
+                            "key": "col_key1",
+                            "name": "Column name 1"
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "col_key1": "Cell value 1"
+                        },
+                        {
+                            "col_key1": true
+                        },
+                        {
+                            "col_key1": 123.456
+                        }
+                    ]
+                },
+                "children": [
+                    {
+                        "name": "Nested node 0",
+                        "parameters": [],
+                        "data": [],
+                        "metadata": [],
+                        "children": []
+                    },
+                    {
+                        "name": "Nested node 1",
+                        "parameters": [],
+                        "data": [],
+                        "metadata": [],
+                        "children": []
+                    }
+                ]
+            }"#;
         let path = "example.json";
         let reader = Cursor::new(JSON);
 
@@ -236,8 +235,6 @@ mod tests {
             row2.get("col_key1")
         );
 
-        // TODO: test for BigInt cell value
-
         assert_eq!(2, root.children.len());
         let nested0 = &root.children[0];
         assert_eq!("Nested node 0", nested0.name);
@@ -258,7 +255,10 @@ mod tests {
 
     #[test]
     fn fails_parsing_unexpected_json() {
-        const SOME_JSON: &str = r#"{ somefield: "some value" }"#;
+        const SOME_JSON: &str = r#"
+            {
+                somefield: "some value"
+            }"#;
         let result = JsonParser::parse("somepath.json", Cursor::new(SOME_JSON));
         assert!(result.is_err());
     }

@@ -52,7 +52,16 @@ pub struct JsonDocument {
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonParameter {
     key: Option<String>,
-    value: String,
+    value: JsonValue,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(untagged)]
+pub enum JsonValue {
+    String(String),
+    Bool(bool),
+    I64(i64), // not a JSON type but useful for reading numbers with integer values
+    Number(f64),
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -71,21 +80,13 @@ pub struct JsonMetadataItem {
 pub struct JsonTable {
     #[serde(rename(deserialize = "columnNames"))]
     column_names: Vec<JsonTableColumn>,
-    rows: Vec<HashMap<String, JsonTableCellValue>>,
+    rows: Vec<HashMap<String, JsonValue>>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonTableColumn {
     key: String,
     name: String,
-}
-
-#[derive(Deserialize, PartialEq, Debug)]
-#[serde(untagged)]
-pub enum JsonTableCellValue {
-    String(String),
-    Bool(bool),
-    Number(f64),
 }
 
 #[cfg(test)]
@@ -100,11 +101,27 @@ mod tests {
                 "name": "Single node",
                 "parameters": [
                     {
-                        "key": "Parameter key 1",
+                        "key": "Parameter key 0",
+                        "value": "Parameter value 0"
+                    },
+                    {
                         "value": "Parameter value 1"
                     },
                     {
-                        "value": "Parameter value 2"
+                        "key": "Parameter key 2",
+                        "value": true
+                    },
+                    {
+                        "key": "Parameter key 3",
+                        "value": 123
+                    },
+                    {
+                        "key": "Parameter key 4",
+                        "value": 123.456
+                    },
+                    {
+                        "key": "Parameter key 5",
+                        "value": -123
                     }
                 ],
                 "data": [
@@ -170,20 +187,48 @@ mod tests {
 
         assert_eq!("Single node", &root.name);
 
-        assert_eq!(2, root.parameters.len());
+        assert_eq!(6, root.parameters.len());
         assert_eq!(
             JsonParameter {
-                key: Some("Parameter key 1".to_owned()),
-                value: "Parameter value 1".to_owned()
+                key: Some("Parameter key 0".to_owned()),
+                value: JsonValue::String("Parameter value 0".to_owned())
             },
             root.parameters[0]
         );
         assert_eq!(
             JsonParameter {
                 key: None,
-                value: "Parameter value 2".to_owned()
+                value: JsonValue::String("Parameter value 1".to_owned())
             },
             root.parameters[1]
+        );
+        assert_eq!(
+            JsonParameter {
+                key: Some("Parameter key 2".to_owned()),
+                value: JsonValue::Bool(true)
+            },
+            root.parameters[2]
+        );
+        assert_eq!(
+            JsonParameter {
+                key: Some("Parameter key 3".to_owned()),
+                value: JsonValue::I64(123)
+            },
+            root.parameters[3]
+        );
+        assert_eq!(
+            JsonParameter {
+                key: Some("Parameter key 4".to_owned()),
+                value: JsonValue::Number(123.456)
+            },
+            root.parameters[4]
+        );
+        assert_eq!(
+            JsonParameter {
+                key: Some("Parameter key 5".to_owned()),
+                value: JsonValue::I64(-123)
+            },
+            root.parameters[5]
         );
 
         assert_eq!(2, root.data.len());
@@ -220,20 +265,17 @@ mod tests {
         assert_eq!(1, row0.len());
         assert!(row0.contains_key("col_key1"));
         assert_eq!(
-            Some(&JsonTableCellValue::String("Cell value 1".to_owned())),
+            Some(&JsonValue::String("Cell value 1".to_owned())),
             row0.get("col_key1")
         );
         let row1 = &root.table.as_ref().unwrap().rows[1];
         assert_eq!(1, row1.len());
         assert!(row1.contains_key("col_key1"));
-        assert_eq!(Some(&JsonTableCellValue::Bool(true)), row1.get("col_key1"));
+        assert_eq!(Some(&JsonValue::Bool(true)), row1.get("col_key1"));
         let row2 = &root.table.as_ref().unwrap().rows[2];
         assert_eq!(1, row2.len());
         assert!(row2.contains_key("col_key1"));
-        assert_eq!(
-            Some(&JsonTableCellValue::Number(123.456)),
-            row2.get("col_key1")
-        );
+        assert_eq!(Some(&JsonValue::Number(123.456)), row2.get("col_key1"));
 
         assert_eq!(2, root.children.len());
         let nested0 = &root.children[0];

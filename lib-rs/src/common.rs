@@ -23,6 +23,7 @@ use crate::andi::andi_scanner::AndiScanner;
 use crate::api::{Reader, Scanner};
 use crate::gaml::gaml_scanner::GamlScanner;
 use crate::jdx::jdx_scanner::JdxScanner;
+use crate::json::json_scanner::JsonScanner;
 use std::fmt;
 use std::io::{BufReader, ErrorKind, SeekFrom};
 use std::{
@@ -122,7 +123,9 @@ impl<T: Seek + Read + 'static> ScannerRepository<T> {
         let andi_scanner: Box<dyn Scanner<T>> = Box::new(AndiScanner::new());
         let gaml_scanner = Box::new(GamlScanner::new());
         let jdx_scanner = Box::new(JdxScanner::new());
-        let scanners: Vec<Box<dyn Scanner<T>>> = vec![andi_scanner, gaml_scanner, jdx_scanner];
+        let json_scanner = Box::new(JsonScanner::new());
+        let scanners: Vec<Box<dyn Scanner<T>>> =
+            vec![andi_scanner, gaml_scanner, jdx_scanner, json_scanner];
         ScannerRepository { scanners }
     }
 

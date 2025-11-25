@@ -17,24 +17,21 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{COMPOUND_FILE, open_file};
+use super::{EXAMPLE, open_file};
 use sciformats::{
-    api::{Parser, Reader, SeekBufRead},
-    jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},
+    api::{Parser, Reader},
+    json::{json_parser::JsonParser, json_reader::JsonReader},
 };
-use std::io::BufReader;
 use wasm_bindgen_test::wasm_bindgen_test;
 
 wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 #[allow(dead_code)]
 #[wasm_bindgen_test]
-fn jdx_read_valid_succeeds() {
-    let (path, file) = open_file(COMPOUND_FILE);
-    let buf_reader = BufReader::new(file);
-    let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);
-    let jdx = JdxParser::parse(&path, buf_input).unwrap();
-    let reader = JdxReader::new(&path, jdx);
+fn json_read_valid_succeeds() {
+    let (path, file) = open_file(EXAMPLE);
+    let parser = JsonParser::parse(&path, file).unwrap();
+    let reader = JsonReader::new(&path, parser);
 
     let root_node_result = &reader.read("/");
 

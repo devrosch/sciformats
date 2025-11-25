@@ -1,0 +1,83 @@
+{
+    "name": "Root node",
+    "parameters": [
+        {
+            "key": "Parameter key 0",
+            "value": "Parameter value 0"
+        },
+        {
+            "value": "Parameter value 1"
+        },
+        {
+            "key": "Parameter key 2",
+            "value": true
+        },
+        {
+            "key": "Parameter key 3",
+            "value": 123
+        },
+        {
+            "key": "Parameter key 4",
+            "value": 123.456
+        },
+        {
+            "key": "Parameter key 5",
+            "value": -123
+        }
+    ],
+    "data": [
+        {
+            "x": 0,
+            "y": 10.1
+        },
+        {
+            "x": 1,
+            "y": 1000.01
+        }
+    ],
+    "metadata": [
+        {
+            "key": "x.unit",
+            "value": "arbitrary unit"
+        },
+        {
+            "key": "y.unit",
+            "value": "another arbitrary unit"
+        }
+    ],
+    "table": {
+        "columnNames": [
+            {
+                "key": "col_key1",
+                "name": "Column name 1"
+            }
+        ],
+        "rows": [
+            {
+                "col_key1": "Cell value 1"
+            },
+            {
+                "col_key1": true
+            },
+            {
+                "col_key1": 123.456
+            }
+        ]
+    },
+    "children": [
+        {
+            "name": "Nested node 0",
+            "parameters": [],
+            "data": [],
+            "metadata": [],
+            "children": []
+        },
+        {
+            "name": "Nested node 1",
+            "parameters": [],
+            "data": [],
+            "metadata": [],
+            "children": []
+        }
+    ]
+}

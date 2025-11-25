@@ -41,18 +41,18 @@ impl<T: Seek + Read + 'static> Parser<T> for JsonParser {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JsonDocument {
-    name: String,
-    parameters: Vec<JsonParameter>,
-    data: Vec<JsonDataItem>,
-    metadata: Vec<JsonMetadataItem>,
-    table: Option<JsonTable>,
-    children: Vec<JsonDocument>,
+    pub name: String,
+    pub parameters: Vec<JsonParameter>,
+    pub data: Vec<JsonDataItem>,
+    pub metadata: Vec<JsonMetadataItem>,
+    pub table: Option<JsonTable>,
+    pub children: Vec<JsonDocument>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonParameter {
-    key: Option<String>,
-    value: JsonValue,
+    pub key: Option<String>,
+    pub value: JsonValue,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -66,27 +66,27 @@ pub enum JsonValue {
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonDataItem {
-    x: f64,
-    y: f64,
+    pub x: f64,
+    pub y: f64,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonMetadataItem {
-    key: String,
-    value: String,
+    pub key: String,
+    pub value: String,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonTable {
     #[serde(rename(deserialize = "columnNames"))]
-    column_names: Vec<JsonTableColumn>,
-    rows: Vec<HashMap<String, JsonValue>>,
+    pub column_names: Vec<JsonTableColumn>,
+    pub rows: Vec<HashMap<String, JsonValue>>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct JsonTableColumn {
-    key: String,
-    name: String,
+    pub key: String,
+    pub name: String,
 }
 
 #[cfg(test)]
@@ -98,7 +98,7 @@ mod tests {
     fn parses_json() {
         const JSON: &str = r#"
             {
-                "name": "Single node",
+                "name": "Root node",
                 "parameters": [
                     {
                         "key": "Parameter key 0",
@@ -185,7 +185,7 @@ mod tests {
 
         let root = JsonParser::parse(path, reader).unwrap();
 
-        assert_eq!("Single node", &root.name);
+        assert_eq!("Root node", &root.name);
 
         assert_eq!(6, root.parameters.len());
         assert_eq!(

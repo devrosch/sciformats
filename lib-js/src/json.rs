@@ -17,26 +17,10 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{COMPOUND_FILE, open_file};
-use sciformats::{
-    api::{Parser, Reader, SeekBufRead},
-    jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},
-};
-use std::io::BufReader;
-use wasm_bindgen_test::wasm_bindgen_test;
+use super::{BlobSeekRead, JsNode, JsReader, create_js_reader, create_js_scanner, map_to_js_err};
+use sciformats::{api::Scanner, json::json_scanner::JsonScanner};
+use wasm_bindgen::{JsError, prelude::wasm_bindgen};
+use web_sys::Blob;
 
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
-
-#[allow(dead_code)]
-#[wasm_bindgen_test]
-fn jdx_read_valid_succeeds() {
-    let (path, file) = open_file(COMPOUND_FILE);
-    let buf_reader = BufReader::new(file);
-    let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);
-    let jdx = JdxParser::parse(&path, buf_input).unwrap();
-    let reader = JdxReader::new(&path, jdx);
-
-    let root_node_result = &reader.read("/");
-
-    assert!(root_node_result.is_ok());
-}
+create_js_scanner!(JsonScanner, JsJsonScanner);
+create_js_reader!(JsJsonScanner, JsonReader, JsJsonReader);

@@ -17,26 +17,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use super::{COMPOUND_FILE, open_file};
-use sciformats::{
-    api::{Parser, Reader, SeekBufRead},
-    jdx::{jdx_parser::JdxParser, jdx_reader::JdxReader},
-};
-use std::io::BufReader;
-use wasm_bindgen_test::wasm_bindgen_test;
+mod json_reader_tests;
 
-wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+use super::open_files;
 
-#[allow(dead_code)]
-#[wasm_bindgen_test]
-fn jdx_read_valid_succeeds() {
-    let (path, file) = open_file(COMPOUND_FILE);
-    let buf_reader = BufReader::new(file);
-    let buf_input: Box<dyn SeekBufRead> = Box::new(buf_reader);
-    let jdx = JdxParser::parse(&path, buf_input).unwrap();
-    let reader = JdxReader::new(&path, jdx);
-
-    let root_node_result = &reader.read("/");
-
-    assert!(root_node_result.is_ok());
-}
+open_files!("resources/", ((EXAMPLE, "example.json"),));

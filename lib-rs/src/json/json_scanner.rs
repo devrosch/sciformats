@@ -18,8 +18,9 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use crate::{
-    api::{Reader, Scanner},
+    api::{Parser, Reader, Scanner},
     common::SfError,
+    json::{json_parser::JsonParser, json_reader::JsonReader},
     utils::is_recognized_extension,
 };
 use std::io::{Read, Seek};
@@ -44,7 +45,9 @@ impl<T: Seek + Read + 'static> Scanner<T> for JsonScanner {
     }
 
     fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, SfError> {
-        todo!()
+        let parser = JsonParser::parse(_path, _input)?;
+        let reader = JsonReader::new(_path, parser);
+        Ok(Box::new(reader))
     }
 }
 
@@ -107,10 +110,19 @@ mod tests {
 
     #[test]
     fn recognizes_single_node_json() {
-        let path = "single_node.json";
-        let mut reader = Cursor::new(SINGLE_NODE_JSON);
+        let path = "example.json";
+        let mut input = Cursor::new(SINGLE_NODE_JSON);
         let scanner = JsonScanner::new();
 
-        assert_eq!(true, scanner.is_recognized(path, &mut reader));
+        assert_eq!(true, scanner.is_recognized(path, &mut input));
+    }
+
+    #[test]
+    fn provides_reader_for_valid_json() {
+        let path = "example.json";
+        let input = Cursor::new(SINGLE_NODE_JSON);
+        let scanner = JsonScanner::new();
+
+        assert!(scanner.get_reader(path, input).is_ok());
     }
 }

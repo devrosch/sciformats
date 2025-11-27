@@ -21,32 +21,60 @@ use crate::{
     api::{Parser, Reader, Scanner},
     common::SfError,
     json::{json_parser::JsonParser, json_reader::JsonReader},
-    utils::is_recognized_extension,
+    utils::{from_iso_8859_1_cstr, is_recognized_extension},
 };
-use std::io::{Read, Seek};
+use std::io::{Read, Seek, SeekFrom};
 
 #[derive(Default)]
 pub struct JsonScanner {}
 
 impl JsonScanner {
     const ACCEPTED_EXTENSIONS: [&'static str; 1] = ["json"];
+    const EXPECTED_STRINGS: [&'static str; 4] =
+        ["\"name\"", "\"sciformats\"", "\"version\"", "\"0.1.0\""];
 }
 
 impl JsonScanner {
     pub fn new() -> Self {
         Self::default()
     }
+
+    fn read_start<T: Read + Seek>(input: &mut T) -> std::io::Result<String> {
+        let pos = input.stream_position()?;
+        let mut buf: Vec<u8> = vec![];
+        let res = input.take(128).read_to_end(&mut buf);
+        input.seek(SeekFrom::Start(pos))?;
+
+        match res {
+            Err(e) => Err(e),
+            Ok(_) => Ok(from_iso_8859_1_cstr(&buf)),
+        }
+    }
 }
 
 impl<T: Seek + Read + 'static> Scanner<T> for JsonScanner {
-    fn is_recognized(&self, path: &str, _input: &mut T) -> bool {
-        // TODO: add more checks
-        is_recognized_extension(path, &Self::ACCEPTED_EXTENSIONS)
+    fn is_recognized(&self, path: &str, input: &mut T) -> bool {
+        if !is_recognized_extension(path, &Self::ACCEPTED_EXTENSIONS) {
+            return false;
+        };
+
+        let start = match Self::read_start(input) {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+
+        for expected in Self::EXPECTED_STRINGS.iter() {
+            if !start.contains(expected) {
+                return false;
+            }
+        }
+
+        true
     }
 
     fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, SfError> {
-        let parser = JsonParser::parse(_path, _input)?;
-        let reader = JsonReader::new(_path, parser);
+        let doc = JsonParser::parse(_path, _input)?;
+        let reader = JsonReader::new(_path, doc);
         Ok(Box::new(reader))
     }
 }
@@ -58,54 +86,58 @@ mod tests {
 
     const SINGLE_NODE_JSON: &str = r#"
         {
-            "name": "Single Node",
-            "parameters": [
-                {
-                    "key": "Parameter key 1",
-                    "value": "Parameter value 1"
-                },
-                {
-                    "key": "Parameter key 2",
-                    "value": "Parameter value 2"
-                }
-            ],
-            "data": [
-                {
-                    "x": 0,
-                    "y": 10.1
-                },
-                {
-                    "x": 1,
-                    "y": 1000.01
-                }
-            ],
-            "metadata": [
-                {
-                    "key": "x.unit",
-                    "value": "arbitrary unit"
-                },
-                {
-                    "key": "y.unit",
-                    "value": "another arbitrary unit"
-                }
-            ],
-            "table": {
-                "columnNames": [
+            "name": "sciformats",
+            "version": "0.1.0",
+            "nodes": {
+                "name": "Single Node",
+                "parameters": [
                     {
-                        "key": "col_key1",
-                        "name": "Column name 1"
-                    }
-                ],
-                "rows": [
-                    {
-                        "col_key1": "Cell value 1"
+                        "key": "Parameter key 1",
+                        "value": "Parameter value 1"
                     },
                     {
-                        "col_key1": "Cell value 2"
+                        "key": "Parameter key 2",
+                        "value": "Parameter value 2"
                     }
-                ]
-            },
-            "children": []
+                ],
+                "data": [
+                    {
+                        "x": 0,
+                        "y": 10.1
+                    },
+                    {
+                        "x": 1,
+                        "y": 1000.01
+                    }
+                ],
+                "metadata": [
+                    {
+                        "key": "x.unit",
+                        "value": "arbitrary unit"
+                    },
+                    {
+                        "key": "y.unit",
+                        "value": "another arbitrary unit"
+                    }
+                ],
+                "table": {
+                    "columnNames": [
+                        {
+                            "key": "col_key1",
+                            "name": "Column name 1"
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "col_key1": "Cell value 1"
+                        },
+                        {
+                            "col_key1": "Cell value 2"
+                        }
+                    ]
+                },
+                "children": []
+            }
         }"#;
 
     #[test]
@@ -115,6 +147,26 @@ mod tests {
         let scanner = JsonScanner::new();
 
         assert_eq!(true, scanner.is_recognized(path, &mut input));
+    }
+
+    #[test]
+    fn rejects_illegal_json() {
+        let path = "example.json";
+        let content_missing_name = r#"
+            {
+                "version": "0.1.0",
+                "nodes": {
+                    "name": "Single Node",
+                    "parameters": [],
+                    "data": [],
+                    "metadata": [],
+                    "children": []
+                }
+            "#;
+        let mut input = Cursor::new(content_missing_name);
+        let scanner = JsonScanner::new();
+
+        assert!(!scanner.is_recognized(path, &mut input));
     }
 
     #[test]

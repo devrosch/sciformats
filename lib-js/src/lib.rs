@@ -1290,60 +1290,62 @@ mod tests {
         let output_json: serde_json::Value = serde_json::from_str(&output_str).unwrap();
 
         let expected = json!({
-            "name": "root node name",
-            "parameters": [
-                {"key": "param String", "value": "abc"},
-                {"key": "param bool", "value": true},
-                {"key": "param i32", "value": -1},
-                {"key": "param u32", "value": 1},
-                {"key": "param i64", "value": -2},
-                {"key": "param u64", "value": 2},
-                {"key": "param f32", "value": -1.0},
-                {"key": "param f64", "value": 1.0},
-            ],
-            "data": [
-                { "x": 1.0, "y": 2.0},
-                { "x": 3.0, "y": 4.0},
-                // [1.0, 2.0],
-                // [3.0, 4.0],
-            ],
-            "metadata": [
-                {"key": "mk0", "value": "mv0"},
-                {"key": "mk1", "value": "mv1"},
-                // ["mk0", "mv0"],
-                // ["mk1", "mv1"],
-            ],
-            "table": {
-                // "columnNames": [{"col key": "col name"}],
-                "columnNames": [{"key": "col key", "name": "col name"}],
-                "rows": [
-                    {"col key": "String value"},
-                    {"col key": true},
-                    {"col key": -1},
-                    {"col key": 1},
-                    {"col key": -2},
-                    {"col key": 2},
-                    {"col key": -1.0},
-                    {"col key": 1.0}
+            "name": "sciformats",
+            "version": "0.1.0",
+            "nodes": {
+                "name": "root node name",
+                "parameters": [
+                    {"key": "param String", "value": "abc"},
+                    {"key": "param bool", "value": true},
+                    {"key": "param i32", "value": -1},
+                    {"key": "param u32", "value": 1},
+                    {"key": "param i64", "value": -2},
+                    {"key": "param u64", "value": 2},
+                    {"key": "param f32", "value": -1.0},
+                    {"key": "param f64", "value": 1.0},
                 ],
-            },
-            // "children": [],
-            "children": [
-                {
-                    "name": "child node name 0",
-                    "parameters": [], "data": [],
-                    "metadata": [],
-                    "table": {"columnNames": [], "rows": []},
-                    "children": [],
+                "data": [
+                    { "x": 1.0, "y": 2.0},
+                    { "x": 3.0, "y": 4.0},
+                    // [1.0, 2.0],
+                    // [3.0, 4.0],
+                ],
+                "metadata": [
+                    {"key": "mk0", "value": "mv0"},
+                    {"key": "mk1", "value": "mv1"},
+                    // ["mk0", "mv0"],
+                    // ["mk1", "mv1"],
+                ],
+                "table": {
+                    // "columnNames": [{"col key": "col name"}],
+                    "columnNames": [{"key": "col key", "name": "col name"}],
+                    "rows": [
+                        {"col key": "String value"},
+                        {"col key": true},
+                        {"col key": -1},
+                        {"col key": 1},
+                        {"col key": -2},
+                        {"col key": 2},
+                        {"col key": -1.0},
+                        {"col key": 1.0}
+                    ],
                 },
-                {
-                    "name": "child node name 1",
-                    "parameters": [], "data": [],
-                    "metadata": [],
-                    "table": {"columnNames": [], "rows": []},
-                    "children": [],
-                },
-            ]
+                // "children": [],
+                "children": [
+                    {
+                        "name": "child node name 0",
+                        "parameters": [], "data": [],
+                        "metadata": [],
+                        "children": [],
+                    },
+                    {
+                        "name": "child node name 1",
+                        "parameters": [], "data": [],
+                        "metadata": [],
+                        "children": [],
+                    },
+                ]
+            }
         });
 
         assert_eq!(expected, output_json);

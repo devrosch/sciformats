@@ -42,14 +42,23 @@ impl<T: Seek + Read + 'static> Parser<T> for JsonParser {
 #[serde(deny_unknown_fields)]
 pub struct JsonDocument {
     pub name: String,
+    pub version: String,
+    pub nodes: JsonNode,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct JsonNode {
+    pub name: String,
     pub parameters: Vec<JsonParameter>,
     pub data: Vec<JsonDataItem>,
     pub metadata: Vec<JsonMetadataItem>,
     pub table: Option<JsonTable>,
-    pub children: Vec<JsonDocument>,
+    pub children: Vec<JsonNode>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct JsonParameter {
     pub key: Option<String>,
     pub value: JsonValue,
@@ -65,18 +74,21 @@ pub enum JsonValue {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct JsonDataItem {
     pub x: f64,
     pub y: f64,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct JsonMetadataItem {
     pub key: String,
     pub value: String,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct JsonTable {
     #[serde(rename(deserialize = "columnNames"))]
     pub column_names: Vec<JsonTableColumn>,
@@ -84,6 +96,7 @@ pub struct JsonTable {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct JsonTableColumn {
     pub key: String,
     pub name: String,
@@ -98,93 +111,100 @@ mod tests {
     fn parses_json() {
         const JSON: &str = r#"
             {
-                "name": "Root node",
-                "parameters": [
-                    {
-                        "key": "Parameter key 0",
-                        "value": "Parameter value 0"
-                    },
-                    {
-                        "value": "Parameter value 1"
-                    },
-                    {
-                        "key": "Parameter key 2",
-                        "value": true
-                    },
-                    {
-                        "key": "Parameter key 3",
-                        "value": 123
-                    },
-                    {
-                        "key": "Parameter key 4",
-                        "value": 123.456
-                    },
-                    {
-                        "key": "Parameter key 5",
-                        "value": -123
-                    }
-                ],
-                "data": [
-                    {
-                        "x": 0,
-                        "y": 10.1
-                    },
-                    {
-                        "x": 1,
-                        "y": 1000.01
-                    }
-                ],
-                "metadata": [
-                    {
-                        "key": "x.unit",
-                        "value": "arbitrary unit"
-                    },
-                    {
-                        "key": "y.unit",
-                        "value": "another arbitrary unit"
-                    }
-                ],
-                "table": {
-                    "columnNames": [
+                "name": "sciformats",
+                "version": "0.1.0",
+                "nodes": {
+                    "name": "Root node",
+                    "parameters": [
                         {
-                            "key": "col_key1",
-                            "name": "Column name 1"
+                            "key": "Parameter key 0",
+                            "value": "Parameter value 0"
+                        },
+                        {
+                            "value": "Parameter value 1"
+                        },
+                        {
+                            "key": "Parameter key 2",
+                            "value": true
+                        },
+                        {
+                            "key": "Parameter key 3",
+                            "value": 123
+                        },
+                        {
+                            "key": "Parameter key 4",
+                            "value": 123.456
+                        },
+                        {
+                            "key": "Parameter key 5",
+                            "value": -123
                         }
                     ],
-                    "rows": [
+                    "data": [
                         {
-                            "col_key1": "Cell value 1"
+                            "x": 0,
+                            "y": 10.1
                         },
                         {
-                            "col_key1": true
+                            "x": 1,
+                            "y": 1000.01
+                        }
+                    ],
+                    "metadata": [
+                        {
+                            "key": "x.unit",
+                            "value": "arbitrary unit"
                         },
                         {
-                            "col_key1": 123.456
+                            "key": "y.unit",
+                            "value": "another arbitrary unit"
+                        }
+                    ],
+                    "table": {
+                        "columnNames": [
+                            {
+                                "key": "col_key1",
+                                "name": "Column name 1"
+                            }
+                        ],
+                        "rows": [
+                            {
+                                "col_key1": "Cell value 1"
+                            },
+                            {
+                                "col_key1": true
+                            },
+                            {
+                                "col_key1": 123.456
+                            }
+                        ]
+                    },
+                    "children": [
+                        {
+                            "name": "Nested node 0",
+                            "parameters": [],
+                            "data": [],
+                            "metadata": [],
+                            "children": []
+                        },
+                        {
+                            "name": "Nested node 1",
+                            "parameters": [],
+                            "data": [],
+                            "metadata": [],
+                            "children": []
                         }
                     ]
-                },
-                "children": [
-                    {
-                        "name": "Nested node 0",
-                        "parameters": [],
-                        "data": [],
-                        "metadata": [],
-                        "children": []
-                    },
-                    {
-                        "name": "Nested node 1",
-                        "parameters": [],
-                        "data": [],
-                        "metadata": [],
-                        "children": []
-                    }
-                ]
+                }
             }"#;
         let path = "example.json";
         let reader = Cursor::new(JSON);
 
-        let root = JsonParser::parse(path, reader).unwrap();
+        let doc = JsonParser::parse(path, reader).unwrap();
+        assert_eq!("sciformats", &doc.name);
+        assert_eq!("0.1.0", &doc.version);
 
+        let root = &doc.nodes;
         assert_eq!("Root node", &root.name);
 
         assert_eq!(6, root.parameters.len());

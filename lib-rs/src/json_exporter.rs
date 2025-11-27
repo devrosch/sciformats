@@ -92,18 +92,10 @@ impl<R: Reader + ?Sized> Serialize for NodeWrapper<'_, R> {
             metadata: &node.metadata,
         };
         serializer.serialize_field("metadata", &metadata_wrapper)?;
-        match &node.table {
-            Some(table) => serializer.serialize_field("table", table)?,
-            // if table is none, serialize as empty table
-            None => serializer.serialize_field(
-                "table",
-                &Table {
-                    column_names: vec![],
-                    rows: vec![],
-                },
-            )?,
-        }
-
+        if let Some(table) = &node.table {
+            // if table is some, serialize it
+            serializer.serialize_field("table", table)?;
+        };
         let mut child_paths = vec![];
         for (i, _name) in node.child_node_names.iter().enumerate() {
             let child_path = format!("{}/{}", self.path, i);
@@ -380,20 +372,17 @@ mod tests {
                     {"col key": 1.0}
                 ],
             },
-            // "children": [],
             "children": [
                 {
                     "name": "child node name 0",
                     "parameters": [], "data": [],
                     "metadata": [],
-                    "table": {"columnNames": [], "rows": []},
                     "children": [],
                 },
                 {
                     "name": "child node name 1",
                     "parameters": [], "data": [],
                     "metadata": [],
-                    "table": {"columnNames": [], "rows": []},
                     "children": [],
                 },
             ]

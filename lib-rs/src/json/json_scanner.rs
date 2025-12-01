@@ -72,9 +72,9 @@ impl<T: Seek + Read + 'static> Scanner<T> for JsonScanner {
         true
     }
 
-    fn get_reader(&self, _path: &str, _input: T) -> Result<Box<dyn Reader>, SfError> {
-        let doc = JsonParser::parse(_path, _input)?;
-        let reader = JsonReader::new(_path, doc);
+    fn get_reader(&self, path: &str, input: T) -> Result<Box<dyn Reader>, SfError> {
+        let doc = JsonParser::parse(path, input)?;
+        let reader = JsonReader::new(path, doc);
         Ok(Box::new(reader))
     }
 }

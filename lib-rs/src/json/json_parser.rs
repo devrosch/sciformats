@@ -21,18 +21,21 @@ use crate::api::Parser;
 use crate::common::SfError;
 use serde::Deserialize;
 use std::{
+    cell::RefCell,
     collections::HashMap,
     io::{Read, Seek},
+    rc::Rc,
 };
 
 pub struct JsonParser {}
 
-impl<T: Seek + Read + 'static> Parser<T> for JsonParser {
+impl<T: Seek + Read> Parser<T> for JsonParser {
     type R = JsonDocument;
     type E = SfError;
 
     fn parse(_name: &str, input: T) -> Result<Self::R, Self::E> {
-        let doc: JsonDocument = serde_json::from_reader(input)
+        let rcrefcell = Rc::new(RefCell::new(input));
+        let doc: JsonDocument = serde_json::from_reader(&mut *rcrefcell.borrow_mut())
             .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
         Ok(doc)
     }

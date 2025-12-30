@@ -307,7 +307,7 @@ dependencies = [
 
 [[package]]
 name = "sciformats_serde_json_span"
-version = "1.0.148"
+version = "0.0.148"
 dependencies = [
  "indexmap",
  "itoa",

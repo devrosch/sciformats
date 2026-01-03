@@ -271,6 +271,11 @@ pub fn find_and_parse_parameter<P: FromStr>(
     }
 }
 
+pub(crate) fn extract_var_list(var_list: &str) -> &str {
+    let (vars, _) = strip_line_comment(var_list, true, false);
+    vars
+}
+
 pub fn validate_input(
     label: &str,
     variable_list: Option<&str>,

@@ -29,8 +29,8 @@ use crate::api::{Parser, SeekBufRead};
 use crate::common::SfError;
 use crate::jdx::jdx_audit_trail_parser::AuditTrailParser;
 use crate::jdx::jdx_utils::{
-    find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start, parse_string_value,
-    skip_pure_comments, skip_to_next_ldr,
+    extract_var_list, find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start,
+    parse_string_value, skip_pure_comments, skip_to_next_ldr,
 };
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -199,32 +199,65 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     next_line = next;
                 }
                 "XYDATA" => {
-                    let builder =
-                        || XyData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    let builder = || {
+                        XyData::new(
+                            &label,
+                            extract_var_list(&value),
+                            &ldrs,
+                            next_line,
+                            Rc::clone(&reader_ref),
+                        )
+                    };
                     (xy_data, reader, next_line) =
                         parse_element(&label, &title, &xy_data, builder, reader, &reader_ref)?;
                 }
                 "RADATA" => {
-                    let builder =
-                        || RaData::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    let builder = || {
+                        RaData::new(
+                            &label,
+                            extract_var_list(&value),
+                            &ldrs,
+                            next_line,
+                            Rc::clone(&reader_ref),
+                        )
+                    };
                     (ra_data, reader, next_line) =
                         parse_element(&label, &title, &ra_data, builder, reader, &reader_ref)?;
                 }
                 "XYPOINTS" => {
-                    let builder =
-                        || XyPoints::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    let builder = || {
+                        XyPoints::new(
+                            &label,
+                            extract_var_list(&value),
+                            &ldrs,
+                            next_line,
+                            Rc::clone(&reader_ref),
+                        )
+                    };
                     (xy_points, reader, next_line) =
                         parse_element(&label, &title, &xy_points, builder, reader, &reader_ref)?;
                 }
                 "PEAKTABLE" => {
-                    let builder =
-                        || PeakTable::new(&label, &value, next_line, Rc::clone(&reader_ref));
+                    let builder = || {
+                        PeakTable::new(
+                            &label,
+                            extract_var_list(&value),
+                            next_line,
+                            Rc::clone(&reader_ref),
+                        )
+                    };
                     (peak_table, reader, next_line) =
                         parse_element(&label, &title, &peak_table, builder, reader, &reader_ref)?;
                 }
                 "PEAKASSIGNMENTS" => {
-                    let builder =
-                        || PeakAssignments::new(&label, &value, next_line, Rc::clone(&reader_ref));
+                    let builder = || {
+                        PeakAssignments::new(
+                            &label,
+                            extract_var_list(&value),
+                            next_line,
+                            Rc::clone(&reader_ref),
+                        )
+                    };
                     (peak_assignments, reader, next_line) = parse_element(
                         &label,
                         &title,
@@ -235,8 +268,15 @@ impl<T: SeekBufRead> JdxBlock<T> {
                     )?;
                 }
                 "NTUPLES" => {
-                    let builder =
-                        || NTuples::new(&label, &value, &ldrs, next_line, Rc::clone(&reader_ref));
+                    let builder = || {
+                        NTuples::new(
+                            &label,
+                            extract_var_list(&value),
+                            &ldrs,
+                            next_line,
+                            Rc::clone(&reader_ref),
+                        )
+                    };
                     (n_tuples, reader, next_line) =
                         parse_element(&label, &title, &n_tuples, builder, reader, &reader_ref)?;
                 }
@@ -952,7 +992,7 @@ impl<T: SeekBufRead> NTuples<T> {
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), SfError> {
         validate_input(label, None, Self::LABEL, None)?;
-        Self::parse(block_ldrs, data_form.trim().to_owned(), reader_ref)
+        Self::parse(block_ldrs, data_form.to_owned(), reader_ref)
     }
 
     fn parse(
@@ -2286,6 +2326,37 @@ mod tests {
         // does NOT contain "##END=" even though technically an LDR
         // does NOT contain "##XYDATA=" as it's available through specialized member
         assert_eq!(14, block.ldrs.len());
+        let xy_data = &block.xy_data.unwrap();
+        assert_eq!(
+            vec![(450.0, 10.0), (451.0, 11.0)],
+            xy_data.get_data().unwrap()
+        );
+    }
+
+    #[test]
+    fn block_parses_xydata_with_padded_var_list() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                ##ORIGIN= devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 451\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYDATA= \t (X++(Y..Y)) \t$$ some comment\r\n\
+                                450.0, 10.0\r\n\
+                                451.0, 11.0\r\n\
+                                ##END=\r\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(13, block.ldrs.len());
         let xy_data = &block.xy_data.unwrap();
         assert_eq!(
             vec![(450.0, 10.0), (451.0, 11.0)],
@@ -4666,8 +4737,14 @@ mod tests {
         let reader_ref = Rc::new(RefCell::new(Cursor::new(input)));
         let block_ldrs = Vec::<StringLdr>::new();
 
-        let (ntuples, _next) =
-            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+        let (ntuples, _next) = NTuples::new(
+            label,
+            extract_var_list(&variables),
+            &block_ldrs,
+            next_line,
+            reader_ref,
+        )
+        .unwrap();
 
         assert_eq!(3, ntuples.pages.len());
         assert_eq!("MASS SPECTRUM", ntuples.data_form);
@@ -4802,8 +4879,14 @@ mod tests {
             StringLdr::new("NPOINTS", "5"),
         ];
 
-        let (ntuples, _next) =
-            NTuples::new(label, &variables, &block_ldrs, next_line, reader_ref).unwrap();
+        let (ntuples, _next) = NTuples::new(
+            label,
+            extract_var_list(&variables),
+            &block_ldrs,
+            next_line,
+            reader_ref,
+        )
+        .unwrap();
 
         assert_eq!(1, ntuples.pages.len());
         assert_eq!("MASS SPECTRUM", ntuples.data_form);

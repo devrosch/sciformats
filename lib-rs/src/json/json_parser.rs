@@ -17,8 +17,9 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use crate::api::Parser;
 use crate::common::SfError;
+use crate::{api::Parser, utils::convert_path_to_node_indices};
+use sciformats_serde_json::span::Span;
 use serde::Deserialize;
 use std::{
     cell::RefCell,
@@ -30,44 +31,114 @@ use std::{
 pub struct JsonParser {}
 
 impl<T: Seek + Read> Parser<T> for JsonParser {
-    type R = JsonDocument;
+    type R = JsonDocument<T>;
     type E = SfError;
 
     fn parse(_name: &str, input: T) -> Result<Self::R, Self::E> {
         let rcrefcell = Rc::new(RefCell::new(input));
-        let doc: JsonDocument = serde_json::from_reader(&mut *rcrefcell.borrow_mut())
-            .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
+        let lazy_doc: JsonLazyDocument =
+            sciformats_serde_json::from_reader(&mut *rcrefcell.borrow_mut())
+                .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
+        let doc = JsonDocument {
+            format: lazy_doc.format,
+            version: lazy_doc.version,
+            nodes: lazy_doc.nodes,
+            input: rcrefcell,
+        };
         Ok(doc)
+    }
+}
+
+pub struct JsonDocument<T: Seek + Read> {
+    pub format: String,
+    pub version: String,
+    pub(super) nodes: JsonLazyNode,
+    pub(super) input: Rc<RefCell<T>>,
+}
+
+impl<T: Seek + Read> JsonDocument<T> {
+    pub fn get_node(&self, node_path: &str) -> Result<JsonNode, SfError> {
+        // Retrieve lazy node.
+        let indices = convert_path_to_node_indices(node_path)?;
+        let mut node = &self.nodes;
+        for index in indices {
+            node = node
+                .children
+                .get(index)
+                .ok_or(SfError::new(&format!("Illegal node path: {}", node_path)))?;
+        }
+
+        // Deserialize data section.
+        let data_span = &node.data;
+        let mut input_borrow = self.input.borrow_mut();
+        input_borrow.seek(std::io::SeekFrom::Start(data_span.span.start))?;
+        let span_bytes = (&mut *input_borrow).take(data_span.span.end - data_span.span.start);
+        let mut nested_de = sciformats_serde_json::Deserializer::from_reader(span_bytes);
+        let data = Vec::<JsonDataItem>::deserialize(&mut nested_de).map_err(|e| {
+            SfError::new(&format!(
+                "Error deserializing JSON section: {}",
+                e.to_string()
+            ))
+        })?;
+
+        // Map child node names.
+        let child_node_names: Vec<String> = node
+            .children
+            .iter()
+            .map(|json_child_node| json_child_node.name.clone())
+            .collect();
+
+        // Build node.
+        let node = JsonNode {
+            // TODO: Try to avoid cloning.
+            name: node.name.clone(),
+            parameters: node.parameters.clone(),
+            data,
+            metadata: node.metadata.clone(),
+            table: node.table.clone(),
+            child_node_names,
+        };
+
+        Ok(node)
     }
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct JsonDocument {
-    pub name: String,
+pub struct JsonLazyDocument {
+    pub format: String,
     pub version: String,
-    pub nodes: JsonNode,
+    pub nodes: JsonLazyNode,
 }
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct JsonLazyNode {
+    pub name: String,
+    pub parameters: Vec<JsonParameter>,
+    pub data: Span,
+    pub metadata: Vec<JsonMetadataItem>,
+    pub table: Option<JsonTable>,
+    pub children: Vec<JsonLazyNode>,
+}
+
 pub struct JsonNode {
     pub name: String,
     pub parameters: Vec<JsonParameter>,
     pub data: Vec<JsonDataItem>,
     pub metadata: Vec<JsonMetadataItem>,
     pub table: Option<JsonTable>,
-    pub children: Vec<JsonNode>,
+    pub child_node_names: Vec<String>,
 }
 
-#[derive(Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JsonParameter {
     pub key: Option<String>,
     pub value: JsonValue,
 }
 
-#[derive(Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(untagged)]
 pub enum JsonValue {
     String(String),
@@ -83,14 +154,14 @@ pub struct JsonDataItem {
     pub y: f64,
 }
 
-#[derive(Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JsonMetadataItem {
     pub key: String,
     pub value: String,
 }
 
-#[derive(Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JsonTable {
     #[serde(rename(deserialize = "columnNames"))]
@@ -98,7 +169,7 @@ pub struct JsonTable {
     pub rows: Vec<HashMap<String, JsonValue>>,
 }
 
-#[derive(Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct JsonTableColumn {
     pub key: String,
@@ -114,7 +185,7 @@ mod tests {
     fn parses_json() {
         const JSON: &str = r#"
             {
-                "name": "sciformats",
+                "format": "sciformats",
                 "version": "0.1.0",
                 "nodes": {
                     "name": "Root node",
@@ -204,12 +275,11 @@ mod tests {
         let reader = Cursor::new(JSON);
 
         let doc = JsonParser::parse(path, reader).unwrap();
-        assert_eq!("sciformats", &doc.name);
+        assert_eq!("sciformats", &doc.format);
         assert_eq!("0.1.0", &doc.version);
 
-        let root = &doc.nodes;
+        let root = &doc.get_node("/").unwrap();
         assert_eq!("Root node", &root.name);
-
         assert_eq!(6, root.parameters.len());
         assert_eq!(
             JsonParameter {
@@ -300,22 +370,22 @@ mod tests {
         assert!(row2.contains_key("col_key1"));
         assert_eq!(Some(&JsonValue::Number(123.456)), row2.get("col_key1"));
 
-        assert_eq!(2, root.children.len());
-        let nested0 = &root.children[0];
+        assert_eq!(2, root.child_node_names.len());
+        let nested0 = &doc.get_node("/0").unwrap();
         assert_eq!("Nested node 0", nested0.name);
         assert!(nested0.parameters.is_empty());
         assert!(nested0.data.is_empty());
         assert!(nested0.metadata.is_empty());
         assert!(nested0.table.is_none());
-        assert!(nested0.children.is_empty());
+        assert!(nested0.child_node_names.is_empty());
 
-        let nested1 = &root.children[1];
+        let nested1 = &doc.get_node("/1").unwrap();
         assert_eq!("Nested node 1", nested1.name);
         assert!(nested1.parameters.is_empty());
         assert!(nested1.data.is_empty());
         assert!(nested1.metadata.is_empty());
         assert!(nested1.table.is_none());
-        assert!(nested1.children.is_empty());
+        assert!(nested1.child_node_names.is_empty());
     }
 
     #[test]

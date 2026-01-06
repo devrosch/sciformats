@@ -17,13 +17,12 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-use std::io::{Read, Seek};
-
 use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
     common::SfError,
     json::json_parser::{JsonDocument, JsonNode, JsonValue},
 };
+use std::io::{Read, Seek};
 
 pub struct JsonReader<T: Seek + Read> {
     _path: String,

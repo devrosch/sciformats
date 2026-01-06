@@ -130,12 +130,11 @@ impl<T: Seek + Read> JsonReader<T> {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::span::Span;
-
     use super::*;
     use crate::json::json_parser::{
         JsonLazyNode, JsonMetadataItem, JsonParameter, JsonTable, JsonTableColumn, JsonValue,
     };
+    use sciformats_serde_json::span::Span;
     use std::{cell::RefCell, collections::HashMap, io::Cursor, rc::Rc};
 
     fn create_sample_json_doc() -> JsonDocument<Cursor<String>> {

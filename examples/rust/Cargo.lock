@@ -293,7 +293,7 @@ dependencies = [
  "netcdf3",
  "quick-xml",
  "regex",
- "sciformats_serde_json_span",
+ "sciformats_serde_json",
  "serde",
  "strum",
 ]
@@ -306,8 +306,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "sciformats_serde_json_span"
-version = "0.0.148"
+name = "sciformats_serde_json"
+version = "1.0.148"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b749580df49c6c766354e27813ce963dd3ee75313b7c315e75233997552ae09e"
 dependencies = [
  "indexmap",
  "itoa",

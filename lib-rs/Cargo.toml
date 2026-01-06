@@ -22,8 +22,10 @@ quick-xml = { version = "0.38", features = ['encoding'] }
 base64 = "0.22"
 regex = "1.11"
 serde = { version = "1.0", features = ["derive"] }
+# Use custom serde_json fork that allows lazy loading of elements and supports file sizes beyond 4 GiB on 32 bit platforms.
 # serde_json = { version = "1.0", features = ["preserve_order"] }
-serde_json = { package = "sciformats_serde_json_span", path = "../../sciformats_serde_json_span", features = ["preserve_order"] }
+# sciformats_serde_json = { git = "https://github.com/devrosch/sciformats_serde_json.git", features = ["preserve_order"] }
+sciformats_serde_json = { version = "1.0", features = ["preserve_order"] }
 
 # Uncomment the below lines to retain debug information in release build
 # ---------------------------------

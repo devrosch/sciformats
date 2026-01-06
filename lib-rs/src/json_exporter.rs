@@ -52,7 +52,7 @@ impl<R: Reader + ?Sized> Exporter for JsonExporter<'_, R> {
     }
 
     fn write(&mut self, writer: &mut dyn Write) -> Result<(), SfError> {
-        let mut serializer = serde_json::Serializer::new(writer);
+        let mut serializer = sciformats_serde_json::Serializer::new(writer);
         let wrapper = NodeWrapper {
             path: "",
             reader: self.reader,
@@ -276,7 +276,7 @@ mod tests {
         common::SfError,
     };
     use core::str;
-    use serde_json::{Value, json};
+    use sciformats_serde_json::{Value, json};
     use std::collections::HashMap;
 
     struct StubReader {}
@@ -362,7 +362,7 @@ mod tests {
 
         // https://docs.rs/serde_json/latest/serde_json/fn.to_value.html#example
         let output_str = String::from_utf8(export).unwrap();
-        let output_json: Value = serde_json::from_str(&output_str).unwrap();
+        let output_json: Value = sciformats_serde_json::from_str(&output_str).unwrap();
 
         let expected = json!({
             "name": "sciformats",

@@ -19,8 +19,8 @@
 
 use crate::common::SfError;
 use crate::{api::Parser, utils::convert_path_to_node_indices};
+use sciformats_serde_json::span::Span;
 use serde::Deserialize;
-use serde_json::span::Span;
 use std::{
     cell::RefCell,
     collections::HashMap,
@@ -36,8 +36,9 @@ impl<T: Seek + Read> Parser<T> for JsonParser {
 
     fn parse(_name: &str, input: T) -> Result<Self::R, Self::E> {
         let rcrefcell = Rc::new(RefCell::new(input));
-        let lazy_doc: JsonLazyDocument = serde_json::from_reader(&mut *rcrefcell.borrow_mut())
-            .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
+        let lazy_doc: JsonLazyDocument =
+            sciformats_serde_json::from_reader(&mut *rcrefcell.borrow_mut())
+                .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
         let doc = JsonDocument {
             name: lazy_doc.name,
             version: lazy_doc.version,
@@ -72,7 +73,7 @@ impl<T: Seek + Read> JsonDocument<T> {
         let mut input_borrow = self.input.borrow_mut();
         input_borrow.seek(std::io::SeekFrom::Start(data_span.span.start))?;
         let span_bytes = (&mut *input_borrow).take(data_span.span.end - data_span.span.start);
-        let mut nested_de = serde_json::Deserializer::from_reader(span_bytes);
+        let mut nested_de = sciformats_serde_json::Deserializer::from_reader(span_bytes);
         let data = Vec::<JsonDataItem>::deserialize(&mut nested_de).map_err(|e| {
             SfError::new(&format!(
                 "Error deserializing JSON section: {}",

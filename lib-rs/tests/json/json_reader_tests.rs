@@ -22,7 +22,7 @@ use sciformats::{
     api::{ExportFormat, Parser, Reader},
     json::{json_parser::JsonParser, json_reader::JsonReader},
 };
-use serde_json::Value;
+use sciformats_serde_json::Value;
 use std::io::{Cursor, Read, Seek};
 
 #[test]
@@ -42,8 +42,8 @@ fn json_roundtrip_succeeds() {
     reader.export(ExportFormat::Json, &mut writer).unwrap();
 
     // turn original and exported content as json values
-    let original_json: Value = serde_json::from_slice(&original_content).unwrap();
-    let exported_json: Value = serde_json::from_slice(&exported_content).unwrap();
+    let original_json: Value = sciformats_serde_json::from_slice(&original_content).unwrap();
+    let exported_json: Value = sciformats_serde_json::from_slice(&exported_content).unwrap();
 
     assert_eq!(original_json, exported_json);
 }

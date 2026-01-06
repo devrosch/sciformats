@@ -12,11 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** Value only parameter type. Parameter type that has no key but holds a value.
 - This changelog.
 - Version information to sciformats_web.
-- Ability to read exported JSON data.
+- Reading of exported JSON data.
 
 ### Changed
 
 - **Breaking (Rust only):** Use of SfError type instead of dynamic error in API functions.
+- **Breaking:** JSON export header field name change from "name" to "format".
 - Fixed minor navigation issues in sciformats_web.
 - Fixed minor documentation issue.
 - Updated dependencies.

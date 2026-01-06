@@ -29,8 +29,8 @@ use crate::api::{Parser, SeekBufRead};
 use crate::common::SfError;
 use crate::jdx::jdx_audit_trail_parser::AuditTrailParser;
 use crate::jdx::jdx_utils::{
-    find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start, parse_string_value,
-    skip_pure_comments, skip_to_next_ldr,
+    extract_var_list, find_ldr, is_bruker_specific_section_end, is_bruker_specific_section_start,
+    parse_string_value, skip_pure_comments, skip_to_next_ldr,
 };
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -368,6 +368,7 @@ impl<T: SeekBufRead> XyData<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(XyData<T>, Option<String>), SfError> {
+        let variable_list = extract_var_list(variable_list);
         validate_input(
             label,
             Some(variable_list),
@@ -553,6 +554,7 @@ impl<T: SeekBufRead> RaData<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(RaData<T>, Option<String>), SfError> {
+        let variable_list = extract_var_list(variable_list);
         validate_input(
             label,
             Some(variable_list),
@@ -729,6 +731,7 @@ impl<T: SeekBufRead> XyPoints<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(XyPoints<T>, Option<String>), SfError> {
+        let variable_list = extract_var_list(variable_list);
         validate_input(
             label,
             Some(variable_list),
@@ -792,6 +795,7 @@ impl<T: SeekBufRead> PeakTable<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(PeakTable<T>, Option<String>), SfError> {
+        let variable_list = extract_var_list(variable_list);
         validate_input(
             label,
             Some(variable_list),
@@ -866,6 +870,7 @@ impl<T: SeekBufRead> PeakAssignments<T> {
         next_line: Option<String>,
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(PeakAssignments<T>, Option<String>), SfError> {
+        let variable_list = extract_var_list(variable_list);
         validate_input(
             label,
             Some(variable_list),
@@ -952,7 +957,11 @@ impl<T: SeekBufRead> NTuples<T> {
         reader_ref: Rc<RefCell<T>>,
     ) -> Result<(Self, Option<String>), SfError> {
         validate_input(label, None, Self::LABEL, None)?;
-        Self::parse(block_ldrs, data_form.trim().to_owned(), reader_ref)
+        Self::parse(
+            block_ldrs,
+            extract_var_list(data_form).to_owned(),
+            reader_ref,
+        )
     }
 
     fn parse(
@@ -2286,6 +2295,37 @@ mod tests {
         // does NOT contain "##END=" even though technically an LDR
         // does NOT contain "##XYDATA=" as it's available through specialized member
         assert_eq!(14, block.ldrs.len());
+        let xy_data = &block.xy_data.unwrap();
+        assert_eq!(
+            vec![(450.0, 10.0), (451.0, 11.0)],
+            xy_data.get_data().unwrap()
+        );
+    }
+
+    #[test]
+    fn block_parses_xydata_with_padded_var_list() {
+        let input = b"##TITLE= Test\r\n\
+                                ##JCAMP-DX= 4.24\r\n\
+                                ##DATA TYPE= INFRARED SPECTRUM\r\n\
+                                ##ORIGIN= devrosch\r\n\
+                                ##OWNER= PUBLIC DOMAIN\r\n\
+                                ##XUNITS= 1/CM\r\n\
+                                ##YUNITS= ABSORBANCE\r\n\
+                                ##XFACTOR= 1.0\r\n\
+                                ##YFACTOR= 1.0\r\n\
+                                ##FIRSTX= 450\r\n\
+                                ##LASTX= 451\r\n\
+                                ##NPOINTS= 2\r\n\
+                                ##FIRSTY= 10\r\n\
+                                ##XYDATA= \t (X++(Y..Y)) \t$$ some comment\r\n\
+                                450.0, 10.0\r\n\
+                                451.0, 11.0\r\n\
+                                ##END=\r\n";
+        let mut reader = Cursor::new(input);
+
+        let block = JdxBlock::new("test.jdx", &mut reader).unwrap();
+
+        assert_eq!(13, block.ldrs.len());
         let xy_data = &block.xy_data.unwrap();
         assert_eq!(
             vec![(450.0, 10.0), (451.0, 11.0)],

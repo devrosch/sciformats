@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** JSON export header field name change from "name" to "format".
 - Fixed minor navigation issues in sciformats_web.
 - Fixed minor documentation issue.
+- More flexible parsing of JCAMP-DX variables.
 - Updated dependencies.
 
 ### Removed

@@ -442,7 +442,7 @@ fn parse_xydata_parameters(ldrs: &[StringLdr], context: &str) -> Result<XyParame
     let min_x = find_and_parse_parameter::<f64>("MINX", ldrs)?;
     let max_y = find_and_parse_parameter::<f64>("MAXY", ldrs)?;
     let min_y = find_and_parse_parameter::<f64>("MINY", ldrs)?;
-    let resolution = find_and_parse_parameter::<f64>("RESOLUTION", ldrs)?;
+    let resolution = find_and_parse_parameter::<String>("RESOLUTION", ldrs)?;
     let delta_x = find_and_parse_parameter::<f64>("DELTAX", ldrs)?;
 
     let mut missing = vec![];
@@ -527,7 +527,7 @@ pub struct XyParameters {
     /// Minimum Y.
     min_y: Option<f64>,
     /// The resolution of the data.
-    resolution: Option<f64>,
+    resolution: Option<String>,
     /// The x distance between adjacent data points (if constant).
     delta_x: Option<f64>,
 }
@@ -598,7 +598,7 @@ impl<T: SeekBufRead> RaData<T> {
         let max_a = find_and_parse_parameter::<f64>("MAXA", ldrs)?;
         // required, according to standard
         let min_a = find_and_parse_parameter::<f64>("MINA", ldrs)?;
-        let resolution = find_and_parse_parameter::<f64>("RESOLUTION", ldrs)?;
+        let resolution = find_and_parse_parameter::<String>("RESOLUTION", ldrs)?;
         let delta_r = find_and_parse_parameter::<f64>("DELTAR", ldrs)?;
         let zdp = find_and_parse_parameter::<f64>("ZDP", ldrs)?;
         // string
@@ -698,7 +698,7 @@ pub struct RaParameters {
     /// Minimum A. Required, according to standard.
     min_a: Option<f64>,
     /// The resolution of the data.
-    resolution: Option<f64>,
+    resolution: Option<String>,
     /// The R distance between adjacent data points (if constant).
     delta_r: Option<f64>,
     /// The number of data points before zero path difference.
@@ -2889,7 +2889,7 @@ mod tests {
         assert_eq!(Some(12.0), params.max_y);
         assert_eq!(Some(10.0), params.min_y);
         assert_eq!(Some(1.0), params.delta_x);
-        assert_eq!(Some(2.0), params.resolution);
+        assert_eq!(Some("2.0".to_owned()), params.resolution);
     }
 
     #[test]
@@ -3328,7 +3328,7 @@ mod tests {
         assert_eq!(Some(10.0), params.first_a);
         assert_eq!(Some(12.0), params.max_a);
         assert_eq!(Some(10.0), params.min_a);
-        assert_eq!(Some(2.0), params.resolution);
+        assert_eq!(Some("2.0".to_owned()), params.resolution);
         assert_eq!(Some(1.0), params.delta_r);
         assert_eq!(Some(1.0), params.zdp);
         assert_eq!(Some("1/2".to_owned()), params.alias);

@@ -1,6 +1,6 @@
 [package]
 name = "sciformats_js"
-version = "0.2.0-snapshot"
+version = "0.2.0"
 edition = "2024"
 authors = ["Robert Schiwon <devrosch@gmx.net>"]
 description = "JavaScript/TypeScript bindings for sciformats, a library for reading scientific data formats."

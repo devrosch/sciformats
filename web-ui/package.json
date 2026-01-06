@@ -1,6 +1,6 @@
 {
   "name": "sciformats_web",
-  "version": "0.2.0-snapshot",
+  "version": "0.2.0",
   "author": "Robert Schiwon <devrosch@gmx.net>",
   "description": "An HTML/CSS/JS web UI for visualizing scientific data read with sciformats, a library for reading scientific data formats.",
   "homepage": "https://sciformats.org/",

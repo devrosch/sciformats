@@ -87,10 +87,10 @@ const template = `
       source code: <a href="https://github.com/serde-rs/serde">serde</a>
     </li>
     <li>
-      <a href="https://crates.io/crates/serde_json">serde_json</a>,
-      license: <a href="https://github.com/serde-rs/json/blob/master/LICENSE-MIT">MIT</a>
-      or <a href="https://github.com/serde-rs/json/blob/master/LICENSE-APACHE">Apache 2.0</a>,
-      source code: <a href="https://github.com/serde-rs/json">json</a>
+      <a href="https://github.com/devrosch/sciformats_serde_json">sciformats_serde_json</a>,
+      license: <a href="https://github.com/devrosch/sciformats_serde_json/blob/master/LICENSE-MIT">MIT</a>
+      or <a href="https://github.com/devrosch/sciformats_serde_json/blob/master/LICENSE-APACHE">Apache 2.0</a>,
+      source code: <a href="https://github.com/devrosch/sciformats_serde_json">sciformats_serde_json</a>
     </li>
   </ul>
   <p>

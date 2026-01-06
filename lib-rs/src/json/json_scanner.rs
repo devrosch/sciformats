@@ -86,7 +86,7 @@ mod tests {
 
     const SINGLE_NODE_JSON: &str = r#"
         {
-            "name": "sciformats",
+            "format": "sciformats",
             "version": "0.1.0",
             "nodes": {
                 "name": "Single Node",
@@ -152,7 +152,7 @@ mod tests {
     #[test]
     fn rejects_illegal_json() {
         let path = "example.json";
-        let content_missing_name = r#"
+        let content_missing_format = r#"
             {
                 "version": "0.1.0",
                 "nodes": {
@@ -163,7 +163,7 @@ mod tests {
                     "children": []
                 }
             "#;
-        let mut input = Cursor::new(content_missing_name);
+        let mut input = Cursor::new(content_missing_format);
         let scanner = JsonScanner::new();
 
         assert!(!scanner.is_recognized(path, &mut input));

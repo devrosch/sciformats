@@ -21,43 +21,31 @@ use crate::{
     api::{Column, Node, Parameter, PointXy, Reader, Table, Value},
     common::SfError,
     json::json_parser::{JsonDocument, JsonNode, JsonValue},
-    utils::convert_path_to_node_indices,
 };
+use std::io::{Read, Seek};
 
-pub struct JsonReader {
+pub struct JsonReader<T: Seek + Read> {
     _path: String,
-    file: JsonDocument,
+    file: JsonDocument<T>,
 }
 
-impl Reader for JsonReader {
-    fn read(&self, path: &str) -> Result<Node, SfError> {
-        let json_node = self.get_json_node(path)?;
+impl<T: Seek + Read> Reader for JsonReader<T> {
+    fn read(&self, node_path: &str) -> Result<Node, SfError> {
+        let json_node = self.file.get_node(node_path)?;
         let node = Self::map_node(json_node)?;
         Ok(node)
     }
 }
 
-impl JsonReader {
-    pub fn new(path: &str, file: JsonDocument) -> Self {
+impl<T: Seek + Read> JsonReader<T> {
+    pub fn new(path: &str, file: JsonDocument<T>) -> Self {
         Self {
             _path: path.to_owned(),
             file,
         }
     }
 
-    fn get_json_node(&self, path: &str) -> Result<&JsonNode, SfError> {
-        let path_indices = convert_path_to_node_indices(path)?;
-        let mut json_node = &self.file.nodes;
-        for index in path_indices {
-            json_node = json_node
-                .children
-                .get(index)
-                .ok_or(SfError::new(&format!("Illegal node path: {}", path)))?;
-        }
-        Ok(json_node)
-    }
-
-    fn map_node(json_node: &JsonNode) -> Result<Node, SfError> {
+    fn map_node(json_node: JsonNode) -> Result<Node, SfError> {
         // Map name
         let name = json_node.name.clone();
 
@@ -126,11 +114,7 @@ impl JsonReader {
         };
 
         // Map child node names
-        let child_node_names = json_node
-            .children
-            .iter()
-            .map(|json_child_node| json_child_node.name.clone())
-            .collect();
+        let child_node_names = json_node.child_node_names;
 
         Ok(Node {
             name,
@@ -147,91 +131,97 @@ impl JsonReader {
 mod tests {
     use super::*;
     use crate::json::json_parser::{
-        JsonDataItem, JsonMetadataItem, JsonNode, JsonParameter, JsonTable, JsonTableColumn,
-        JsonValue,
+        JsonLazyNode, JsonMetadataItem, JsonParameter, JsonTable, JsonTableColumn, JsonValue,
     };
-    use std::collections::HashMap;
+    use sciformats_serde_json::span::Span;
+    use std::{cell::RefCell, collections::HashMap, io::Cursor, rc::Rc};
 
-    fn create_sample_json_doc() -> JsonDocument {
-        JsonDocument {
-            name: "sciformats".to_owned(),
+    fn create_sample_json_doc() -> JsonDocument<Cursor<String>> {
+        let root_data = r#""data": [{"x": 0, "y": 10.1}, {"x": 1, "y": 1000.01}], "blank": []"#;
+        let reader = Cursor::new(root_data.to_owned());
+        let reader_rc: Rc<RefCell<Cursor<String>>> = Rc::new(RefCell::new(reader));
+
+        let root_node = JsonLazyNode {
+            name: "Root node".to_owned(),
+            parameters: vec![
+                JsonParameter {
+                    key: Some("Parameter key 0".to_owned()),
+                    value: JsonValue::String("Parameter value 0".to_owned()),
+                },
+                JsonParameter {
+                    key: None,
+                    value: JsonValue::String("Parameter value 1".to_owned()),
+                },
+                JsonParameter {
+                    key: Some("Parameter key 2".to_owned()),
+                    value: JsonValue::Bool(true),
+                },
+                JsonParameter {
+                    key: Some("Parameter key 3".to_owned()),
+                    value: JsonValue::I64(123),
+                },
+                JsonParameter {
+                    key: Some("Parameter key 4".to_owned()),
+                    value: JsonValue::Number(123.456),
+                },
+                JsonParameter {
+                    key: Some("Parameter key 5".to_owned()),
+                    value: JsonValue::I64(-123),
+                },
+            ],
+            data: Span { span: 7..81 }, // [{"x": 0, "y": 10.1}, {"x": 1, "y": 1000.01}]
+            metadata: vec![
+                JsonMetadataItem {
+                    key: "x.unit".to_owned(),
+                    value: "arbitrary unit".to_owned(),
+                },
+                JsonMetadataItem {
+                    key: "y.unit".to_owned(),
+                    value: "another arbitrary unit".to_owned(),
+                },
+            ],
+            table: Some(JsonTable {
+                column_names: vec![JsonTableColumn {
+                    key: "col_key1".to_owned(),
+                    name: "Column name 1".to_owned(),
+                }],
+                rows: vec![
+                    HashMap::from([(
+                        "col_key1".to_owned(),
+                        JsonValue::String("Cell value 1".to_owned()),
+                    )]),
+                    HashMap::from([("col_key1".to_owned(), JsonValue::Bool(true))]),
+                    HashMap::from([("col_key1".to_owned(), JsonValue::Number(123.456))]),
+                ],
+            }),
+            children: vec![
+                JsonLazyNode {
+                    name: "Nested node 0".to_owned(),
+                    parameters: vec![],
+                    data: Span { span: 64..66 }, // []
+                    metadata: vec![],
+                    table: None,
+                    children: vec![],
+                },
+                JsonLazyNode {
+                    name: "Nested node 1".to_owned(),
+                    parameters: vec![],
+                    data: Span { span: 64..66 }, // []
+                    metadata: vec![],
+                    table: None,
+                    children: vec![],
+                },
+            ],
+        };
+
+        let doc = JsonDocument {
+            format: "sciformats".to_owned(),
             version: "0.1.0".to_owned(),
-            nodes: JsonNode {
-                name: "Root node".to_owned(),
-                parameters: vec![
-                    JsonParameter {
-                        key: Some("Parameter key 0".to_owned()),
-                        value: JsonValue::String("Parameter value 0".to_owned()),
-                    },
-                    JsonParameter {
-                        key: None,
-                        value: JsonValue::String("Parameter value 1".to_owned()),
-                    },
-                    JsonParameter {
-                        key: Some("Parameter key 2".to_owned()),
-                        value: JsonValue::Bool(true),
-                    },
-                    JsonParameter {
-                        key: Some("Parameter key 3".to_owned()),
-                        value: JsonValue::I64(123),
-                    },
-                    JsonParameter {
-                        key: Some("Parameter key 4".to_owned()),
-                        value: JsonValue::Number(123.456),
-                    },
-                    JsonParameter {
-                        key: Some("Parameter key 5".to_owned()),
-                        value: JsonValue::I64(-123),
-                    },
-                ],
-                data: vec![
-                    JsonDataItem { x: 0.0, y: 10.1 },
-                    JsonDataItem { x: 1.0, y: 1000.01 },
-                ],
-                metadata: vec![
-                    JsonMetadataItem {
-                        key: "x.unit".to_owned(),
-                        value: "arbitrary unit".to_owned(),
-                    },
-                    JsonMetadataItem {
-                        key: "y.unit".to_owned(),
-                        value: "another arbitrary unit".to_owned(),
-                    },
-                ],
-                table: Some(JsonTable {
-                    column_names: vec![JsonTableColumn {
-                        key: "col_key1".to_owned(),
-                        name: "Column name 1".to_owned(),
-                    }],
-                    rows: vec![
-                        HashMap::from([(
-                            "col_key1".to_owned(),
-                            JsonValue::String("Cell value 1".to_owned()),
-                        )]),
-                        HashMap::from([("col_key1".to_owned(), JsonValue::Bool(true))]),
-                        HashMap::from([("col_key1".to_owned(), JsonValue::Number(123.456))]),
-                    ],
-                }),
-                children: vec![
-                    JsonNode {
-                        name: "Nested node 0".to_owned(),
-                        parameters: vec![],
-                        data: vec![],
-                        metadata: vec![],
-                        table: None,
-                        children: vec![],
-                    },
-                    JsonNode {
-                        name: "Nested node 1".to_owned(),
-                        parameters: vec![],
-                        data: vec![],
-                        metadata: vec![],
-                        table: None,
-                        children: vec![],
-                    },
-                ],
-            },
-        }
+            nodes: root_node,
+            input: reader_rc,
+        };
+
+        doc
     }
 
     #[test]

@@ -38,7 +38,7 @@ pub struct JsonExporter<'a, R: Reader + ?Sized> {
 }
 
 impl<'a, R: Reader + ?Sized> JsonExporter<'a, R> {
-    const EXPORT_NAME: &'static str = "sciformats";
+    const EXPORT_FORMAT: &'static str = "sciformats";
     const EXPORT_VERSION: &'static str = "0.1.0";
 
     pub fn new(reader: &'a R) -> Self {
@@ -52,13 +52,13 @@ impl<R: Reader + ?Sized> Exporter for JsonExporter<'_, R> {
     }
 
     fn write(&mut self, writer: &mut dyn Write) -> Result<(), SfError> {
-        let mut serializer = serde_json::Serializer::new(writer);
+        let mut serializer = sciformats_serde_json::Serializer::new(writer);
         let wrapper = NodeWrapper {
             path: "",
             reader: self.reader,
         };
         let export = JsonExport {
-            name: Self::EXPORT_NAME,
+            format: Self::EXPORT_FORMAT,
             version: Self::EXPORT_VERSION,
             nodes: wrapper,
         };
@@ -69,7 +69,7 @@ impl<R: Reader + ?Sized> Exporter for JsonExporter<'_, R> {
 }
 
 struct JsonExport<'a, R: Reader + ?Sized> {
-    name: &'static str,
+    format: &'static str,
     version: &'static str,
     nodes: NodeWrapper<'a, R>,
 }
@@ -80,7 +80,7 @@ impl<'a, R: Reader + ?Sized> Serialize for JsonExport<'a, R> {
         S: Serializer,
     {
         let mut s = serializer.serialize_struct("JsonExport", 3)?;
-        s.serialize_field("name", &self.name)?;
+        s.serialize_field("format", &self.format)?;
         s.serialize_field("version", &self.version)?;
         s.serialize_field("nodes", &self.nodes)?;
         s.end()
@@ -276,7 +276,7 @@ mod tests {
         common::SfError,
     };
     use core::str;
-    use serde_json::{Value, json};
+    use sciformats_serde_json::{Value, json};
     use std::collections::HashMap;
 
     struct StubReader {}
@@ -362,10 +362,10 @@ mod tests {
 
         // https://docs.rs/serde_json/latest/serde_json/fn.to_value.html#example
         let output_str = String::from_utf8(export).unwrap();
-        let output_json: Value = serde_json::from_str(&output_str).unwrap();
+        let output_json: Value = sciformats_serde_json::from_str(&output_str).unwrap();
 
         let expected = json!({
-            "name": "sciformats",
+            "format": "sciformats",
             "version": "0.1.0",
             "nodes":{
                 "name": "root node name",

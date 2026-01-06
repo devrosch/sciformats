@@ -1,5 +1,5 @@
 {
-    "name": "sciformats",
+    "format": "sciformats",
     "version": "0.1.0",
     "nodes": {
         "name": "Root node",

@@ -344,7 +344,7 @@ dependencies = [
 
 [[package]]
 name = "sciformats"
-version = "0.2.0"
+version = "0.3.0-snapshot"
 dependencies = [
  "base64",
  "chrono",
@@ -358,7 +358,7 @@ dependencies = [
 
 [[package]]
 name = "sciformats_js"
-version = "0.2.0"
+version = "0.3.0-snapshot"
 dependencies = [
  "js-sys",
  "sciformats",

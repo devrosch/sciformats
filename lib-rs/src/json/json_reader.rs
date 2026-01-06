@@ -216,7 +216,7 @@ mod tests {
         };
 
         let doc = JsonDocument {
-            name: "sciformats".to_owned(),
+            format: "sciformats".to_owned(),
             version: "0.1.0".to_owned(),
             nodes: root_node,
             input: reader_rc,

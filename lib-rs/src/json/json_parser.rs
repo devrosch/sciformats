@@ -40,7 +40,7 @@ impl<T: Seek + Read> Parser<T> for JsonParser {
             sciformats_serde_json::from_reader(&mut *rcrefcell.borrow_mut())
                 .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
         let doc = JsonDocument {
-            name: lazy_doc.name,
+            format: lazy_doc.format,
             version: lazy_doc.version,
             nodes: lazy_doc.nodes,
             input: rcrefcell,
@@ -50,7 +50,7 @@ impl<T: Seek + Read> Parser<T> for JsonParser {
 }
 
 pub struct JsonDocument<T: Seek + Read> {
-    pub name: String,
+    pub format: String,
     pub version: String,
     pub(super) nodes: JsonLazyNode,
     pub(super) input: Rc<RefCell<T>>,
@@ -106,7 +106,7 @@ impl<T: Seek + Read> JsonDocument<T> {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct JsonLazyDocument {
-    pub name: String,
+    pub format: String,
     pub version: String,
     pub nodes: JsonLazyNode,
 }
@@ -185,7 +185,7 @@ mod tests {
     fn parses_json() {
         const JSON: &str = r#"
             {
-                "name": "sciformats",
+                "format": "sciformats",
                 "version": "0.1.0",
                 "nodes": {
                     "name": "Root node",
@@ -275,7 +275,7 @@ mod tests {
         let reader = Cursor::new(JSON);
 
         let doc = JsonParser::parse(path, reader).unwrap();
-        assert_eq!("sciformats", &doc.name);
+        assert_eq!("sciformats", &doc.format);
         assert_eq!("0.1.0", &doc.version);
 
         let root = &doc.get_node("/").unwrap();

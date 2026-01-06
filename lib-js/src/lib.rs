@@ -1290,7 +1290,7 @@ mod tests {
         let output_json: serde_json::Value = serde_json::from_str(&output_str).unwrap();
 
         let expected = json!({
-            "name": "sciformats",
+            "format": "sciformats",
             "version": "0.1.0",
             "nodes": {
                 "name": "root node name",

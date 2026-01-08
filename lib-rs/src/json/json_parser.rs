@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Robert Schiwon
+// Copyright (c) 2025, 2026 Robert Schiwon
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -38,7 +38,7 @@ impl<T: Seek + Read> Parser<T> for JsonParser {
         let rcrefcell = Rc::new(RefCell::new(input));
         let lazy_doc: JsonLazyDocument =
             sciformats_serde_json::from_reader(&mut *rcrefcell.borrow_mut())
-                .map_err(|e| SfError::from_source(e, "Error deserializing JSON document."))?;
+                .map_err(|e| SfError::from_source(e, "Error parsing JSON document."))?;
         let doc = JsonDocument {
             format: lazy_doc.format,
             version: lazy_doc.version,

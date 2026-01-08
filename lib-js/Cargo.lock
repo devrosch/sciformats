@@ -287,6 +287,7 @@ checksum = "b66c2058c55a409d601666cffe35f04333cf1013010882cec174a7467cd4e21c"
 dependencies = [
  "encoding_rs",
  "memchr",
+ "serde",
 ]
 
 [[package]]

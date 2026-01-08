@@ -1,4 +1,4 @@
-// Copyright (c) 2025, 2026 Robert Schiwon
+// Copyright (c) 2026 Robert Schiwon
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -17,13 +17,5 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-pub mod andi;
-pub mod api;
-pub mod common;
-pub mod gaml;
-pub mod jdx;
-pub mod json;
-pub mod mzml;
-pub(crate) mod json_exporter;
-pub(crate) mod utils;
-pub(crate) mod xml_utils;
+pub mod mzml_scanner;
+pub mod mzml_parser;

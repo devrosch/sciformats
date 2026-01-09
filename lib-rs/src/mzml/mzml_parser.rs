@@ -35,7 +35,7 @@ impl<T: Seek + Read> Parser<T> for MzMlParser {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq, Debug)]
 pub struct MzMl {
     #[serde(rename = "@xmlns")]
     pub xmlns: String,
@@ -49,12 +49,12 @@ pub struct MzMl {
     pub version: String,
     #[serde(rename = "@id")]
     pub id: Option<String>,
-    // #[serde(rename = "cvList")]
-    // pub cv_list: CvList,
-    // #[serde(rename = "fileDescription")]
-    // pub file_description: FileDescription,
-    // #[serde(rename = "referenceableParamGroupList")]
-    // pub referenceable_param_group_list: ReferenceableParamGroupList,
+    #[serde(rename = "cvList")]
+    pub cv_list: CvList,
+    #[serde(rename = "fileDescription")]
+    pub file_description: FileDescription,
+    #[serde(rename = "referenceableParamGroupList")]
+    pub referenceable_param_group_list: Option<ReferenceableParamGroupList>,
     // #[serde(rename = "sampleList")]
     // pub sample_list: SampleList,
     // #[serde(rename = "softwareList")]
@@ -68,37 +68,45 @@ pub struct MzMl {
     // pub run: Run,
 }
 
-// #[derive(Deserialize)]
-// pub struct CvList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     pub cv: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct CvList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    // Must contain at least one Cv element. minOccurs="1",
+    pub cv: Vec<Cv>,
+}
 
-// #[derive(Deserialize)]
-// pub struct Cv {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "@fullName")]
-//     pub full_name: String,
-//     #[serde(rename = "@version")]
-//     pub version: String,
-//     #[serde(rename = "@URI")]
-//     pub uri: String,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Cv {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "@fullName")]
+    pub full_name: String,
+    #[serde(rename = "@version")]
+    pub version: String,
+    #[serde(rename = "@URI")]
+    pub uri: String,
+}
 
-// #[derive(Deserialize)]
-// pub struct FileDescription {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "fileContent")]
-//     pub file_content: FileContent,
-//     #[serde(rename = "sourceFileList")]
-//     pub source_file_list: SourceFileList,
-//     pub contact: Contact,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct FileDescription {
+    #[serde(rename = "fileContent")]
+    pub file_content: ParamGroup,
+    #[serde(rename = "sourceFileList")]
+    pub source_file_list: Option<SourceFileList>,
+    #[serde(default)]
+    pub contact: Vec<ParamGroup>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ParamGroup {
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+}
 
 // #[derive(Deserialize)]
 // pub struct FileContent {
@@ -107,6 +115,40 @@ pub struct MzMl {
 //     #[serde(rename = "cvParam")]
 //     pub cv_param: Vec,
 // }
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct CvParam {
+    #[serde(rename = "@cvRef")]
+    pub cv_ref: String,
+    #[serde(rename = "@accession")]
+    pub accession: String,
+    #[serde(rename = "@value")]
+    pub value: Option<String>,
+    #[serde(rename = "@name")]
+    pub name: String,
+    #[serde(rename = "@unitAccession")]
+    pub unit_accession: Option<String>,
+    #[serde(rename = "@unitName")]
+    pub unit_name: Option<String>,
+    #[serde(rename = "@unitCvRef")]
+    pub unit_cv_ref: Option<String>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct UserParam {
+    #[serde(rename = "@name")]
+    pub name: String,
+    #[serde(rename = "@type")]
+    pub r#type: Option<String>,
+    #[serde(rename = "@value")]
+    pub value: Option<String>,
+    #[serde(rename = "@unitAccession")]
+    pub unit_accession: Option<String>,
+    #[serde(rename = "@unitName")]
+    pub unit_name: Option<String>,
+    #[serde(rename = "@unitCvRef")]
+    pub unit_cv_ref: Option<String>,
+}
 
 // #[derive(Deserialize)]
 // pub struct MzMlFileDescriptionFileContentCvParam {
@@ -120,29 +162,31 @@ pub struct MzMl {
 //     pub value: String,
 // }
 
-// #[derive(Deserialize)]
-// pub struct SourceFileList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "sourceFile")]
-//     pub source_file: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct SourceFileList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "sourceFile")] // minOccurs="1"
+    pub source_file: Vec<SourceFile>,
+}
 
-// #[derive(Deserialize)]
-// pub struct SourceFile {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@location")]
-//     pub location: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct SourceFile {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "@name")]
+    pub name: String,
+    #[serde(rename = "@location")]
+    pub location: String,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+}
 
 // #[derive(Deserialize)]
 // pub struct FileDescriptionSourceFileListSourceFileCvParam {
@@ -176,25 +220,23 @@ pub struct MzMl {
 //     pub value: String,
 // }
 
-// #[derive(Deserialize)]
-// pub struct ReferenceableParamGroupList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "referenceableParamGroup")]
-//     pub referenceable_param_group: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ReferenceableParamGroupList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "referenceableParamGroup")] // minOccurs="1"
+    pub referenceable_param_group: Vec<ReferenceableParamGroup>,
+}
 
-// #[derive(Deserialize)]
-// pub struct ReferenceableParamGroup {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ReferenceableParamGroup {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+}
 
 // #[derive(Deserialize)]
 // pub struct MzMlReferenceableParamGroupListReferenceableParamGroupCvParam {
@@ -665,11 +707,11 @@ pub struct MzMl {
 //     pub unit_cv_ref: Option,
 // }
 
-// #[derive(Deserialize)]
-// pub struct ReferenceableParamGroupRef {
-//     #[serde(rename = "@ref")]
-//     pub referenceable_param_group_ref_ref: String,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ReferenceableParamGroupRef {
+    #[serde(rename = "@ref")]
+    pub r#ref: String,
+}
 
 // #[derive(Deserialize)]
 // pub struct RunSpectrumListSpectrumCvParam {
@@ -1016,6 +1058,113 @@ mod tests {
                 accession="SF:0123456"
                 version="1.1.0"
                 id="sciformats:all_optional:valid.mzML">
+
+                <cvList count="2">
+                <cv
+                    id="MS"
+                    fullName="Proteomics Standards Initiative Mass Spectrometry Ontology"
+                    version="2.26.0"
+                    URI="http://psidev.cvs.sourceforge.net/*checkout*/psidev/psi/psi-ms/mzML/controlledVocabulary/psi-ms.obo"/>
+                <cv
+                    id="UO"
+                    fullName="Unit Ontology"
+                    version="14:07:2009"
+                    URI="http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/phenotype/unit.obo"/>
+                </cvList>
+                <fileDescription>
+                    <fileContent>
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234567"
+                            name="cvParam name 1234567"
+                            value="1234567"
+                            unitAccession="unitAccession 1234567"
+                            unitName="unitName 1234567"
+                            unitCvRef="unitCvRef 1234567"/>
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234568"
+                            name="cvParam name 1234568"
+                            value="1234568"
+                            unitAccession="unitAccession 1234568"
+                            unitName="unitName 1234568"
+                            unitCvRef="unitCvRef 1234568"/>
+                    </fileContent>
+                    <sourceFileList count="1">
+                        <sourceFile id="sourceFile_id0" name="source_file.raw" location="file:///path/to/location/">
+                            <referenceableParamGroupRef ref="ref0"/>
+                            <cvParam
+                                cvRef="MS"
+                                accession="MS:1234570"
+                                name="cvParam name 1234570"
+                                value="cvParam value 1234570"
+                                unitAccession="cvParam unitAccession 1234570"
+                                unitName="cvParam unitName 1234570"
+                                unitCvRef="cvParam unitCvRef 1234570"/>
+                            <userParam
+                                name="userParam name 1234571"
+                                type="userParam type 1234571"
+                                value="userParam value 1234571"
+                                unitAccession="userParam unitAccession 1234571"
+                                unitName="userParam unitName 1234571"
+                                unitCvRef="userParam unitCvRef 1234571"/>
+                        </sourceFile>
+                    </sourceFileList>
+                    <contact>
+                        <referenceableParamGroupRef ref="ref1"/>
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234572"
+                            name="cvParam name 1234572"
+                            value="cvParam value 1234572"
+                            unitAccession="cvParam unitAccession 1234572"
+                            unitName="cvParam unitName 1234572"
+                            unitCvRef="cvParam unitCvRef 1234572"/>
+                        <userParam
+                            name="userParam name 1234573"
+                            type="userParam type 1234573"
+                            value="userParam value 1234573"
+                            unitAccession="userParam unitAccession 1234573"
+                            unitName="userParam unitName 1234573"
+                            unitCvRef="userParam unitCvRef 1234573"/>
+                    </contact>
+                </fileDescription>
+                <referenceableParamGroupList count="2">
+                    <referenceableParamGroup id="referenceableParamGroup0">
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234574"
+                            name="cvParam name 1234574"
+                            value="cvParam value 1234574"
+                            unitAccession="cvParam unitAccession 1234574"
+                            unitName="cvParam unitName 1234574"
+                            unitCvRef="cvParam unitCvRef 1234574"/>
+                        <userParam
+                            name="userParam name 1234575"
+                            type="userParam type 1234575"
+                            value="userParam value 1234575"
+                            unitAccession="userParam unitAccession 1234575"
+                            unitName="userParam unitName 1234575"
+                            unitCvRef="userParam unitCvRef 1234575"/>
+                    </referenceableParamGroup>
+                    <referenceableParamGroup id="referenceableParamGroup1">
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234576"
+                            name="cvParam name 1234576"
+                            value="cvParam value 1234576"
+                            unitAccession="cvParam unitAccession 1234576"
+                            unitName="cvParam unitName 1234576"
+                            unitCvRef="cvParam unitCvRef 1234576"/>
+                        <userParam
+                            name="userParam name 1234577"
+                            type="userParam type 1234577"
+                            value="userParam value 1234577"
+                            unitAccession="userParam unitAccession 1234577"
+                            unitName="userParam unitName 1234577"
+                            unitCvRef="userParam unitCvRef 1234577"/>
+                    </referenceableParamGroup>
+                </referenceableParamGroupList>
             </mzML>"#;
         let reader = Cursor::new(xml);
         let mzml = MzMlParser::parse(path, reader).unwrap();
@@ -1025,6 +1174,170 @@ mod tests {
         assert_eq!(
             Some("sciformats:all_optional:valid.mzML".to_owned()),
             mzml.id
+        );
+
+        let cv_list = &mzml.cv_list;
+        assert_eq!(2, cv_list.count);
+        assert_eq!(2, cv_list.cv.len());
+        assert_eq!(Cv {
+            id: "MS".to_owned(),
+            full_name: "Proteomics Standards Initiative Mass Spectrometry Ontology".to_owned(),
+            version: "2.26.0".to_owned(),
+            uri: "http://psidev.cvs.sourceforge.net/*checkout*/psidev/psi/psi-ms/mzML/controlledVocabulary/psi-ms.obo".to_owned(),
+        }, cv_list.cv[0]);
+        assert_eq!(
+            Cv {
+                id: "UO".to_owned(),
+                full_name: "Unit Ontology".to_owned(),
+                version: "14:07:2009".to_owned(),
+                uri:
+                    "http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/phenotype/unit.obo"
+                        .to_owned(),
+            },
+            cv_list.cv[1]
+        );
+
+        let file_description = &mzml.file_description;
+        let file_content = &file_description.file_content;
+        assert_eq!(2, file_content.cv_param.len());
+        assert_eq!(
+            file_content.cv_param[0],
+            CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234567".to_owned(),
+                name: "cvParam name 1234567".to_owned(),
+                value: Some("1234567".to_owned()),
+                unit_accession: Some("unitAccession 1234567".to_owned()),
+                unit_name: Some("unitName 1234567".to_owned()),
+                unit_cv_ref: Some("unitCvRef 1234567".to_owned()),
+            }
+        );
+        assert_eq!(
+            file_content.cv_param[1],
+            CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234568".to_owned(),
+                name: "cvParam name 1234568".to_owned(),
+                value: Some("1234568".to_owned()),
+                unit_accession: Some("unitAccession 1234568".to_owned()),
+                unit_name: Some("unitName 1234568".to_owned()),
+                unit_cv_ref: Some("unitCvRef 1234568".to_owned()),
+            }
+        );
+
+        let source_file_list = file_description.source_file_list.as_ref().unwrap();
+        assert_eq!(1, source_file_list.count);
+        assert_eq!(1, source_file_list.source_file.len());
+        assert_eq!(
+            source_file_list.source_file[0],
+            SourceFile {
+                id: "sourceFile_id0".to_owned(),
+                name: "source_file.raw".to_owned(),
+                location: "file:///path/to/location/".to_owned(),
+                referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                    r#ref: "ref0".to_owned(),
+                }],
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234570".to_owned(),
+                    name: "cvParam name 1234570".to_owned(),
+                    value: Some("cvParam value 1234570".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234570".to_owned()),
+                    unit_name: Some("cvParam unitName 1234570".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234570".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234571".to_owned(),
+                    r#type: Some("userParam type 1234571".to_owned()),
+                    value: Some("userParam value 1234571".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234571".to_owned()),
+                    unit_name: Some("userParam unitName 1234571".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234571".to_owned()),
+                }],
+            }
+        );
+
+        let contacts = &file_description.contact;
+        assert_eq!(1, contacts.len());
+        assert_eq!(
+            ParamGroup {
+                referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                    r#ref: "ref1".to_owned(),
+                }],
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234572".to_owned(),
+                    name: "cvParam name 1234572".to_owned(),
+                    value: Some("cvParam value 1234572".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234572".to_owned()),
+                    unit_name: Some("cvParam unitName 1234572".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234572".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234573".to_owned(),
+                    r#type: Some("userParam type 1234573".to_owned()),
+                    value: Some("userParam value 1234573".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234573".to_owned()),
+                    unit_name: Some("userParam unitName 1234573".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234573".to_owned()),
+                }],
+            },
+            contacts[0]
+        );
+
+        let referenceable_param_group_list = &mzml.referenceable_param_group_list.unwrap();
+        assert_eq!(2, referenceable_param_group_list.count);
+        assert_eq!(
+            2,
+            referenceable_param_group_list
+                .referenceable_param_group
+                .len()
+        );
+        assert_eq!(
+            ReferenceableParamGroup {
+                id: "referenceableParamGroup0".to_owned(),
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234574".to_owned(),
+                    name: "cvParam name 1234574".to_owned(),
+                    value: Some("cvParam value 1234574".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234574".to_owned()),
+                    unit_name: Some("cvParam unitName 1234574".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234574".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234575".to_owned(),
+                    r#type: Some("userParam type 1234575".to_owned()),
+                    value: Some("userParam value 1234575".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234575".to_owned()),
+                    unit_name: Some("userParam unitName 1234575".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234575".to_owned()),
+                }],
+            },
+            referenceable_param_group_list.referenceable_param_group[0]
+        );
+        assert_eq!(
+            ReferenceableParamGroup {
+                id: "referenceableParamGroup1".to_owned(),
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234576".to_owned(),
+                    name: "cvParam name 1234576".to_owned(),
+                    value: Some("cvParam value 1234576".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234576".to_owned()),
+                    unit_name: Some("cvParam unitName 1234576".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234576".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234577".to_owned(),
+                    r#type: Some("userParam type 1234577".to_owned()),
+                    value: Some("userParam value 1234577".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234577".to_owned()),
+                    unit_name: Some("userParam unitName 1234577".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234577".to_owned()),
+                }],
+            },
+            referenceable_param_group_list.referenceable_param_group[1]
         );
     }
 }

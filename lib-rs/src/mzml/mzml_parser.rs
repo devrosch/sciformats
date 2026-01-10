@@ -57,8 +57,8 @@ pub struct MzMl {
     pub referenceable_param_group_list: Option<ReferenceableParamGroupList>,
     #[serde(rename = "sampleList")]
     pub sample_list: Option<SampleList>,
-    // #[serde(rename = "softwareList")]
-    // pub software_list: SoftwareList,
+    #[serde(rename = "softwareList")]
+    pub software_list: SoftwareList,
     // #[serde(rename = "scanSettingsList")]
     // pub scan_settings_list: ScanSettingsList,
     // #[serde(rename = "instrumentConfigurationList")]
@@ -273,26 +273,28 @@ pub struct Sample {
     pub user_param: Vec<UserParam>,
 }
 
-// #[derive(Deserialize)]
-// pub struct SoftwareList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     pub software: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct SoftwareList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    pub software: Vec<Software>,
+}
 
-// #[derive(Deserialize)]
-// pub struct Software {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "@version")]
-//     pub version: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: MzMlSoftwareListSoftwareCvParam,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Software {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "@version")]
+    pub version: String,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+}
 
 // #[derive(Deserialize)]
 // pub struct MzMlSoftwareListSoftwareCvParam {
@@ -1189,6 +1191,28 @@ mod tests {
                             unitCvRef="userParam unitCvRef 1234579"/>
                     </sample>
                 </sampleList>
+                <softwareList count="2">
+                    <software id="software_id0" version="1.2.3">
+                        <referenceableParamGroupRef ref="ref3"/>
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234580"
+                            name="cvParam name 1234580"
+                            value="cvParam value 1234580"
+                            unitAccession="cvParam unitAccession 1234580"
+                            unitName="cvParam unitName 1234580"
+                            unitCvRef="cvParam unitCvRef 1234580"/>
+                        <userParam
+                            name="userParam name 1234581"
+                            type="userParam type 1234581"
+                            value="userParam value 1234581"
+                            unitAccession="userParam unitAccession 1234581"
+                            unitName="userParam unitName 1234581"
+                            unitCvRef="userParam unitCvRef 1234581"/>
+                    </software>
+                    <software id="software_id1" version="0.1.2">
+                    </software>
+                </softwareList>
             </mzML>"#;
         let reader = Cursor::new(xml);
         let mzml = MzMlParser::parse(path, reader).unwrap();
@@ -1393,6 +1417,47 @@ mod tests {
                 }],
             },
             sample_list.sample[0]
+        );
+
+        let software_list = &mzml.software_list;
+        assert_eq!(2, software_list.count);
+        assert_eq!(2, software_list.software.len());
+        assert_eq!(
+            Software {
+                id: "software_id0".to_owned(),
+                version: "1.2.3".to_owned(),
+                referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                    r#ref: "ref3".to_owned(),
+                }],
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234580".to_owned(),
+                    name: "cvParam name 1234580".to_owned(),
+                    value: Some("cvParam value 1234580".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234580".to_owned()),
+                    unit_name: Some("cvParam unitName 1234580".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234580".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234581".to_owned(),
+                    r#type: Some("userParam type 1234581".to_owned()),
+                    value: Some("userParam value 1234581".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234581".to_owned()),
+                    unit_name: Some("userParam unitName 1234581".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234581".to_owned()),
+                }],
+            },
+            software_list.software[0]
+        );
+        assert_eq!(
+            Software {
+                id: "software_id1".to_owned(),
+                version: "0.1.2".to_owned(),
+                referenceable_param_group_ref: vec![],
+                cv_param: vec![],
+                user_param: vec![],
+            },
+            software_list.software[1]
         );
     }
 }

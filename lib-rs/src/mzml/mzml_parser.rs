@@ -59,8 +59,8 @@ pub struct MzMl {
     pub sample_list: Option<SampleList>,
     #[serde(rename = "softwareList")]
     pub software_list: SoftwareList,
-    // #[serde(rename = "scanSettingsList")]
-    // pub scan_settings_list: ScanSettingsList,
+    #[serde(rename = "scanSettingsList")]
+    pub scan_settings_list: Option<ScanSettingsList>,
     // #[serde(rename = "instrumentConfigurationList")]
     // pub instrument_configuration_list: InstrumentConfigurationList,
     // #[serde(rename = "dataProcessingList")]
@@ -308,52 +308,53 @@ pub struct Software {
 //     pub value: String,
 // }
 
-// #[derive(Deserialize)]
-// pub struct ScanSettingsList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "scanSettings")]
-//     pub scan_settings: ScanSettings,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ScanSettingsList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "scanSettings")]
+    pub scan_settings: Vec<ScanSettings>,
+}
 
-// #[derive(Deserialize)]
-// pub struct ScanSettings {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "sourceFileRefList")]
-//     pub source_file_ref_list: SourceFileRefList,
-//     #[serde(rename = "targetList")]
-//     pub target_list: TargetList,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ScanSettings {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "sourceFileRefList")]
+    pub source_file_ref_list: Option<SourceFileRefList>,
+    #[serde(rename = "targetList")]
+    pub target_list: Option<TargetList>,
 
-// #[derive(Deserialize)]
-// pub struct SourceFileRefList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "sourceFileRef")]
-//     pub source_file_ref: SourceFileRef,
-// }
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+}
 
-// #[derive(Deserialize)]
-// pub struct SourceFileRef {
-//     #[serde(rename = "@ref")]
-//     pub source_file_ref_ref: String,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct SourceFileRefList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "sourceFileRef", default)]
+    pub source_file_ref: Vec<SourceFileRef>,
+}
 
-// #[derive(Deserialize)]
-// pub struct TargetList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     pub target: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct SourceFileRef {
+    #[serde(rename = "@ref")]
+    pub r#ref: String,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct TargetList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    // minOccurs="1"
+    pub target: Vec<ParamGroup>,
+}
 
 // #[derive(Deserialize)]
 // pub struct Target {
@@ -1210,9 +1211,70 @@ mod tests {
                             unitName="userParam unitName 1234581"
                             unitCvRef="userParam unitCvRef 1234581"/>
                     </software>
-                    <software id="software_id1" version="0.1.2">
+                        <software id="software_id1" version="0.1.2">
                     </software>
                 </softwareList>
+                <scanSettingsList count="1">
+                    <scanSettings id="scanSettings_id0">
+                        <referenceableParamGroupRef ref="ref6"/>
+                        <cvParam
+                            cvRef="MS"
+                            accession="MS:1234582"
+                            name="cvParam name 1234582"
+                            value="cvParam value 1234582"
+                            unitAccession="cvParam unitAccession 1234582"
+                            unitName="cvParam unitName 1234582"
+                            unitCvRef="cvParam unitCvRef 1234582"/>
+                        <userParam
+                            name="userParam name 1234583"
+                            type="userParam type 1234583"
+                            value="userParam value 1234583"
+                            unitAccession="userParam unitAccession 1234583"
+                            unitName="userParam unitName 1234583"
+                            unitCvRef="userParam unitCvRef 1234583"/>
+                        <sourceFileRefList count="1">
+                            <sourceFileRef ref="sourceFileRef0"/>
+                        </sourceFileRefList>
+                        <targetList count="2">
+                        <target>
+                            <referenceableParamGroupRef ref="ref4"/>
+                            <cvParam
+                                cvRef="MS"
+                                accession="MS:1234584"
+                                name="cvParam name 1234584"
+                                value="cvParam value 1234584"
+                                unitAccession="cvParam unitAccession 1234584"
+                                unitName="cvParam unitName 1234584"
+                                unitCvRef="cvParam unitCvRef 1234584"/>
+                            <userParam
+                                name="userParam name 1234585"
+                                type="userParam type 1234585"
+                                value="userParam value 1234585"
+                                unitAccession="userParam unitAccession 1234585"
+                                unitName="userParam unitName 1234585"
+                                unitCvRef="userParam unitCvRef 1234585"/>
+                        </target>
+                        <target>
+                            <referenceableParamGroupRef ref="ref5"/>
+                            <cvParam
+                                cvRef="MS"
+                                accession="MS:1234586"
+                                name="cvParam name 1234586"
+                                value="cvParam value 1234586"
+                                unitAccession="cvParam unitAccession 1234586"
+                                unitName="cvParam unitName 1234586"
+                                unitCvRef="cvParam unitCvRef 1234586"/>
+                            <userParam
+                                name="userParam name 1234587"
+                                type="userParam type 1234587"
+                                value="userParam value 1234587"
+                                unitAccession="userParam unitAccession 1234587"
+                                unitName="userParam unitName 1234587"
+                                unitCvRef="userParam unitCvRef 1234587"/>
+                        </target>
+                        </targetList>
+                    </scanSettings>
+                </scanSettingsList>
             </mzML>"#;
         let reader = Cursor::new(xml);
         let mzml = MzMlParser::parse(path, reader).unwrap();
@@ -1458,6 +1520,105 @@ mod tests {
                 user_param: vec![],
             },
             software_list.software[1]
+        );
+
+        let scan_settings_list = &mzml.scan_settings_list.unwrap();
+        assert_eq!(1, scan_settings_list.count);
+        assert_eq!(1, scan_settings_list.scan_settings.len());
+        let scan_settings = &scan_settings_list.scan_settings[0];
+        assert_eq!("scanSettings_id0".to_owned(), scan_settings.id);
+        assert_eq!(
+            scan_settings.referenceable_param_group_ref,
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref6".to_owned(),
+            }]
+        );
+        assert_eq!(1, scan_settings.cv_param.len());
+        assert_eq!(
+            CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234582".to_owned(),
+                name: "cvParam name 1234582".to_owned(),
+                value: Some("cvParam value 1234582".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234582".to_owned()),
+                unit_name: Some("cvParam unitName 1234582".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234582".to_owned()),
+            },
+            scan_settings.cv_param[0]
+        );
+        assert_eq!(1, scan_settings.user_param.len());
+        assert_eq!(
+            UserParam {
+                name: "userParam name 1234583".to_owned(),
+                r#type: Some("userParam type 1234583".to_owned()),
+                value: Some("userParam value 1234583".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234583".to_owned()),
+                unit_name: Some("userParam unitName 1234583".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234583".to_owned()),
+            },
+            scan_settings.user_param[0]
+        );
+        let source_file_ref_list = scan_settings.source_file_ref_list.as_ref().unwrap();
+        assert_eq!(1, source_file_ref_list.count);
+        assert_eq!(1, source_file_ref_list.source_file_ref.len());
+        assert_eq!(
+            source_file_ref_list.source_file_ref[0],
+            SourceFileRef {
+                r#ref: "sourceFileRef0".to_owned(),
+            }
+        );
+        let target_list = scan_settings.target_list.as_ref().unwrap();
+        assert_eq!(2, target_list.count);
+        assert_eq!(2, target_list.target.len());
+        assert_eq!(
+            target_list.target[0],
+            ParamGroup {
+                referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                    r#ref: "ref4".to_owned(),
+                }],
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234584".to_owned(),
+                    name: "cvParam name 1234584".to_owned(),
+                    value: Some("cvParam value 1234584".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234584".to_owned()),
+                    unit_name: Some("cvParam unitName 1234584".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234584".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234585".to_owned(),
+                    r#type: Some("userParam type 1234585".to_owned()),
+                    value: Some("userParam value 1234585".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234585".to_owned()),
+                    unit_name: Some("userParam unitName 1234585".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234585".to_owned()),
+                }],
+            }
+        );
+        assert_eq!(
+            target_list.target[1],
+            ParamGroup {
+                referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                    r#ref: "ref5".to_owned(),
+                }],
+                cv_param: vec![CvParam {
+                    cv_ref: "MS".to_owned(),
+                    accession: "MS:1234586".to_owned(),
+                    name: "cvParam name 1234586".to_owned(),
+                    value: Some("cvParam value 1234586".to_owned()),
+                    unit_accession: Some("cvParam unitAccession 1234586".to_owned()),
+                    unit_name: Some("cvParam unitName 1234586".to_owned()),
+                    unit_cv_ref: Some("cvParam unitCvRef 1234586".to_owned()),
+                }],
+                user_param: vec![UserParam {
+                    name: "userParam name 1234587".to_owned(),
+                    r#type: Some("userParam type 1234587".to_owned()),
+                    value: Some("userParam value 1234587".to_owned()),
+                    unit_accession: Some("userParam unitAccession 1234587".to_owned()),
+                    unit_name: Some("userParam unitName 1234587".to_owned()),
+                    unit_cv_ref: Some("userParam unitCvRef 1234587".to_owned()),
+                }],
+            }
         );
     }
 }

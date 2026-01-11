@@ -63,8 +63,8 @@ pub struct MzMl {
     pub scan_settings_list: Option<ScanSettingsList>,
     #[serde(rename = "instrumentConfigurationList")]
     pub instrument_configuration_list: InstrumentConfigurationList,
-    // #[serde(rename = "dataProcessingList")]
-    // pub data_processing_list: DataProcessingList,
+    #[serde(rename = "dataProcessingList")]
+    pub data_processing_list: DataProcessingList,
     // pub run: Run,
 }
 
@@ -522,37 +522,37 @@ pub struct SoftwareRef {
     pub r#ref: String,
 }
 
-// #[derive(Deserialize)]
-// pub struct DataProcessingList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "dataProcessing")]
-//     pub data_processing: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct DataProcessingList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "dataProcessing")] // minOccurs="1"
+    pub data_processing: Vec<DataProcessing>,
+}
 
-// #[derive(Deserialize)]
-// pub struct DataProcessing {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "processingMethod")]
-//     pub processing_method: ProcessingMethod,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct DataProcessing {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "processingMethod")] //minOccurs="1"
+    pub processing_method: Vec<ProcessingMethod>,
+}
 
-// #[derive(Deserialize)]
-// pub struct ProcessingMethod {
-//     #[serde(rename = "@order")]
-//     pub order: String,
-//     #[serde(rename = "@softwareRef")]
-//     pub software_ref: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ProcessingMethod {
+    #[serde(rename = "@order")]
+    pub order: u64,
+    #[serde(rename = "@softwareRef")]
+    pub software_ref: String,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+}
 
 // #[derive(Deserialize)]
 // pub struct DataProcessingListDataProcessingProcessingMethodCvParam {
@@ -1373,6 +1373,28 @@ mod tests {
                         <softwareRef ref="softwareRef0"/>
                     </instrumentConfiguration>
                 </instrumentConfigurationList>
+                <dataProcessingList count="1">
+                    <dataProcessing id="dataProcessing_id0">
+                        <processingMethod order="1" softwareRef="softwareRef1">
+                            <referenceableParamGroupRef ref="ref10"/>
+                            <cvParam
+                                cvRef="MS"
+                                accession="MS:1234595"
+                                name="cvParam name 1234595"
+                                value="cvParam value 1234595"
+                                unitAccession="cvParam unitAccession 1234595"
+                                unitName="cvParam unitName 1234595"
+                                unitCvRef="cvParam unitCvRef 1234595"/>
+                            <userParam
+                                name="userParam name 1234596"
+                                type="userParam type 1234596"
+                                value="userParam value 1234596"
+                                unitAccession="userParam unitAccession 1234596"
+                                unitName="userParam unitName 1234596"
+                                unitCvRef="userParam unitCvRef 1234596"/>
+                        </processingMethod>
+                    </dataProcessing>
+                </dataProcessingList>
             </mzML>"#;
         let reader = Cursor::new(xml);
         let mzml = MzMlParser::parse(path, reader).unwrap();
@@ -1849,6 +1871,41 @@ mod tests {
             Some(SoftwareRef {
                 r#ref: "softwareRef0".to_owned(),
             })
+        );
+
+        let data_processing_list = &mzml.data_processing_list;
+        assert_eq!(1, data_processing_list.count);
+        assert_eq!(1, data_processing_list.data_processing.len());
+        let data_processing = &data_processing_list.data_processing[0];
+        assert_eq!("dataProcessing_id0".to_owned(), data_processing.id);
+        assert_eq!(1, data_processing.processing_method.len());
+        let processing_method = &data_processing.processing_method[0];
+        assert_eq!(1, processing_method.order);
+        assert_eq!("softwareRef1".to_owned(), processing_method.software_ref);
+        assert_eq!(1, processing_method.cv_param.len());
+        assert_eq!(
+            processing_method.cv_param[0],
+            CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234595".to_owned(),
+                name: "cvParam name 1234595".to_owned(),
+                value: Some("cvParam value 1234595".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234595".to_owned()),
+                unit_name: Some("cvParam unitName 1234595".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234595".to_owned()),
+            }
+        );
+        assert_eq!(1, processing_method.user_param.len());
+        assert_eq!(
+            processing_method.user_param[0],
+            UserParam {
+                name: "userParam name 1234596".to_owned(),
+                r#type: Some("userParam type 1234596".to_owned()),
+                value: Some("userParam value 1234596".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234596".to_owned()),
+                unit_name: Some("userParam unitName 1234596".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234596".to_owned()),
+            }
         );
     }
 }

@@ -65,7 +65,7 @@ pub struct MzMl {
     pub instrument_configuration_list: InstrumentConfigurationList,
     #[serde(rename = "dataProcessingList")]
     pub data_processing_list: DataProcessingList,
-    // pub run: Run,
+    pub run: Run,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -566,64 +566,76 @@ pub struct ProcessingMethod {
 //     pub value: String,
 // }
 
-// #[derive(Deserialize)]
-// pub struct Run {
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "@defaultInstrumentConfigurationRef")]
-//     pub default_instrument_configuration_ref: String,
-//     #[serde(rename = "@sampleRef")]
-//     pub sample_ref: String,
-//     #[serde(rename = "@startTimeStamp")]
-//     pub start_time_stamp: String,
-//     #[serde(rename = "@defaultSourceFileRef")]
-//     pub default_source_file_ref: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "spectrumList")]
-//     pub spectrum_list: SpectrumList,
-//     #[serde(rename = "chromatogramList")]
-//     pub chromatogram_list: ChromatogramList,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Run {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "@defaultInstrumentConfigurationRef")]
+    pub default_instrument_configuration_ref: String,
+    #[serde(rename = "@defaultSourceFileRef")]
+    pub default_source_file_ref: Option<String>,
+    #[serde(rename = "@sampleRef")]
+    pub sample_ref: Option<String>,
+    #[serde(rename = "@startTimeStamp")]
+    pub start_time_stamp: Option<String>,
 
-// #[derive(Deserialize)]
-// pub struct SpectrumList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "@defaultDataProcessingRef")]
-//     pub default_data_processing_ref: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     pub spectrum: Vec,
-// }
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
 
-// #[derive(Deserialize)]
-// pub struct Spectrum {
-//     #[serde(rename = "@index")]
-//     pub index: String,
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "@defaultArrayLength")]
-//     pub default_array_length: String,
-//     #[serde(rename = "@sourceFileRef")]
-//     pub source_file_ref: Option,
-//     #[serde(rename = "@spotID")]
-//     pub spot_id: Option,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "precursorList")]
-//     pub precursor_list: Option,
-//     #[serde(rename = "referenceableParamGroupRef")]
-//     pub referenceable_param_group_ref: ReferenceableParamGroupRef,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-//     #[serde(rename = "scanList")]
-//     pub scan_list: ScanList,
-//     #[serde(rename = "binaryDataArrayList")]
-//     pub binary_data_array_list: SpectrumBinaryDataArrayList,
-//     #[serde(rename = "userParam")]
-//     pub user_param: Option,
-// }
+    #[serde(rename = "spectrumList")]
+    pub spectrum_list: Option<SpectrumList>,
+    // TODO:
+    // #[serde(rename = "chromatogramList")]
+    // pub chromatogram_list: Option<ChromatogramList>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct SpectrumList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "@defaultDataProcessingRef")]
+    pub default_data_processing_ref: String,
+    pub spectrum: Vec<Spectrum>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Spectrum {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "@spotID")]
+    pub spot_id: Option<String>,
+    #[serde(rename = "@index")]
+    pub index: u64,
+    #[serde(rename = "@defaultArrayLength")]
+    pub default_array_length: i64,
+    #[serde(rename = "@dataProcessingRef")]
+    pub data_processing_ref: Option<String>,
+    #[serde(rename = "@sourceFileRef")]
+    pub source_file_ref: Option<String>,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+
+    #[serde(rename = "scanList")]
+    pub scan_list: Option<ScanList>,
+    // TODO: implement
+    // #[serde(rename = "precursorList")]
+    // pub precursor_list: Option<PrecursorList>,
+    // #[serde(rename = "productList")]
+    // pub product_list: Option<ProductList>,
+    // #[serde(rename = "binaryDataArrayList")]
+    // pub binary_data_array_list: Option<BinaryDataArrayList>,
+}
 
 // #[derive(Deserialize)]
 // pub struct PrecursorList {
@@ -759,16 +771,21 @@ pub struct ReferenceableParamGroupRef {
 //     pub unit_cv_ref: Option,
 // }
 
-// #[derive(Deserialize)]
-// pub struct ScanList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: SpectrumListSpectrumScanListCvParam,
-//     pub scan: Scan,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ScanList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+
+    pub scan: Vec<Scan>,
+}
 
 // #[derive(Deserialize)]
 // pub struct SpectrumListSpectrumScanListCvParam {
@@ -782,27 +799,36 @@ pub struct ReferenceableParamGroupRef {
 //     pub value: String,
 // }
 
-// #[derive(Deserialize)]
-// pub struct Scan {
-//     #[serde(rename = "@instrumentConfigurationRef")]
-//     pub instrument_configuration_ref: Option,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "scanWindowList")]
-//     pub scan_window_list: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Scan {
+    #[serde(rename = "@spectrumRef")]
+    pub spectrum_ref: Option<String>,
+    #[serde(rename = "@sourceFileRef")]
+    pub source_file_ref: Option<String>,
+    #[serde(rename = "@externalSpectrumID")]
+    pub external_spectrum_id: Option<String>,
+    #[serde(rename = "@instrumentConfigurationRef")]
+    pub instrument_configuration_ref: Option<String>,
 
-// #[derive(Deserialize)]
-// pub struct ScanWindowList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "scanWindow")]
-//     pub scan_window: ScanWindow,
-// }
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+
+    #[serde(rename = "scanWindowList")]
+    pub scan_window_list: Option<ScanWindowList>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ScanWindowList {
+    #[serde(rename = "@count")]
+    pub count: i64,
+    #[serde(rename = "scanWindow")]
+    pub scan_window: Vec<ParamGroup>,
+}
 
 // #[derive(Deserialize)]
 // pub struct ScanWindow {
@@ -1395,6 +1421,122 @@ mod tests {
                         </processingMethod>
                     </dataProcessing>
                 </dataProcessingList>
+                <run
+                    id="run_id0"
+                    defaultInstrumentConfigurationRef="defaultInstrumentConfigurationRef0"
+                    sampleRef="sampleRef0"
+                    startTimeStamp="2026-01-12T07:25:35.12345"
+                    defaultSourceFileRef="defaultSourceFileRef0">
+                    <referenceableParamGroupRef ref="ref11"/>
+                    <cvParam
+                        cvRef="MS"
+                        accession="MS:1234597"
+                        name="cvParam name 1234597"
+                        value="cvParam value 1234597"
+                        unitAccession="cvParam unitAccession 1234597"
+                        unitName="cvParam unitName 1234597"
+                        unitCvRef="cvParam unitCvRef 1234597"/>
+                    <userParam
+                        name="userParam name 1234598"
+                        type="userParam type 1234598"
+                        value="userParam value 1234598"
+                        unitAccession="userParam unitAccession 1234598"
+                        unitName="userParam unitName 1234598"
+                        unitCvRef="userParam unitCvRef 1234598"/>
+                    <spectrumList count="2" defaultDataProcessingRef="defaultDataProcessingRef0">
+                        <spectrum
+                            id="spectrum_id0"
+                            spotID="spotID0"
+                            index="0"
+                            defaultArrayLength="2"
+                            dataProcessingRef="dataProcessingRef0"
+                            sourceFileRef="sourceFileRef0">
+                            <referenceableParamGroupRef ref="ref12"/>
+                            <cvParam
+                                cvRef="MS"
+                                accession="MS:1234599"
+                                name="cvParam name 1234599"
+                                value="cvParam value 1234599"
+                                unitAccession="cvParam unitAccession 1234599"
+                                unitName="cvParam unitName 1234599"
+                                unitCvRef="cvParam unitCvRef 1234599"/>
+                            <userParam
+                                name="userParam name 1234600"
+                                type="userParam type 1234600"
+                                value="userParam value 1234600"
+                                unitAccession="userParam unitAccession 1234600"
+                                unitName="userParam unitName 1234600"
+                                unitCvRef="userParam unitCvRef 1234600"/>
+                            <scanList count="1">
+                                <referenceableParamGroupRef ref="ref13"/>
+                                <cvParam
+                                    cvRef="MS"
+                                    accession="MS:1234601"
+                                    name="cvParam name 1234601"
+                                    value="cvParam value 1234601"
+                                    unitAccession="cvParam unitAccession 1234601"
+                                    unitName="cvParam unitName 1234601"
+                                    unitCvRef="cvParam unitCvRef 1234601"/>
+                                <userParam
+                                    name="userParam name 1234602"
+                                    type="userParam type 1234602"
+                                    value="userParam value 1234602"
+                                    unitAccession="userParam unitAccession 1234602"
+                                    unitName="userParam unitName 1234602"
+                                    unitCvRef="userParam unitCvRef 1234602"/>
+                                <scan
+                                    spectrumRef="spectrumRef0"
+                                    sourceFileRef="sourceFileRef0"
+                                    externalSpectrumID="externalSpectrumID0"
+                                    instrumentConfigurationRef="instrumentConfigurationRef0">
+                                    <referenceableParamGroupRef ref="ref14"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234603"
+                                        name="cvParam name 1234603"
+                                        value="cvParam value 1234603"
+                                        unitAccession="cvParam unitAccession 1234603"
+                                        unitName="cvParam unitName 1234603"
+                                        unitCvRef="cvParam unitCvRef 1234603"/>
+                                    <userParam
+                                        name="userParam name 1234604"
+                                        type="userParam type 1234604"
+                                        value="userParam value 1234604"
+                                        unitAccession="userParam unitAccession 1234604"
+                                        unitName="userParam unitName 1234604"
+                                        unitCvRef="userParam unitCvRef 1234604"/>
+                                    <scanWindowList count="1">
+                                        <scanWindow>
+                                            <referenceableParamGroupRef ref="ref15"/>
+                                            <cvParam
+                                                cvRef="MS"
+                                                accession="MS:1234605"
+                                                name="cvParam name 1234605"
+                                                value="cvParam value 1234605"
+                                                unitAccession="cvParam unitAccession 1234605"
+                                                unitName="cvParam unitName 1234605"
+                                                unitCvRef="cvParam unitCvRef 1234605"/>
+                                            <userParam
+                                                name="userParam name 1234606"
+                                                type="userParam type 1234606"
+                                                value="userParam value 1234606"
+                                                unitAccession="userParam unitAccession 1234606"
+                                                unitName="userParam unitName 1234606"
+                                                unitCvRef="userParam unitCvRef 1234606"/>
+                                        </scanWindow>
+                                    </scanWindowList>
+                                </scan>
+                            </scanList>
+                            <!-- TODO: add more elements -->
+                        </spectrum>
+                        <spectrum
+                            id="spectrum_id1"
+                            index="1"
+                            defaultArrayLength="2">
+                            <!-- TODO: add more elements -->
+                            </spectrum>
+                    </spectrumList>
+                </run>
             </mzML>"#;
         let reader = Cursor::new(xml);
         let mzml = MzMlParser::parse(path, reader).unwrap();
@@ -1882,6 +2024,12 @@ mod tests {
         let processing_method = &data_processing.processing_method[0];
         assert_eq!(1, processing_method.order);
         assert_eq!("softwareRef1".to_owned(), processing_method.software_ref);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref10".to_owned(),
+            }],
+            processing_method.referenceable_param_group_ref
+        );
         assert_eq!(1, processing_method.cv_param.len());
         assert_eq!(
             processing_method.cv_param[0],
@@ -1907,5 +2055,216 @@ mod tests {
                 unit_cv_ref: Some("userParam unitCvRef 1234596".to_owned()),
             }
         );
+
+        let run = &mzml.run;
+        assert_eq!(run.id, "run_id0");
+        assert_eq!(
+            "defaultInstrumentConfigurationRef0",
+            run.default_instrument_configuration_ref
+        );
+        assert_eq!(
+            Some("defaultSourceFileRef0".to_owned()),
+            run.default_source_file_ref
+        );
+        assert_eq!(Some("sampleRef0".to_owned()), run.sample_ref);
+        assert_eq!(
+            Some("2026-01-12T07:25:35.12345".to_owned()),
+            run.start_time_stamp
+        );
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref11".to_owned(),
+            }],
+            run.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234597".to_owned(),
+                name: "cvParam name 1234597".to_owned(),
+                value: Some("cvParam value 1234597".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234597".to_owned()),
+                unit_name: Some("cvParam unitName 1234597".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234597".to_owned()),
+            }],
+            run.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234598".to_owned(),
+                r#type: Some("userParam type 1234598".to_owned()),
+                value: Some("userParam value 1234598".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234598".to_owned()),
+                unit_name: Some("userParam unitName 1234598".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234598".to_owned()),
+            }],
+            run.user_param
+        );
+
+        let spectrum_list = run.spectrum_list.as_ref().unwrap();
+        assert_eq!(2, spectrum_list.count);
+        assert_eq!(
+            "defaultDataProcessingRef0",
+            spectrum_list.default_data_processing_ref,
+        );
+        assert_eq!(2, spectrum_list.spectrum.len());
+
+        let spectrum0 = &spectrum_list.spectrum[0];
+        assert_eq!(spectrum0.id, "spectrum_id0");
+        assert_eq!(spectrum0.spot_id.as_deref(), Some("spotID0"));
+        assert_eq!(spectrum0.index, 0);
+        assert_eq!(spectrum0.default_array_length, 2);
+        assert_eq!(
+            Some("dataProcessingRef0".to_owned()),
+            spectrum0.data_processing_ref
+        );
+        assert_eq!(Some("sourceFileRef0".to_owned()), spectrum0.source_file_ref);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref12".to_owned(),
+            }],
+            spectrum0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            spectrum0.cv_param,
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234599".to_owned(),
+                name: "cvParam name 1234599".to_owned(),
+                value: Some("cvParam value 1234599".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234599".to_owned()),
+                unit_name: Some("cvParam unitName 1234599".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234599".to_owned()),
+            }]
+        );
+        assert_eq!(
+            spectrum0.user_param,
+            vec![UserParam {
+                name: "userParam name 1234600".to_owned(),
+                r#type: Some("userParam type 1234600".to_owned()),
+                value: Some("userParam value 1234600".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234600".to_owned()),
+                unit_name: Some("userParam unitName 1234600".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234600".to_owned()),
+            }]
+        );
+
+        // Test scanList in spectrum0
+        let scan_list = spectrum0.scan_list.as_ref().expect("scanList should exist");
+        assert_eq!(scan_list.count, 1);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref13".to_owned(),
+            }],
+            scan_list.referenceable_param_group_ref
+        );
+        assert_eq!(
+            scan_list.cv_param,
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234601".to_owned(),
+                name: "cvParam name 1234601".to_owned(),
+                value: Some("cvParam value 1234601".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234601".to_owned()),
+                unit_name: Some("cvParam unitName 1234601".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234601".to_owned()),
+            }]
+        );
+        assert_eq!(
+            scan_list.user_param,
+            vec![UserParam {
+                name: "userParam name 1234602".to_owned(),
+                r#type: Some("userParam type 1234602".to_owned()),
+                value: Some("userParam value 1234602".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234602".to_owned()),
+                unit_name: Some("userParam unitName 1234602".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234602".to_owned()),
+            }]
+        );
+
+        // Test scan in scanList
+        let scan = &scan_list.scan[0];
+        assert_eq!(scan.spectrum_ref, Some("spectrumRef0".to_owned()));
+        assert_eq!(scan.source_file_ref, Some("sourceFileRef0".to_owned()));
+        assert_eq!(
+            scan.external_spectrum_id,
+            Some("externalSpectrumID0".to_owned())
+        );
+        assert_eq!(
+            scan.instrument_configuration_ref,
+            Some("instrumentConfigurationRef0".to_owned())
+        );
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref14".to_owned(),
+            }],
+            scan.referenceable_param_group_ref
+        );
+        assert_eq!(
+            scan.cv_param,
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234603".to_owned(),
+                name: "cvParam name 1234603".to_owned(),
+                value: Some("cvParam value 1234603".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234603".to_owned()),
+                unit_name: Some("cvParam unitName 1234603".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234603".to_owned()),
+            }]
+        );
+        assert_eq!(
+            scan.user_param,
+            vec![UserParam {
+                name: "userParam name 1234604".to_owned(),
+                r#type: Some("userParam type 1234604".to_owned()),
+                value: Some("userParam value 1234604".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234604".to_owned()),
+                unit_name: Some("userParam unitName 1234604".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234604".to_owned()),
+            }]
+        );
+
+        // Test scanWindowList in scan
+        let scan_window_list = scan
+            .scan_window_list
+            .as_ref()
+            .expect("scanWindowList should exist");
+        assert_eq!(scan_window_list.count, 1);
+        let scan_window = &scan_window_list.scan_window[0];
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref15".to_owned(),
+            }],
+            scan_window.referenceable_param_group_ref
+        );
+        assert_eq!(
+            scan_window.cv_param,
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234605".to_owned(),
+                name: "cvParam name 1234605".to_owned(),
+                value: Some("cvParam value 1234605".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234605".to_owned()),
+                unit_name: Some("cvParam unitName 1234605".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234605".to_owned()),
+            }]
+        );
+        assert_eq!(
+            scan_window.user_param,
+            vec![UserParam {
+                name: "userParam name 1234606".to_owned(),
+                r#type: Some("userParam type 1234606".to_owned()),
+                value: Some("userParam value 1234606".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234606".to_owned()),
+                unit_name: Some("userParam unitName 1234606".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234606".to_owned()),
+            }]
+        );
+
+        // Test second spectrum (minimal, only id, index, defaultArrayLength)
+        let spectrum1 = &spectrum_list.spectrum[1];
+        assert_eq!(spectrum1.id, "spectrum_id1");
+        assert_eq!(spectrum1.index, 1);
+        assert_eq!(spectrum1.default_array_length, 2);
     }
 }

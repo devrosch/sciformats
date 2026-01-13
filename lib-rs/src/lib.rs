@@ -23,7 +23,7 @@ pub mod common;
 pub mod gaml;
 pub mod jdx;
 pub mod json;
-pub mod mzml;
 pub(crate) mod json_exporter;
+pub mod mzml;
 pub(crate) mod utils;
 pub(crate) mod xml_utils;

@@ -630,9 +630,9 @@ pub struct Spectrum {
     pub scan_list: Option<ScanList>,
     #[serde(rename = "precursorList")]
     pub precursor_list: Option<PrecursorList>,
+    #[serde(rename = "productList")]
+    pub product_list: Option<ProductList>,
     // TODO: implement
-    // #[serde(rename = "productList")]
-    // pub product_list: Option<ProductList>,
     // #[serde(rename = "binaryDataArrayList")]
     // pub binary_data_array_list: Option<BinaryDataArrayList>,
 }
@@ -658,6 +658,19 @@ pub struct Precursor {
     #[serde(rename = "selectedIonList")]
     pub selected_ion_list: Option<SelectedIonList>,
     pub activation: ParamGroup,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ProductList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    pub product: Vec<Product>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Product {
+    #[serde(rename = "isolationWindow")]
+    pub isolation_window: Option<ParamGroup>,
 }
 
 // #[derive(Deserialize)]
@@ -1589,6 +1602,28 @@ mod tests {
                                     </activation>
                                 </precursor>
                             </precursorList>
+                            <productList count="1">
+                                <product>
+                                    <isolationWindow>
+                                        <referenceableParamGroupRef ref="ref19"/>
+                                        <cvParam
+                                            cvRef="MS"
+                                            accession="MS:1234613"
+                                            name="cvParam name 1234613"
+                                            value="cvParam value 1234613"
+                                            unitAccession="cvParam unitAccession 1234613"
+                                            unitName="cvParam unitName 1234613"
+                                            unitCvRef="cvParam unitCvRef 1234613"/>
+                                        <userParam
+                                            name="userParam name 1234614"
+                                            type="userParam type 1234614"
+                                            value="userParam value 1234614"
+                                            unitAccession="userParam unitAccession 1234614"
+                                            unitName="userParam unitName 1234614"
+                                            unitCvRef="userParam unitCvRef 1234614"/>
+                                    </isolationWindow>
+                                </product>
+                            </productList>                            
 
                             <!-- TODO: add more elements -->
                         </spectrum>
@@ -2428,6 +2463,41 @@ mod tests {
                 unit_cv_ref: Some("userParam unitCvRef 1234612".to_owned()),
             }],
             activation0.user_param
+        );
+
+        let product_list0 = spectrum0.product_list.as_ref().unwrap();
+        assert_eq!(1, product_list0.count);
+        assert_eq!(1, product_list0.product.len());
+        let product0 = &product_list0.product[0];
+        let product_isolation_window0 = product0.isolation_window.as_ref().unwrap();
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref19".to_owned(),
+            }],
+            product_isolation_window0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234613".to_owned(),
+                name: "cvParam name 1234613".to_owned(),
+                value: Some("cvParam value 1234613".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234613".to_owned()),
+                unit_name: Some("cvParam unitName 1234613".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234613".to_owned()),
+            }],
+            product_isolation_window0.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234614".to_owned(),
+                r#type: Some("userParam type 1234614".to_owned()),
+                value: Some("userParam value 1234614".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234614".to_owned()),
+                unit_name: Some("userParam unitName 1234614".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234614".to_owned()),
+            }],
+            product_isolation_window0.user_param
         );
 
         // Test second spectrum (minimal).

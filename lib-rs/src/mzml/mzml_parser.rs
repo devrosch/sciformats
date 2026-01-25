@@ -828,7 +828,7 @@ mod tests {
                     </scanSettings>
                 </scanSettingsList>
                 <instrumentConfigurationList count="1">
-                    <instrumentConfiguration id="instrumentConfiguration_id0">
+                    <instrumentConfiguration id="instrumentConfiguration_id0" scanSettingsRef="scanSettingsRef0">
                         <referenceableParamGroupRef ref="ref6"/>
                         <cvParam
                             cvRef="MS"
@@ -1667,6 +1667,10 @@ mod tests {
         assert_eq!(
             "instrumentConfiguration_id0".to_owned(),
             instrument_configuration.id
+        );
+        assert_eq!(
+            Some("scanSettingsRef0".to_owned()),
+            instrument_configuration.scan_setting_ref
         );
         assert_eq!(
             instrument_configuration.referenceable_param_group_ref,

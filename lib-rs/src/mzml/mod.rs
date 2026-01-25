@@ -18,4 +18,5 @@
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 pub mod mzml_parser;
+pub mod mzml_reader;
 pub mod mzml_scanner;

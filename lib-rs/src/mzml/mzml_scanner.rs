@@ -29,15 +29,15 @@ use std::{
 };
 
 #[derive(Default)]
-pub struct MzmlScanner {}
+pub struct MzMlScanner {}
 
-impl MzmlScanner {
+impl MzMlScanner {
     const ACCEPTED_EXTENSIONS: [&'static str; 1] = ["mzml"];
     const MAGIC_BYTES: &'static [u8; 4] = b"mzML";
     const NUM_START_BYTES: u64 = 128;
 }
 
-impl MzmlScanner {
+impl MzMlScanner {
     pub fn new() -> Self {
         Self::default()
     }
@@ -53,7 +53,7 @@ impl MzmlScanner {
     }
 }
 
-impl<T: Seek + Read> Scanner<T> for MzmlScanner {
+impl<T: Seek + Read> Scanner<T> for MzMlScanner {
     fn is_recognized(&self, path: &str, input: &mut T) -> bool {
         if !is_recognized_extension(path, &Self::ACCEPTED_EXTENSIONS) {
             return false;
@@ -93,7 +93,7 @@ mod tests {
                 id="sciformats:simple.mzML" version="1.1.0">
             </mzML>"#;
         let mut reader = Cursor::new(xml);
-        let scanner = MzmlScanner::new();
+        let scanner = MzMlScanner::new();
 
         assert_eq!(true, scanner.is_recognized(path, &mut reader));
     }
@@ -109,7 +109,7 @@ mod tests {
                 id="sciformats:simple.mzML" version="1.1.0">
             </mzML>"#;
         let mut reader = Cursor::new(xml);
-        let scanner = MzmlScanner::new();
+        let scanner = MzMlScanner::new();
 
         assert_eq!(false, scanner.is_recognized(path, &mut reader));
     }
@@ -125,7 +125,7 @@ mod tests {
                 id="sciformats:simple.mzML" version="1.1.0">
             </notMzML>"#;
         let mut reader = Cursor::new(xml);
-        let scanner = MzmlScanner::new();
+        let scanner = MzMlScanner::new();
 
         assert_eq!(false, scanner.is_recognized(path, &mut reader));
     }
@@ -224,7 +224,7 @@ mod tests {
             </mzML>"#;
 
         let reader = Cursor::new(xml);
-        let scanner = MzmlScanner::new();
+        let scanner = MzMlScanner::new();
 
         assert!(scanner.get_reader(path, reader).is_ok());
     }

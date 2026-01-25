@@ -589,9 +589,8 @@ pub struct Run {
 
     #[serde(rename = "spectrumList")]
     pub spectrum_list: Option<SpectrumList>,
-    // TODO:
-    // #[serde(rename = "chromatogramList")]
-    // pub chromatogram_list: Option<ChromatogramList>,
+    #[serde(rename = "chromatogramList")]
+    pub chromatogram_list: Option<ChromatogramList>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -939,36 +938,39 @@ pub struct BinaryDataArray {
 //     pub value: String,
 // }
 
-// #[derive(Deserialize)]
-// pub struct ChromatogramList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "@defaultDataProcessingRef")]
-//     pub default_data_processing_ref: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     pub chromatogram: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct ChromatogramList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "@defaultDataProcessingRef")]
+    pub default_data_processing_ref: String,
+    pub chromatogram: Vec<Chromatogram>,
+}
 
-// #[derive(Deserialize)]
-// pub struct Chromatogram {
-//     #[serde(rename = "@index")]
-//     pub index: String,
-//     #[serde(rename = "@id")]
-//     pub id: String,
-//     #[serde(rename = "@defaultArrayLength")]
-//     pub default_array_length: String,
-//     #[serde(rename = "@dataProcessingRef")]
-//     pub data_processing_ref: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: RunChromatogramListChromatogramCvParam,
-//     #[serde(rename = "binaryDataArrayList")]
-//     pub binary_data_array_list: ChromatogramBinaryDataArrayList,
-//     pub product: Option,
-//     pub precursor: Option,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct Chromatogram {
+    #[serde(rename = "@id")]
+    pub id: String,
+    #[serde(rename = "@index")]
+    pub index: u64,
+    #[serde(rename = "@defaultArrayLength")]
+    pub default_array_length: i64,
+    #[serde(rename = "@dataProcessingRef")]
+    pub data_processing_ref: Option<String>,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+
+    pub precursor: Option<Precursor>,
+    pub product: Option<Product>,
+    #[serde(rename = "binaryDataArrayList")]
+    pub binary_data_array_list: BinaryDataArrayList,
+}
 
 // #[derive(Deserialize)]
 // pub struct RunChromatogramListChromatogramCvParam {
@@ -1670,8 +1672,6 @@ mod tests {
                                     <binary>QBAAAAAAAABAFAAAAAAAAEAYAAAAAAAA</binary>
                                 </binaryDataArray>
                             </binaryDataArrayList>
-
-                            <!-- TODO: add more elements -->
                         </spectrum>
                         <spectrum
                             id="spectrum_id1"
@@ -1680,6 +1680,149 @@ mod tests {
                             <!-- TODO: add more elements -->
                             </spectrum>
                     </spectrumList>
+                    <chromatogramList count="1" defaultDataProcessingRef="defaultDataProcessingRef1">
+                        <chromatogram id="chromatogram_id0" index="0" defaultArrayLength="3" dataProcessingRef="dataProcessingRef3">
+                            <referenceableParamGroupRef ref="ref22"/>
+                            <cvParam
+                                cvRef="MS"
+                                accession="MS:1234619"
+                                name="cvParam name 1234619"
+                                value="cvParam value 1234619"
+                                unitAccession="cvParam unitAccession 1234619"
+                                unitName="cvParam unitName 1234619"
+                                unitCvRef="cvParam unitCvRef 1234619"/>
+                            <userParam
+                                name="userParam name 1234620"
+                                type="userParam type 1234620"
+                                value="userParam value 1234620"
+                                unitAccession="userParam unitAccession 1234620"
+                                unitName="userParam unitName 1234620"
+                                unitCvRef="userParam unitCvRef 1234620"/>
+                            <precursor
+                                spectrumRef="spectrumRef2"
+                                sourceFileRef="sourceFileRef5"
+                                externalSpectrumID="externalSpectrumID2">
+                                <isolationWindow>
+                                    <referenceableParamGroupRef ref="ref23"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234621"
+                                        name="cvParam name 1234621"
+                                        value="cvParam value 1234621"
+                                        unitAccession="cvParam unitAccession 1234621"
+                                        unitName="cvParam unitName 1234621"
+                                        unitCvRef="cvParam unitCvRef 1234621"/>
+                                    <userParam
+                                        name="userParam name 1234622"
+                                        type="userParam type 1234622"
+                                        value="userParam value 1234622"
+                                        unitAccession="userParam unitAccession 1234622"
+                                        unitName="userParam unitName 1234622"
+                                        unitCvRef="userParam unitCvRef 1234622"/>
+                                </isolationWindow>
+                                <selectedIonList count="1">
+                                    <selectedIon>
+                                        <referenceableParamGroupRef ref="ref24"/>
+                                        <cvParam
+                                            cvRef="MS"
+                                            accession="MS:1234623"
+                                            name="cvParam name 1234623"
+                                            value="cvParam value 1234623"
+                                            unitAccession="cvParam unitAccession 1234623"
+                                            unitName="cvParam unitName 1234623"
+                                            unitCvRef="cvParam unitCvRef 1234623"/>
+                                        <userParam
+                                            name="userParam name 1234624"
+                                            type="userParam type 1234624"
+                                            value="userParam value 1234624"
+                                            unitAccession="userParam unitAccession 1234624"
+                                            unitName="userParam unitName 1234624"
+                                            unitCvRef="userParam unitCvRef 1234624"/>
+                                    </selectedIon>
+                                </selectedIonList>
+                                <activation>
+                                    <referenceableParamGroupRef ref="ref25"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234625"
+                                        name="cvParam name 1234625"
+                                        value="cvParam value 1234625"
+                                        unitAccession="cvParam unitAccession 1234625"
+                                        unitName="cvParam unitName 1234625"
+                                        unitCvRef="cvParam unitCvRef 1234625"/>
+                                    <userParam
+                                        name="userParam name 1234626"
+                                        type="userParam type 1234626"
+                                        value="userParam value 1234626"
+                                        unitAccession="userParam unitAccession 1234626"
+                                        unitName="userParam unitName 1234626"
+                                        unitCvRef="userParam unitCvRef 1234626"/>
+                                </activation>
+                            </precursor>
+                            <product>
+                                <isolationWindow>
+                                    <referenceableParamGroupRef ref="ref26"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234627"
+                                        name="cvParam name 1234627"
+                                        value="cvParam value 1234627"
+                                        unitAccession="cvParam unitAccession 1234627"
+                                        unitName="cvParam unitName 1234627"
+                                        unitCvRef="cvParam unitCvRef 1234627"/>
+                                    <userParam
+                                        name="userParam name 1234628"
+                                        type="userParam type 1234628"
+                                        value="userParam value 1234628"
+                                        unitAccession="userParam unitAccession 1234628"
+                                        unitName="userParam unitName 1234628"
+                                        unitCvRef="userParam unitCvRef 1234628"/>
+                                </isolationWindow>
+                            </product>
+                            <binaryDataArrayList count="2">
+                                <binaryDataArray arrayLength="3" dataProcessingRef="dataProcessingRef4" encodedLength="32">
+                                    <referenceableParamGroupRef ref="ref27"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234629"
+                                        name="cvParam name 1234629"
+                                        value="cvParam value 1234629"
+                                        unitAccession="cvParam unitAccession 1234629"
+                                        unitName="cvParam unitName 1234629"
+                                        unitCvRef="cvParam unitCvRef 1234629"/>
+                                    <userParam
+                                        name="userParam name 1234630"
+                                        type="userParam type 1234630"
+                                        value="userParam value 1234630"
+                                        unitAccession="userParam unitAccession 1234630"
+                                        unitName="userParam unitName 1234630"
+                                        unitCvRef="userParam unitCvRef 1234630"/>
+                                    <!-- [1.0, 2.0, 3.0] little endian doubles base 64 encoded -->
+                                    <binary>P/AAAAAAAABAAAAAAAAAAEAIAAAAAAAA</binary>
+                                </binaryDataArray>
+                                <binaryDataArray arrayLength="3" dataProcessingRef="dataProcessingRef5" encodedLength="32">
+                                    <referenceableParamGroupRef ref="ref28"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234631"
+                                        name="cvParam name 1234631"
+                                        value="cvParam value 1234631"
+                                        unitAccession="cvParam unitAccession 1234631"
+                                        unitName="cvParam unitName 1234631"
+                                        unitCvRef="cvParam unitCvRef 1234631"/>
+                                    <userParam
+                                        name="userParam name 1234632"
+                                        type="userParam type 1234632"
+                                        value="userParam value 1234632"
+                                        unitAccession="userParam unitAccession 1234632"
+                                        unitName="userParam unitName 1234632"
+                                        unitCvRef="userParam unitCvRef 1234632"/>
+                                    <!-- [4.0, 5.0, 6.0] little endian doubles base 64 encoded -->
+                                    <binary>QBAAAAAAAABAFAAAAAAAAEAYAAAAAAAA</binary>
+                                </binaryDataArray>
+                            </binaryDataArrayList>
+                        </chromatogram>
+                    </chromatogramList>
                 </run>
             </mzML>"#;
         let reader = Cursor::new(xml);
@@ -2623,6 +2766,265 @@ mod tests {
                 unit_accession: Some("userParam unitAccession 1234618".to_owned()),
                 unit_name: Some("userParam unitName 1234618".to_owned()),
                 unit_cv_ref: Some("userParam unitCvRef 1234618".to_owned()),
+            }],
+            binary_data_array1.user_param
+        );
+        assert_eq!(
+            "QBAAAAAAAABAFAAAAAAAAEAYAAAAAAAA",
+            binary_data_array1.binary
+        );
+
+        let chromatogram_list = run.chromatogram_list.as_ref().unwrap();
+        assert_eq!(1, chromatogram_list.count);
+        assert_eq!(1, chromatogram_list.chromatogram.len());
+        let chromatogram0 = &chromatogram_list.chromatogram[0];
+        assert_eq!("chromatogram_id0", chromatogram0.id);
+        assert_eq!(0, chromatogram0.index);
+        assert_eq!(3, chromatogram0.default_array_length);
+        assert_eq!(
+            Some("dataProcessingRef3".to_owned()),
+            chromatogram0.data_processing_ref
+        );
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref22".to_owned(),
+            }],
+            chromatogram0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234619".to_owned(),
+                name: "cvParam name 1234619".to_owned(),
+                value: Some("cvParam value 1234619".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234619".to_owned()),
+                unit_name: Some("cvParam unitName 1234619".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234619".to_owned()),
+            }],
+            chromatogram0.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234620".to_owned(),
+                r#type: Some("userParam type 1234620".to_owned()),
+                value: Some("userParam value 1234620".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234620".to_owned()),
+                unit_name: Some("userParam unitName 1234620".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234620".to_owned()),
+            }],
+            chromatogram0.user_param
+        );
+
+        let precursor = chromatogram0.precursor.as_ref().unwrap();
+        assert_eq!(Some("spectrumRef2".to_owned()), precursor.spectrum_ref);
+        assert_eq!(Some("sourceFileRef5".to_owned()), precursor.source_file_ref);
+        assert_eq!(
+            Some("externalSpectrumID2".to_owned()),
+            precursor.external_spectrum_id
+        );
+        let isolation_window = precursor.isolation_window.as_ref().unwrap();
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref23".to_owned(),
+            }],
+            isolation_window.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234621".to_owned(),
+                name: "cvParam name 1234621".to_owned(),
+                value: Some("cvParam value 1234621".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234621".to_owned()),
+                unit_name: Some("cvParam unitName 1234621".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234621".to_owned()),
+            }],
+            isolation_window.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234622".to_owned(),
+                r#type: Some("userParam type 1234622".to_owned()),
+                value: Some("userParam value 1234622".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234622".to_owned()),
+                unit_name: Some("userParam unitName 1234622".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234622".to_owned()),
+            }],
+            isolation_window.user_param
+        );
+        let selected_ion_list = precursor.selected_ion_list.as_ref().unwrap();
+        assert_eq!(1, selected_ion_list.count);
+        assert_eq!(1, selected_ion_list.selected_ion.len());
+        let selected_ion0 = &selected_ion_list.selected_ion[0];
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref24".to_owned(),
+            }],
+            selected_ion0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234623".to_owned(),
+                name: "cvParam name 1234623".to_owned(),
+                value: Some("cvParam value 1234623".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234623".to_owned()),
+                unit_name: Some("cvParam unitName 1234623".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234623".to_owned()),
+            }],
+            selected_ion0.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234624".to_owned(),
+                r#type: Some("userParam type 1234624".to_owned()),
+                value: Some("userParam value 1234624".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234624".to_owned()),
+                unit_name: Some("userParam unitName 1234624".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234624".to_owned()),
+            }],
+            selected_ion0.user_param
+        );
+        let activation0 = &precursor.activation;
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref25".to_owned(),
+            }],
+            activation0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234625".to_owned(),
+                name: "cvParam name 1234625".to_owned(),
+                value: Some("cvParam value 1234625".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234625".to_owned()),
+                unit_name: Some("cvParam unitName 1234625".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234625".to_owned()),
+            }],
+            activation0.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234626".to_owned(),
+                r#type: Some("userParam type 1234626".to_owned()),
+                value: Some("userParam value 1234626".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234626".to_owned()),
+                unit_name: Some("userParam unitName 1234626".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234626".to_owned()),
+            }],
+            activation0.user_param
+        );
+
+        let product = chromatogram0.product.as_ref().unwrap();
+        let product_isolation_window = product.isolation_window.as_ref().unwrap();
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref26".to_owned(),
+            }],
+            product_isolation_window.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234627".to_owned(),
+                name: "cvParam name 1234627".to_owned(),
+                value: Some("cvParam value 1234627".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234627".to_owned()),
+                unit_name: Some("cvParam unitName 1234627".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234627".to_owned()),
+            }],
+            product_isolation_window.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234628".to_owned(),
+                r#type: Some("userParam type 1234628".to_owned()),
+                value: Some("userParam value 1234628".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234628".to_owned()),
+                unit_name: Some("userParam unitName 1234628".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234628".to_owned()),
+            }],
+            product_isolation_window.user_param
+        );
+
+        let binary_data_array_list = &chromatogram0.binary_data_array_list;
+        assert_eq!(2, binary_data_array_list.count);
+        assert_eq!(2, binary_data_array_list.binary_data_array.len());
+        let binary_data_array0 = &binary_data_array_list.binary_data_array[0];
+        assert_eq!(3, binary_data_array0.array_length.unwrap());
+        assert_eq!(
+            Some("dataProcessingRef4".to_owned()),
+            binary_data_array0.data_processing_ref
+        );
+        assert_eq!(32, binary_data_array0.encoded_length);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref27".to_owned(),
+            }],
+            binary_data_array0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234629".to_owned(),
+                name: "cvParam name 1234629".to_owned(),
+                value: Some("cvParam value 1234629".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234629".to_owned()),
+                unit_name: Some("cvParam unitName 1234629".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234629".to_owned()),
+            }],
+            binary_data_array0.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234630".to_owned(),
+                r#type: Some("userParam type 1234630".to_owned()),
+                value: Some("userParam value 1234630".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234630".to_owned()),
+                unit_name: Some("userParam unitName 1234630".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234630".to_owned()),
+            }],
+            binary_data_array0.user_param
+        );
+        assert_eq!(
+            "P/AAAAAAAABAAAAAAAAAAEAIAAAAAAAA",
+            binary_data_array0.binary
+        );
+
+        let binary_data_array1 = &binary_data_array_list.binary_data_array[1];
+        assert_eq!(3, binary_data_array1.array_length.unwrap());
+        assert_eq!(
+            Some("dataProcessingRef5".to_owned()),
+            binary_data_array1.data_processing_ref
+        );
+        assert_eq!(32, binary_data_array1.encoded_length);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref28".to_owned(),
+            }],
+            binary_data_array1.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234631".to_owned(),
+                name: "cvParam name 1234631".to_owned(),
+                value: Some("cvParam value 1234631".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234631".to_owned()),
+                unit_name: Some("cvParam unitName 1234631".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234631".to_owned()),
+            }],
+            binary_data_array1.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234632".to_owned(),
+                r#type: Some("userParam type 1234632".to_owned()),
+                value: Some("userParam value 1234632".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234632".to_owned()),
+                unit_name: Some("userParam unitName 1234632".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234632".to_owned()),
             }],
             binary_data_array1.user_param
         );

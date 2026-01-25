@@ -30,7 +30,7 @@ use chrono::{DateTime, SecondsFormat};
 use quick_xml::reader::Reader;
 use std::cell::RefCell;
 use std::fmt::Debug;
-use std::io::{BufRead, BufReader, Cursor, Read, Seek, SeekFrom};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use std::rc::Rc;
 use std::str::{self, FromStr};
 use strum::{Display, EnumString};
@@ -714,12 +714,8 @@ impl Values {
         let end = self.value_end_pos;
         let input = reader.get_mut();
         input.seek(SeekFrom::Start(start))?;
-        // Read value bytes into owned buffer to allow quickxml deserialization. When using reader directly,
-        // quickxml returns an error when it encounters a closing element after the value text.
-        // Is it possible to make this more efficient and still remove possibly interspersed comments?
-        let mut input_buffer = vec![0u8; (end - start) as usize];
-        input.read_exact(&mut input_buffer)?;
-        let mut reader = Reader::from_reader(Cursor::new(input_buffer));
+        let limit_input = input.take(end - start);
+        let mut reader = Reader::from_reader(limit_input);
         let mut buf = Vec::<u8>::new();
         let (mut value, _next) = read_value(&mut reader, &mut buf)?;
         value.retain(|c| !c.is_whitespace());
@@ -775,7 +771,7 @@ impl Values {
     pub(super) fn create_values_with(bytes: &[u8], format: Format, byteorder: Byteorder) -> Values {
         let base64 = BASE64_STANDARD.encode(bytes);
         let base64_len = base64.len();
-        let input = Cursor::new(base64);
+        let input = std::io::Cursor::new(base64);
         let buf_reader: Box<dyn SeekBufRead> = Box::new(BufReader::new(input));
         let reader = quick_xml::Reader::from_reader(buf_reader);
         let reader_ref = Rc::new(RefCell::new(reader));

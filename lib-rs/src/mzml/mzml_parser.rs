@@ -72,7 +72,6 @@ pub struct MzMl {
 pub struct CvList {
     #[serde(rename = "@count")]
     pub count: u64,
-    // minOccurs="1",
     pub cv: Vec<Cv>,
 }
 
@@ -108,14 +107,6 @@ pub struct ParamGroup {
     pub user_param: Vec<UserParam>,
 }
 
-// #[derive(Deserialize)]
-// pub struct FileContent {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct CvParam {
     #[serde(rename = "@cvRef")]
@@ -150,18 +141,6 @@ pub struct UserParam {
     pub unit_cv_ref: Option<String>,
 }
 
-// #[derive(Deserialize)]
-// pub struct MzMlFileDescriptionFileContentCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct SourceFileList {
     #[serde(rename = "@count")]
@@ -188,38 +167,6 @@ pub struct SourceFile {
     pub user_param: Vec<UserParam>,
 }
 
-// #[derive(Deserialize)]
-// pub struct FileDescriptionSourceFileListSourceFileCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct Contact {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
-
-// #[derive(Deserialize)]
-// pub struct MzMlFileDescriptionContactCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ReferenceableParamGroupList {
     #[serde(rename = "@count")]
@@ -237,18 +184,6 @@ pub struct ReferenceableParamGroup {
     #[serde(rename = "userParam", default)]
     pub user_param: Vec<UserParam>,
 }
-
-// #[derive(Deserialize)]
-// pub struct MzMlReferenceableParamGroupListReferenceableParamGroupCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct SampleList {
@@ -295,18 +230,6 @@ pub struct Software {
     #[serde(rename = "userParam", default)]
     pub user_param: Vec<UserParam>,
 }
-
-// #[derive(Deserialize)]
-// pub struct MzMlSoftwareListSoftwareCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ScanSettingsList {
@@ -356,32 +279,6 @@ pub struct TargetList {
     pub target: Vec<ParamGroup>,
 }
 
-// #[derive(Deserialize)]
-// pub struct Target {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: ScanSettingsTargetListTargetCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ScanSettingsTargetListTargetCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: String,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: String,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct InstrumentConfigurationList {
     #[serde(rename = "@count")]
@@ -412,18 +309,6 @@ pub struct InstrumentConfiguration {
     pub software_ref: Option<SoftwareRef>,
 }
 
-// #[derive(Deserialize)]
-// pub struct MzMlInstrumentConfigurationListInstrumentConfigurationCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ComponentList {
     #[serde(rename = "@count")]
@@ -450,72 +335,6 @@ pub struct Component {
     pub user_param: Vec<UserParam>,
 }
 
-// #[derive(Deserialize)]
-// pub struct Source {
-//     #[serde(rename = "@order")]
-//     pub order: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: InstrumentConfigurationComponentListSourceCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct InstrumentConfigurationComponentListSourceCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct Analyzer {
-//     #[serde(rename = "@order")]
-//     pub order: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: InstrumentConfigurationComponentListAnalyzerCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct InstrumentConfigurationComponentListAnalyzerCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct Detector {
-//     #[serde(rename = "@order")]
-//     pub order: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: InstrumentConfigurationComponentListDetectorCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct InstrumentConfigurationComponentListDetectorCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct SoftwareRef {
     #[serde(rename = "@ref")]
@@ -526,7 +345,7 @@ pub struct SoftwareRef {
 pub struct DataProcessingList {
     #[serde(rename = "@count")]
     pub count: u64,
-    #[serde(rename = "dataProcessing")] // minOccurs="1"
+    #[serde(rename = "dataProcessing")]
     pub data_processing: Vec<DataProcessing>,
 }
 
@@ -534,7 +353,7 @@ pub struct DataProcessingList {
 pub struct DataProcessing {
     #[serde(rename = "@id")]
     pub id: String,
-    #[serde(rename = "processingMethod")] //minOccurs="1"
+    #[serde(rename = "processingMethod")]
     pub processing_method: Vec<ProcessingMethod>,
 }
 
@@ -553,18 +372,6 @@ pub struct ProcessingMethod {
     #[serde(rename = "userParam", default)]
     pub user_param: Vec<UserParam>,
 }
-
-// #[derive(Deserialize)]
-// pub struct DataProcessingListDataProcessingProcessingMethodCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct Run {
@@ -671,32 +478,6 @@ pub struct Product {
     pub isolation_window: Option<ParamGroup>,
 }
 
-// #[derive(Deserialize)]
-// pub struct PrecursorListPrecursorIsolationWindow {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
-
-// #[derive(Deserialize)]
-// pub struct PrecursorListPrecursorIsolationWindowCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: String,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: String,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct SelectedIonList {
     #[serde(rename = "@count")]
@@ -705,81 +486,11 @@ pub struct SelectedIonList {
     pub selected_ion: Vec<ParamGroup>,
 }
 
-// #[derive(Deserialize)]
-// pub struct SelectedIon {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
-
-// #[derive(Deserialize)]
-// pub struct PrecursorSelectedIonListSelectedIonCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: Option,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: Option,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: Option,
-// }
-
-// #[derive(Deserialize)]
-// pub struct PrecursorListPrecursorActivation {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
-
-// #[derive(Deserialize)]
-// pub struct PrecursorListPrecursorActivationCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: Option,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: Option,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: Option,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ReferenceableParamGroupRef {
     #[serde(rename = "@ref")]
     pub r#ref: String,
 }
-
-// #[derive(Deserialize)]
-// pub struct RunSpectrumListSpectrumCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: Option,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: Option,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: Option,
-// }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ScanList {
@@ -796,18 +507,6 @@ pub struct ScanList {
 
     pub scan: Vec<Scan>,
 }
-
-// #[derive(Deserialize)]
-// pub struct SpectrumListSpectrumScanListCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct Scan {
@@ -840,50 +539,6 @@ pub struct ScanWindowList {
     pub scan_window: Vec<ParamGroup>,
 }
 
-// #[derive(Deserialize)]
-// pub struct ScanWindow {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ScanScanWindowListScanWindowCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: String,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct SpectrumScanListScanCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: Option,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: Option,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: Option,
-// }
-
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct BinaryDataArrayList {
     #[serde(rename = "@count")]
@@ -911,32 +566,6 @@ pub struct BinaryDataArray {
 
     pub binary: String,
 }
-
-// #[derive(Deserialize)]
-// pub struct SpectrumBinaryDataArrayListBinaryDataArrayCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: Option,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: Option,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: Option,
-// }
-
-// #[derive(Deserialize)]
-// pub struct UserParam {
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ChromatogramList {
@@ -971,148 +600,6 @@ pub struct Chromatogram {
     #[serde(rename = "binaryDataArrayList")]
     pub binary_data_array_list: BinaryDataArrayList,
 }
-
-// #[derive(Deserialize)]
-// pub struct RunChromatogramListChromatogramCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramBinaryDataArrayList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "binaryDataArray")]
-//     pub binary_data_array: Vec,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramBinaryDataArrayListBinaryDataArray {
-//     #[serde(rename = "@encodedLength")]
-//     pub encoded_length: String,
-//     #[serde(rename = "@dataProcessingRef")]
-//     pub data_processing_ref: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-//     pub binary: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramBinaryDataArrayListBinaryDataArrayCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: Option,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: Option,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: Option,
-// }
-
-// #[derive(Deserialize)]
-// pub struct Product {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "isolationWindow")]
-//     pub isolation_window: ChromatogramProductIsolationWindow,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramProductIsolationWindow {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: ChromatogramProductIsolationWindowCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramProductIsolationWindowCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: String,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramPrecursor {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "isolationWindow")]
-//     pub isolation_window: ChromatogramPrecursorIsolationWindow,
-//     pub activation: ChromatogramPrecursorActivation,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramPrecursorIsolationWindow {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: ChromatogramPrecursorIsolationWindowCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramPrecursorIsolationWindowCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-//     #[serde(rename = "@unitCvRef")]
-//     pub unit_cv_ref: String,
-//     #[serde(rename = "@unitAccession")]
-//     pub unit_accession: String,
-//     #[serde(rename = "@unitName")]
-//     pub unit_name: String,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramPrecursorActivation {
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: ChromatogramPrecursorActivationCvParam,
-// }
-
-// #[derive(Deserialize)]
-// pub struct ChromatogramPrecursorActivationCvParam {
-//     #[serde(rename = "@cvRef")]
-//     pub cv_ref: String,
-//     #[serde(rename = "@accession")]
-//     pub accession: String,
-//     #[serde(rename = "@name")]
-//     pub name: String,
-//     #[serde(rename = "@value")]
-//     pub value: String,
-// }
 
 #[cfg(test)]
 mod tests {

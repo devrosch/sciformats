@@ -632,9 +632,8 @@ pub struct Spectrum {
     pub precursor_list: Option<PrecursorList>,
     #[serde(rename = "productList")]
     pub product_list: Option<ProductList>,
-    // TODO: implement
-    // #[serde(rename = "binaryDataArrayList")]
-    // pub binary_data_array_list: Option<BinaryDataArrayList>,
+    #[serde(rename = "binaryDataArrayList")]
+    pub binary_data_array_list: Option<BinaryDataArrayList>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -886,28 +885,33 @@ pub struct ScanWindowList {
 //     pub unit_name: Option,
 // }
 
-// #[derive(Deserialize)]
-// pub struct SpectrumBinaryDataArrayList {
-//     #[serde(rename = "@count")]
-//     pub count: String,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "binaryDataArray")]
-//     pub binary_data_array: Vec,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct BinaryDataArrayList {
+    #[serde(rename = "@count")]
+    pub count: u64,
+    #[serde(rename = "binaryDataArray")]
+    pub binary_data_array: Vec<BinaryDataArray>,
+}
 
-// #[derive(Deserialize)]
-// pub struct SpectrumBinaryDataArrayListBinaryDataArray {
-//     #[serde(rename = "@encodedLength")]
-//     pub encoded_length: String,
-//     #[serde(rename = "@dataProcessingRef")]
-//     pub data_processing_ref: Option,
-//     #[serde(rename = "$text")]
-//     pub text: Option,
-//     #[serde(rename = "cvParam")]
-//     pub cv_param: Vec,
-//     pub binary: String,
-// }
+#[derive(Deserialize, PartialEq, Debug)]
+pub struct BinaryDataArray {
+    #[serde(rename = "@arrayLength")]
+    pub array_length: Option<u64>,
+    #[serde(rename = "@dataProcessingRef")]
+    pub data_processing_ref: Option<String>,
+    #[serde(rename = "@encodedLength")]
+    pub encoded_length: u64,
+
+    // ParamGroup elements
+    #[serde(rename = "referenceableParamGroupRef", default)]
+    pub referenceable_param_group_ref: Vec<ReferenceableParamGroupRef>,
+    #[serde(rename = "cvParam", default)]
+    pub cv_param: Vec<CvParam>,
+    #[serde(rename = "userParam", default)]
+    pub user_param: Vec<UserParam>,
+
+    pub binary: String,
+}
 
 // #[derive(Deserialize)]
 // pub struct SpectrumBinaryDataArrayListBinaryDataArrayCvParam {
@@ -1624,6 +1628,48 @@ mod tests {
                                     </isolationWindow>
                                 </product>
                             </productList>                            
+                            <binaryDataArrayList count="2">
+                                <binaryDataArray arrayLength="3" dataProcessingRef="dataProcessingRef1" encodedLength="32">
+                                    <referenceableParamGroupRef ref="ref20"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234615"
+                                        name="cvParam name 1234615"
+                                        value="cvParam value 1234615"
+                                        unitAccession="cvParam unitAccession 1234615"
+                                        unitName="cvParam unitName 1234615"
+                                        unitCvRef="cvParam unitCvRef 1234615"/>
+                                    <userParam
+                                        name="userParam name 1234616"
+                                        type="userParam type 1234616"
+                                        value="userParam value 1234616"
+                                        unitAccession="userParam unitAccession 1234616"
+                                        unitName="userParam unitName 1234616"
+                                        unitCvRef="userParam unitCvRef 1234616"/>
+                                    <!-- [1.0, 2.0, 3.0] little endian doubles base 64 encoded -->
+                                    <binary>P/AAAAAAAABAAAAAAAAAAEAIAAAAAAAA</binary>
+                                </binaryDataArray>
+                                <binaryDataArray arrayLength="3" dataProcessingRef="dataProcessingRef2" encodedLength="32">
+                                    <referenceableParamGroupRef ref="ref21"/>
+                                    <cvParam
+                                        cvRef="MS"
+                                        accession="MS:1234617"
+                                        name="cvParam name 1234617"
+                                        value="cvParam value 1234617"
+                                        unitAccession="cvParam unitAccession 1234617"
+                                        unitName="cvParam unitName 1234617"
+                                        unitCvRef="cvParam unitCvRef 1234617"/>
+                                    <userParam
+                                        name="userParam name 1234618"
+                                        type="userParam type 1234618"
+                                        value="userParam value 1234618"
+                                        unitAccession="userParam unitAccession 1234618"
+                                        unitName="userParam unitName 1234618"
+                                        unitCvRef="userParam unitCvRef 1234618"/>
+                                    <!-- [4.0, 5.0, 6.0] little endian doubles base 64 encoded -->
+                                    <binary>QBAAAAAAAABAFAAAAAAAAEAYAAAAAAAA</binary>
+                                </binaryDataArray>
+                            </binaryDataArrayList>
 
                             <!-- TODO: add more elements -->
                         </spectrum>
@@ -2498,6 +2544,91 @@ mod tests {
                 unit_cv_ref: Some("userParam unitCvRef 1234614".to_owned()),
             }],
             product_isolation_window0.user_param
+        );
+
+        let binary_data_array_list0 = spectrum0.binary_data_array_list.as_ref().unwrap();
+        assert_eq!(2, binary_data_array_list0.count);
+        assert_eq!(2, binary_data_array_list0.binary_data_array.len());
+        let binary_data_array0 = &binary_data_array_list0.binary_data_array[0];
+        assert_eq!(3, binary_data_array0.array_length.unwrap());
+        assert_eq!(
+            Some("dataProcessingRef1".to_owned()),
+            binary_data_array0.data_processing_ref
+        );
+        assert_eq!(32, binary_data_array0.encoded_length);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref20".to_owned(),
+            }],
+            binary_data_array0.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234615".to_owned(),
+                name: "cvParam name 1234615".to_owned(),
+                value: Some("cvParam value 1234615".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234615".to_owned()),
+                unit_name: Some("cvParam unitName 1234615".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234615".to_owned()),
+            }],
+            binary_data_array0.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234616".to_owned(),
+                r#type: Some("userParam type 1234616".to_owned()),
+                value: Some("userParam value 1234616".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234616".to_owned()),
+                unit_name: Some("userParam unitName 1234616".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234616".to_owned()),
+            }],
+            binary_data_array0.user_param
+        );
+        assert_eq!(
+            "P/AAAAAAAABAAAAAAAAAAEAIAAAAAAAA",
+            binary_data_array0.binary
+        );
+
+        let binary_data_array1 = &binary_data_array_list0.binary_data_array[1];
+        assert_eq!(3, binary_data_array1.array_length.unwrap());
+        assert_eq!(
+            Some("dataProcessingRef2".to_owned()),
+            binary_data_array1.data_processing_ref
+        );
+        assert_eq!(32, binary_data_array1.encoded_length);
+        assert_eq!(
+            vec![ReferenceableParamGroupRef {
+                r#ref: "ref21".to_owned(),
+            }],
+            binary_data_array1.referenceable_param_group_ref
+        );
+        assert_eq!(
+            vec![CvParam {
+                cv_ref: "MS".to_owned(),
+                accession: "MS:1234617".to_owned(),
+                name: "cvParam name 1234617".to_owned(),
+                value: Some("cvParam value 1234617".to_owned()),
+                unit_accession: Some("cvParam unitAccession 1234617".to_owned()),
+                unit_name: Some("cvParam unitName 1234617".to_owned()),
+                unit_cv_ref: Some("cvParam unitCvRef 1234617".to_owned()),
+            }],
+            binary_data_array1.cv_param
+        );
+        assert_eq!(
+            vec![UserParam {
+                name: "userParam name 1234618".to_owned(),
+                r#type: Some("userParam type 1234618".to_owned()),
+                value: Some("userParam value 1234618".to_owned()),
+                unit_accession: Some("userParam unitAccession 1234618".to_owned()),
+                unit_name: Some("userParam unitName 1234618".to_owned()),
+                unit_cv_ref: Some("userParam unitCvRef 1234618".to_owned()),
+            }],
+            binary_data_array1.user_param
+        );
+        assert_eq!(
+            "QBAAAAAAAABAFAAAAAAAAEAYAAAAAAAA",
+            binary_data_array1.binary
         );
 
         // Test second spectrum (minimal).

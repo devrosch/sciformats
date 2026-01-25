@@ -313,18 +313,18 @@ pub struct InstrumentConfiguration {
 pub struct ComponentList {
     #[serde(rename = "@count")]
     pub count: u64,
-    // minOccurs="0", SourceComponentType is extends ComponentType without additions, hence use Component directly
+    // SourceComponentType is extends ComponentType without additions, hence use Component directly
     pub source: Vec<Component>,
-    // minOccurs="0", AnalyzerComponentType is extends ComponentType without additions, hence use Component directly
+    // AnalyzerComponentType is extends ComponentType without additions, hence use Component directly
     pub analyzer: Vec<Component>,
-    // minOccurs="0", DetectorComponentType is extends ComponentType without additions, hence use Component directly
+    // DetectorComponentType is extends ComponentType without additions, hence use Component directly
     pub detector: Vec<Component>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct Component {
     #[serde(rename = "@order")]
-    pub order: i64,
+    pub order: i64, // xs:int, so i32 really but there's no harm using i64.
 
     // ParamGroup elements
     #[serde(rename = "referenceableParamGroupRef", default)]
@@ -418,7 +418,7 @@ pub struct Spectrum {
     #[serde(rename = "@index")]
     pub index: u64,
     #[serde(rename = "@defaultArrayLength")]
-    pub default_array_length: i64,
+    pub default_array_length: i64, // xs:int, so i32 really but there's no harm using i64.
     #[serde(rename = "@dataProcessingRef")]
     pub data_processing_ref: Option<String>,
     #[serde(rename = "@sourceFileRef")]
@@ -534,7 +534,7 @@ pub struct Scan {
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct ScanWindowList {
     #[serde(rename = "@count")]
-    pub count: i64,
+    pub count: i64, // xs:int, so i32 really but there's no harm using i64.
     #[serde(rename = "scanWindow")]
     pub scan_window: Vec<ParamGroup>,
 }
@@ -583,7 +583,7 @@ pub struct Chromatogram {
     #[serde(rename = "@index")]
     pub index: u64,
     #[serde(rename = "@defaultArrayLength")]
-    pub default_array_length: i64,
+    pub default_array_length: i64, // xs:int, so i32 really but there's no harm using i64.
     #[serde(rename = "@dataProcessingRef")]
     pub data_processing_ref: Option<String>,
 

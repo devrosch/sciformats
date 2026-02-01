@@ -38,11 +38,11 @@ impl<T: Seek + Read> Parser<T> for MzMlParser {
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct MzMl {
     #[serde(rename = "@xmlns")]
-    pub xmlns: String,
+    pub xmlns: Option<String>,
     #[serde(rename = "@xmlns:xsi")]
-    pub xmlns_xsi: String,
+    pub xmlns_xsi: Option<String>,
     #[serde(rename = "@schemaLocation")]
-    pub xsi_schema_location: String,
+    pub xsi_schema_location: Option<String>,
     #[serde(rename = "@accession")]
     pub accession: Option<String>,
     #[serde(rename = "@version")]
@@ -1315,6 +1315,18 @@ mod tests {
         let reader = Cursor::new(xml);
         let mzml = MzMlParser::parse(path, reader).unwrap();
 
+        assert_eq!(Some("http://psi.hupo.org/ms/mzml".to_owned()), mzml.xmlns);
+        assert_eq!(
+            Some("http://www.w3.org/2001/XMLSchema-instance".to_owned()),
+            mzml.xmlns_xsi
+        );
+        assert_eq!(
+            Some(
+                "http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd"
+                    .to_owned()
+            ),
+            mzml.xsi_schema_location
+        );
         assert_eq!(Some("SF:0123456".to_owned()), mzml.accession);
         assert_eq!("1.1.0", mzml.version);
         assert_eq!(

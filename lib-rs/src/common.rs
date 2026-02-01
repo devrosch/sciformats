@@ -124,8 +124,14 @@ impl<T: Seek + Read + 'static> ScannerRepository<T> {
         let gaml_scanner = Box::new(GamlScanner::new());
         let jdx_scanner = Box::new(JdxScanner::new());
         let json_scanner = Box::new(JsonScanner::new());
-        let scanners: Vec<Box<dyn Scanner<T>>> =
-            vec![andi_scanner, gaml_scanner, jdx_scanner, json_scanner];
+        let mzml_scanner = Box::new(crate::mzml::mzml_scanner::MzMlScanner::new());
+        let scanners: Vec<Box<dyn Scanner<T>>> = vec![
+            andi_scanner,
+            gaml_scanner,
+            jdx_scanner,
+            json_scanner,
+            mzml_scanner,
+        ];
         ScannerRepository { scanners }
     }
 

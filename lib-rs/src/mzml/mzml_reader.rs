@@ -3,7 +3,8 @@ use crate::{
     api::{Node, Parameter, Reader},
     common::SfError,
     mzml::mzml_parser::{
-        Cv, CvList, CvParam, FileDescription, ParamGroup, SourceFileList, UserParam,
+        Cv, CvList, CvParam, FileDescription, ParamGroup, ReferenceableParamGroupRef, SourceFile,
+        SourceFileList, UserParam,
     },
     utils::convert_path_to_node_indices,
 };
@@ -237,104 +238,120 @@ impl MzMl {
 impl NodeMapping for ParamGroup {
     fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(Self::map_param_group(name.unwrap_or_default(), self)),
+            [] => Ok(map_param_group(name.unwrap_or_default(), self)),
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
         }
     }
 }
 
-impl ParamGroup {
-    fn map_cv_param(cv_param: &CvParam) -> Parameter {
-        let key = format!(
-            "{} ({}, {})",
-            cv_param.name, cv_param.cv_ref, cv_param.accession
-        );
-        let unit_description = match (&cv_param.unit_accession, &cv_param.unit_cv_ref) {
-            (None, None) => None,
-            (Some(unit_accession), None) => Some(format!("unit_accession={}", unit_accession)),
-            (None, Some(unit_cv_ref)) => Some(format!("unit_cv_ref={}", unit_cv_ref)),
-            (Some(unit_accession), Some(unit_cv_ref)) => Some(format!(
-                "unit_accession={}, unit_cv_ref={}",
-                unit_accession, unit_cv_ref
-            )),
-        };
-        let value = match (&cv_param.value, &cv_param.unit_name, &unit_description) {
-            (None, None, None) => None,
-            (Some(value), None, None) => Some(value.to_owned()),
-            (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
-            (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
-            (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
-            (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
-            (None, Some(unit_name), Some(unit_desc)) => {
-                Some(format!("{} ({})", unit_name, unit_desc))
-            }
-            (Some(value), Some(unit_name), Some(unit_desc)) => {
-                Some(format!("{} {} ({})", value, unit_name, unit_desc))
-            }
-        };
-        match value {
-            None => Parameter::from_str(key),
-            Some(v) => Parameter::from_str_str(key, &v),
+fn map_cv_param(cv_param: &CvParam) -> Parameter {
+    let key = format!(
+        "{} ({}, {})",
+        cv_param.name, cv_param.cv_ref, cv_param.accession
+    );
+    let unit_description = match (&cv_param.unit_accession, &cv_param.unit_cv_ref) {
+        (None, None) => None,
+        (Some(unit_accession), None) => Some(format!("unit_accession={}", unit_accession)),
+        (None, Some(unit_cv_ref)) => Some(format!("unit_cv_ref={}", unit_cv_ref)),
+        (Some(unit_accession), Some(unit_cv_ref)) => Some(format!(
+            "unit_accession={}, unit_cv_ref={}",
+            unit_accession, unit_cv_ref
+        )),
+    };
+    let value = match (&cv_param.value, &cv_param.unit_name, &unit_description) {
+        (None, None, None) => None,
+        (Some(value), None, None) => Some(value.to_owned()),
+        (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
+        (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
+        (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
+        (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
+        (None, Some(unit_name), Some(unit_desc)) => Some(format!("{} ({})", unit_name, unit_desc)),
+        (Some(value), Some(unit_name), Some(unit_desc)) => {
+            Some(format!("{} {} ({})", value, unit_name, unit_desc))
         }
+    };
+    match value {
+        None => Parameter::from_str(key),
+        Some(v) => Parameter::from_str_str(key, &v),
     }
+}
 
-    fn map_user_param(user_param: &UserParam) -> Parameter {
-        let key = match &user_param.r#type {
-            None => user_param.name.to_owned(),
-            Some(r#type) => format!("{} ({})", &user_param.name, r#type),
-        };
-        let unit_description = match (&user_param.unit_accession, &user_param.unit_cv_ref) {
-            (None, None) => None,
-            (Some(unit_accession), None) => Some(format!("unit_accession={}", unit_accession)),
-            (None, Some(unit_cv_ref)) => Some(format!("unit_cv_ref={}", unit_cv_ref)),
-            (Some(unit_accession), Some(unit_cv_ref)) => Some(format!(
-                "unit_accession={}, unit_cv_ref={}",
-                unit_accession, unit_cv_ref
-            )),
-        };
-        let value = match (&user_param.value, &user_param.unit_name, &unit_description) {
-            (None, None, None) => None,
-            (Some(value), None, None) => Some(value.to_owned()),
-            (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
-            (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
-            (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
-            (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
-            (None, Some(unit_name), Some(unit_desc)) => {
-                Some(format!("{} ({})", unit_name, unit_desc))
-            }
-            (Some(value), Some(unit_name), Some(unit_desc)) => {
-                Some(format!("{} {} ({})", value, unit_name, unit_desc))
-            }
-        };
-        match value {
-            None => Parameter::from_str(key),
-            Some(v) => Parameter::from_str_str(key, &v),
+fn map_user_param(user_param: &UserParam) -> Parameter {
+    let key = match &user_param.r#type {
+        None => user_param.name.to_owned(),
+        Some(r#type) => format!("{} ({})", &user_param.name, r#type),
+    };
+    let unit_description = match (&user_param.unit_accession, &user_param.unit_cv_ref) {
+        (None, None) => None,
+        (Some(unit_accession), None) => Some(format!("unit_accession={}", unit_accession)),
+        (None, Some(unit_cv_ref)) => Some(format!("unit_cv_ref={}", unit_cv_ref)),
+        (Some(unit_accession), Some(unit_cv_ref)) => Some(format!(
+            "unit_accession={}, unit_cv_ref={}",
+            unit_accession, unit_cv_ref
+        )),
+    };
+    let value = match (&user_param.value, &user_param.unit_name, &unit_description) {
+        (None, None, None) => None,
+        (Some(value), None, None) => Some(value.to_owned()),
+        (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
+        (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
+        (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
+        (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
+        (None, Some(unit_name), Some(unit_desc)) => Some(format!("{} ({})", unit_name, unit_desc)),
+        (Some(value), Some(unit_name), Some(unit_desc)) => {
+            Some(format!("{} {} ({})", value, unit_name, unit_desc))
         }
+    };
+    match value {
+        None => Parameter::from_str(key),
+        Some(v) => Parameter::from_str_str(key, &v),
     }
+}
 
-    fn map_param_group(name: &str, param_group: &ParamGroup) -> Node {
-        let mut parameters = vec![];
-        for referenceable_param_group_ref in param_group.referenceable_param_group_ref.iter() {
-            parameters.push(Parameter::from_str_str(
-                "referenceableParamGroupRef",
-                referenceable_param_group_ref.r#ref.to_owned(),
-            ));
-        }
-        for cv_param in param_group.cv_param.iter() {
-            parameters.push(Self::map_cv_param(cv_param));
-        }
-        for user_param in param_group.user_param.iter() {
-            parameters.push(Self::map_user_param(user_param));
-        }
+fn map_referenceable_param_group_ref_list(
+    referenceable_param_group_ref: &[ReferenceableParamGroupRef],
+) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for referenceable_param_group_ref in referenceable_param_group_ref.iter() {
+        parameters.push(Parameter::from_str_str(
+            "referenceableParamGroupRef",
+            referenceable_param_group_ref.r#ref.to_owned(),
+        ));
+    }
+    parameters
+}
 
-        Node {
-            name: name.to_owned(),
-            parameters,
-            data: vec![],
-            metadata: vec![],
-            table: None,
-            child_node_names: vec![],
-        }
+fn map_cv_param_list(cv_params: &[CvParam]) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for cv_param in cv_params.iter() {
+        parameters.push(map_cv_param(cv_param));
+    }
+    parameters
+}
+
+fn map_user_param_list(user_params: &[UserParam]) -> Vec<Parameter> {
+    let mut parameters = vec![];
+    for user_param in user_params.iter() {
+        parameters.push(map_user_param(user_param));
+    }
+    parameters
+}
+
+fn map_param_group(name: &str, param_group: &ParamGroup) -> Node {
+    let mut parameters = vec![];
+    parameters.extend(map_referenceable_param_group_ref_list(
+        &param_group.referenceable_param_group_ref,
+    ));
+    parameters.extend(map_cv_param_list(&param_group.cv_param));
+    parameters.extend(map_user_param_list(&param_group.user_param));
+
+    Node {
+        name: name.to_owned(),
+        parameters,
+        data: vec![],
+        metadata: vec![],
+        table: None,
+        child_node_names: vec![],
     }
 }
 
@@ -343,10 +360,23 @@ impl NodeMapping for SourceFileList {
         match path {
             [] => Ok(Self::map_source_file_list(self, name.unwrap_or_default())),
             // TODO: implement child nodes for sourceFileList
-            _ => Err(SfError::new(&format!(
-                "Not yet implemented for path: {}",
-                context
-            ))),
+            [n] => {
+                let child_node_names = Self::get_source_file_list_children(self);
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.source_file.get(*n) {
+                    None => {
+                        return Err(SfError::new(&format!(
+                            "Internal error for path: {}",
+                            context
+                        )));
+                    }
+                    Some(source_file) => source_file.get_node(Some(child_node_name), &[], context),
+                }
+            }
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
         }
     }
 }
@@ -355,7 +385,7 @@ impl SourceFileList {
     fn get_source_file_list_children(source_file_list: &SourceFileList) -> Vec<String> {
         let mut child_node_names = vec![];
         for source_file in source_file_list.source_file.iter() {
-            child_node_names.push(format!("{} ({})", source_file.name, source_file.id));
+            child_node_names.push(source_file.get_name());
         }
         child_node_names
     }
@@ -368,6 +398,42 @@ impl SourceFileList {
             metadata: vec![],
             table: None,
             child_node_names: Self::get_source_file_list_children(source_file_list),
+        }
+    }
+}
+
+impl NodeMapping for SourceFile {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_source_file(name.unwrap_or_default())),
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl SourceFile {
+    fn get_name(&self) -> String {
+        format!("{} ({})", self.name, self.id)
+    }
+
+    fn map_source_file(&self, name: &str) -> Node {
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("id", &self.id));
+        parameters.push(Parameter::from_str_str("name", &self.name));
+        parameters.push(Parameter::from_str_str("location", &self.location));
+        parameters.extend(map_referenceable_param_group_ref_list(
+            &self.referenceable_param_group_ref,
+        ));
+        parameters.extend(map_cv_param_list(&self.cv_param));
+        parameters.extend(map_user_param_list(&self.user_param));
+
+        Node {
+            name: name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
         }
     }
 }

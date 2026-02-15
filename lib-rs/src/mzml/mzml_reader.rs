@@ -237,6 +237,7 @@ impl MzMl {
         }
         child_node_names.push("instrumentConfigurationList".to_owned());
         child_node_names.push("dataProcessingList".to_owned());
+        child_node_names.push("run".to_owned());
         child_node_names
     }
 }

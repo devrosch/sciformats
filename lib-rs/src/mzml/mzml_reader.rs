@@ -2,6 +2,9 @@ use super::mzml_parser::MzMl;
 use crate::{
     api::{Node, Parameter, Reader},
     common::SfError,
+    mzml::mzml_parser::{
+        Cv, CvList, CvParam, FileDescription, ParamGroup, SourceFileList, UserParam,
+    },
     utils::convert_path_to_node_indices,
 };
 use std::path::Path;
@@ -12,21 +15,6 @@ pub struct MzMlReader {
     file: MzMl,
 }
 
-impl Reader for MzMlReader {
-    #[allow(unused_variables)] // TODO: remove when implemented
-    fn read(&self, path: &str) -> Result<Node, SfError> {
-        let path_indices = convert_path_to_node_indices(path)?;
-        match &path_indices[..] {
-            [] => Ok(Self::map_root(&self.path, &self.file)?), // "", "/"
-            // TODO: implement other paths
-            _ => Err(SfError::new(&format!(
-                "MzMlReader::read not yet implemented for path: {}",
-                &path
-            ))),
-        }
-    }
-}
-
 impl MzMlReader {
     pub fn new(path: &str, file: MzMl) -> Self {
         Self {
@@ -34,60 +22,373 @@ impl MzMlReader {
             file,
         }
     }
+}
 
-    fn map_root(path: &str, mzml: &MzMl) -> Result<Node, SfError> {
-        let path = Path::new(path);
-        let name = path
+impl Reader for MzMlReader {
+    #[allow(unused_variables)] // TODO: remove when implemented
+    fn read(&self, path: &str) -> Result<Node, SfError> {
+        let path_indices = convert_path_to_node_indices(path)?;
+        let file_path = Path::new(self.path.as_str());
+        let name = file_path
             .file_name()
-            .map_or("", |f| f.to_str().unwrap_or(""))
-            .to_owned();
+            .map_or("", |f| f.to_str().unwrap_or(""));
+        self.file.get_node(Some(name), &path_indices, path)
+    }
+}
 
+trait NodeMapping {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError>;
+}
+
+impl NodeMapping for MzMl {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => {
+                let name = name.unwrap_or_default().to_owned();
+                let parameters = self.get_parameters();
+                let child_node_names = self.get_child_node_names();
+                Ok(Node {
+                    name,
+                    parameters,
+                    data: vec![],
+                    metadata: vec![],
+                    table: None,
+                    child_node_names,
+                })
+            }
+            [n, tail_path @ ..] => {
+                let child_node_names = self.get_child_node_names();
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match child_node_name.as_str() {
+                    "cvList" => self.cv_list.get_node(Some("cvList"), tail_path, context),
+                    "fileDescription" => {
+                        self.file_description
+                            .get_node(Some("fileDescription"), tail_path, context)
+                    }
+                    // TODO: continue
+                    // "softwareList" => {
+                    //     self.software_list
+                    //         .get_node(Some("softwareList"), tail_path, context)
+                    // }
+                    // "instrumentConfigurationList" => self.instrument_configuration_list.get_node(
+                    //     Some("instrumentConfigurationList"),
+                    //     tail_path,
+                    //     context,
+                    // ),
+                    // "dataProcessingList" => self.data_processing_list.get_node(
+                    //     Some("dataProcessingList"),
+                    //     tail_path,
+                    //     context,
+                    // ),
+                    _ => Err(SfError::new(&format!(
+                        "Not yet implemented for path: {}",
+                        context
+                    ))),
+                    // _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+                }
+            }
+        }
+    }
+}
+
+impl NodeMapping for CvList {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(Self::map_cv_list(self, name.unwrap_or_default())),
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl CvList {
+    fn map_cv(cv: &Cv) -> Parameter {
+        let key = format!("{} ({}, {})", cv.full_name, cv.id, cv.version);
+        Parameter::from_str_str(key, &cv.uri)
+    }
+
+    fn map_cv_list(cv_list: &CvList, name: &str) -> Node {
         let mut parameters = vec![];
-        if let Some(xmlns) = &mzml.xmlns {
-            parameters.push(Parameter::from_str_str("xmlns", xmlns));
+        parameters.push(Parameter::from_str_u64("count", cv_list.count));
+        for cv in cv_list.cv.iter() {
+            parameters.push(Self::map_cv(cv));
         }
-        if let Some(xmlns_xsi) = &mzml.xmlns_xsi {
-            parameters.push(Parameter::from_str_str("xmlns:xsi", xmlns_xsi));
-        }
-        if let Some(xsi_schema_location) = &mzml.xsi_schema_location {
-            parameters.push(Parameter::from_str_str(
-                "schemaLocation",
-                xsi_schema_location,
-            ));
-        }
-        if let Some(accession) = &mzml.accession {
-            parameters.push(Parameter::from_str_str("accession", accession));
-        }
-        parameters.push(Parameter::from_str_str("version", &mzml.version));
-        if let Some(id) = &mzml.id {
-            parameters.push(Parameter::from_str_str("id", id));
-        }
-
-        let mut child_node_names = vec![];
-        child_node_names.push("cvList".to_owned());
-        child_node_names.push("fileDescription".to_owned());
-        if let Some(_) = &mzml.referenceable_param_group_list {
-            child_node_names.push("referenceableParamGroupList".to_owned());
-        }
-        if let Some(_) = &mzml.sample_list {
-            child_node_names.push("sampleList".to_owned());
-        }
-        child_node_names.push("softwareList".to_owned());
-        if let Some(_) = &mzml.scan_settings_list {
-            child_node_names.push("scanSettingsList".to_owned());
-        }
-        child_node_names.push("instrumentConfigurationList".to_owned());
-        child_node_names.push("dataProcessingList".to_owned());
-
-        Ok(Node {
-            name,
+        Node {
+            name: name.to_owned(),
             parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        }
+    }
+}
+
+impl NodeMapping for FileDescription {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Self::map_file_description(self, name.unwrap_or_default()),
+            [n, tail_path @ ..] => {
+                let child_node_names = Self::get_file_description_children(self);
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match child_node_name.as_str() {
+                    "fileContent" => self.file_content.get_node(
+                        Some("fileContent"),
+                        tail_path,
+                        &format!("{} > fileContent", context),
+                    ),
+                    "sourceFileList" => match &self.source_file_list {
+                        None => Err(SfError::new(&format!(
+                            "Internal error for path: {}. sourceFileList not found.",
+                            context
+                        ))),
+                        Some(source_file_list) => source_file_list.get_node(
+                            Some("sourceFileList"),
+                            tail_path,
+                            &format!("{} > sourceFileList", context),
+                        ),
+                    },
+                    "contact" => map_param_group_list("contact", &self.contact, context),
+                    _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+                }
+            }
+        }
+    }
+}
+
+impl FileDescription {
+    fn get_file_description_children(file_description: &FileDescription) -> Vec<String> {
+        let mut child_node_names = vec!["fileContent".to_owned()];
+        if file_description.source_file_list.is_some() {
+            child_node_names.push("sourceFileList".to_owned());
+        }
+        if file_description.contact.len() > 0 {
+            child_node_names.push("contact".to_owned());
+        }
+        child_node_names
+    }
+
+    fn map_file_description(
+        file_description: &FileDescription,
+        name: &str,
+    ) -> Result<Node, SfError> {
+        let child_node_names = Self::get_file_description_children(file_description);
+        Ok(Node {
+            name: name.to_owned(),
+            parameters: vec![],
             data: vec![],
             metadata: vec![],
             table: None,
             child_node_names,
         })
     }
+}
+
+impl MzMl {
+    fn get_parameters(&self) -> Vec<Parameter> {
+        let mut parameters = vec![];
+        if let Some(xmlns) = &self.xmlns {
+            parameters.push(Parameter::from_str_str("xmlns", xmlns));
+        }
+        if let Some(xmlns_xsi) = &self.xmlns_xsi {
+            parameters.push(Parameter::from_str_str("xmlns:xsi", xmlns_xsi));
+        }
+        if let Some(xsi_schema_location) = &self.xsi_schema_location {
+            parameters.push(Parameter::from_str_str(
+                "schemaLocation",
+                xsi_schema_location,
+            ));
+        }
+        if let Some(accession) = &self.accession {
+            parameters.push(Parameter::from_str_str("accession", accession));
+        }
+        parameters.push(Parameter::from_str_str("version", &self.version));
+        if let Some(id) = &self.id {
+            parameters.push(Parameter::from_str_str("id", id));
+        }
+        parameters
+    }
+
+    fn get_child_node_names(&self) -> Vec<String> {
+        let mut child_node_names = vec![];
+        child_node_names.push("cvList".to_owned());
+        child_node_names.push("fileDescription".to_owned());
+        if let Some(_) = self.referenceable_param_group_list {
+            child_node_names.push("referenceableParamGroupList".to_owned());
+        }
+        if let Some(_) = self.sample_list {
+            child_node_names.push("sampleList".to_owned());
+        }
+        child_node_names.push("softwareList".to_owned());
+        if let Some(_) = self.scan_settings_list {
+            child_node_names.push("scanSettingsList".to_owned());
+        }
+        child_node_names.push("instrumentConfigurationList".to_owned());
+        child_node_names.push("dataProcessingList".to_owned());
+        child_node_names
+    }
+}
+
+impl NodeMapping for ParamGroup {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(Self::map_param_group(name.unwrap_or_default(), self)),
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl ParamGroup {
+    fn map_cv_param(cv_param: &CvParam) -> Parameter {
+        let key = format!(
+            "{} ({}, {})",
+            cv_param.name, cv_param.cv_ref, cv_param.accession
+        );
+        let unit_description = match (&cv_param.unit_accession, &cv_param.unit_cv_ref) {
+            (None, None) => None,
+            (Some(unit_accession), None) => Some(format!("unit_accession={}", unit_accession)),
+            (None, Some(unit_cv_ref)) => Some(format!("unit_cv_ref={}", unit_cv_ref)),
+            (Some(unit_accession), Some(unit_cv_ref)) => Some(format!(
+                "unit_accession={}, unit_cv_ref={}",
+                unit_accession, unit_cv_ref
+            )),
+        };
+        let value = match (&cv_param.value, &cv_param.unit_name, &unit_description) {
+            (None, None, None) => None,
+            (Some(value), None, None) => Some(value.to_owned()),
+            (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
+            (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
+            (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
+            (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
+            (None, Some(unit_name), Some(unit_desc)) => {
+                Some(format!("{} ({})", unit_name, unit_desc))
+            }
+            (Some(value), Some(unit_name), Some(unit_desc)) => {
+                Some(format!("{} {} ({})", value, unit_name, unit_desc))
+            }
+        };
+        match value {
+            None => Parameter::from_str(key),
+            Some(v) => Parameter::from_str_str(key, &v),
+        }
+    }
+
+    fn map_user_param(user_param: &UserParam) -> Parameter {
+        let key = match &user_param.r#type {
+            None => user_param.name.to_owned(),
+            Some(r#type) => format!("{} ({})", &user_param.name, r#type),
+        };
+        let unit_description = match (&user_param.unit_accession, &user_param.unit_cv_ref) {
+            (None, None) => None,
+            (Some(unit_accession), None) => Some(format!("unit_accession={}", unit_accession)),
+            (None, Some(unit_cv_ref)) => Some(format!("unit_cv_ref={}", unit_cv_ref)),
+            (Some(unit_accession), Some(unit_cv_ref)) => Some(format!(
+                "unit_accession={}, unit_cv_ref={}",
+                unit_accession, unit_cv_ref
+            )),
+        };
+        let value = match (&user_param.value, &user_param.unit_name, &unit_description) {
+            (None, None, None) => None,
+            (Some(value), None, None) => Some(value.to_owned()),
+            (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
+            (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
+            (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
+            (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
+            (None, Some(unit_name), Some(unit_desc)) => {
+                Some(format!("{} ({})", unit_name, unit_desc))
+            }
+            (Some(value), Some(unit_name), Some(unit_desc)) => {
+                Some(format!("{} {} ({})", value, unit_name, unit_desc))
+            }
+        };
+        match value {
+            None => Parameter::from_str(key),
+            Some(v) => Parameter::from_str_str(key, &v),
+        }
+    }
+
+    fn map_param_group(name: &str, param_group: &ParamGroup) -> Node {
+        let mut parameters = vec![];
+        for referenceable_param_group_ref in param_group.referenceable_param_group_ref.iter() {
+            parameters.push(Parameter::from_str_str(
+                "referenceableParamGroupRef",
+                referenceable_param_group_ref.r#ref.to_owned(),
+            ));
+        }
+        for cv_param in param_group.cv_param.iter() {
+            parameters.push(Self::map_cv_param(cv_param));
+        }
+        for user_param in param_group.user_param.iter() {
+            parameters.push(Self::map_user_param(user_param));
+        }
+
+        Node {
+            name: name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        }
+    }
+}
+
+impl NodeMapping for SourceFileList {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(Self::map_source_file_list(self, name.unwrap_or_default())),
+            // TODO: implement child nodes for sourceFileList
+            _ => Err(SfError::new(&format!(
+                "Not yet implemented for path: {}",
+                context
+            ))),
+        }
+    }
+}
+
+impl SourceFileList {
+    fn get_source_file_list_children(source_file_list: &SourceFileList) -> Vec<String> {
+        let mut child_node_names = vec![];
+        for source_file in source_file_list.source_file.iter() {
+            child_node_names.push(format!("{} ({})", source_file.name, source_file.id));
+        }
+        child_node_names
+    }
+
+    fn map_source_file_list(source_file_list: &SourceFileList, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", source_file_list.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: Self::get_source_file_list_children(source_file_list),
+        }
+    }
+}
+
+fn map_param_group_list(
+    name: &str,
+    param_groups: &[ParamGroup],
+    context: &str,
+) -> Result<Node, SfError> {
+    let mut parameters = vec![];
+    for param_group in param_groups {
+        parameters.extend(param_group.get_node(None, &[], context)?.parameters);
+    }
+    Ok(Node {
+        name: name.to_owned(),
+        parameters,
+        data: vec![],
+        metadata: vec![],
+        table: None,
+        child_node_names: vec![],
+    })
 }
 
 #[cfg(test)]
@@ -159,7 +460,7 @@ mod tests {
         let reader = MzMlReader::new("valid.mzml", mzml);
         let root_node = reader.read("").unwrap();
 
-        assert_eq!(root_node.name, "valid.mzml");
+        assert_eq!("valid.mzml", root_node.name);
         assert_eq!(
             &Parameter::from_str_str("xmlns", "http://psi.hupo.org/ms/mzml"),
             &root_node.parameters[0]

@@ -4,8 +4,8 @@ use crate::{
     common::SfError,
     mzml::mzml_parser::{
         Cv, CvList, CvParam, FileDescription, ParamGroup, ReferenceableParamGroup,
-        ReferenceableParamGroupList, ReferenceableParamGroupRef, SourceFile, SourceFileList,
-        UserParam,
+        ReferenceableParamGroupList, ReferenceableParamGroupRef, Sample, SampleList, SourceFile,
+        SourceFileList, UserParam,
     },
     utils::convert_path_to_node_indices,
 };
@@ -78,9 +78,14 @@ impl NodeMapping for MzMl {
                         Some(referenceable_param_group_list) => referenceable_param_group_list
                             .get_node("referenceableParamGroupList", tail_path, context),
                     },
+                    "sampleList" => match &self.sample_list {
+                        None => Err(SfError::new(&format!(
+                            "Internal error for path: {}. sampleList not found.",
+                            context
+                        ))),
+                        Some(sample_list) => sample_list.get_node("sampleList", tail_path, context),
+                    },
                     // TODO: continue
-                    // #[serde(rename = "sampleList")]
-                    // pub sample_list: Option<SampleList>,
                     // #[serde(rename = "softwareList")]
                     // pub software_list: SoftwareList,
                     // #[serde(rename = "scanSettingsList")]
@@ -536,6 +541,89 @@ fn map_param_group_list(
     })
 }
 
+impl NodeMapping for SampleList {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name)),
+            [n] => {
+                let child_node_names = self.get_child_node_names();
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.sample.get(*n) {
+                    None => {
+                        return Err(SfError::new(&format!(
+                            "Internal error for path: {}",
+                            context
+                        )));
+                    }
+                    Some(child) => child.get_node(child_node_name, &[], context),
+                }
+            }
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl SampleList {
+    fn get_child_node_names(&self) -> Vec<String> {
+        let mut child_node_names = vec![];
+        for child in self.sample.iter() {
+            let name = match child.name.as_deref() {
+                None => child.id.clone(),
+                Some(name) => format!("{} ({})", name, child.id),
+            };
+            child_node_names.push(name);
+        }
+        child_node_names
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", self.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
+        }
+    }
+}
+
+impl NodeMapping for Sample {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name)),
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl Sample {
+    fn map_to_node(&self, name: &str) -> Node {
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("id", &self.id));
+        if let Some(name) = &self.name {
+            parameters.push(Parameter::from_str_str("name", name));
+        }
+        parameters.extend(map_referenceable_param_group_ref_list(
+            &self.referenceable_param_group_ref,
+        ));
+        parameters.extend(map_cv_param_list(&self.cv_param));
+        parameters.extend(map_user_param_list(&self.user_param));
+
+        Node {
+            name: name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::mzml::mzml_parser::{
@@ -637,7 +725,7 @@ mod tests {
         assert!(root_node.metadata.is_empty());
         assert!(root_node.table.is_none());
         let root_node_child_noode_names = &root_node.child_node_names;
-        assert_eq!(5, root_node_child_noode_names.len());
+        assert_eq!(6, root_node_child_noode_names.len());
         assert_eq!("cvList", &root_node_child_noode_names[0]);
         assert_eq!("fileDescription", &root_node_child_noode_names[1]);
         assert_eq!("softwareList", &root_node_child_noode_names[2]);
@@ -646,5 +734,6 @@ mod tests {
             &root_node_child_noode_names[3]
         );
         assert_eq!("dataProcessingList", &root_node_child_noode_names[4]);
+        assert_eq!("run", &root_node_child_noode_names[5]);
     }
 }

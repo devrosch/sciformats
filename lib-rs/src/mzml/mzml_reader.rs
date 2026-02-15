@@ -3,8 +3,9 @@ use crate::{
     api::{Node, Parameter, Reader},
     common::SfError,
     mzml::mzml_parser::{
-        Cv, CvList, CvParam, FileDescription, ParamGroup, ReferenceableParamGroupRef, SourceFile,
-        SourceFileList, UserParam,
+        Cv, CvList, CvParam, FileDescription, ParamGroup, ReferenceableParamGroup,
+        ReferenceableParamGroupList, ReferenceableParamGroupRef, SourceFile, SourceFileList,
+        UserParam,
     },
     utils::convert_path_to_node_indices,
 };
@@ -69,7 +70,26 @@ impl NodeMapping for MzMl {
                         self.file_description
                             .get_node(Some("fileDescription"), tail_path, context)
                     }
+                    "referenceableParamGroupList" => match &self.referenceable_param_group_list {
+                        None => Err(SfError::new(&format!(
+                            "Internal error for path: {}. referenceableParamGroupList not found.",
+                            context
+                        ))),
+                        Some(referenceable_param_group_list) => referenceable_param_group_list
+                            .get_node(Some("referenceableParamGroupList"), tail_path, context),
+                    },
                     // TODO: continue
+                    // #[serde(rename = "sampleList")]
+                    // pub sample_list: Option<SampleList>,
+                    // #[serde(rename = "softwareList")]
+                    // pub software_list: SoftwareList,
+                    // #[serde(rename = "scanSettingsList")]
+                    // pub scan_settings_list: Option<ScanSettingsList>,
+                    // #[serde(rename = "instrumentConfigurationList")]
+                    // pub instrument_configuration_list: InstrumentConfigurationList,
+                    // #[serde(rename = "dataProcessingList")]
+                    // pub data_processing_list: DataProcessingList,
+                    // pub run: Run,
                     // "softwareList" => {
                     //     self.software_list
                     //         .get_node(Some("softwareList"), tail_path, context)
@@ -359,7 +379,6 @@ impl NodeMapping for SourceFileList {
     fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
             [] => Ok(Self::map_source_file_list(self, name.unwrap_or_default())),
-            // TODO: implement child nodes for sourceFileList
             [n] => {
                 let child_node_names = Self::get_source_file_list_children(self);
                 let child_node_name = match child_node_names.get(*n) {
@@ -424,6 +443,79 @@ impl SourceFile {
         parameters.extend(map_referenceable_param_group_ref_list(
             &self.referenceable_param_group_ref,
         ));
+        parameters.extend(map_cv_param_list(&self.cv_param));
+        parameters.extend(map_user_param_list(&self.user_param));
+
+        Node {
+            name: name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        }
+    }
+}
+
+impl NodeMapping for ReferenceableParamGroupList {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name.unwrap_or_default())),
+            [n] => {
+                let child_node_names = self.get_child_node_names();
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.referenceable_param_group.get(*n) {
+                    None => {
+                        return Err(SfError::new(&format!(
+                            "Internal error for path: {}",
+                            context
+                        )));
+                    }
+                    Some(child) => child.get_node(Some(child_node_name), &[], context),
+                }
+            }
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl ReferenceableParamGroupList {
+    fn get_child_node_names(&self) -> Vec<String> {
+        let mut child_node_names = vec![];
+        for child in self.referenceable_param_group.iter() {
+            child_node_names.push(child.id.clone());
+        }
+        child_node_names
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", self.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
+        }
+    }
+}
+
+impl NodeMapping for ReferenceableParamGroup {
+    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name.unwrap_or_default())),
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl ReferenceableParamGroup {
+    fn map_to_node(&self, name: &str) -> Node {
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("id", &self.id));
         parameters.extend(map_cv_param_list(&self.cv_param));
         parameters.extend(map_user_param_list(&self.user_param));
 

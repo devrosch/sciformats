@@ -34,19 +34,19 @@ impl Reader for MzMlReader {
         let name = file_path
             .file_name()
             .map_or("", |f| f.to_str().unwrap_or(""));
-        self.file.get_node(Some(name), &path_indices, path)
+        self.file.get_node(name, &path_indices, path)
     }
 }
 
 trait NodeMapping {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError>;
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError>;
 }
 
 impl NodeMapping for MzMl {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
             [] => {
-                let name = name.unwrap_or_default().to_owned();
+                let name = name.to_owned();
                 let parameters = self.get_parameters();
                 let child_node_names = self.get_child_node_names();
                 Ok(Node {
@@ -65,10 +65,10 @@ impl NodeMapping for MzMl {
                     Some(child_node_name) => child_node_name,
                 };
                 match child_node_name.as_str() {
-                    "cvList" => self.cv_list.get_node(Some("cvList"), tail_path, context),
+                    "cvList" => self.cv_list.get_node("cvList", tail_path, context),
                     "fileDescription" => {
                         self.file_description
-                            .get_node(Some("fileDescription"), tail_path, context)
+                            .get_node("fileDescription", tail_path, context)
                     }
                     "referenceableParamGroupList" => match &self.referenceable_param_group_list {
                         None => Err(SfError::new(&format!(
@@ -76,7 +76,7 @@ impl NodeMapping for MzMl {
                             context
                         ))),
                         Some(referenceable_param_group_list) => referenceable_param_group_list
-                            .get_node(Some("referenceableParamGroupList"), tail_path, context),
+                            .get_node("referenceableParamGroupList", tail_path, context),
                     },
                     // TODO: continue
                     // #[serde(rename = "sampleList")]
@@ -90,20 +90,6 @@ impl NodeMapping for MzMl {
                     // #[serde(rename = "dataProcessingList")]
                     // pub data_processing_list: DataProcessingList,
                     // pub run: Run,
-                    // "softwareList" => {
-                    //     self.software_list
-                    //         .get_node(Some("softwareList"), tail_path, context)
-                    // }
-                    // "instrumentConfigurationList" => self.instrument_configuration_list.get_node(
-                    //     Some("instrumentConfigurationList"),
-                    //     tail_path,
-                    //     context,
-                    // ),
-                    // "dataProcessingList" => self.data_processing_list.get_node(
-                    //     Some("dataProcessingList"),
-                    //     tail_path,
-                    //     context,
-                    // ),
                     _ => Err(SfError::new(&format!(
                         "Not yet implemented for path: {}",
                         context
@@ -116,9 +102,9 @@ impl NodeMapping for MzMl {
 }
 
 impl NodeMapping for CvList {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(Self::map_cv_list(self, name.unwrap_or_default())),
+            [] => Ok(Self::map_cv_list(self, name)),
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
         }
     }
@@ -148,9 +134,9 @@ impl CvList {
 }
 
 impl NodeMapping for FileDescription {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Self::map_file_description(self, name.unwrap_or_default()),
+            [] => Self::map_file_description(self, name),
             [n, tail_path @ ..] => {
                 let child_node_names = Self::get_file_description_children(self);
                 let child_node_name = match child_node_names.get(*n) {
@@ -159,7 +145,7 @@ impl NodeMapping for FileDescription {
                 };
                 match child_node_name.as_str() {
                     "fileContent" => self.file_content.get_node(
-                        Some("fileContent"),
+                        "fileContent",
                         tail_path,
                         &format!("{} > fileContent", context),
                     ),
@@ -169,7 +155,7 @@ impl NodeMapping for FileDescription {
                             context
                         ))),
                         Some(source_file_list) => source_file_list.get_node(
-                            Some("sourceFileList"),
+                            "sourceFileList",
                             tail_path,
                             &format!("{} > sourceFileList", context),
                         ),
@@ -256,9 +242,9 @@ impl MzMl {
 }
 
 impl NodeMapping for ParamGroup {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(map_param_group(name.unwrap_or_default(), self)),
+            [] => Ok(map_param_group(name, self)),
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
         }
     }
@@ -376,9 +362,9 @@ fn map_param_group(name: &str, param_group: &ParamGroup) -> Node {
 }
 
 impl NodeMapping for SourceFileList {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(Self::map_source_file_list(self, name.unwrap_or_default())),
+            [] => Ok(Self::map_source_file_list(self, name)),
             [n] => {
                 let child_node_names = Self::get_source_file_list_children(self);
                 let child_node_name = match child_node_names.get(*n) {
@@ -392,7 +378,7 @@ impl NodeMapping for SourceFileList {
                             context
                         )));
                     }
-                    Some(source_file) => source_file.get_node(Some(child_node_name), &[], context),
+                    Some(source_file) => source_file.get_node(child_node_name, &[], context),
                 }
             }
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
@@ -422,9 +408,9 @@ impl SourceFileList {
 }
 
 impl NodeMapping for SourceFile {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(self.map_source_file(name.unwrap_or_default())),
+            [] => Ok(self.map_source_file(name)),
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
         }
     }
@@ -458,9 +444,9 @@ impl SourceFile {
 }
 
 impl NodeMapping for ReferenceableParamGroupList {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(self.map_to_node(name.unwrap_or_default())),
+            [] => Ok(self.map_to_node(name)),
             [n] => {
                 let child_node_names = self.get_child_node_names();
                 let child_node_name = match child_node_names.get(*n) {
@@ -474,7 +460,7 @@ impl NodeMapping for ReferenceableParamGroupList {
                             context
                         )));
                     }
-                    Some(child) => child.get_node(Some(child_node_name), &[], context),
+                    Some(child) => child.get_node(child_node_name, &[], context),
                 }
             }
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
@@ -504,9 +490,9 @@ impl ReferenceableParamGroupList {
 }
 
 impl NodeMapping for ReferenceableParamGroup {
-    fn get_node(&self, name: Option<&str>, path: &[usize], context: &str) -> Result<Node, SfError> {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
         match path {
-            [] => Ok(self.map_to_node(name.unwrap_or_default())),
+            [] => Ok(self.map_to_node(name)),
             _ => Err(SfError::new(&format!("Illegal path: {}", context))),
         }
     }
@@ -537,7 +523,7 @@ fn map_param_group_list(
 ) -> Result<Node, SfError> {
     let mut parameters = vec![];
     for param_group in param_groups {
-        parameters.extend(param_group.get_node(None, &[], context)?.parameters);
+        parameters.extend(param_group.get_node("", &[], context)?.parameters);
     }
     Ok(Node {
         name: name.to_owned(),

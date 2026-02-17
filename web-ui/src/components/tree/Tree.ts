@@ -185,6 +185,7 @@ export default class Tree extends HTMLElement {
   }
 
   static #findNextTreeNode(element: Element): TreeNode | null {
+    /* eslint-disable-next-line no-useless-assignment */
     let next = null;
     if (
       element.hasAttribute('expand') &&

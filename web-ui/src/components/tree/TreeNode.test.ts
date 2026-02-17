@@ -39,7 +39,7 @@ class StubParser implements Parser {
     return this.#url;
   }
 
-  // eslint-disable-next-line class-methods-use-this
+  /* eslint-disable-next-line class-methods-use-this */
   async open() {
     // noop
   }
@@ -53,6 +53,7 @@ class StubParser implements Parser {
       value: string | boolean | number | bigint;
     }[] = [{ key: 'key 1', value: 'value 1' }];
 
+    /* eslint-disable-next-line no-useless-assignment */
     let data: { x: number; y: number }[] = [];
     data = [{ x: 1, y: 2 }];
     if (hash.endsWith('/child 2')) {

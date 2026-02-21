@@ -179,7 +179,7 @@ impl FileDescription {
         if file_description.source_file_list.is_some() {
             child_node_names.push("sourceFileList".to_owned());
         }
-        if file_description.contact.len() > 0 {
+        if !file_description.contact.is_empty() {
             child_node_names.push("contact".to_owned());
         }
         child_node_names
@@ -230,14 +230,14 @@ impl MzMl {
         let mut child_node_names = vec![];
         child_node_names.push("cvList".to_owned());
         child_node_names.push("fileDescription".to_owned());
-        if let Some(_) = self.referenceable_param_group_list {
+        if self.referenceable_param_group_list.is_some() {
             child_node_names.push("referenceableParamGroupList".to_owned());
         }
-        if let Some(_) = self.sample_list {
+        if self.sample_list.is_some() {
             child_node_names.push("sampleList".to_owned());
         }
         child_node_names.push("softwareList".to_owned());
-        if let Some(_) = self.scan_settings_list {
+        if self.scan_settings_list.is_some() {
             child_node_names.push("scanSettingsList".to_owned());
         }
         child_node_names.push("instrumentConfigurationList".to_owned());
@@ -273,7 +273,7 @@ fn map_cv_param(cv_param: &CvParam) -> Parameter {
     let value = match (&cv_param.value, &cv_param.unit_name, &unit_description) {
         (None, None, None) => None,
         (Some(value), None, None) => Some(value.to_owned()),
-        (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
+        (None, Some(unit_name), None) => Some(unit_name.to_owned()),
         (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
         (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
         (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
@@ -305,7 +305,7 @@ fn map_user_param(user_param: &UserParam) -> Parameter {
     let value = match (&user_param.value, &user_param.unit_name, &unit_description) {
         (None, None, None) => None,
         (Some(value), None, None) => Some(value.to_owned()),
-        (None, Some(unit_name), None) => Some(format!("{}", unit_name)),
+        (None, Some(unit_name), None) => Some(unit_name.to_owned()),
         (None, None, Some(unit_desc)) => Some(format!("({})", unit_desc)),
         (Some(value), Some(unit_name), None) => Some(format!("{} {}", value, unit_name)),
         (Some(value), None, Some(unit_desc)) => Some(format!("{} ({})", value, unit_desc)),
@@ -378,12 +378,10 @@ impl NodeMapping for SourceFileList {
                     Some(child_node_name) => child_node_name,
                 };
                 match self.source_file.get(*n) {
-                    None => {
-                        return Err(SfError::new(&format!(
-                            "Internal error for path: {}",
-                            context
-                        )));
-                    }
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
                     Some(source_file) => source_file.get_node(child_node_name, &[], context),
                 }
             }
@@ -460,12 +458,10 @@ impl NodeMapping for ReferenceableParamGroupList {
                     Some(child_node_name) => child_node_name,
                 };
                 match self.referenceable_param_group.get(*n) {
-                    None => {
-                        return Err(SfError::new(&format!(
-                            "Internal error for path: {}",
-                            context
-                        )));
-                    }
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
                     Some(child) => child.get_node(child_node_name, &[], context),
                 }
             }
@@ -552,12 +548,10 @@ impl NodeMapping for SampleList {
                     Some(child_node_name) => child_node_name,
                 };
                 match self.sample.get(*n) {
-                    None => {
-                        return Err(SfError::new(&format!(
-                            "Internal error for path: {}",
-                            context
-                        )));
-                    }
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
                     Some(child) => child.get_node(child_node_name, &[], context),
                 }
             }

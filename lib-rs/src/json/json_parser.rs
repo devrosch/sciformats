@@ -74,12 +74,8 @@ impl<T: Seek + Read> JsonDocument<T> {
         input_borrow.seek(std::io::SeekFrom::Start(data_span.span.start))?;
         let span_bytes = (&mut *input_borrow).take(data_span.span.end - data_span.span.start);
         let mut nested_de = sciformats_serde_json::Deserializer::from_reader(span_bytes);
-        let data = Vec::<JsonDataItem>::deserialize(&mut nested_de).map_err(|e| {
-            SfError::new(&format!(
-                "Error deserializing JSON section: {}",
-                e.to_string()
-            ))
-        })?;
+        let data = Vec::<JsonDataItem>::deserialize(&mut nested_de)
+            .map_err(|e| SfError::new(&format!("Error deserializing JSON section: {}", e)))?;
 
         // Map child node names.
         let child_node_names: Vec<String> = node

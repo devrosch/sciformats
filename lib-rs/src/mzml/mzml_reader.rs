@@ -626,6 +626,8 @@ impl Sample {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use crate::mzml::mzml_parser::{
         CvList, DataProcessingList, FileDescription, InstrumentConfigurationList, ParamGroup, Run,
         SoftwareList,
@@ -748,7 +750,33 @@ mod tests {
                     }],
                 }],
             }),
-            sample_list: None,
+            sample_list: Some(SampleList {
+                count: 1,
+                sample: vec![Sample {
+                    id: "S1".to_owned(),
+                    name: Some("Sample 1".to_owned()),
+                    referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                        r#ref: "RG4".to_owned(),
+                    }],
+                    cv_param: vec![CvParam {
+                        name: "MS:1000004".to_owned(),
+                        cv_ref: "MS".to_owned(),
+                        accession: "MS:1000004".to_owned(),
+                        value: Some("CV parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                    user_param: vec![UserParam {
+                        name: "User parameter".to_owned(),
+                        r#type: Some("string".to_owned()),
+                        value: Some("User parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                }],
+            }),
             software_list: SoftwareList {
                 count: 0,
                 software: vec![],
@@ -815,20 +843,21 @@ mod tests {
         assert!(root_node.metadata.is_empty());
         assert!(root_node.table.is_none());
         let root_node_child_node_names = &root_node.child_node_names;
-        assert_eq!(7, root_node_child_node_names.len());
+        assert_eq!(8, root_node_child_node_names.len());
         assert_eq!("cvList", &root_node_child_node_names[0]);
         assert_eq!("fileDescription", &root_node_child_node_names[1]);
         assert_eq!(
             "referenceableParamGroupList",
             &root_node_child_node_names[2]
         );
-        assert_eq!("softwareList", &root_node_child_node_names[3]);
+        assert_eq!("sampleList", &root_node_child_node_names[3]);
+        assert_eq!("softwareList", &root_node_child_node_names[4]);
         assert_eq!(
             "instrumentConfigurationList",
-            &root_node_child_node_names[4]
+            &root_node_child_node_names[5]
         );
-        assert_eq!("dataProcessingList", &root_node_child_node_names[5]);
-        assert_eq!("run", &root_node_child_node_names[6]);
+        assert_eq!("dataProcessingList", &root_node_child_node_names[6]);
+        assert_eq!("run", &root_node_child_node_names[7]);
 
         let cv_list = reader.read("/0").unwrap();
         assert_eq!("cvList", cv_list.name);
@@ -957,7 +986,10 @@ mod tests {
         assert!(contact.child_node_names.is_empty());
 
         let referenceable_param_group_list = reader.read("/2").unwrap();
-        assert_eq!("referenceableParamGroupList", referenceable_param_group_list.name);
+        assert_eq!(
+            "referenceableParamGroupList",
+            referenceable_param_group_list.name
+        );
         assert_eq!(1, referenceable_param_group_list.parameters.len());
         assert_eq!(
             &Parameter::from_str_u64("count", 1),
@@ -966,7 +998,8 @@ mod tests {
         assert!(referenceable_param_group_list.data.is_empty());
         assert!(referenceable_param_group_list.metadata.is_empty());
         assert!(referenceable_param_group_list.table.is_none());
-        let referenceable_param_group_list_child_node_names = &referenceable_param_group_list.child_node_names;
+        let referenceable_param_group_list_child_node_names =
+            &referenceable_param_group_list.child_node_names;
         assert_eq!(1, referenceable_param_group_list_child_node_names.len());
         assert_eq!("RG3", &referenceable_param_group_list_child_node_names[0]);
         let referenceable_param_group_0 = reader.read("/2/0").unwrap();
@@ -994,5 +1027,45 @@ mod tests {
         assert!(referenceable_param_group_0.metadata.is_empty());
         assert!(referenceable_param_group_0.table.is_none());
         assert!(referenceable_param_group_0.child_node_names.is_empty());
+
+        let sample_list = reader.read("/3").unwrap();
+        assert_eq!("sampleList", sample_list.name);
+        assert_eq!(1, sample_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &sample_list.parameters[0]
+        );
+        assert!(sample_list.data.is_empty());
+        assert!(sample_list.metadata.is_empty());
+        assert!(sample_list.table.is_none());
+        let sample_list_child_node_names = &sample_list.child_node_names;
+        assert_eq!(1, sample_list_child_node_names.len());
+        assert_eq!("Sample 1 (S1)", &sample_list_child_node_names[0]);
+        let sample_0 = reader.read("/3/0").unwrap();
+        assert_eq!("Sample 1 (S1)", sample_0.name);
+        assert_eq!(5, sample_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("id", "S1"),
+            &sample_0.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("name", "Sample 1"),
+            &sample_0.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("referenceableParamGroupRef", "RG4"),
+            &sample_0.parameters[2]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("MS:1000004 (MS, MS:1000004)", "CV parameter value"),
+            &sample_0.parameters[3]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("User parameter (string)", "User parameter value"),
+            &sample_0.parameters[4]
+        );
+        assert!(sample_0.data.is_empty());
+        assert!(sample_0.metadata.is_empty());
+        assert!(sample_0.table.is_none());
     }
 }

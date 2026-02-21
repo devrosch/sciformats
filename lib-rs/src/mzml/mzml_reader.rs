@@ -645,19 +645,109 @@ mod tests {
             version: "1.1.0".to_owned(),
             id: Some("ValidID".to_owned()),
             cv_list: CvList {
-                count: 0,
-                cv: vec![],
+                count: 1,
+                cv: vec![Cv {
+                    id: "MS".to_owned(),
+                    full_name: "Mass Spectrometry Ontology".to_owned(),
+                    version: "4.1.0".to_owned(),
+                    uri: "http://psidev.info/psi/ms/mzML".to_owned(),
+                }],
             },
             file_description: FileDescription {
                 file_content: ParamGroup {
-                    referenceable_param_group_ref: vec![],
-                    cv_param: vec![],
-                    user_param: vec![],
+                    referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                        r#ref: "RG1".to_owned(),
+                    }],
+                    cv_param: vec![CvParam {
+                        name: "MS:1000001".to_owned(),
+                        cv_ref: "MS".to_owned(),
+                        accession: "MS:1000001".to_owned(),
+                        value: Some("CV parameter value 1000001".to_owned()),
+                        unit_accession: Some("unitAccession 100001".to_owned()),
+                        unit_cv_ref: Some("unitCvRef 100001".to_owned()),
+                        unit_name: Some("unitName 100001".to_owned()),
+                    }],
+                    user_param: vec![UserParam {
+                        name: "User parameter".to_owned(),
+                        r#type: Some("string".to_owned()),
+                        value: Some("User parameter value".to_owned()),
+                        unit_accession: Some("unitAccession 100001".to_owned()),
+                        unit_cv_ref: Some("unitCvRef 100001".to_owned()),
+                        unit_name: Some("unitName 100001".to_owned()),
+                    }],
                 },
-                source_file_list: None,
-                contact: vec![],
+                source_file_list: Some(SourceFileList {
+                    count: 1,
+                    source_file: vec![SourceFile {
+                        id: "SF1".to_owned(),
+                        name: "Source file".to_owned(),
+                        location: "file:///some/source/file".to_owned(),
+                        referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                            r#ref: "RG2".to_owned(),
+                        }],
+                        cv_param: vec![CvParam {
+                            name: "MS:1000001".to_owned(),
+                            cv_ref: "MS".to_owned(),
+                            accession: "MS:1000001".to_owned(),
+                            value: Some("CV parameter value 1000001".to_owned()),
+                            unit_accession: Some("unitAccession 100001".to_owned()),
+                            unit_cv_ref: Some("unitCvRef 100001".to_owned()),
+                            unit_name: Some("unitName 100001".to_owned()),
+                        }],
+                        user_param: vec![UserParam {
+                            name: "User parameter".to_owned(),
+                            r#type: Some("string".to_owned()),
+                            value: Some("User parameter value".to_owned()),
+                            unit_accession: Some("unitAccession 100001".to_owned()),
+                            unit_cv_ref: Some("unitCvRef 100001".to_owned()),
+                            unit_name: Some("unitName 100001".to_owned()),
+                        }],
+                    }],
+                }),
+                contact: vec![ParamGroup {
+                    referenceable_param_group_ref: vec![],
+                    cv_param: vec![CvParam {
+                        name: "MS:1000002".to_owned(),
+                        cv_ref: "MS".to_owned(),
+                        accession: "MS:1000002".to_owned(),
+                        value: Some("Contact CV parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                    user_param: vec![UserParam {
+                        name: "Contact user parameter".to_owned(),
+                        r#type: Some("string".to_owned()),
+                        value: Some("Contact user parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                }],
             },
-            referenceable_param_group_list: None,
+            referenceable_param_group_list: Some(ReferenceableParamGroupList {
+                count: 1,
+                referenceable_param_group: vec![ReferenceableParamGroup {
+                    id: "RG3".to_owned(),
+                    cv_param: vec![CvParam {
+                        name: "MS:1000003".to_owned(),
+                        cv_ref: "MS".to_owned(),
+                        accession: "MS:1000003".to_owned(),
+                        value: Some("Referenceable param group CV parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                    user_param: vec![UserParam {
+                        name: "Referenceable param group user parameter".to_owned(),
+                        r#type: Some("string".to_owned()),
+                        value: Some("Referenceable param group user parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                }],
+            }),
             sample_list: None,
             software_list: SoftwareList {
                 count: 0,
@@ -724,16 +814,185 @@ mod tests {
         assert!(root_node.data.is_empty());
         assert!(root_node.metadata.is_empty());
         assert!(root_node.table.is_none());
-        let root_node_child_noode_names = &root_node.child_node_names;
-        assert_eq!(6, root_node_child_noode_names.len());
-        assert_eq!("cvList", &root_node_child_noode_names[0]);
-        assert_eq!("fileDescription", &root_node_child_noode_names[1]);
-        assert_eq!("softwareList", &root_node_child_noode_names[2]);
+        let root_node_child_node_names = &root_node.child_node_names;
+        assert_eq!(7, root_node_child_node_names.len());
+        assert_eq!("cvList", &root_node_child_node_names[0]);
+        assert_eq!("fileDescription", &root_node_child_node_names[1]);
+        assert_eq!(
+            "referenceableParamGroupList",
+            &root_node_child_node_names[2]
+        );
+        assert_eq!("softwareList", &root_node_child_node_names[3]);
         assert_eq!(
             "instrumentConfigurationList",
-            &root_node_child_noode_names[3]
+            &root_node_child_node_names[4]
         );
-        assert_eq!("dataProcessingList", &root_node_child_noode_names[4]);
-        assert_eq!("run", &root_node_child_noode_names[5]);
+        assert_eq!("dataProcessingList", &root_node_child_node_names[5]);
+        assert_eq!("run", &root_node_child_node_names[6]);
+
+        let cv_list = reader.read("/0").unwrap();
+        assert_eq!("cvList", cv_list.name);
+        assert_eq!(2, cv_list.parameters.len());
+        assert_eq!(&Parameter::from_str_u64("count", 1), &cv_list.parameters[0]);
+        assert_eq!(
+            &Parameter::from_str_str(
+                "Mass Spectrometry Ontology (MS, 4.1.0)",
+                "http://psidev.info/psi/ms/mzML"
+            ),
+            &cv_list.parameters[1]
+        );
+        assert!(cv_list.data.is_empty());
+        assert!(cv_list.metadata.is_empty());
+        assert!(cv_list.table.is_none());
+        let cv_list_child_node_names = &cv_list.child_node_names;
+        assert!(cv_list_child_node_names.is_empty());
+
+        let file_description = reader.read("/1").unwrap();
+        assert_eq!("fileDescription", file_description.name);
+        assert!(file_description.parameters.is_empty());
+        assert!(file_description.data.is_empty());
+        assert!(file_description.metadata.is_empty());
+        assert!(file_description.table.is_none());
+        let file_description_child_node_names = &file_description.child_node_names;
+        assert_eq!(3, file_description_child_node_names.len());
+        assert_eq!("fileContent", &file_description_child_node_names[0]);
+        assert_eq!("sourceFileList", &file_description_child_node_names[1]);
+        assert_eq!("contact", &file_description_child_node_names[2]);
+
+        let file_content = reader.read("/1/0").unwrap();
+        assert_eq!("fileContent", file_content.name);
+        assert_eq!(3, file_content.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("referenceableParamGroupRef", "RG1"),
+            &file_content.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "MS:1000001 (MS, MS:1000001)",
+                "CV parameter value 1000001 unitName 100001 (unit_accession=unitAccession 100001, unit_cv_ref=unitCvRef 100001)"
+            ),
+            &file_content.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "User parameter (string)",
+                "User parameter value unitName 100001 (unit_accession=unitAccession 100001, unit_cv_ref=unitCvRef 100001)"
+            ),
+            &file_content.parameters[2]
+        );
+        assert!(file_content.data.is_empty());
+        assert!(file_content.metadata.is_empty());
+        assert!(file_content.table.is_none());
+        assert!(file_content.child_node_names.is_empty());
+
+        let source_file_list = reader.read("/1/1").unwrap();
+        assert_eq!("sourceFileList", source_file_list.name);
+        assert_eq!(1, source_file_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &source_file_list.parameters[0]
+        );
+        assert!(source_file_list.data.is_empty());
+        assert!(source_file_list.metadata.is_empty());
+        assert!(source_file_list.table.is_none());
+        let source_file_list_child_node_names = &source_file_list.child_node_names;
+        assert_eq!(1, source_file_list_child_node_names.len());
+        assert_eq!("Source file (SF1)", &source_file_list_child_node_names[0]);
+
+        let source_file_0 = reader.read("/1/1/0").unwrap();
+        assert_eq!("Source file (SF1)", source_file_0.name);
+        assert_eq!(6, source_file_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("id", "SF1"),
+            &source_file_0.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("name", "Source file"),
+            &source_file_0.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("location", "file:///some/source/file"),
+            &source_file_0.parameters[2]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("referenceableParamGroupRef", "RG2"),
+            &source_file_0.parameters[3]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "MS:1000001 (MS, MS:1000001)",
+                "CV parameter value 1000001 unitName 100001 (unit_accession=unitAccession 100001, unit_cv_ref=unitCvRef 100001)"
+            ),
+            &source_file_0.parameters[4]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "User parameter (string)",
+                "User parameter value unitName 100001 (unit_accession=unitAccession 100001, unit_cv_ref=unitCvRef 100001)"
+            ),
+            &source_file_0.parameters[5]
+        );
+        assert!(source_file_0.data.is_empty());
+        assert!(source_file_0.metadata.is_empty());
+        assert!(source_file_0.table.is_none());
+        assert!(source_file_0.child_node_names.is_empty());
+
+        let contact = reader.read("/1/2").unwrap();
+        assert_eq!("contact", contact.name);
+        assert_eq!(2, contact.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("MS:1000002 (MS, MS:1000002)", "Contact CV parameter value"),
+            &contact.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "Contact user parameter (string)",
+                "Contact user parameter value"
+            ),
+            &contact.parameters[1]
+        );
+        assert!(contact.data.is_empty());
+        assert!(contact.metadata.is_empty());
+        assert!(contact.table.is_none());
+        assert!(contact.child_node_names.is_empty());
+
+        let referenceable_param_group_list = reader.read("/2").unwrap();
+        assert_eq!("referenceableParamGroupList", referenceable_param_group_list.name);
+        assert_eq!(1, referenceable_param_group_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &referenceable_param_group_list.parameters[0]
+        );
+        assert!(referenceable_param_group_list.data.is_empty());
+        assert!(referenceable_param_group_list.metadata.is_empty());
+        assert!(referenceable_param_group_list.table.is_none());
+        let referenceable_param_group_list_child_node_names = &referenceable_param_group_list.child_node_names;
+        assert_eq!(1, referenceable_param_group_list_child_node_names.len());
+        assert_eq!("RG3", &referenceable_param_group_list_child_node_names[0]);
+        let referenceable_param_group_0 = reader.read("/2/0").unwrap();
+        assert_eq!("RG3", referenceable_param_group_0.name);
+        assert_eq!(3, referenceable_param_group_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("id", "RG3"),
+            &referenceable_param_group_0.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "MS:1000003 (MS, MS:1000003)",
+                "Referenceable param group CV parameter value"
+            ),
+            &referenceable_param_group_0.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str(
+                "Referenceable param group user parameter (string)",
+                "Referenceable param group user parameter value"
+            ),
+            &referenceable_param_group_0.parameters[2]
+        );
+        assert!(referenceable_param_group_0.data.is_empty());
+        assert!(referenceable_param_group_0.metadata.is_empty());
+        assert!(referenceable_param_group_0.table.is_none());
+        assert!(referenceable_param_group_0.child_node_names.is_empty());
     }
 }

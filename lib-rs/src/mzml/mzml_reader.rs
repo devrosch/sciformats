@@ -4,8 +4,9 @@ use crate::{
     common::SfError,
     mzml::mzml_parser::{
         Cv, CvList, CvParam, FileDescription, ParamGroup, ReferenceableParamGroup,
-        ReferenceableParamGroupList, ReferenceableParamGroupRef, Sample, SampleList, Software,
-        SoftwareList, SourceFile, SourceFileList, UserParam,
+        ReferenceableParamGroupList, ReferenceableParamGroupRef, Sample, SampleList, ScanSettings,
+        ScanSettingsList, Software, SoftwareList, SourceFile, SourceFileList, SourceFileRef,
+        SourceFileRefList, TargetList, UserParam,
     },
     utils::convert_path_to_node_indices,
 };
@@ -89,9 +90,16 @@ impl NodeMapping for MzMl {
                         self.software_list
                             .get_node("softwareList", tail_path, context)
                     }
+                    "scanSettingsList" => match &self.scan_settings_list {
+                        None => Err(SfError::new(&format!(
+                            "Internal error for path: {}. scanSettingsList not found.",
+                            context
+                        ))),
+                        Some(scan_settings_list) => {
+                            scan_settings_list.get_node("scanSettingsList", tail_path, context)
+                        }
+                    },
                     // TODO: continue
-                    // #[serde(rename = "scanSettingsList")]
-                    // pub scan_settings_list: Option<ScanSettingsList>,
                     // #[serde(rename = "instrumentConfigurationList")]
                     // pub instrument_configuration_list: InstrumentConfigurationList,
                     // #[serde(rename = "dataProcessingList")]
@@ -694,6 +702,220 @@ impl Software {
             metadata: vec![],
             table: None,
             child_node_names: vec![],
+        }
+    }
+}
+
+impl NodeMapping for ScanSettingsList {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name)),
+            [n, tail_path @ ..] => {
+                let child_node_names = self.get_child_node_names();
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.scan_settings.get(*n) {
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
+                    Some(scan_settings) => {
+                        scan_settings.get_node(child_node_name, tail_path, context)
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl ScanSettingsList {
+    fn get_child_node_names(&self) -> Vec<String> {
+        let mut child_node_names = vec![];
+        for scan_settings in self.scan_settings.iter() {
+            child_node_names.push(scan_settings.get_name());
+        }
+        child_node_names
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", self.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
+        }
+    }
+}
+
+impl NodeMapping for ScanSettings {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name)),
+            [n, tail_path @ ..] => {
+                let child_node_names = self.get_child_node_names();
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match child_node_name.as_str() {
+                    "sourceFileRefList" => match &self.source_file_ref_list {
+                        None => Err(SfError::new(&format!(
+                            "Internal error for path: {}. sourceFileRefList not found.",
+                            context
+                        ))),
+                        Some(list) => list.get_node("sourceFileRefList", tail_path, context),
+                    },
+                    "targetList" => match &self.target_list {
+                        None => Err(SfError::new(&format!(
+                            "Internal error for path: {}. targetList not found.",
+                            context
+                        ))),
+                        Some(list) => list.get_node("targetList", tail_path, context),
+                    },
+                    _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+                }
+            }
+        }
+    }
+}
+
+impl ScanSettings {
+    fn get_name(&self) -> String {
+        self.id.clone()
+    }
+
+    fn get_child_node_names(&self) -> Vec<String> {
+        let mut child_node_names = vec![];
+        if self.source_file_ref_list.is_some() {
+            child_node_names.push("sourceFileRefList".to_owned());
+        }
+        if self.target_list.is_some() {
+            child_node_names.push("targetList".to_owned());
+        }
+        child_node_names
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("id", &self.id));
+        parameters.extend(map_referenceable_param_group_ref_list(
+            &self.referenceable_param_group_ref,
+        ));
+        parameters.extend(map_cv_param_list(&self.cv_param));
+        parameters.extend(map_user_param_list(&self.user_param));
+        Node {
+            name: name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
+        }
+    }
+}
+
+// NodeMapping for SourceFileRefList
+impl NodeMapping for SourceFileRefList {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(Self::map_to_node(self, name)),
+            [n] => {
+                let child_node_names = Self::get_child_node_names(self);
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.source_file_ref.get(*n) {
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
+                    Some(child) => Ok(child.map_to_node(child_node_name)),
+                }
+            }
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl SourceFileRefList {
+    fn get_child_node_names(&self) -> Vec<String> {
+        self.source_file_ref
+            .iter()
+            .map(|r| r.r#ref.clone())
+            .collect()
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", self.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
+        }
+    }
+}
+
+impl SourceFileRef {
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_str("ref", &self.r#ref)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        }
+    }
+}
+
+// NodeMapping for TargetList
+impl NodeMapping for TargetList {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(Self::map_to_node(self, name)),
+            [n] => {
+                let child_node_names = Self::get_child_node_names(self);
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.target.get(*n) {
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
+                    Some(child) => child.get_node(child_node_name, &[], context),
+                }
+            }
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl TargetList {
+    fn get_child_node_names(&self) -> Vec<String> {
+        self.target
+            .iter()
+            .enumerate()
+            .map(|(i, _)| format!("target {}", i))
+            .collect()
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", self.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
         }
     }
 }

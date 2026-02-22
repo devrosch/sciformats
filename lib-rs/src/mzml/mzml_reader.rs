@@ -4,8 +4,8 @@ use crate::{
     common::SfError,
     mzml::mzml_parser::{
         Cv, CvList, CvParam, FileDescription, ParamGroup, ReferenceableParamGroup,
-        ReferenceableParamGroupList, ReferenceableParamGroupRef, Sample, SampleList, SourceFile,
-        SourceFileList, UserParam,
+        ReferenceableParamGroupList, ReferenceableParamGroupRef, Sample, SampleList, Software,
+        SoftwareList, SourceFile, SourceFileList, UserParam,
     },
     utils::convert_path_to_node_indices,
 };
@@ -85,9 +85,11 @@ impl NodeMapping for MzMl {
                         ))),
                         Some(sample_list) => sample_list.get_node("sampleList", tail_path, context),
                     },
+                    "softwareList" => {
+                        self.software_list
+                            .get_node("softwareList", tail_path, context)
+                    }
                     // TODO: continue
-                    // #[serde(rename = "softwareList")]
-                    // pub software_list: SoftwareList,
                     // #[serde(rename = "scanSettingsList")]
                     // pub scan_settings_list: Option<ScanSettingsList>,
                     // #[serde(rename = "instrumentConfigurationList")]
@@ -618,6 +620,84 @@ impl Sample {
     }
 }
 
+impl NodeMapping for SoftwareList {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name)),
+            [n] => {
+                let child_node_names = self.get_child_node_names();
+                let child_node_name = match child_node_names.get(*n) {
+                    None => return Err(SfError::new(&format!("Illegal path: {}", context))),
+                    Some(child_node_name) => child_node_name,
+                };
+                match self.software.get(*n) {
+                    None => Err(SfError::new(&format!(
+                        "Internal error for path: {}",
+                        context
+                    ))),
+                    Some(software) => software.get_node(child_node_name, &[], context),
+                }
+            }
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl SoftwareList {
+    fn get_child_node_names(&self) -> Vec<String> {
+        let mut child_node_names = vec![];
+        for software in self.software.iter() {
+            child_node_names.push(software.get_name());
+        }
+        child_node_names
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        Node {
+            name: name.to_owned(),
+            parameters: vec![Parameter::from_str_u64("count", self.count)],
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: self.get_child_node_names(),
+        }
+    }
+}
+
+impl NodeMapping for Software {
+    fn get_node(&self, name: &str, path: &[usize], context: &str) -> Result<Node, SfError> {
+        match path {
+            [] => Ok(self.map_to_node(name)),
+            _ => Err(SfError::new(&format!("Illegal path: {}", context))),
+        }
+    }
+}
+
+impl Software {
+    fn get_name(&self) -> String {
+        format!("{} {}", self.id, self.version)
+    }
+
+    fn map_to_node(&self, name: &str) -> Node {
+        let mut parameters = vec![];
+        parameters.push(Parameter::from_str_str("id", &self.id));
+        parameters.push(Parameter::from_str_str("version", &self.version));
+        parameters.extend(map_referenceable_param_group_ref_list(
+            &self.referenceable_param_group_ref,
+        ));
+        parameters.extend(map_cv_param_list(&self.cv_param));
+        parameters.extend(map_user_param_list(&self.user_param));
+        Node {
+            name: name.to_owned(),
+            parameters,
+            data: vec![],
+            metadata: vec![],
+            table: None,
+            child_node_names: vec![],
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::vec;
@@ -772,8 +852,31 @@ mod tests {
                 }],
             }),
             software_list: SoftwareList {
-                count: 0,
-                software: vec![],
+                count: 1,
+                software: vec![Software {
+                    id: "SW1".to_owned(),
+                    version: "1.0".to_owned(),
+                    referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                        r#ref: "RG5".to_owned(),
+                    }],
+                    cv_param: vec![CvParam {
+                        name: "MS:1000005".to_owned(),
+                        cv_ref: "MS".to_owned(),
+                        accession: "MS:1000005".to_owned(),
+                        value: Some("CV parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                    user_param: vec![UserParam {
+                        name: "User parameter".to_owned(),
+                        r#type: Some("string".to_owned()),
+                        value: Some("User parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                }],
             },
             scan_settings_list: None,
             instrument_configuration_list: InstrumentConfigurationList {
@@ -1061,5 +1164,46 @@ mod tests {
         assert!(sample_0.data.is_empty());
         assert!(sample_0.metadata.is_empty());
         assert!(sample_0.table.is_none());
+
+        let software_list = reader.read("/4").unwrap();
+        assert_eq!("softwareList", software_list.name);
+        assert_eq!(1, software_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &software_list.parameters[0]
+        );
+        assert!(software_list.data.is_empty());
+        assert!(software_list.metadata.is_empty());
+        assert!(software_list.table.is_none());
+        let software_list_child_node_names = &software_list.child_node_names;
+        assert_eq!(1, software_list_child_node_names.len());
+        assert_eq!("SW1 1.0", &software_list_child_node_names[0]);
+
+        let software_0 = reader.read("/4/0").unwrap();
+        assert_eq!("SW1 1.0", software_0.name);
+        assert_eq!(5, software_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("id", "SW1"),
+            &software_0.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("version", "1.0"),
+            &software_0.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("referenceableParamGroupRef", "RG5"),
+            &software_0.parameters[2]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("MS:1000005 (MS, MS:1000005)", "CV parameter value"),
+            &software_0.parameters[3]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("User parameter (string)", "User parameter value"),
+            &software_0.parameters[4]
+        );
+        assert!(software_0.data.is_empty());
+        assert!(software_0.metadata.is_empty());
+        assert!(software_0.table.is_none());
     }
 }

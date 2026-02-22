@@ -1100,7 +1100,63 @@ mod tests {
                     }],
                 }],
             },
-            scan_settings_list: None,
+            scan_settings_list: Some(ScanSettingsList {
+                count: 1,
+                scan_settings: vec![ScanSettings {
+                    id: "SS1".to_owned(),
+                    referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                        r#ref: "RG6".to_owned(),
+                    }],
+                    cv_param: vec![CvParam {
+                        name: "MS:1000006".to_owned(),
+                        cv_ref: "MS".to_owned(),
+                        accession: "MS:1000006".to_owned(),
+                        value: Some("CV parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                    user_param: vec![UserParam {
+                        name: "User parameter".to_owned(),
+                        r#type: Some("string".to_owned()),
+                        value: Some("User parameter value".to_owned()),
+                        unit_accession: None,
+                        unit_cv_ref: None,
+                        unit_name: None,
+                    }],
+                    source_file_ref_list: Some(SourceFileRefList {
+                        count: 1,
+                        source_file_ref: vec![SourceFileRef {
+                            r#ref: "SF1".to_owned(),
+                        }],
+                    }),
+                    target_list: Some(TargetList {
+                        count: 1,
+                        target: vec![ParamGroup {
+                            referenceable_param_group_ref: vec![ReferenceableParamGroupRef {
+                                r#ref: "RG7".to_owned(),
+                            }],
+                            cv_param: vec![CvParam {
+                                name: "MS:1000007".to_owned(),
+                                cv_ref: "MS".to_owned(),
+                                accession: "MS:1000007".to_owned(),
+                                value: Some("CV parameter value".to_owned()),
+                                unit_accession: None,
+                                unit_cv_ref: None,
+                                unit_name: None,
+                            }],
+                            user_param: vec![UserParam {
+                                name: "User parameter".to_owned(),
+                                r#type: Some("string".to_owned()),
+                                value: Some("User parameter value".to_owned()),
+                                unit_accession: None,
+                                unit_cv_ref: None,
+                                unit_name: None,
+                            }],
+                        }],
+                    }),
+                }],
+            }),
             instrument_configuration_list: InstrumentConfigurationList {
                 count: 0,
                 instrument_configuration: vec![],
@@ -1162,7 +1218,7 @@ mod tests {
         assert!(root_node.metadata.is_empty());
         assert!(root_node.table.is_none());
         let root_node_child_node_names = &root_node.child_node_names;
-        assert_eq!(8, root_node_child_node_names.len());
+        assert_eq!(9, root_node_child_node_names.len());
         assert_eq!("cvList", &root_node_child_node_names[0]);
         assert_eq!("fileDescription", &root_node_child_node_names[1]);
         assert_eq!(
@@ -1171,12 +1227,13 @@ mod tests {
         );
         assert_eq!("sampleList", &root_node_child_node_names[3]);
         assert_eq!("softwareList", &root_node_child_node_names[4]);
+        assert_eq!("scanSettingsList", &root_node_child_node_names[5]);
         assert_eq!(
             "instrumentConfigurationList",
-            &root_node_child_node_names[5]
+            &root_node_child_node_names[6]
         );
-        assert_eq!("dataProcessingList", &root_node_child_node_names[6]);
-        assert_eq!("run", &root_node_child_node_names[7]);
+        assert_eq!("dataProcessingList", &root_node_child_node_names[7]);
+        assert_eq!("run", &root_node_child_node_names[8]);
 
         let cv_list = reader.read("/0").unwrap();
         assert_eq!("cvList", cv_list.name);
@@ -1427,5 +1484,105 @@ mod tests {
         assert!(software_0.data.is_empty());
         assert!(software_0.metadata.is_empty());
         assert!(software_0.table.is_none());
+
+        let scan_settings_list = reader.read("/5").unwrap();
+        assert_eq!("scanSettingsList", scan_settings_list.name);
+        assert_eq!(1, scan_settings_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &scan_settings_list.parameters[0]
+        );
+        assert!(scan_settings_list.data.is_empty());
+        assert!(scan_settings_list.metadata.is_empty());
+        assert!(scan_settings_list.table.is_none());
+        let scan_settings_list_child_node_names = &scan_settings_list.child_node_names;
+        assert_eq!(1, scan_settings_list_child_node_names.len());
+        assert_eq!("SS1", &scan_settings_list_child_node_names[0]);
+
+        let scan_settings_0 = reader.read("/5/0").unwrap();
+        assert_eq!("SS1", scan_settings_0.name);
+        assert_eq!(4, scan_settings_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("id", "SS1"),
+            &scan_settings_0.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("referenceableParamGroupRef", "RG6"),
+            &scan_settings_0.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("MS:1000006 (MS, MS:1000006)", "CV parameter value"),
+            &scan_settings_0.parameters[2]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("User parameter (string)", "User parameter value"),
+            &scan_settings_0.parameters[3]
+        );
+        assert!(scan_settings_0.data.is_empty());
+        assert!(scan_settings_0.metadata.is_empty());
+        assert!(scan_settings_0.table.is_none());
+        let scan_settings_0_child_node_names = &scan_settings_0.child_node_names;
+        assert_eq!(2, scan_settings_0_child_node_names.len());
+        assert_eq!("sourceFileRefList", &scan_settings_0_child_node_names[0]);
+        assert_eq!("targetList", &scan_settings_0_child_node_names[1]);
+
+        let source_file_ref_list = reader.read("/5/0/0").unwrap();
+        assert_eq!("sourceFileRefList", source_file_ref_list.name);
+        assert_eq!(1, source_file_ref_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &source_file_ref_list.parameters[0]
+        );
+        assert!(source_file_ref_list.data.is_empty());
+        assert!(source_file_ref_list.metadata.is_empty());
+        assert!(source_file_ref_list.table.is_none());
+        let source_file_ref_list_child_node_names = &source_file_ref_list.child_node_names;
+        assert_eq!(1, source_file_ref_list_child_node_names.len());
+        assert_eq!("SF1", &source_file_ref_list_child_node_names[0]);
+
+        let source_file_ref_0 = reader.read("/5/0/0/0").unwrap();
+        assert_eq!("SF1", source_file_ref_0.name);
+        assert_eq!(1, source_file_ref_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("ref", "SF1"),
+            &source_file_ref_0.parameters[0]
+        );
+        assert!(source_file_ref_0.data.is_empty());
+        assert!(source_file_ref_0.metadata.is_empty());
+        assert!(source_file_ref_0.table.is_none());
+        assert!(source_file_ref_0.child_node_names.is_empty());
+
+        let target_list = reader.read("/5/0/1").unwrap();
+        assert_eq!("targetList", target_list.name);
+        assert_eq!(1, target_list.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_u64("count", 1),
+            &target_list.parameters[0]
+        );
+        assert!(target_list.data.is_empty());
+        assert!(target_list.metadata.is_empty());
+        assert!(target_list.table.is_none());
+        let target_list_child_node_names = &target_list.child_node_names;
+        assert_eq!(1, target_list_child_node_names.len());
+        assert_eq!("target 0", &target_list_child_node_names[0]);
+
+        let target_0 = reader.read("/5/0/1/0").unwrap();
+        assert_eq!("target 0", target_0.name);
+        assert_eq!(3, target_0.parameters.len());
+        assert_eq!(
+            &Parameter::from_str_str("referenceableParamGroupRef", "RG7"),
+            &target_0.parameters[0]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("MS:1000007 (MS, MS:1000007)", "CV parameter value"),
+            &target_0.parameters[1]
+        );
+        assert_eq!(
+            &Parameter::from_str_str("User parameter (string)", "User parameter value"),
+            &target_0.parameters[2]
+        );
+        assert!(target_0.data.is_empty());
+        assert!(target_0.metadata.is_empty());
+        assert!(target_0.table.is_none());
     }
 }
